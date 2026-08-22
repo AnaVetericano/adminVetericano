@@ -8,6 +8,8 @@ import { CrearMedicamentos } from './crear-medicamentos/crear-medicamentos';
 import { FormularioEspecies } from './formulario-especies/formulario-especies';
 import { FormularioMedicametos } from './formulario-medicametos/formulario-medicametos';
 import { Component } from '@angular/core';
+import { Login } from './login/login';
+import { Register } from './register/register';
 
 export const routes: Routes = [
     {
@@ -54,5 +56,7 @@ export const routes: Routes = [
     },
     
     
+{path:'loign',component:Login},
+{path:'register',component:Register},
 
 ];
