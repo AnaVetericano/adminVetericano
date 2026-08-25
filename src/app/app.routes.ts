@@ -14,7 +14,7 @@ import { Register } from './register/register';
 export const routes: Routes = [
     {
         path:'',
-        component: FormularioEspecies
+        component:Login
     },
     {
         path:'formularioespecies',
@@ -56,7 +56,7 @@ export const routes: Routes = [
     },
     
     
-{path:'loign',component:Login},
+// {path:'loign',component:Login},
 {path:'register',component:Register},
 
 ];
