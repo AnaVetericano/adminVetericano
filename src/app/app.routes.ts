@@ -10,6 +10,8 @@ import { FormularioMedicametos } from './formulario-medicametos/formulario-medic
 import { Component } from '@angular/core';
 import { Login } from './login/login';
 import { Register } from './register/register';
+import { InicioAdministrador } from './Inicio-administrador/Inicio-administrador';
+import { InicioDeSesionAdministrador } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 
 export const routes: Routes = [
     {
@@ -54,9 +56,21 @@ export const routes: Routes = [
         path:'formulariomedicamentos',
         component: FormularioMedicametos
     },
-    
-    
-{path:'loign',component:Login},
-{path:'register',component:Register},
+    {
+        path:'registro-administrador',
+        component: InicioAdministrador
+    },
+    {
+        path:'inicio-de-sesion-administrador',
+        component: InicioDeSesionAdministrador
+    },
+    { 
+        path:'loign',
+        component:Login
+    },
+    {
+        path:'register',
+        component:Register
+    }
 
 ];

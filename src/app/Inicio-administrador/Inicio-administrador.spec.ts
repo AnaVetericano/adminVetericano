@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RegistroAdministrador } from './registro-administrador';
+import { InicioAdministrador } from './Inicio-administrador';
 
-describe('RegistroAdministrador', () => {
-  let component: RegistroAdministrador;
-  let fixture: ComponentFixture<RegistroAdministrador>;
+describe('InicioAdministrador', () => {
+  let component: InicioAdministrador;
+  let fixture: ComponentFixture<InicioAdministrador>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RegistroAdministrador],
+      imports: [InicioAdministrador],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(RegistroAdministrador);
+    fixture = TestBed.createComponent(InicioAdministrador);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
