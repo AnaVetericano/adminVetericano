@@ -1,136 +1,70 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VETERICANO – Administrador Inicio</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'vet-purple': '#3B2D8F',
-            'vet-purple-light': '#4E3DAB',
-            'vet-sidebar': '#E8E6E1',
-          },
-          fontFamily: {
-            sans: ['Segoe UI', 'Roboto', 'sans-serif'],
-          },
-        }
-      }
-    }
-  </script>
-  <style>
-    /* Hover item sidebar */
-    .nav-item:hover {
-      background-color: rgba(59, 45, 143, 0.08);
-      border-radius: 8px;
-    }
-    .nav-item.active {
-      background-color: rgba(59, 45, 143, 0.13);
-      border-radius: 8px;
-    }
-  </style>
-</head>
-<body class="min-h-screen flex items-center justify-center bg-gray-300">
+<div class="min-h-screen bg-[#1B1947] flex items-center justify-center p-4">
+  <div class="w-full max-w-5xl bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl flex min-h-[680px]">
 
-  <!-- Etiqueta de pantalla -->
-  <p class="fixed top-3 left-4 text-xs text-gray-500 tracking-widest uppercase select-none">
-    4 ADMINISTRADOR INICIO
-  </p>
+    <!-- SIDEBAR -->
+    <div class="w-[370px] bg-[#E3E1DC] flex flex-col">
 
-  <!-- Contenedor principal -->
-  <div class="w-full max-w-4xl min-h-[680px] flex rounded-xl overflow-hidden shadow-2xl">
-
-    <!-- ══════════════════════════════
-         SIDEBAR IZQUIERDO
-         ══════════════════════════════ -->
-    <aside class="w-[370px] min-h-full bg-[#E8E6E1] flex flex-col">
-
-      <!-- Perfil de usuario -->
-      <div class="flex flex-col items-center pt-10 pb-6 border-b border-gray-300">
-        <!-- Avatar circular -->
-        <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-white shadow-md mb-3">
-          <!--
-            Reemplaza src con tu asset real.
-            En Angular: src="assets/images/jubelit-zapata.jpg"
-          -->
-          <img
-            src="assets/images/jubelit-zapata.jpg"
-            alt="Jubelit Zapata"
-            class="w-full h-full object-cover"
-            onerror="this.style.display='none'; this.parentElement.classList.add('bg-gray-400', 'flex', 'items-center', 'justify-center')"
-          />
-          <!-- Fallback avatar SVG si no carga la imagen -->
-          <svg class="hidden w-full h-full text-white p-4" fill="currentColor" viewBox="0 0 24 24" id="avatar-fallback">
-            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-          </svg>
+      <!-- Perfil -->
+      <div class="flex flex-col items-center pt-10 pb-6 border-b border-slate-300/70">
+        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 bg-slate-300">
+          <!-- Angular: [src]="admin.foto" — assets/images/jubelit-zapata.jpg -->
+          <img src="assets/images/jubelit-zapata.jpg" alt="Jubelit Zapata"
+               class="w-full h-full object-cover" onerror="this.style.display='none'" />
         </div>
-
-        <!-- Nombre y rol -->
-        <h2 class="text-base font-semibold text-gray-800 tracking-wide">Jubelit Zapata</h2>
-        <p class="text-xs text-gray-500 mt-0.5">Admin</p>
+        <h2 class="text-sm font-semibold text-slate-800 mt-1">Jubelit Zapata</h2>
+        <p class="text-xs text-slate-500">Admin</p>
       </div>
 
       <!-- Navegación -->
-      <nav class="flex-1 px-6 pt-6 space-y-1">
+      <nav class="flex-1 px-6 pt-7 space-y-1">
 
-        <!-- HOME -->
-        <div class="px-3 py-1 mb-2">
-          <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">
-            HOME(EJEMPLO)
-          </span>
-        </div>
+        <p class="text-[11px] font-bold text-slate-500 tracking-widest uppercase px-3 mb-3">
+          HOME(EJEMPLO)
+        </p>
 
         <!-- PATOLOGIA -->
-        <a href="#" routerLink="/admin/patologia"
-           class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all">
-          <!-- Ícono microscopio/patología -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700 shrink-0"
-               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <a routerLink="/patologias" routerLinkActive="bg-[#1B1947]/10"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <svg class="w-5 h-5 text-slate-800 shrink-0" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9.75 3v6m0 0l-2.25 2.25M9.75 9l2.25 2.25M9.75 9H3m6.75 0a6.75 6.75 0
-                     110 13.5A6.75 6.75 0 019.75 9zm5.25 9h3.75"/>
+                  d="M9.75 3v5.25m0 0L7.5 10.5M9.75 8.25l2.25 2.25M9.75 8.25H3.75
+                     m6 0a6.75 6.75 0 110 13.5 6.75 6.75 0 010-13.5zm5.25 10.5H21"/>
           </svg>
-          <span class="text-sm font-bold tracking-widest text-gray-800 uppercase">Patologia</span>
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Patologia</span>
         </a>
 
         <!-- EXAMENES MEDICOS -->
-        <a href="#" routerLink="/admin/examenes"
-           class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all">
-          <!-- Ícono portapapeles/exámenes -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700 shrink-0"
-               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <a routerLink="/examenes-clinicos" routerLinkActive="bg-[#1B1947]/10"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <svg class="w-5 h-5 text-slate-800 shrink-0" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0
                      002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2
-                     0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2
-                     4-4"/>
+                     0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
           </svg>
-          <span class="text-sm font-bold tracking-widest text-gray-800 uppercase">Examenes Medicos</span>
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Examenes Medicos</span>
         </a>
 
         <!-- MEDICAMENTOS -->
-        <a href="#" routerLink="/admin/medicamentos"
-           class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all">
-          <!-- Ícono pastilla/medicamentos -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700 shrink-0"
-               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <a routerLink="/formulariomedicamentos" routerLinkActive="bg-[#1B1947]/10"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <svg class="w-5 h-5 text-slate-800 shrink-0" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15 9.75A3 3 0 009 12a3 3 0 006 2.25"/>
+                  d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622
+                     a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25
+                     c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125
+                     H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
           </svg>
-          <span class="text-sm font-bold tracking-widest text-gray-800 uppercase">Medicamentos</span>
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Medicamentos</span>
         </a>
 
         <!-- ESPECIES -->
-        <a href="#" routerLink="/admin/especies"
-           class="nav-item flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all">
-          <!-- Ícono patita/especies -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-700 shrink-0"
-               viewBox="0 0 64 64" fill="currentColor">
+        <a routerLink="/formularioespecies" routerLinkActive="bg-[#1B1947]/10"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <svg class="w-5 h-5 text-slate-800 shrink-0" viewBox="0 0 64 64" fill="currentColor">
             <ellipse cx="16" cy="12" rx="5" ry="7"/>
             <ellipse cx="30" cy="8"  rx="5" ry="7"/>
             <ellipse cx="44" cy="12" rx="5" ry="7"/>
@@ -138,33 +72,25 @@
             <ellipse cx="56" cy="26" rx="4" ry="6"/>
             <path d="M32 22c-9 0-16 5.5-16 14 0 7 5 12 16 12s16-5 16-12c0-8.5-7-14-16-14z"/>
           </svg>
-          <span class="text-sm font-bold tracking-widest text-gray-800 uppercase">Especies</span>
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Especies</span>
         </a>
 
       </nav>
 
       <!-- Cerrar sesión -->
-      <div class="px-6 pb-8 pt-4">
-        <a href="#" routerLink="/login"
-           class="text-sm font-semibold text-vet-purple hover:text-vet-purple-light hover:underline tracking-wide transition-colors">
+      <div class="px-9 pb-8 pt-4">
+        <a routerLink="/iniciodesesionadministrador"
+           class="text-sm font-bold text-[#1B1947] hover:underline tracking-widest uppercase transition-colors">
           CERRAR SESIÓN
         </a>
       </div>
 
-    </aside>
+    </div>
 
-    <!-- ══════════════════════════════
-         ÁREA DE CONTENIDO PRINCIPAL
-         ══════════════════════════════ -->
-    <main class="flex-1 bg-white min-h-full">
-      <!--
-        Aquí se proyecta el contenido de cada sección mediante router-outlet en Angular.
-        <router-outlet></router-outlet>
-      -->
-    </main>
+    <!-- ÁREA CONTENIDO -->
+    <div class="flex-1 bg-white">
+      <router-outlet></router-outlet>
+    </div>
 
   </div>
-  <!-- fin contenedor -->
-
-</body>
-</html>
+</div>
