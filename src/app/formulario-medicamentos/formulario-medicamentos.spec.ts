@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FormularioMedicametos } from './formulario-medicametos';
+import { FormularioMedicametos } from './formulario-medicamentos';
 
 describe('FormularioMedicametos', () => {
   let component: FormularioMedicametos;
