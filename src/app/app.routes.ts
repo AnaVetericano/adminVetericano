@@ -7,9 +7,9 @@ import { ListarMedicamentos } from './listar-medicamentos/listar-medicamentos';
 import { CrearEspecies } from './crear-especies/crear-especies';
 import { CrearMedicamentos } from './crear-medicamentos/crear-medicamentos';
 import { FormularioEspecies } from './formulario-especies/formulario-especies';
-import { FormularioMedicamentos } from './formulario-medicamentos/formulario-medicamentos';
+import { FormularioMedicametos } from './formulario-medicametos/formulario-medicametos';
 
-import { Login } from './landepage/landepage';
+import { Landepage } from './landepage/landepage';
 import { Register } from './register/register';
 
 import { InicioAdministrador } from './Inicio-administrador/Inicio-administrador';
@@ -21,7 +21,7 @@ export const routes: Routes = [
 
   {
     path: '',
-    component: Login
+    component:Landepage
   },
 
   {
@@ -61,23 +61,16 @@ export const routes: Routes = [
 
   {
     path: 'formulariomedicamentos',
-    component: FormularioMedicamentos
+    component: FormularioMedicametos
   },
 
-  {
-    path: 'registro-administrador',
-    component: InicioAdministrador
-  },
 
   {
     path: 'inicio-de-sesion-administrador',
     component: InicioDeSesionAdministrador
   },
 
-  {
-    path: 'login',
-    component: Login
-  },
+  
 
   {
     path: 'register',
