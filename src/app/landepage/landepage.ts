@@ -10,7 +10,7 @@ export class Landepage {
   constructor(private router: Router) {}
 
   iniciarSesion(): void {
-    this.router.navigate(['/inicio-de-sesion-administrador']);
+    this.router.navigate(['/iniciodesesionadministrador']);
   }
 
   registrarse(): void {
