@@ -1,1 +1,109 @@
-<p>inicio-de-sesion-administrador works!</p>
+<div class="min-h-screen flex w-full bg-white font-sans">
+  
+  <!-- Panel Izquierdo (Cabra y texto) -->
+  <div class="hidden md:flex flex-col w-1/2 bg-[#E9ECE6] p-12 relative overflow-hidden">
+    <!-- Logo superior izquierdo -->
+    <div class="flex items-center space-x-2 text-[#474395] mb-8 z-10">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+      <span class="font-serif text-2xl tracking-wide font-medium">VETERICANO</span>
+    </div>
+
+    <!-- Texto descriptivo -->
+    <div class="text-black text-sm font-medium leading-tight max-w-sm z-10 font-mono tracking-tight">
+      <p>Panel de administración para gestionar peticiones, rescates y cordinacion de equipos veterinarios.</p>
+      <p class="mt-1">Administra y supervisa todas las operaciones de rescate</p>
+    </div>
+
+    <!-- Imagen de la Cabra (Ajustada al fondo/izquierda) -->
+    <img 
+      src="assets/cabra.png" 
+      alt="Cabra Vetericano" 
+      class="absolute bottom-0 left-[-10%] w-[110%] object-contain scale-x-[-1] z-0 drop-shadow-2xl" 
+    />
+  </div>
+
+  <!-- Panel Derecho (Formulario de Login) -->
+  <div class="w-full md:w-1/2 flex flex-col justify-center items-center bg-white p-8">
+    <div class="w-full max-w-[340px] flex flex-col items-center">
+      
+      <!-- Logo Principal Derecho -->
+      <div class="flex flex-col items-center mb-6">
+        <img src="assets/logo-vetericano.png" alt="Logo Perro y Gato" class="h-14 object-contain mb-1" />
+        <h1 class="text-[#474395] font-bold text-2xl tracking-wide uppercase">VETERICANO</h1>
+        <span class="text-[#F5B041] text-[9px] font-bold italic -mt-1 tracking-wider">Salvando vidas animales🐾</span>
+      </div>
+
+      <!-- Títulos -->
+      <h2 class="text-3xl font-bold text-[#474395] mb-2">Bienvenido</h2>
+      <p class="text-gray-600 text-[13px] font-bold w-full text-left mb-6">Inicia sesión para continuar</p>
+
+      <!-- Formulario -->
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="w-full space-y-5">
+        
+        <!-- Input Email -->
+        <div class="relative w-full shadow-[0_3px_15px_rgba(0,0,0,0.08)] rounded-full">
+          <span class="absolute inset-y-0 left-4 flex items-center text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
+          </span>
+          <input 
+            type="text" 
+            formControlName="emailOrPhone"
+            placeholder="Email o telefono"
+            class="w-full pl-12 pr-4 py-3 rounded-full border border-gray-100 focus:outline-none focus:ring-2 focus:ring-[#474395]/50 text-sm text-gray-600 font-medium placeholder-gray-400"
+          />
+        </div>
+
+        <!-- Input Contraseña -->
+        <div class="relative w-full shadow-[0_3px_15px_rgba(0,0,0,0.08)] rounded-full">
+          <span class="absolute inset-y-0 left-4 flex items-center text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+          </span>
+          <input 
+            type="password" 
+            formControlName="password"
+            placeholder="Contraseña"
+            class="w-full pl-12 pr-4 py-3 rounded-full border border-gray-100 focus:outline-none focus:ring-2 focus:ring-[#474395]/50 text-sm text-gray-600 font-medium placeholder-gray-400"
+          />
+        </div>
+
+        <!-- Olvidaste contraseña y Perrito -->
+        <div class="flex flex-col items-end pr-2 pt-1 relative">
+          <a href="#" class="text-[10px] text-[#474395] font-semibold hover:underline">¿Olvidaste tu contraseña?</a>
+          <!-- Perrito centrado arriba del botón -->
+          <div class="w-full flex justify-center mt-2 mb-1">
+             <img src="assets/perro-boton.png" alt="Perro sentado" class="h-10 object-contain z-10" />
+          </div>
+        </div>
+
+        <!-- Botón Iniciar Sesión -->
+        <button 
+          type="submit" 
+          class="w-full py-3 bg-[#474395] hover:bg-[#353273] text-white rounded-full font-medium text-sm transition-all duration-300 shadow-lg shadow-[#474395]/30">
+          Iniciar Sesión
+        </button>
+      </form>
+
+      <!-- Divisor "O inicia con" -->
+      <div class="w-full flex items-center justify-center mt-8 mb-4 relative">
+        <div class="border-t border-gray-300 w-full absolute"></div>
+        <span class="bg-white px-3 text-[12px] text-black font-bold z-10">O inicia con</span>
+      </div>
+
+      <!-- Iconos Sociales -->
+      <div class="flex justify-center space-x-5 mb-6">
+        <button class="hover:scale-105 transition-transform"><img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-7 h-7" alt="Google"></button>
+        <button class="hover:scale-105 transition-transform"><img src="https://www.svgrepo.com/show/475647/facebook-color.svg" class="w-7 h-7" alt="Facebook"></button>
+        <button class="hover:scale-105 transition-transform"><img src="https://www.svgrepo.com/show/511330/apple-173.svg" class="w-7 h-7" alt="Apple"></button>
+      </div>
+
+      <!-- Enlace a Registro -->
+      <p class="text-[12px] text-black font-semibold">
+        ¿No tienes cuenta? 
+        <a routerLink="/registro-administrador" class="text-[#474395] font-serif tracking-wide hover:underline">Registrate</a>
+      </p>
+
+    </div>
+  </div>
+</div>

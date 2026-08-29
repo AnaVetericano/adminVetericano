@@ -12,10 +12,10 @@ import { FormularioMedicamentos } from './formulario-medicamentos/formulario-med
 import { Landepage } from './landepage/landepage';
 import { Register } from './register/register';
 
-import { InicioAdministrador } from './Inicio-administrador/Inicio-administrador';
-import { InicioDeSesionAdministrador } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
-import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
+import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-administrador';
+import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 import { Patologias } from './patologias/patologias';
+import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
 
 export const routes: Routes = [
 
@@ -64,10 +64,14 @@ export const routes: Routes = [
     component: FormularioMedicamentos
   },
 
+  {
+    path: ' Inicio-administrador',
+    component: InicioAdministradorComponent
+  },
 
   {
     path: 'inicio-de-sesion-administrador',
-    component: InicioDeSesionAdministrador
+    component: InicioDeSesionAdministradorComponent
   },
 
   
