@@ -14,6 +14,8 @@ import { Register } from './register/register';
 
 import { InicioAdministrador } from './Inicio-administrador/Inicio-administrador';
 import { InicioDeSesionAdministrador } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
+import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
+import { Patologias } from './patologias/patologias';
 
 export const routes: Routes = [
 
@@ -80,6 +82,14 @@ export const routes: Routes = [
   {
     path: 'register',
     component: Register
-  }
+  },
+
+  {path: 'examenes-clinicos', 
+    component:ExamenesClinicos},
+
+    
+  {path:'patologias', 
+    component:Patologias}
+
 
 ];
