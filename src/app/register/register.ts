@@ -44,6 +44,6 @@ export class Register {
   }
 
   iniciarSesion() {
-    this.router.navigate(['/inicio-sesion']);
+    this.router.navigate(['/iniciodesesionadministrador']);
   }
 }
