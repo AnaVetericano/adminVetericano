@@ -30,7 +30,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'actualizarespecies',
+    path: 'actualizarespecies/:id',
     component: ActualizarEspecies
   },
 
@@ -45,7 +45,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'actualizarmedicamentos',
+    path: 'actualizarmedicamentos/:id',
     component: ActualizarMedicamentos
   },
 
