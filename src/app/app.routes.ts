@@ -9,7 +9,7 @@ import { CrearMedicamentos } from './crear-medicamentos/crear-medicamentos';
 import { FormularioEspecies } from './formulario-especies/formulario-especies';
 import { FormularioMedicametos } from './formulario-medicametos/formulario-medicametos';
 
-import { Login } from './login/login';
+import { Login } from './landepage/landepage';
 import { Register } from './register/register';
 
 import { InicioAdministrador } from './Inicio-administrador/Inicio-administrador';
