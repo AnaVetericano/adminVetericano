@@ -87,7 +87,7 @@ export const routes: Routes = [
   {path: 'examenes-clinicos', 
     component:ExamenesClinicos},
 
-    
+
   {path:'patologias', 
     component:Patologias}
 
