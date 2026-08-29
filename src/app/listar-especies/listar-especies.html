@@ -1,1 +1,48 @@
-<p>listar-especies works!</p>
+<div class="min-h-screen bg-[#1B1947] p-6 font-sans">
+  <header class="flex items-center gap-4 pb-4 border-b border-indigo-900/50">
+    <button class="text-white text-2xl font-bold">☰</button>
+    <h1 class="text-white text-2xl font-bold tracking-wider uppercase">ESPECIES</h1>
+  </header>
+
+  <div class="my-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <input 
+        type="text" 
+        placeholder="Buscar" 
+        class="w-full sm:w-64 py-2 px-4 rounded-full bg-[#E2E0EF] text-slate-800 focus:outline-none placeholder-slate-500 text-sm"
+      />
+      <button class="bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-4 py-2 rounded-full text-sm shadow">
+        Filtros
+      </button>
+    </div>
+
+    <a 
+      routerLink="/crearespecies" 
+      class="w-full sm:w-auto bg-[#4F46E5] hover:bg-indigo-600 text-white font-bold px-6 py-2.5 rounded-2xl flex items-center justify-center gap-2 text-sm shadow uppercase">
+      + CREAR ESPECIE
+    </a>
+  </div>
+
+  <div class="bg-[#ECECF6] rounded-2xl p-4 shadow-lg overflow-x-auto">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300">
+          <th class="py-3 px-4">NOMBRE DE LA ESPECIE</th>
+          <th class="py-3 px-4">DESCRIPCIÓN</th>
+          <th class="py-3 px-4">ESTADO</th>
+          <th class="py-3 px-4 text-center">OPCIONES</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 text-sm text-slate-700">
+        <tr>
+          <td class="py-3 px-4 font-semibold">Canino</td>
+          <td class="py-3 px-4">Perros de todas las razas</td>
+          <td class="py-3 px-4">Activo</td>
+          <td class="py-3 px-4 text-center">
+            <a routerLink="/actualizarespecies" class="text-yellow-600 hover:text-yellow-700 font-bold text-base">✏️</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
