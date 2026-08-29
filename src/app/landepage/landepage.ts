@@ -1,9 +1,20 @@
 import { Component } from '@angular/core';
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-landepage',
   imports: [],
   templateUrl: './landepage.html',
   styleUrl: './landepage.css',
 })
-export class Landepage {}
+export class Landepage {
+  constructor(private router: Router) {}
+
+  iniciarSesion(): void {
+    this.router.navigate(['/inicio-de-sesion-administrador']);
+  }
+
+  registrarse(): void {
+    this.router.navigate(['/register']);
+  }
+
+}
