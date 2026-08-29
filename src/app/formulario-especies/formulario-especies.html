@@ -1,1 +1,36 @@
-<p>formulario-especies works!</p>
+<div class="min-h-screen bg-[#1B1947]/90 flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl">
+    <!-- Encabezado Modal -->
+    <div class="bg-[#1B1947] px-6 py-4 flex justify-between items-center">
+      <h2 class="text-white text-lg font-bold tracking-wider uppercase">FORMULARIO ESPECIES</h2>
+      <a routerLink="/listarespecies" class="text-white text-xl font-bold hover:text-red-400 transition-colors">&times;</a>
+    </div>
+
+    <!-- Formulario -->
+    <form class="p-6 space-y-4">
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-700 ml-2">Nombre de la Especie</label>
+        <input type="text" placeholder="Ej: Canino" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none focus:border-indigo-500" />
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-700 ml-2">Descripción</label>
+        <textarea placeholder="Características generales..." rows="3" class="w-full px-4 py-2.5 rounded-2xl bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-700 ml-2">Estado</label>
+        <select class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none focus:border-indigo-500">
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+      </div>
+
+      <div class="pt-4 flex justify-center">
+        <button type="button" class="bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-10 py-2.5 rounded-full text-sm uppercase shadow transition-colors">
+          GUARDAR
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
