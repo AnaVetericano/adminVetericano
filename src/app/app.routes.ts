@@ -7,7 +7,7 @@ import { ListarMedicamentos } from './listar-medicamentos/listar-medicamentos';
 import { CrearEspecies } from './crear-especies/crear-especies';
 import { CrearMedicamentos } from './crear-medicamentos/crear-medicamentos';
 import { FormularioEspecies } from './formulario-especies/formulario-especies';
-import { FormularioMedicametos } from './formulario-medicametos/formulario-medicametos';
+import { FormularioMedicamentos } from './formulario-medicamentos/formulario-medicamentos';
 
 import { Login } from './login/login';
 import { Register } from './register/register';
@@ -61,7 +61,7 @@ export const routes: Routes = [
 
   {
     path: 'formulariomedicamentos',
-    component: FormularioMedicametos
+    component: FormularioMedicamentos
   },
 
   {
