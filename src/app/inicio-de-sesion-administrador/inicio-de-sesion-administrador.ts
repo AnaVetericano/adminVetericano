@@ -6,8 +6,8 @@ import { Router, RouterLink } from '@angular/router';
   selector: 'app-inicio-de-sesion-administrador',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './inicio-de-sesion-administrador.component.html',
-  styleUrl: './inicio-de-sesion-administrador.component.css'
+  templateUrl: './Inicio-de-sesion-administrador.component.html',
+  styleUrl: './Inicio-de-sesion-administrador.component.css'
 })
 export class InicioDeSesionAdministradorComponent {
   private fb = inject(FormBuilder);

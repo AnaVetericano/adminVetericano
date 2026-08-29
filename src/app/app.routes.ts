@@ -15,6 +15,7 @@ import { Register } from './register/register';
 import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-administrador';
 import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 import { Patologias } from './patologias/patologias';
+import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
 
 export const routes: Routes = [
 

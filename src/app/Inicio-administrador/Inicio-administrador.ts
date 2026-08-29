@@ -5,8 +5,8 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
   selector: 'app-inicio-administrador',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './inicio-administrador.component.html',
-  styleUrl: './inicio-administrador.component.css'
+  templateUrl: './Inicio-administradoR.html',
+  styleUrl: './Inicio-administrador.css'
 })
 export class InicioAdministradorComponent {
   private router = inject(Router);
