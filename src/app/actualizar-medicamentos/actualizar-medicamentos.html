@@ -1,21 +1,19 @@
 <div class="min-h-screen bg-[#1B1947]/90 flex items-center justify-center p-4">
   <div class="w-full max-w-md bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl">
-    <!-- Encabezado Modal -->
     <div class="bg-[#1B1947] px-6 py-4 flex justify-between items-center">
-      <h2 class="text-white text-lg font-bold tracking-wider uppercase">EDITAR MEDICAMENTOS</h2>
+      <h2 class="text-white text-lg font-bold tracking-wider uppercase">EDITAR MEDICAMENTO</h2>
       <a routerLink="/listarmedicamentos" class="text-white text-xl font-bold">&times;</a>
     </div>
 
-    <!-- Formulario -->
-    <form class="p-6 space-y-4">
-      <input type="text" placeholder="Nombre del medicamento" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input type="text" placeholder="Tipo de medicamento" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input type="text" placeholder="Descripción" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input type="text" placeholder="Cantidad" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input type="text" placeholder="Estado" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+    <form (ngSubmit)="actualizarMedicamento()" class="p-6 space-y-4">
+      <input [(ngModel)]="medicamento.nombre" name="nombre" type="text" placeholder="Nombre del medicamento" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" required />
+      <input [(ngModel)]="medicamento.tipo" name="tipo" type="text" placeholder="Tipo de medicamento" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="medicamento.descripcion" name="descripcion" type="text" placeholder="Descripción" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="medicamento.observaciones" name="observaciones" type="text" placeholder="Observaciones" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="medicamento.estado" name="estado" type="text" placeholder="Estado" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
 
       <div class="pt-2 flex justify-center">
-        <button type="button" class="bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-8 py-2 rounded-lg text-xs uppercase shadow">
+        <button type="submit" class="bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-8 py-2 rounded-lg text-xs uppercase shadow">
           EDITAR
         </button>
       </div>

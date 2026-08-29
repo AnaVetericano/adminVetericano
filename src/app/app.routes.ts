@@ -30,7 +30,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'actualizarespecies',
+    path: 'actualizarespecies/:id',
     component: ActualizarEspecies
   },
 
@@ -45,7 +45,7 @@ export const routes: Routes = [
   },
 
   {
-    path: 'actualizarmedicamentos',
+    path: 'actualizarmedicamentos/:id',
     component: ActualizarMedicamentos
   },
 
@@ -65,12 +65,12 @@ export const routes: Routes = [
   },
 
   {
-    path: ' Inicio-administrador',
+    path: 'inicio-admin',
     component: InicioAdministradorComponent
   },
 
   {
-    path: 'inicio-de-sesion-administrador',
+    path: 'iniciodesesionadministrador',
     component: InicioDeSesionAdministradorComponent
   },
 
