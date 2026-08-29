@@ -65,12 +65,12 @@ export const routes: Routes = [
   },
 
   {
-    path: ' Inicio-administrador',
+    path: 'inicio-admin',
     component: InicioAdministradorComponent
   },
 
   {
-    path: 'inicio-de-sesion-administrador',
+    path: 'iniciodesesionadministrador',
     component: InicioDeSesionAdministradorComponent
   },
 
