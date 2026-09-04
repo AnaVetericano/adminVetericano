@@ -1,30 +1,46 @@
-import { Component, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-inicio-de-sesion-administrador',
+  selector: 'app-inicio-de-sesion-administrador', 
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './Inicio-de-sesion-administrador.html',
-  styleUrl: './Inicio-de-sesion-administrador.css'
+  imports: [FormsModule, RouterLink],
+  templateUrl: './inicio-de-sesion-administrador.html', 
+  styleUrl: './inicio-de-sesion-administrador.css'     
 })
-export class InicioDeSesionAdministradorComponent {
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
+export class InicioDeSesionAdministradorComponent { 
+  
+  usuario = {
+    username: '',
+    password: ''
+  };
 
-  loginForm = this.fb.nonNullable.group({
-    emailOrPhone: ['', [Validators.required]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
-  });
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {}
 
-  onLogin(): void {
-    if (this.loginForm.valid) {
-      console.log('Credenciales enviadas:', this.loginForm.value);
-      // Redirecciona al panel principal tras autenticar
-      this.router.navigate(['/inicio-administrador']);
-    } else {
-      this.loginForm.markAllAsTouched();
+  login() {
+    // Validación
+    if (this.usuario.username === '' || this.usuario.password === '') {
+      alert('Por favor, ingresa tu usuario y contraseña.');
+      return; 
     }
+
+    console.log('Credenciales enviadas:', this.usuario);
+
+    // Petición a tu API
+    this.http.post('https://backendvetericano.onrender.com/api/usuarios/login/', this.usuario).subscribe({
+      next: (res: any) => {
+        console.log(res);
+        this.router.navigate(['/inicio-admin']);
+      },
+      error: (err) => {
+        console.error('Error:', err);
+        alert(err.error?.mensaje || 'Credenciales incorrectas, intenta de nuevo.');
+      }
+    });
   }
 }
