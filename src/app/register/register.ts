@@ -11,13 +11,14 @@ import { AuthService } from '../services/auth';
   styleUrl: './register.css'
 })
 export class Register {
-
-  nombre: string = '';
-  apellido:string='';
-  email: string = '';
-  password: string = '';
-  telefono: string='';
-  confirmarPassword: string = '';
+  register = {
+    username: '',
+    email: '',
+    password: '',
+    nombre: '',
+    apellido: '',
+    telefono: ''
+  };
 
   constructor(
     private router: Router,
@@ -25,30 +26,22 @@ export class Register {
   ) {}
 
   registrarse() {
-
-    if (!this.nombre || !this.email || !this.password || !this.confirmarPassword) {
-      alert('Por favor completa todos los campos');
+    if (!this.register.username || !this.register.email || !this.register.password) {
+      alert('Por favor completa todos los campos principales');
       return;
     }
 
-    if (this.password !== this.confirmarPassword) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
-
-    const datos = {
-      nombre: this.nombre,
-      email: this.email,
-      password: this.password
-    };
-
-    this.authService.registrar(datos).subscribe({
+    // Enviamos el objeto 'this.register' completo que cumple exacto con la interfaz 'RegistroUsuario'
+    this.authService.registrar(this.register).subscribe({
       next: (respuesta) => {
         console.log('Administrador registrado:', respuesta);
         alert('Administrador registrado correctamente');
-        this.router.navigate(['/inicio-sesion']);
+        this.router.navigate(['/iniciodesesionadministrador']);
       },
-
+      error: (err) => {
+        console.error('Error en el registro:', err);
+        alert(err.error?.mensaje || 'Ocurrió un error al registrarse');
+      }
     });
   }
 
