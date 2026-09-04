@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface RegistroUsuario {
-  nombre: string;
-  apellido:string;
+  username: string;
   email: string;
   password: string;
-  confirmarPassword: string;
+  nombre: string;
+  apellido: string;
+  telefono: string;
 }
 
 export interface RespuestaRegistro {
@@ -20,15 +21,12 @@ export interface RespuestaRegistro {
   providedIn: 'root'
 })
 export class AuthService {
-
-  
-
-  private apiUrl = 'http://127.0.0.1:8000/api';
+  // Ajusta esta URL según tu endpoint real de Django para el registro
+  private apiUrl = 'https://backendvetericano.onrender.com/api/usuarios';
 
   constructor(private http: HttpClient) {}
 
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
-
     return this.http.post<RespuestaRegistro>(
       `${this.apiUrl}/registro/`,
       usuario
