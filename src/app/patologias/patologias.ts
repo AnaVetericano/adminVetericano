@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-CommonModule
+
 import { Router,RouterLink } from '@angular/router';
 
 @Component({
@@ -12,8 +12,10 @@ import { Router,RouterLink } from '@angular/router';
 export class Patologias {
    constructor(private router: Router) {}
 
-  crearpato() {
-    this.router.navigate(['/']);
+   crearpatoo():void {
+    this.router.navigate(['/crear-pa']);
   }
 
+
+  
 }

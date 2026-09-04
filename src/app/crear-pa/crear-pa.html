@@ -1,1 +1,27 @@
-<p>crear-pa works!</p>
+<div class="min-h-screen bg-[#1B1947]/90 flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl">
+    <div class="bg-[#1B1947] px-6 py-4 flex justify-between items-center">
+      <h2 class="text-white text-lg font-bold tracking-wider uppercase">CREAR PATOLOGIAS</h2>
+      <a routerLink="/patologias" class="text-white text-xl font-bold">&times;</a>
+    </div>
+
+    <form (ngSubmit)="guardarpat()" class="p-6 space-y-4">
+      <input [(ngModel)]="patoLogias.nombre" name="nombre" type="text" placeholder="Nombre de la patologia" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" required />
+      <input [(ngModel)]="patoLogias.tipo" name="tipo" type="text" placeholder="Tipo de patologia" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="patoLogias.descripcion" name="descripcion" type="text" placeholder="Descripción" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="patoLogias.signos" name="observaciones" type="text" placeholder="Signos clinicos" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="patoLogias.especie" name="estado" type="text" placeholder="Especie" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+      <input [(ngModel)]="patoLogias.observaciones" name="observaciones" type="text" placeholder="Observaciones" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+        <input [(ngModel)]="patoLogias.estado" name="observaciones" type="text" placeholder="Estado" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+
+      <div class="pt-2 flex justify-center gap-8">
+        <button type="submit" class="bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-8 py-2 rounded-lg text-xs uppercase shadow">
+          CREAR
+        </button>
+        <button type="button" routerLink="/patologias" class="   bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-8 py-2 rounded-lg text-xs uppercase shadow">
+          CANCELAR
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

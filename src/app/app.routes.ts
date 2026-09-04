@@ -18,6 +18,7 @@ import { Patologias } from './patologias/patologias';
 import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
 import { ExamenClinico } from './examen-clinico/examen-clinico';
 import { EditarExamen } from './editar-examen/editar-examen';
+import { CrearPa } from './crear-pa/crear-pa';
 
 export const routes: Routes = [
 
@@ -98,6 +99,10 @@ export const routes: Routes = [
 
   {path:'editar-examen',
     component:EditarExamen
+  },
+
+  {path:'crear-pa',
+    component:CrearPa
   }
 
 
