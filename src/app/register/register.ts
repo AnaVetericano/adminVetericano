@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-register',
@@ -12,11 +13,16 @@ import { Router } from '@angular/router';
 export class Register {
 
   nombre: string = '';
+  apellido:string='';
   email: string = '';
   password: string = '';
+  telefono: string='';
   confirmarPassword: string = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   registrarse() {
 
@@ -30,17 +36,20 @@ export class Register {
       return;
     }
 
-    console.log('Datos del administrador:', {
+    const datos = {
       nombre: this.nombre,
       email: this.email,
       password: this.password
+    };
+
+    this.authService.registrar(datos).subscribe({
+      next: (respuesta) => {
+        console.log('Administrador registrado:', respuesta);
+        alert('Administrador registrado correctamente');
+        this.router.navigate(['/inicio-sesion']);
+      },
+
     });
-
-    // Después aquí conectamos con tu API de Django
-    alert('Administrador registrado correctamente');
-
-    // Ir al inicio de sesión
-    this.router.navigate(['/inicio-sesion']);
   }
 
   iniciarSesion() {
