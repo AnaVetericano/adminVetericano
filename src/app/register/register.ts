@@ -49,3 +49,5 @@ export class Register {
     this.router.navigate(['/iniciodesesionadministrador']);
   }
 }
+
+// perra 
