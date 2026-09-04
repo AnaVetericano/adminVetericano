@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-[#1B1947] flex items-center justify-center p-4">
   <div class="w-full max-w-5xl bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl flex min-h-[600px]">
 
-    <!-- PANEL IZQUIERDO -->
-    <div class="hidden md:flex flex-col w-[45%] bg-[#DCDAD4] relative overflow-hidden p-10">
+    <!-- PANEL IZQUIERDO (Color de fondo actualizado a #E1E4DD) -->
+    <div class="hidden md:flex flex-col w-[45%] bg-[#E1E4DD] relative overflow-hidden p-10">
       <div class="flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#1B1947]" fill="none"
              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -20,35 +20,25 @@
         Administra y supervisa todas las operaciones de rescate
       </p>
 
-      <!-- Imagen: reemplaza con assets/images/cabra-relajada.png -->
+      <!-- CABRA DEL LOGIN -->
       <div class="absolute inset-0 flex items-center justify-center mt-32">
-        <img src="assets/images/cabra-relajada.png" alt="Animal VETERICANO"
-             class="object-contain w-72 h-auto select-none pointer-events-none"
-             onerror="this.style.opacity='0'" />
+        <img src="/images/cabraDelLogin.svg"
+             alt="Animal VETERICANO"
+             class="object-contain w-72 h-auto select-none pointer-events-none" />
       </div>
     </div>
 
     <!-- PANEL DERECHO -->
     <div class="flex-1 bg-white flex flex-col items-center justify-center px-10 py-10">
 
-      <!-- Logo -->
+      <!-- LOGO VETERICANO -->
       <div class="flex flex-col items-center mb-4">
-        <div class="w-16 h-16 rounded-full bg-[#1B1947] flex items-center justify-center shadow-md mb-3">
-          <svg class="w-9 h-9 text-white" viewBox="0 0 64 64" fill="currentColor">
-            <ellipse cx="20" cy="13" rx="6" ry="8"/>
-            <ellipse cx="44" cy="13" rx="6" ry="8"/>
-            <ellipse cx="9"  cy="29" rx="5" ry="7"/>
-            <ellipse cx="55" cy="29" rx="5" ry="7"/>
-            <path d="M32 23c-10 0-18 6-18 16 0 8 6 14 18 14s18-6 18-14c0-10-8-16-18-16z"/>
-          </svg>
-        </div>
-        <h1 class="text-2xl font-extrabold tracking-widest text-[#1B1947]">VETERICANO</h1>
-        <p class="text-[10px] font-semibold tracking-widest text-[#F5C842] uppercase mt-0.5">
-          ✦ Salvando vidas animales ✦
-        </p>
+        <img src="/images/logoVet.svg"
+             alt="Logo VETERICANO"
+             class="w-20 h-20 object-contain mb-3" />
       </div>
 
-      <h2 class="text-4xl font-extrabold text-[#1B1947] mb-1">Bienvenido</h2>
+      <h2 class="text-3xl font-extrabold text-[#1B1947] mb-1">Bienvenido</h2>
       <p class="text-sm font-semibold text-slate-600 mb-6">Inicia sesión para continuar</p>
 
       <!-- Formulario -->
@@ -85,27 +75,6 @@
         <!-- ¿Olvidaste tu contraseña? -->
         <div class="text-right">
           <a href="#" class="text-xs text-[#1B1947] font-medium hover:underline">¿Olvidaste tu contraseña?</a>
-        </div>
-
-        <!-- Perrito decorativo -->
-        <div class="flex justify-center">
-          <svg viewBox="0 0 80 80" class="w-14 h-14 select-none" aria-hidden="true">
-            <ellipse cx="40" cy="56" rx="18" ry="14" fill="#c8a96e"/>
-            <circle cx="40" cy="36" r="14" fill="#c8a96e"/>
-            <ellipse cx="28" cy="29" rx="6" ry="9" fill="#a0784a" transform="rotate(-15 28 29)"/>
-            <ellipse cx="52" cy="29" rx="6" ry="9" fill="#a0784a" transform="rotate(15 52 29)"/>
-            <ellipse cx="28.5" cy="30" rx="3" ry="6" fill="#e8c49a" transform="rotate(-15 28 30)"/>
-            <ellipse cx="51.5" cy="30" rx="3" ry="6" fill="#e8c49a" transform="rotate(15 52 30)"/>
-            <circle cx="34" cy="34" r="2.5" fill="#3d2c1e"/>
-            <circle cx="46" cy="34" r="2.5" fill="#3d2c1e"/>
-            <circle cx="35" cy="33" r="0.8" fill="white"/>
-            <circle cx="47" cy="33" r="0.8" fill="white"/>
-            <ellipse cx="40" cy="40" rx="3" ry="2" fill="#3d2c1e"/>
-            <path d="M37 43 Q40 46 43 43" fill="none" stroke="#3d2c1e" stroke-width="1.2" stroke-linecap="round"/>
-            <rect x="30" y="47" width="20" height="4" rx="2" fill="#3B6EA5"/>
-            <ellipse cx="30" cy="68" rx="5" ry="6" fill="#c8a96e"/>
-            <ellipse cx="50" cy="68" rx="5" ry="6" fill="#c8a96e"/>
-          </svg>
         </div>
 
         <!-- Botón -->
