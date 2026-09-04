@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-[#1B1947] flex items-center justify-center p-4">
   <div class="w-full max-w-5xl bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl flex min-h-[600px]">
 
-    <!-- PANEL IZQUIERDO (Color de fondo actualizado a #E1E4DD) -->
+    <!-- PANEL IZQUIERDO -->
     <div class="hidden md:flex flex-col w-[45%] bg-[#E1E4DD] relative overflow-hidden p-10">
       <div class="flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#1B1947]" fill="none"
@@ -41,10 +41,10 @@
       <h2 class="text-3xl font-extrabold text-[#1B1947] mb-1">Bienvenido</h2>
       <p class="text-sm font-semibold text-slate-600 mb-6">Inicia sesión para continuar</p>
 
-      <!-- Formulario -->
-      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="w-full max-w-sm space-y-4" novalidate>
+      <!-- Formulario ajustado con el método de ngModel -->
+      <form (ngSubmit)="login()" class="w-full max-w-sm space-y-4" novalidate>
 
-        <!-- Email -->
+        <!-- Email / Usuario -->
         <div class="flex items-center gap-3 bg-white border border-slate-300 rounded-full px-5 py-3 focus-within:border-indigo-500 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 shrink-0" fill="none"
                viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -54,7 +54,7 @@
                      0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0
                      l-9.75 6.75L2.25 6.75"/>
           </svg>
-          <input type="text" placeholder="Email o telefono" formControlName="emailOrPhone"
+          <input type="text" placeholder="Usuario" [(ngModel)]="usuario.username" name="username"
                  class="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
         </div>
 
@@ -68,7 +68,7 @@
                      a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0
                      00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
           </svg>
-          <input type="password" placeholder="Contraseña" formControlName="password"
+          <input type="password" placeholder="Contraseña" [(ngModel)]="usuario.password" name="password"
                  class="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
         </div>
 
@@ -83,42 +83,12 @@
           Iniciar Sesión
         </button>
 
-        <!-- Divisor -->
-        <div class="flex items-center gap-3">
-          <hr class="flex-1 border-slate-300"/>
-          <span class="text-xs text-slate-400">O inicia con</span>
-          <hr class="flex-1 border-slate-300"/>
-        </div>
-
-        <!-- Sociales -->
-        <div class="flex justify-center gap-5">
-          <button type="button" class="w-11 h-11 rounded-full border border-slate-200 bg-white hover:shadow-md transition flex items-center justify-center">
-            <svg class="w-5 h-5" viewBox="0 0 48 48">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-            </svg>
-          </button>
-          <button type="button" class="w-11 h-11 rounded-full border border-slate-200 bg-white hover:shadow-md transition flex items-center justify-center">
-            <svg class="w-5 h-5" viewBox="0 0 48 48">
-              <path fill="#1877F2" d="M48 24C48 10.745 37.255 0 24 0S0 10.745 0 24c0 11.979 8.776 21.908 20.25 23.708V30.938h-6.094V24H20.25v-5.344c0-6.011 3.579-9.332 9.066-9.332 2.625 0 5.372.469 5.372.469v5.906h-3.026c-2.979 0-3.912 1.849-3.912 3.745V24h6.656l-1.064 6.938H27.75v16.77C39.224 45.908 48 35.979 48 24z"/>
-            </svg>
-          </button>
-          <button type="button" class="w-11 h-11 rounded-full border border-slate-200 bg-white hover:shadow-md transition flex items-center justify-center">
-            <svg class="w-5 h-5" viewBox="0 0 48 48">
-              <path fill="#000" d="M35.5 25.7c-.1-4.9 4-7.3 4.2-7.4-2.3-3.3-5.8-3.8-7.1-3.8-3-.3-5.9 1.8-7.4 1.8-1.5 0-3.9-1.7-6.4-1.7-3.3.1-6.4 1.9-8.1 4.9-3.4 6-.9 14.9 2.5 19.7 1.6 2.4 3.6 5 6.2 4.9 2.5-.1 3.4-1.6 6.4-1.6s3.8 1.6 6.4 1.5c2.7 0 4.4-2.4 6-4.8 1.9-2.8 2.7-5.5 2.7-5.6-.1 0-5.3-2.1-5.4-8zm-5.1-14.8c1.4-1.7 2.3-4 2-6.4-2 .1-4.3 1.3-5.7 3-1.3 1.5-2.4 3.9-2 6.2 2.1.2 4.3-1.1 5.7-2.8z"/>
-            </svg>
-          </button>
-        </div>
-
-        <p class="text-center text-sm text-slate-600">
+        <p class="text-center text-sm text-slate-600 mt-4">
           ¿No tienes cuenta?
           <a routerLink="/register" class="text-[#1B1947] font-bold hover:underline ml-1">Registrate</a>
         </p>
 
       </form>
     </div>
-
   </div>
 </div>
