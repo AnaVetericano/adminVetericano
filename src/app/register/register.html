@@ -36,14 +36,14 @@
       <!-- FORMULARIO -->
       <form (ngSubmit)="registrarse()" class="w-full max-w-sm space-y-4">
 
-        <!-- NOMBRE -->
+        <!-- username -->
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
-          <span class="text-gray-400 mr-3 text-sm">▣</span>
+        
           <input
             type="text"
             name="nombre"
-            [(ngModel)]="nombre"
-            placeholder="Nombre"
+            [(ngModel)]="register.username"
+            placeholder="Username"
             required
             class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
           >
@@ -51,12 +51,12 @@
 
         <!-- EMAIL -->
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
-          <span class="text-gray-400 mr-3 text-sm">✉</span>
+          
           <input
             type="text"
             name="email"
-            [(ngModel)]="email"
-            placeholder="Email o telefono"
+            [(ngModel)]="register.email"
+            placeholder="Email"
             required
             class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
           >
@@ -64,29 +64,53 @@
 
         <!-- CONTRASEÑA -->
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
-          <span class="text-gray-400 mr-3 text-sm">🔒</span>
+          
           <input
             type="password"
             name="password"
-            [(ngModel)]="password"
+            [(ngModel)]="register.password"
             placeholder="Contraseña"
             required
             class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
           >
         </div>
 
-        <!-- CONFIRMAR CONTRASEÑA -->
+        <!-- nombre -->
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
-          <span class="text-gray-400 mr-3 text-sm">🔒</span>
+          
           <input
-            type="password"
-            name="confirmarPassword"
-            [(ngModel)]="confirmarPassword"
-            placeholder="Confirmar contraseña"
+            type="text"
+            name="nombre"
+            [(ngModel)]="register.nombre"
+            placeholder="Nombre"
             required
             class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
           >
         </div>
+
+        <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
+        
+          <input
+            type="text"
+            name="ape"
+            [(ngModel)]="register.apellido"
+            placeholder="Apellido"
+            required
+            class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
+          >
+        </div>
+        
+        <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
+
+     <input
+       type="text"
+       name="telefono"
+       [(ngModel)]="register.telefono"
+       placeholder="Teléfono"
+      required
+       class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
+  >
+</div>
 
         <!-- BOTÓN REGISTRARSE -->
         <button
