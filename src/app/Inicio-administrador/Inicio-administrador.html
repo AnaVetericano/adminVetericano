@@ -5,11 +5,10 @@
     <div class="w-[370px] bg-[#E3E1DC] flex flex-col">
 
       <!-- Perfil -->
+     <!-- Perfil -->
       <div class="flex flex-col items-center pt-10 pb-6 border-b border-slate-300/70">
-        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 bg-slate-300">
-          <!-- Angular: [src]="admin.foto" — assets/images/jubelit-zapata.jpg -->
-          <img src="assets/images/jubelit-zapata.jpg" alt="Jubelit Zapata"
-               class="w-full h-full object-cover" onerror="this.style.display='none'" />
+        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 bg-slate-300 flex items-center justify-center">
+          <img src="images/administradorperfil.svg" alt="Administrador" class="w-full h-full object-cover" />
         </div>
         <h2 class="text-sm font-semibold text-slate-800 mt-1">Julian M.</h2>
         <p class="text-xs text-slate-500">ADMINISTRADOR</p>
@@ -27,23 +26,23 @@
         </a>
 
         <!-- EXAMENES MEDICOS -->
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+        <a routerLink="/examenes-clinicos" routerLinkActive="bg-[#1B1947]/10"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
           <img src="images/iconexamnesmedicos.svg" alt="Icono Examenes " class="w-5 h-5 object-contain shrink-0">
           <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Examenes Medicos</span>
         </a>
 
         <!-- MEDICAMENTOS -->
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+        <a routerLink="/crearmedicamentos" routerLinkActive="bg-[#1B1947]/10"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
           <img src="images/iconmedication.svg" alt="Icono Medicmantos" class="w-5 h-5 object-contain shrink-0">
           <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Medicmantos</span>
-        </a>
+        </a>  
 
         <!-- ESPECIES -->
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+        <a routerLink="/crearespecies" routerLinkActive="bg-[#1B1947]/10"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <img src="images/iconpetsespecies.svg" alt="Icono Especies" class="w-5 h-5 object-contain shrink-0">
+          <img src="images/iconpetsespecies.svg" alt="Icono Usuarios" class="w-5 h-5 object-contain shrink-0">
           <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Especies</span>
         </a>
 
