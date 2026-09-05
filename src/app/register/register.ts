@@ -12,12 +12,10 @@ import { AuthService } from '../services/auth';
 })
 export class Register {
   register = {
-    username: '',
     email: '',
     password: '',
     nombre: '',
     apellido: '',
-    telefono: ''
   };
 
   constructor(
@@ -26,7 +24,7 @@ export class Register {
   ) {}
 
   registrarse() {
-    if (!this.register.username || !this.register.email || !this.register.password) {
+    if (!this.register.email || !this.register.password || !this.register.nombre || !this.register.apellido) {
       alert('Por favor completa todos los campos principales');
       return;
     }

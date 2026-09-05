@@ -1,10 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet,  RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet,  RouterLinkActive, RouterLink , } from '@angular/router';
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive],
+  imports: [RouterOutlet, RouterLinkActive, RouterLink],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })
