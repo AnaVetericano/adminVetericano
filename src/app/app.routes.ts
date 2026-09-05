@@ -16,6 +16,7 @@ import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-admi
 import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 import { Patologias } from './patologias/patologias';
 import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
+import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 
 export const routes: Routes = [
 
@@ -86,7 +87,11 @@ export const routes: Routes = [
 
     
   {path:'patologias', 
-    component:Patologias}
+    component:Patologias},
 
+     {
+    path: 'usuarios-roles',
+    component: UsuariosRoles
+  }
 
 ];
