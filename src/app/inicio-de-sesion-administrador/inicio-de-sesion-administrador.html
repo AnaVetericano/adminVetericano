@@ -72,10 +72,32 @@
                  class="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
         </div>
 
-        <!-- ¿Olvidaste tu contraseña? -->
-        <div class="text-right">
-          <a href="#" class="text-xs text-[#1B1947] font-medium hover:underline">¿Olvidaste tu contraseña?</a>
+        <!-- ========================================== -->
+
+        <!-- INICIO: Recuperación de Contraseña - AnaC  -->
+
+        <!-- ========================================== -->
+
+        
+
+        <div class="text-right flex justify-between items-center mt-2">
+
+          <span class="text-xs text-slate-500">¿Problemas para acceder?</span>
+
+          <button type="button" (click)="mostrarRecuperacion = true" class="text-xs text-[#1B1947] font-bold hover:underline">
+
+            ¿Olvidaste tu contraseña?
+
+          </button>
+
         </div>
+
+
+
+        <!-- FIN: Recuperación de Contraseña - AnaC     -->
+
+        <!-- ========================================== --> 
+
 
         <!-- Botón -->
         <button type="submit"
@@ -92,3 +114,63 @@
     </div>
   </div>
 </div>
+<!-- ========================================== -->
+<!-- INICIO: Ventana Modal de Recuperación - AnaC -->
+<!-- ========================================== -->
+<div *ngIf="mostrarRecuperacion" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+  <div class="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl relative space-y-4 border border-slate-200">
+    
+    <!-- Botón para cerrar la ventana -->
+    <button type="button" (click)="mostrarRecuperacion = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-sm">
+      ✕
+    </button>
+
+    <h3 class="text-lg font-bold text-[#1B1947]">Recuperar Contraseña</h3>
+    
+    <div *ngIf="mensajeExito" class="text-xs p-2 text-green-700 bg-green-100 rounded">
+      {{ mensajeExito }}
+    </div>
+    <div *ngIf="mensajeError" class="text-xs p-2 text-red-700 bg-red-100 rounded">
+      {{ mensajeError }}
+    </div>
+
+    <!-- Paso 1 -->
+    <div class="space-y-1">
+      <p class="text-xs text-slate-700 font-medium">Paso 1: Ingresa tu correo electrónico</p>
+      <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-full px-4 py-2">
+        <input type="email" placeholder="correo@example.com" [(ngModel)]="emailRecuperacion" name="emailRecuperacionModal"
+               class="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none" />
+        <button type="button" (click)="solicitarRecuperacion()" [disabled]="cargandoPaso1"
+                class="bg-[#1B1947] text-white text-xs px-3 py-1.5 rounded-full hover:bg-opacity-90 disabled:opacity-50">
+          {{ cargandoPaso1 ? 'Enviando...' : 'Enviar Código' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Paso 2 -->
+    <div class="space-y-2 pt-2 border-t border-slate-200">
+      <p class="text-xs text-slate-700 font-medium">Paso 2: Código de 6 dígitos y nueva contraseña</p>
+      
+      <input type="text" placeholder="Código de 6 dígitos" [(ngModel)]="codigoIngresado" name="codigoIngresadoModal" maxlength="6"
+             class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2 text-xs text-slate-800 focus:outline-none" />
+      
+      <input type="password" placeholder="Nueva contraseña" [(ngModel)]="nuevaPassword" name="nuevaPasswordModal"
+             class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2 text-xs text-slate-800 focus:outline-none" />
+
+      <button type="button" (click)="confirmarRecuperacion()" [disabled]="cargandoPaso2"
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-full text-xs uppercase shadow transition-colors disabled:opacity-50">
+        {{ cargandoPaso2 ? 'Actualizando...' : 'Cambiar Contraseña' }}
+      </button>
+    </div>
+
+    <!-- Botón Cancelar -->
+    <div class="text-center pt-2">
+      <button type="button" (click)="mostrarRecuperacion = false" class="text-xs text-slate-500 hover:underline">
+        Cancelar / Volver al Login
+      </button>
+    </div>
+
+  </div>
+</div>
+<!-- FIN: Ventana Modal de Recuperación - AnaC -->
+<!-- ========================================== -->
