@@ -1,72 +1,138 @@
+
 <div class="min-h-screen bg-[#1B1947] flex items-center justify-center p-4">
   <div class="w-full max-w-5xl bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl flex min-h-[680px]">
 
     <!-- SIDEBAR -->
     <div class="w-[370px] bg-[#E3E1DC] flex flex-col">
 
-      <!-- Perfil -->
-     <!-- Perfil -->
+      <!-- PERFIL -->
       <div class="flex flex-col items-center pt-10 pb-6 border-b border-slate-300/70">
         <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 bg-slate-300 flex items-center justify-center">
-          <img src="images/administradorperfil.svg" alt="Administrador" class="w-full h-full object-cover" />
+          <img
+            src="images/administradorperfil.svg"
+            alt="Administrador"
+            class="w-full h-full object-cover"
+          />
         </div>
-        <h2 class="text-sm font-semibold text-slate-800 mt-1">Julian M.</h2>
-        <p class="text-xs text-slate-500">ADMINISTRADOR</p>
+
+        <h2 class="text-sm font-semibold text-slate-800 mt-1">
+          Julian M.
+        </h2>
+
+        <p class="text-xs text-slate-500">
+          ADMINISTRADOR
+        </p>
       </div>
 
-      <!-- Navegación -->
+      <!-- NAVEGACIÓN -->
       <nav class="flex-1 px-6 pt-7 space-y-1">
 
-        
-        <!-- PATOLOGIA -->
-        <a routerLink="/patologias" routerLinkActive="bg-[#1B1947]/10"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <img src="images/iconpatologia.svg" alt="Icono Patología" class="w-5 h-5 object-contain shrink-0">
-          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Patologia</span>
+        <!-- PATOLOGÍAS -->
+        <a
+          routerLink="/patologias"
+          routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer"
+        >
+          <img
+            src="images/iconpatologia.svg"
+            alt="Icono Patología"
+            class="w-5 h-5 object-contain shrink-0"
+          >
+
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">
+            Patología
+          </span>
         </a>
 
-        <!-- EXAMENES MEDICOS -->
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <img src="images/iconexamnesmedicos.svg" alt="Icono Examenes " class="w-5 h-5 object-contain shrink-0">
-          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Examenes Medicos</span>
+
+        <!-- EXÁMENES MÉDICOS -->
+        <a
+          routerLink="/examenes-clinicos"
+          routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer"
+        >
+          <img
+            src="images/iconexamnesmedicos.svg"
+            alt="Icono Exámenes"
+            class="w-5 h-5 object-contain shrink-0"
+          >
+
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">
+            Exámenes Médicos
+          </span>
         </a>
+
 
         <!-- MEDICAMENTOS -->
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <img src="images/iconmedication.svg" alt="Icono Medicmantos" class="w-5 h-5 object-contain shrink-0">
-          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Medicamentos</span>
+        <a
+          routerLink="/listarmedicamentos"
+          routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer"
+        >
+          <img
+            src="images/iconmedication.svg"
+            alt="Icono Medicamentos"
+            class="w-5 h-5 object-contain shrink-0"
+          >
+
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">
+            Medicamentos
+          </span>
         </a>
+
 
         <!-- ESPECIES -->
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <img src="images/iconpetsespecies.svg" alt="Icono Usuarios" class="w-5 h-5 object-contain shrink-0">
-          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Especies</span>
+        <a
+          routerLink="/listarespecies"
+          routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer"
+        >
+          <img
+            src="images/iconpetsespecies.svg"
+            alt="Icono Especies"
+            class="w-5 h-5 object-contain shrink-0"
+          >
+
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">
+            Especies
+          </span>
         </a>
 
-        <!-- USUARIOS-->
-        
-        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-5 h-5 object-contain shrink-0">
-          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Usuarios</span>
+
+        <!-- USUARIOS -->
+        <a
+          routerLink="/usuarios-roles"
+          routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer"
+        >
+          <img
+            src="images/iconusuario.svg"
+            alt="Icono Usuarios"
+            class="w-5 h-5 object-contain shrink-0"
+          >
+
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">
+            Usuarios
+          </span>
         </a>
 
       </nav>
 
-      <!-- Cerrar sesión -->
+
+      <!-- CERRAR SESIÓN -->
       <div class="px-9 pb-8 pt-4">
-        <a routerLink="/iniciodesesionadministrador"
-           class="text-sm font-bold text-[#1B1947] hover:underline tracking-widest uppercase transition-colors">
+        <a
+          routerLink="/iniciodesesionadministrador"
+          class="text-sm font-bold text-[#1B1947] hover:underline tracking-widest uppercase transition-colors"
+        >
           CERRAR SESIÓN
         </a>
       </div>
 
     </div>
 
-    <!-- ÁREA CONTENIDO -->
+
+    <!-- ÁREA DE CONTENIDO -->
     <div class="flex-1 bg-white">
       <router-outlet></router-outlet>
     </div>
