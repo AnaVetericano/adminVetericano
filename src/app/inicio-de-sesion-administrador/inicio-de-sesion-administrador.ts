@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
-import { email } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-inicio-de-sesion-administrador', 

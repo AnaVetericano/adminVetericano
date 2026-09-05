@@ -38,7 +38,13 @@ export class Register {
       },
       error: (err) => {
         console.error('Error en el registro:', err);
-        alert(err.error?.mensaje || 'Ocurrió un error al registrarse');
+        const errData = err.error;
+        // DRF devuelve {campo: ["mensaje"]} en errores de validación
+        const primerCampo = errData && Object.keys(errData)[0];
+        const mensajeReal = errData?.mensaje
+          || (primerCampo && Array.isArray(errData[primerCampo]) ? errData[primerCampo][0] : null)
+          || 'Ocurrió un error al registrarse';
+        alert(mensajeReal);
       }
     });
   }
