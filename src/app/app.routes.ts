@@ -16,6 +16,9 @@ import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-admi
 import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 import { Patologias } from './patologias/patologias';
 import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
+import { ExamenClinico } from './examen-clinico/examen-clinico';
+import { EditarExamen } from './editar-examen/editar-examen';
+import { CrearPa } from './crear-pa/crear-pa';
 import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 
 export const routes: Routes = [
@@ -85,9 +88,23 @@ export const routes: Routes = [
   {path: 'examenes-clinicos', 
     component:ExamenesClinicos},
 
-    
+
   {path:'patologias', 
     component:Patologias},
+
+
+  {path:'examen-clinico',
+    component:ExamenClinico
+  },
+
+
+  {path:'editar-examen',
+    component:EditarExamen
+  },
+
+  {path:'crear-pa',
+    component:CrearPa
+  },
 
      {
     path: 'usuarios-roles',
