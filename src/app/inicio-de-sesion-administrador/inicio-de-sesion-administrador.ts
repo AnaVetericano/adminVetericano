@@ -45,7 +45,7 @@ export class InicioDeSesionAdministradorComponent {
     console.log('Credenciales enviadas:', this.usuario);
 
     // Petición a tu API
-    this.http.post('https://backendvetericano.onrender.com/api/usuarios/login/', this.usuario).subscribe({
+    this.http.post('https://backendvetericano-fo3o.onrender.com/api/users/login/', this.usuario).subscribe({
       next: (res: any) => {
         this.router.navigate(['/inicio-admin']);
       },
