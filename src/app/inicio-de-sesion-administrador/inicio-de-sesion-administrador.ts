@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { email } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-inicio-de-sesion-administrador', 
@@ -13,7 +14,7 @@ import { Router, RouterLink } from '@angular/router';
 export class InicioDeSesionAdministradorComponent { 
   
   usuario = {
-    username: '',
+    email: '',
     password: ''
   };
 
@@ -24,7 +25,7 @@ export class InicioDeSesionAdministradorComponent {
 
   login() {
     // Validación
-    if (this.usuario.username === '' || this.usuario.password === '') {
+    if (this.usuario.email === '' || this.usuario.password === '') {
       alert('Por favor, ingresa tu usuario y contraseña.');
       return; 
     }
@@ -32,7 +33,7 @@ export class InicioDeSesionAdministradorComponent {
     console.log('Credenciales enviadas:', this.usuario);
 
     // Petición a tu API
-    this.http.post('https://backendvetericano.onrender.com/api/usuarios/login/', this.usuario).subscribe({
+    this.http.post('https://backendvetericano-fo3o.onrender.com/api/users/login/', this.usuario).subscribe({
       next: (res: any) => {
         console.log(res);
         this.router.navigate(['/inicio-admin']);
