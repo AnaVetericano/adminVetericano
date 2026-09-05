@@ -36,18 +36,8 @@
       <!-- FORMULARIO -->
       <form (ngSubmit)="registrarse()" class="w-full max-w-sm space-y-4">
 
-        <!-- username -->
-        <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
         
-          <input
-            type="text"
-            name="nombre"
-            [(ngModel)]="register.username"
-            placeholder="Username"
-            required
-            class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
-          >
-        </div>
+        
 
         <!-- EMAIL -->
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
@@ -62,7 +52,7 @@
           >
         </div>
 
-        <!-- CONTRASEÑA -->
+        
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
           
           <input
@@ -75,7 +65,7 @@
           >
         </div>
 
-        <!-- nombre -->
+      
         <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
           
           <input
@@ -99,20 +89,9 @@
             class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
           >
         </div>
+    
+
         
-        <div class="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2.5 shadow-sm focus-within:border-[#3B38A6] transition">
-
-     <input
-       type="text"
-       name="telefono"
-       [(ngModel)]="register.telefono"
-       placeholder="Teléfono"
-      required
-       class="w-full bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
-  >
-</div>
-
-        <!-- BOTÓN REGISTRARSE -->
         <button
           type="submit"
           class="w-full bg-[#3B38A6] hover:bg-[#2F2C86] text-white font-medium py-2.5 rounded-full shadow-md transition duration-200 mt-2">
@@ -121,14 +100,12 @@
 
       </form>
 
-      <!-- DIVISOR -->
       <div class="relative w-full max-w-sm flex py-4 items-center my-2">
         <div class="flex-grow border-t border-gray-200"></div>
         <span class="flex-shrink mx-4 text-xs text-gray-500 font-medium">O inicia con</span>
         <div class="flex-grow border-t border-gray-200"></div>
       </div>
 
-      <!-- REDES SOCIALES -->
       <div class="flex justify-center gap-6 mb-4">
         <button type="button" class="p-2 rounded-full hover:bg-gray-100 transition">
           <img src="assets/google.png" alt="Google" class="w-6 h-6 object-contain">
