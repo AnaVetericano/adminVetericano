@@ -5,74 +5,53 @@
     <div class="w-[370px] bg-[#E3E1DC] flex flex-col">
 
       <!-- Perfil -->
+     <!-- Perfil -->
       <div class="flex flex-col items-center pt-10 pb-6 border-b border-slate-300/70">
-        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 bg-slate-300">
-          <!-- Angular: [src]="admin.foto" — assets/images/jubelit-zapata.jpg -->
-          <img src="assets/images/jubelit-zapata.jpg" alt="Jubelit Zapata"
-               class="w-full h-full object-cover" onerror="this.style.display='none'" />
+        <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-white shadow-md mb-3 bg-slate-300 flex items-center justify-center">
+          <img src="images/administradorperfil.svg" alt="Administrador" class="w-full h-full object-cover" />
         </div>
-        <h2 class="text-sm font-semibold text-slate-800 mt-1">Jubelit Zapata</h2>
-        <p class="text-xs text-slate-500">Admin</p>
+        <h2 class="text-sm font-semibold text-slate-800 mt-1">Julian M.</h2>
+        <p class="text-xs text-slate-500">ADMINISTRADOR</p>
       </div>
 
       <!-- Navegación -->
       <nav class="flex-1 px-6 pt-7 space-y-1">
 
-        <p class="text-[11px] font-bold text-slate-500 tracking-widest uppercase px-3 mb-3">
-          HOME(EJEMPLO)
-        </p>
-
+        
         <!-- PATOLOGIA -->
         <a routerLink="/patologias" routerLinkActive="bg-[#1B1947]/10"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <svg class="w-5 h-5 text-slate-800 shrink-0" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9.75 3v5.25m0 0L7.5 10.5M9.75 8.25l2.25 2.25M9.75 8.25H3.75
-                     m6 0a6.75 6.75 0 110 13.5 6.75 6.75 0 010-13.5zm5.25 10.5H21"/>
-          </svg>
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <img src="images/iconpatologia.svg" alt="Icono Patología" class="w-5 h-5 object-contain shrink-0">
           <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Patologia</span>
         </a>
 
         <!-- EXAMENES MEDICOS -->
-        <a routerLink="/examenes-clinicos" routerLinkActive="bg-[#1B1947]/10"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <svg class="w-5 h-5 text-slate-800 shrink-0" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0
-                     002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2
-                     0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-          </svg>
+        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <img src="images/iconexamnesmedicos.svg" alt="Icono Examenes " class="w-5 h-5 object-contain shrink-0">
           <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Examenes Medicos</span>
         </a>
 
         <!-- MEDICAMENTOS -->
-        <a routerLink="/formulariomedicamentos" routerLinkActive="bg-[#1B1947]/10"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <svg class="w-5 h-5 text-slate-800 shrink-0" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622
-                     a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25
-                     c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125
-                     H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
-          </svg>
-          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Medicamentos</span>
+        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <img src="images/iconmedication.svg" alt="Icono Medicmantos" class="w-5 h-5 object-contain shrink-0">
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Medicmantos</span>
         </a>
 
         <!-- ESPECIES -->
-        <a routerLink="/formularioespecies" routerLinkActive="bg-[#1B1947]/10"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
-          <svg class="w-5 h-5 text-slate-800 shrink-0" viewBox="0 0 64 64" fill="currentColor">
-            <ellipse cx="16" cy="12" rx="5" ry="7"/>
-            <ellipse cx="30" cy="8"  rx="5" ry="7"/>
-            <ellipse cx="44" cy="12" rx="5" ry="7"/>
-            <ellipse cx="8"  cy="26" rx="4" ry="6"/>
-            <ellipse cx="56" cy="26" rx="4" ry="6"/>
-            <path d="M32 22c-9 0-16 5.5-16 14 0 7 5 12 16 12s16-5 16-12c0-8.5-7-14-16-14z"/>
-          </svg>
+        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <img src="images/iconpetsespecies.svg" alt="Icono Usuarios" class="w-5 h-5 object-contain shrink-0">
           <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Especies</span>
+        </a>
+
+        <!-- USUARIOS-->
+        
+        <a routerLink="/usuarios" routerLinkActive="bg-[#1B1947]/10"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#1B1947]/10 transition-colors cursor-pointer">
+          <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-5 h-5 object-contain shrink-0">
+          <span class="text-xs font-bold tracking-widest text-slate-800 uppercase">Usuarios</span>
         </a>
 
       </nav>
