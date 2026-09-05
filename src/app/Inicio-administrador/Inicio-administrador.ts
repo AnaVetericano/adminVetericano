@@ -20,6 +20,6 @@ export class InicioAdministradorComponent {
 
   onLogout(): void {
     console.log('Cerrando sesión de usuario');
-    this.router.navigate(['/inicio-de-sesion-administrador']);
+    this.router.navigate(['inicio-de-sesion-administrador']);
   }
 }
