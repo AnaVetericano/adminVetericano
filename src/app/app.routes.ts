@@ -27,7 +27,8 @@ export const routes: Routes = [
     path: '',
     component:Landepage
   },
-  
+  {path:'patologias', component:Patologias},
+    
   {
     path: 'formularioespecies',
     component: FormularioEspecies
