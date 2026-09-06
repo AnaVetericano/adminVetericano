@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface RegistroUsuario {
-  
   email: string;
   password: string;
   nombre: string;
   apellido: string;
-  
 }
 
 export interface RespuestaRegistro {
@@ -17,12 +16,32 @@ export interface RespuestaRegistro {
   token?: string;
 }
 
+export interface CredencialesLogin {
+  email: string;
+  password: string;
+}
+
+export interface RespuestaLogin {
+  tokens?: {
+    access: string;
+    refresh: string;
+  };
+  email?: string;
+  id_rol?: number;
+  [key: string]: any;
+}
+
+export interface ConfirmarPasswordPayload {
+  email: string;
+  codigo: string;
+  nueva_password: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Ajusta esta URL según tu endpoint real de Django para el registro
-  private apiUrl = 'https://backendvetericano-fo3o.onrender.com/api/users';
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -31,5 +50,30 @@ export class AuthService {
       `${this.apiUrl}/register/`,
       usuario
     );
+  }
+
+  login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
+    return this.http.post<RespuestaLogin>(
+      `${this.apiUrl}/login/`,
+      credenciales
+    );
+  }
+
+  solicitarRecuperacion(email: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/recuperar-password/`,
+      { email }
+    );
+  }
+
+  confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {   
+    return this.http.post<any>(
+      `${this.apiUrl}/confirmar-password/`,
+      payload
+    );
+  }
+
+  listarRoles(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/roles/`);
   }
 }
