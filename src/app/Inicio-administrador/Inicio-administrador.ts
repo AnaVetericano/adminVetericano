@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet,  RouterLinkActive, RouterLink , } from '@angular/router';
+import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-inicio-administrador',
@@ -11,15 +11,18 @@ import { Router, RouterOutlet,  RouterLinkActive, RouterLink , } from '@angular/
 export class InicioAdministradorComponent {
   private router = inject(Router);
 
+  // Control para abrir y cerrar el menú en móviles
+  menuAbierto: boolean = true;
+
   // Datos para mostrar en el perfil del sidebar
   adminUser = {
-    name: 'Jubelit Zapata',
-    role: 'Admin',
-    avatarUrl: 'assets/admin-avatar.jpg'
+    name: 'Julian M.',
+    role: 'ADMINISTRADOR',
+    avatarUrl: 'images/administradorperfil.svg'
   };
 
   onLogout(): void {
     console.log('Cerrando sesión de usuario');
-    this.router.navigate(['inicio-de-sesion-administrador']);
+    this.router.navigate(['iniciodesesionadministrador']);
   }
 }
