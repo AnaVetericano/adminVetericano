@@ -66,7 +66,7 @@ export class AuthService {
     );
   }
 
-  confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {
+  confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {   
     return this.http.post<any>(
       `${this.apiUrl}/confirmar-password/`,
       payload
