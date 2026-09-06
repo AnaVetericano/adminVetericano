@@ -79,7 +79,7 @@ export const routes: Routes = [
     component: InicioDeSesionAdministradorComponent
   },
 
-  
+
 
   {
     path: 'register',
