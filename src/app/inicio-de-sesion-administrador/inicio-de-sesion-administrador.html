@@ -1,13 +1,15 @@
-<div class="h-screen w-full flex flex-col lg:flex-row overflow-hidden bg-white">
+<div class="h-[100dvh] w-full flex flex-col lg:flex-row overflow-hidden bg-white">
 
+  <!-- PANEL IZQUIERDO -->
   <section
     class="w-full lg:w-1/2
-           h-[40%] lg:h-full
+           h-[38%] lg:h-full
            bg-[#E1E4DD]
            relative flex flex-col justify-between
            px-6 sm:px-10 lg:px-16
-           py-6 lg:py-12"
+           py-4 lg:py-8"
   >
+    <!-- Textos informativos -->
     <div class="z-10">
       <div class="flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 lg:w-7 lg:h-7 text-[#1B1947]" fill="none"
@@ -17,47 +19,50 @@
                    a4.5 4.5 0 016.364 6.364L12 21.364 4.318 12.682
                    a4.5 4.5 0 010-6.364z"/>
         </svg>
-        <span class="text-xl lg:text-2xl font-bold tracking-widest text-[#1B1947]">VETERICANO</span>  
+        <span class="text-lg lg:text-2xl font-bold tracking-widest text-[#1B1947]">VETERICANO</span>  
       </div>
 
-      <p class="mt-2 lg:mt-6 text-xs sm:text-sm lg:text-base text-[#1B1947] leading-relaxed max-w-md">
-        Panel de administración para gestionar peticiones,<br class="hidden sm:inline"/>
-        rescates y coordinación de equipos veterinarios.<br class="hidden sm:inline"/>
-        Administra y supervisa todas las operaciones de rescate.
+      <p class="mt-2 lg:mt-4 text-xs lg:text-sm text-[#1B1947] leading-relaxed max-w-md">
+        Panel de administración para gestionar peticiones, rescates y coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
       </p>
     </div>
 
+    <!-- Imagen de la Cabra ajustada -->
     <div class="absolute inset-x-0 bottom-0 flex justify-center items-end pointer-events-none">
       <img src="/images/cabraDelLogin.svg"
            alt="Animal VETERICANO"
-           class="object-contain w-[220px] sm:w-[280px] lg:max-w-[420px] max-h-[32vh] lg:max-h-[55vh] select-none" />
+           class="object-contain w-[180px] sm:w-[220px] lg:max-w-[380px] max-h-[26vh] lg:max-h-[48vh] select-none" />
     </div>
   </section>
 
+  <!-- PANEL DERECHO (Formulario de Inicio de Sesión) -->
   <section
     class="w-full lg:w-1/2
-           h-[60%] lg:h-full
+           h-[62%] lg:h-full
            bg-white
            flex flex-col
            items-center
            justify-center
            px-6 sm:px-10 lg:px-12
-           py-6 lg:py-12
+           py-4 lg:py-6
            overflow-y-auto"
   >
-    <div class="flex flex-col items-center mb-4 lg:mb-6">
+    <!-- LOGO VETERICANO -->
+    <div class="flex flex-col items-center mb-2 lg:mb-4">
       <img src="/images/logoVet.svg"
            alt="Logo VETERICANO"
-           class="w-24 sm:w-28 lg:w-32 h-auto object-contain mb-2" />
+           class="w-20 sm:w-24 lg:w-28 h-auto object-contain" />
     </div>
 
-    <h2 class="text-3xl lg:text-4xl font-extrabold text-[#1B1947] mb-1">Bienvenido</h2>
-    <p class="text-sm lg:text-base font-semibold text-slate-600 mb-6 lg:mb-8">Inicia sesión para continuar</p>
+    <h2 class="text-2xl lg:text-3xl font-extrabold text-[#1B1947] mb-0.5">Bienvenido</h2>
+    <p class="text-xs lg:text-sm font-semibold text-slate-600 mb-4 lg:mb-6">Inicia sesión para continuar</p>
 
-    <form (ngSubmit)="login()" class="w-full max-w-md space-y-4 lg:space-y-5" novalidate>
+    <!-- Formulario -->
+    <form (ngSubmit)="login()" class="w-full max-w-md space-y-3 lg:space-y-4" novalidate>
 
-      <div class="flex items-center gap-3 bg-white border border-slate-300 rounded-full px-5 py-3 lg:py-4 focus-within:border-indigo-500 transition shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 lg:w-6 lg:h-6 text-slate-400 shrink-0" fill="none"
+      <!-- Email / Usuario -->
+      <div class="flex items-center gap-3 bg-white border border-slate-300 rounded-full px-4 py-2.5 lg:py-3.5 focus-within:border-indigo-500 transition shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 shrink-0" fill="none"
              viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5
@@ -66,11 +71,12 @@
                    l-9.75 6.75L2.25 6.75"/>
         </svg>
         <input type="text" placeholder="Correo electrónico" [(ngModel)]="usuario.email" name="username"
-               class="flex-1 bg-transparent text-sm lg:text-base text-slate-800 placeholder-slate-400 focus:outline-none" />
+               class="flex-1 bg-transparent text-xs lg:text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
       </div>
 
-      <div class="flex items-center gap-3 bg-white border border-slate-300 rounded-full px-5 py-3 lg:py-4 focus-within:border-indigo-500 transition shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 lg:w-6 lg:h-6 text-slate-400 shrink-0" fill="none"
+      <!-- Contraseña -->
+      <div class="flex items-center gap-3 bg-white border border-slate-300 rounded-full px-4 py-2.5 lg:py-3.5 focus-within:border-indigo-500 transition shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 shrink-0" fill="none"
              viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75
@@ -79,22 +85,24 @@
                    00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
         </svg>
         <input type="password" placeholder="Contraseña" [(ngModel)]="usuario.password" name="password"
-               class="flex-1 bg-transparent text-sm lg:text-base text-slate-800 placeholder-slate-400 focus:outline-none" />
+               class="flex-1 bg-transparent text-xs lg:text-sm text-slate-800 placeholder-slate-400 focus:outline-none" />
       </div>
 
-      <div class="text-right flex justify-between items-center mt-1 px-2">
-        <span class="text-xs lg:text-sm text-slate-500">¿Problemas para acceder?</span>
-        <button type="button" (click)="mostrarRecuperacion = true" class="text-xs lg:text-sm text-[#1B1947] font-bold hover:underline">
+      <!-- Recuperación de Contraseña -->
+      <div class="text-right flex justify-between items-center px-2">
+        <span class="text-xs text-slate-500">¿Problemas para acceder?</span>
+        <button type="button" (click)="mostrarRecuperacion = true" class="text-xs text-[#1B1947] font-bold hover:underline">
           ¿Olvidaste tu contraseña?
         </button>
       </div>
 
+      <!-- Botón -->
       <button type="submit"
-              class="w-full bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold py-3.5 lg:py-4 mt-4 rounded-full text-sm lg:text-base uppercase shadow-lg transition-colors">
+              class="w-full bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold py-3 lg:py-3.5 rounded-full text-xs lg:text-sm uppercase shadow-lg transition-colors">
         Iniciar Sesión
       </button>
 
-      <p class="text-center text-sm lg:text-base text-slate-600 mt-4 lg:mt-6">
+      <p class="text-center text-xs lg:text-sm text-slate-600 mt-3">
         ¿No tienes cuenta?
         <a routerLink="/register" class="text-[#1B1947] font-bold hover:underline ml-1">Regístrate</a>
       </p>
@@ -104,51 +112,56 @@
 
 </div>
 
+<!-- ========================================== -->
+<!-- VENTANA MODAL                              -->
+<!-- ========================================== -->
 <div *ngIf="mostrarRecuperacion" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-  <div class="w-full max-w-md bg-white rounded-2xl p-6 lg:p-8 shadow-2xl relative space-y-4 border border-slate-200">
+  <div class="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl relative space-y-3 border border-slate-200">
     
     <button type="button" (click)="mostrarRecuperacion = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-lg">
       ✕
     </button>
 
-    <h3 class="text-lg lg:text-xl font-bold text-[#1B1947]">Recuperar Contraseña</h3>
+    <h3 class="text-lg font-bold text-[#1B1947]">Recuperar Contraseña</h3>
     
-    <div *ngIf="mensajeExito" class="text-xs lg:text-sm p-3 text-green-700 bg-green-100 rounded-lg">
+    <div *ngIf="mensajeExito" class="text-xs p-2.5 text-green-700 bg-green-100 rounded-lg">
       {{ mensajeExito }}
     </div>
-    <div *ngIf="mensajeError" class="text-xs lg:text-sm p-3 text-red-700 bg-red-100 rounded-lg">
+    <div *ngIf="mensajeError" class="text-xs p-2.5 text-red-700 bg-red-100 rounded-lg">
       {{ mensajeError }}
     </div>
 
-    <div class="space-y-2">
-      <p class="text-xs lg:text-sm text-slate-700 font-medium">Paso 1: Ingresa tu correo electrónico</p>
+    <!-- Paso 1 -->
+    <div class="space-y-1.5">
+      <p class="text-xs text-slate-700 font-medium">Paso 1: Ingresa tu correo electrónico</p>
       <div class="flex flex-col sm:flex-row items-center gap-2">
         <input type="email" placeholder="correo@example.com" [(ngModel)]="emailRecuperacion" name="emailRecuperacionModal"
-               class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2.5 lg:py-3 text-xs lg:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500" />
+               class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500" />
         <button type="button" (click)="solicitarRecuperacion()" [disabled]="cargandoPaso1"
-                class="w-full sm:w-auto bg-[#1B1947] text-white text-xs lg:text-sm font-semibold px-4 py-2.5 lg:py-3 rounded-full hover:bg-opacity-90 disabled:opacity-50 whitespace-nowrap">
+                class="w-full sm:w-auto bg-[#1B1947] text-white text-xs font-semibold px-4 py-2 rounded-full hover:bg-opacity-90 disabled:opacity-50 whitespace-nowrap">
           {{ cargandoPaso1 ? 'Enviando...' : 'Enviar Código' }}
         </button>
       </div>
     </div>
 
-    <div class="space-y-2.5 pt-3 border-t border-slate-200">
-      <p class="text-xs lg:text-sm text-slate-700 font-medium">Paso 2: Código de 6 dígitos y nueva contraseña</p>
+    <!-- Paso 2 -->
+    <div class="space-y-2 pt-2 border-t border-slate-200">
+      <p class="text-xs text-slate-700 font-medium">Paso 2: Código de 6 dígitos y nueva contraseña</p>
       
       <input type="text" placeholder="Código de 6 dígitos" [(ngModel)]="codigoIngresado" name="codigoIngresadoModal" maxlength="6"
-             class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2.5 lg:py-3 text-xs lg:text-sm text-slate-800 focus:outline-none focus:border-indigo-500" />
+             class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500" />
       
       <input type="password" placeholder="Nueva contraseña" [(ngModel)]="nuevaPassword" name="nuevaPasswordModal"
-             class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2.5 lg:py-3 text-xs lg:text-sm text-slate-800 focus:outline-none focus:border-indigo-500" />
+             class="w-full bg-slate-50 border border-slate-300 rounded-full px-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-indigo-500" />
 
       <button type="button" (click)="confirmarRecuperacion()" [disabled]="cargandoPaso2"
-              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 mt-1 rounded-full text-xs lg:text-sm uppercase shadow transition-colors disabled:opacity-50">
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-full text-xs uppercase shadow transition-colors disabled:opacity-50">
         {{ cargandoPaso2 ? 'Actualizando...' : 'Cambiar Contraseña' }}
       </button>
     </div>
 
     <div class="text-center pt-1">
-      <button type="button" (click)="mostrarRecuperacion = false" class="text-xs lg:text-sm text-slate-500 hover:underline">
+      <button type="button" (click)="mostrarRecuperacion = false" class="text-xs text-slate-500 hover:underline">
         Cancelar / Volver al Login
       </button>
     </div>
