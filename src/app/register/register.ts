@@ -42,6 +42,7 @@ export class Register {
         // DRF devuelve {campo: ["mensaje"]} en errores de validación
         const primerCampo = errData && Object.keys(errData)[0];
         const mensajeReal = errData?.mensaje
+          || errData?.detail
           || (primerCampo && Array.isArray(errData[primerCampo]) ? errData[primerCampo][0] : null)
           || 'Ocurrió un error al registrarse';
         alert(mensajeReal);
