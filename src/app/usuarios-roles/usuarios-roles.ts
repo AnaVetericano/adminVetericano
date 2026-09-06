@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { Router } from '@angular/router';
+import Swal from 'sweetalert2';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-usuarios-roles',
@@ -21,6 +24,7 @@ export class UsuariosRoles implements OnInit {
 
   // URL unificada apuntando exactamente a endpoint de usuarios en Railway
   private apiUrl = `${environment.apiUrl}/usuarios/`;
+  
 
   usuario = {
     id_usuario: 0,
@@ -32,10 +36,13 @@ export class UsuariosRoles implements OnInit {
     activo: true
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,private authService: AuthService,
+    private cdr: ChangeDetectorRef, private router:Router
+  ) {}
 
   ngOnInit(): void {
     this.listarUsuarios();
+    this.cdr.detectChanges()
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
@@ -44,6 +51,7 @@ export class UsuariosRoles implements OnInit {
       next: (respuesta) => {
         // Si Django devuelve paginación ({results: [...]}), toma results; si no, toma la respuesta directa.
         this.usuarios = Array.isArray(respuesta) ? respuesta : (respuesta.results || []);
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error al listar usuarios:', error);
@@ -123,42 +131,144 @@ export class UsuariosRoles implements OnInit {
   }
 
   // Actualizar usuario
-  actualizarUsuario(): void {
-    const usuarioActualizado = {
-      email: this.usuario.email,
-      nombre: this.usuario.nombre,
-      apellido: this.usuario.apellido,
-      id_rol: this.usuario.id_rol,
-      activo: this.usuario.activo
-    };
+actualizarUsuario(): void {
 
-    this.http.put(`${this.apiUrl}${this.usuario.id_usuario}/`, usuarioActualizado).subscribe({
-      next: () => {
-        alert('Usuario actualizado correctamente');
-        this.listarUsuarios();
-        this.cerrarModal();
-      },
-      error: (error) => {
-        console.error('Error al actualizar usuario:', error.error);
-        alert('Error al actualizar el usuario. Revisa la consola.');
+  const usuarioActualizado = {
+    email: this.usuario.email,
+    nombre: this.usuario.nombre,
+    apellido: this.usuario.apellido,
+    id_rol: this.usuario.id_rol,
+    activo: this.usuario.activo
+  };
+
+  this.http.put(
+    `${this.apiUrl}${this.usuario.id_usuario}/`,
+    usuarioActualizado
+  ).subscribe({
+
+    next: () => {
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Usuario actualizado!',
+        text: 'Los datos del usuario se actualizaron correctamente.',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#4141A5',
+        background: '#FFFFFF',
+        color: '#170B3D',
+        timer: 2500,
+        timerProgressBar: true
+      });
+
+      this.listarUsuarios();
+      this.cerrarModal();
+    },
+
+    error: (error) => {
+
+      console.error('Error al actualizar usuario:', error.error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al actualizar',
+        text: 'No se pudo actualizar el usuario. Intenta nuevamente.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#4141A5',
+        background: '#FFFFFF',
+        color: '#170B3D'
+      });
+
+    }
+
+  });
+}
+
+
+  // Inactivar o activar usuario
+  eliminarUsuario(activoOId: any, idOpcional?: number): void {
+    let id_usuario: number;
+    let nuevoEstado: boolean;
+
+    if (typeof activoOId === 'boolean' && typeof idOpcional === 'number') {
+      id_usuario = idOpcional;
+      nuevoEstado = !activoOId;
+    } else if (typeof activoOId === 'number') {
+      id_usuario = activoOId;
+      nuevoEstado = typeof idOpcional === 'boolean' ? idOpcional : false;
+    } else if (typeof activoOId === 'object' && activoOId !== null) {
+      id_usuario = activoOId.id_usuario;
+      nuevoEstado = !activoOId.activo;
+    } else {
+      id_usuario = Number(idOpcional || activoOId);
+      nuevoEstado = false;
+    }
+
+    const accion = nuevoEstado ? 'activar' : 'inactivar';
+    const accionCapitalizada = nuevoEstado ? 'activado' : 'inactivado';
+
+    Swal.fire({
+      title: `¿Estás seguro de que deseas ${accion} este usuario?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: nuevoEstado ? '#16a34a' : '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: `Sí, ${accion}`,
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.authService.inactivarUsuario(id_usuario, nuevoEstado).subscribe({
+          next: () => {
+            Swal.fire({
+              title: `Usuario ${accionCapitalizada} correctamente`,
+              icon: 'success'
+            });
+            this.listarUsuarios();
+          },
+          error: (error) => {
+            console.error(`Error al ${accion} usuario:`, error);
+            Swal.fire({
+              title: 'Error',
+              text: `No se pudo ${accion} el usuario.`,
+              icon: 'error'
+            });
+          }
+        });
       }
     });
   }
+  cerrarSesion(): void {
 
-  // Eliminar usuario
-  eliminarUsuario(id_usuario: number): void {
-    if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-      this.http.delete(`${this.apiUrl}${id_usuario}/`).subscribe({
-        next: () => {
-          alert('Usuario eliminado correctamente');
-          this.listarUsuarios();
-        },
-        error: (error) => {
-          console.error('Error al eliminar usuario:', error);
-          alert('No se pudo eliminar el usuario.');
-        }
-      });
+  Swal.fire({
+    title: '¿Cerrar sesión?',
+    text: '¿Estás seguro de que deseas cerrar tu sesión?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, cerrar sesión',
+    cancelButtonText: 'No, cancelar',
+    confirmButtonColor: '#4141A5',
+    cancelButtonColor: '#C4C4C4',
+    reverseButtons: true,
+    background: '#FFFFFF',
+    color: '#170B3D'
+  }).then((result) => {
+
+    if (result.isConfirmed) {
+
+      // Eliminar información de sesión
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+
+      // Ir al componente inicio-administrador
+      this.router.navigate(['/']);
+
     }
+
+  });
+}
+
+  // Alias para llamar inactivarUsuario directamente
+  inactivarUsuario(id_usuario: number, activo: boolean = false): void {
+    this.eliminarUsuario(!activo, id_usuario);
   }
 
 }
