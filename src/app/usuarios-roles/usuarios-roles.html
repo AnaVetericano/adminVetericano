@@ -221,14 +221,14 @@
 
                   <button
                     (click)="abrirModalEditar(usuario)"
-                    class="px-4 py-2 rounded-lg bg-[#f1c63c] text-[#10203b] font-semibold hover:opacity-80"
+                    class="px-4 py-2 rounded-lg bg-white border border-[#CBD5E1] text-[#10203b] font-semibold hover:opacity-80"
                   >
                     Editar
                   </button>
 
                   <button
                     (click)="eliminarUsuario(usuario.activo, usuario.id_usuario)"
-                    [ngClass]="usuario.activo ? 'bg-red-500 hover:bg-red-600' : 'bg-green-600 hover:bg-green-700'"
+                    [ngClass]="usuario.activo ? 'bg-[#EF4444] hover:bg-[#EF4444]' : 'bg-green-600 hover:bg-green-700'"
                     class="px-4 py-2 rounded-lg text-white font-semibold transition"
                   >
                     {{ usuario.activo ? 'Inactivar' : 'Activar' }}
