@@ -73,7 +73,8 @@
       <div class="px-8 py-10">
 
         <button
-          class="text-[#10203b] font-bold tracking-wider hover:text-red-600 transition"
+        (click)="cerrarSesion()"
+          class=" text-[#10203b] font-bold tracking-wider hover:text-red-600 transition"
         >
           CERRAR SESIÓN
         </button>
@@ -92,11 +93,11 @@
         <div>
 
           <h1 class="text-3xl font-bold text-[#10203b]">
-            Usuarios y Roles
+            Usuarios
           </h1>
 
           <p class="mt-2 text-gray-500">
-            Gestión de usuarios y asignación de roles
+            Gestión de usuarios 
           </p>
 
         </div>
@@ -226,10 +227,11 @@
                   </button>
 
                   <button
-                    (click)="eliminarUsuario(usuario.id_usuario)"
-                    class="px-4 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600"
+                    (click)="eliminarUsuario(usuario.activo, usuario.id_usuario)"
+                    [ngClass]="usuario.activo ? 'bg-red-500 hover:bg-red-600' : 'bg-green-600 hover:bg-green-700'"
+                    class="px-4 py-2 rounded-lg text-white font-semibold transition"
                   >
-                    Eliminar
+                    {{ usuario.activo ? 'Inactivar' : 'Activar' }}
                   </button>
 
                 </div>
