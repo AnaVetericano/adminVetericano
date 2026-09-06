@@ -9,6 +9,10 @@ export interface RegistroUsuario {
   nombre: string;
   apellido: string;
 }
+export interface InactivarUsuario{
+  activo: boolean;
+
+}
 
 export interface RespuestaRegistro {
   mensaje?: string;
@@ -76,4 +80,14 @@ export class AuthService {
   listarRoles(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/roles/`);
   }
+
+
+  inactivarUsuario(id_usuario: number, activo: boolean = false): Observable<any> {
+    const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
+    return this.http.patch<any>(
+      `${urlBase}/usuarios/${id_usuario}/`,
+      { activo }
+    );
+  }
+
 }
