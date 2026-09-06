@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-inicio-de-sesion-administrador', 
@@ -31,7 +31,7 @@ export class InicioDeSesionAdministradorComponent {
   mensajeError: string = '';
 
   constructor(
-    private http: HttpClient,
+    private authService: AuthService,
     private router: Router
   ) {}
 
@@ -44,13 +44,15 @@ export class InicioDeSesionAdministradorComponent {
 
     console.log('Credenciales enviadas:', this.usuario);
 
-    // Petición a tu API
-    this.http.post('https://backendvetericano-fo3o.onrender.com/api/users/login/', this.usuario).subscribe({
+    // Petición a la API usando AuthService
+    this.authService.login(this.usuario).subscribe({
       next: (res: any) => {
+        // NOTA: Guardar token pospuesto hasta que el usuario lo indique
         this.router.navigate(['/inicio-admin']);
       },
       error: (err: any) => {
-        alert(err.error?.mensaje || 'Credenciales incorrectas, intenta de nuevo.');
+        const mensaje = err.error?.detail || err.error?.mensaje || err.error?.error || 'Credenciales incorrectas, intenta de nuevo.';
+        alert(mensaje);
       }
     });
   }
@@ -67,13 +69,13 @@ export class InicioDeSesionAdministradorComponent {
     this.mensajeError = '';
     this.mensajeExito = '';
 
-    this.http.post('http://127.0.0.1:8000/api/users/recuperar-password/', { email: this.emailRecuperacion }).subscribe({
+    this.authService.solicitarRecuperacion(this.emailRecuperacion).subscribe({
       next: (res: any) => {
-        this.mensajeExito = res.mensaje || '¡Código enviado exitosamente a tu correo!';
+        this.mensajeExito = res.mensaje || res.detail || '¡Código enviado exitosamente a tu correo!';
         this.cargandoPaso1 = false;
       },
-      error: (err) => {
-        this.mensajeError = err.error?.error || 'No se pudo enviar el correo.';
+      error: (err: any) => {
+        this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'No se pudo enviar el correo.';
         this.cargandoPaso1 = false;
       }
     });
@@ -95,9 +97,9 @@ export class InicioDeSesionAdministradorComponent {
       nueva_password: this.nuevaPassword
     };
 
-    this.http.post('http://127.0.0.1:8000/api/users/confirmar-password/', payload).subscribe({
+    this.authService.confirmarPassword(payload).subscribe({
       next: (res: any) => {
-        this.mensajeExito = res.mensaje || '¡Contraseña actualizada con éxito!';
+        this.mensajeExito = res.mensaje || res.detail || '¡Contraseña actualizada con éxito!';
         this.cargandoPaso2 = false;
         
         setTimeout(() => {
@@ -106,7 +108,7 @@ export class InicioDeSesionAdministradorComponent {
         }, 2000);
       },
       error: (err: any) => {
-        this.mensajeError = err.error?.error || 'Código incorrecto o expirado.';
+        this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'Código incorrecto o expirado.';
         this.cargandoPaso2 = false;
       }
     });
