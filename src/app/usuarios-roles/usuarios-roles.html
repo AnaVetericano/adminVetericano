@@ -1,218 +1,76 @@
-<div class="min-h-screen bg-[#1d1b4f] p-4 md:p-6">
+<div class="min-h-screen bg-white p-4 md:p-8">
+  <div class="max-w-7xl mx-auto">
 
-  <div class="flex min-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl bg-white shadow-xl">
-
-    <!-- meno izquierdo -->
-    <aside class="w-64 lg:w-80 bg-[#e4e2dd] flex flex-col">
-
-      <!-- perfil -->
-      <div class="flex flex-col items-center px-6 py-10 border-b border-gray-300">
-
-        <div
-          class="w-24 h-24 rounded-full bg-[#cbd5e1] border-2 border-white shadow-md">
-        </div>
-
-        <h2 class="mt-5 text-lg font-semibold text-[#10203b]">
-          Jubelit Zapata
-        </h2>
-
-        <p class="text-sm text-[#64748b]">
-          Admin
-        </p>
-
-      </div>
-
-      <!-- menu -->
-      <nav class="flex-1 px-8 py-10">
-
-        <p class="text-sm font-bold tracking-wider text-[#58718f] mb-8">
-          HOME(EJEMPLO)
-        </p>
-
-       <a routerLink="/patologias"
-          href="#"
-          class="flex items-center gap-4 mb-8 text-[#10203b] font-bold tracking-wider"
-        >
-          <span></span>
-          <span>PATOLOGIA</span>
-        </a>
-
-   <a routerLink="/examenes-clinicos"          href="#"
-          class="flex items-center gap-4 mb-8 text-[#10203b] font-bold tracking-wider"
-        >
-          <span>▣</span>
-          <span>EXAMENES MEDICOS</span>
-        </a>
-
-<a routerLink="/listarmedicamentos"          href="#"
-          class="flex items-center gap-4 mb-8 text-[#10203b] font-bold tracking-wider"
-        >
-          <span>▱</span>
-          <span>MEDICAMENTOS</span>
-        </a>
-
-        <a routerLink="/listarespecies"
-          href="#"
-          class="flex items-center gap-4 mb-8 text-[#10203b] font-bold tracking-wider"
-        >
-          <span></span>
-          <span>ESPECIES</span>
-        </a>
-
-        <!-- USUARIOS Y ROLES -->
-<a routerLink="/usuarios-roles"          href="#"
-          class="flex items-center gap-4 mb-8 text-[#10203b] font-bold tracking-wider"
-        >
-          <span>👥</span>
-          <span>USUARIOS Y ROLES</span>
-        </a>
-
-      </nav>
-
-      <!-- crerrar sesion -->
-      <div class="px-8 py-10">
-
-        <button
-        (click)="cerrarSesion()"
-          class=" text-[#10203b] font-bold tracking-wider hover:text-red-600 transition"
-        >
-          CERRAR SESIÓN
-        </button>
-
-      </div>
-
-    </aside>
-
-
-    <!-- contenodo -->
-    <main class="flex-1 bg-white p-8 lg:p-12 overflow-auto">
+    <!-- contenido principal -->
+    <main class="w-full">
 
       <!-- encabezado -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
-
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-
           <h1 class="text-3xl font-bold text-[#10203b]">
             Usuarios
           </h1>
-
           <p class="mt-2 text-gray-500">
             Gestión de usuarios 
           </p>
-
         </div>
 
         <button
           (click)="abrirModalCrear()"
-          class="px-6 py-3 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition"
+          class="px-6 py-3 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition w-full md:w-auto text-center"
         >
           + Nuevo usuario
         </button>
-
       </div>
 
-
-      <!-- tabla de usuarios -->
-      <div class="overflow-x-auto rounded-xl border border-gray-200">
-
-        <table class="w-full">
-
+      <!-- tabla de usuarios (responsive con scroll horizontal) -->
+      <div class="w-full overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
+        <table class="w-full text-left border-collapse min-w-[700px]">
           <thead class="bg-[#e4e2dd]">
-
             <tr>
-
-              <th class="px-5 py-4 text-left text-sm font-bold text-[#10203b]">
-                ID
-              </th>
-
-              <th class="px-5 py-4 text-left text-sm font-bold text-[#10203b]">
-                Nombre
-              </th>
-
-              <th class="px-5 py-4 text-left text-sm font-bold text-[#10203b]">
-                Correo
-              </th>
-
-              <th class="px-5 py-4 text-left text-sm font-bold text-[#10203b]">
-                Rol
-              </th>
-
-              <th class="px-5 py-4 text-left text-sm font-bold text-[#10203b]">
-                Estado
-              </th>
-
-              <th class="px-5 py-4 text-center text-sm font-bold text-[#10203b]">
-                Acciones
-              </th>
-
+              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">ID</th>
+              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Nombre</th>
+              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Correo</th>
+              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Rol</th>
+              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Estado</th>
+              <th class="px-5 py-4 text-center text-sm font-bold text-[#10203b]">Acciones</th>
             </tr>
-
           </thead>
-
-
-          <tbody>
-
+          <tbody class="divide-y divide-gray-200">
             <tr
               *ngFor="let usuario of usuarios"
-              class="border-t border-gray-200 hover:bg-gray-50 transition"
+              class="hover:bg-gray-50 transition"
             >
-
-              <td class="px-5 py-4 text-gray-600">
+              <td class="px-5 py-4 text-gray-600 font-medium">
                 {{ usuario.id_usuario }}
               </td>
-
               <td class="px-5 py-4">
-
                 <div class="flex items-center gap-3">
-
-                  <div
-                    class="w-10 h-10 rounded-full bg-[#cbd5e1] flex items-center justify-center text-[#10203b] font-bold"
-                  >
+                  <div class="w-10 h-10 rounded-full bg-[#cbd5e1] flex items-center justify-center text-[#10203b] font-bold shrink-0">
                     {{ usuario.nombre?.charAt(0) }}
                   </div>
-
                   <div>
-
                     <p class="font-semibold text-[#10203b]">
                       {{ usuario.nombre }} {{ usuario.apellido }}
                     </p>
-
                   </div>
-
                 </div>
-
               </td>
-
-              <td class="px-5 py-4 text-gray-600">
+              <td class="px-5 py-4 text-gray-600 truncate max-w-xs">
                 {{ usuario.email }}
               </td>
-
               <td class="px-5 py-4">
-
-                <span
-                  class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700"
-                >
+                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
                   {{ usuario.id_rol }}
                 </span>
-
               </td>
-
               <td class="px-5 py-4">
-
-                <span
-                  *ngIf="usuario.activo"
-                  class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700"
-                >
+                <span *ngIf="usuario.activo" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
                   Activo
                 </span>
-
-                <span
-                  *ngIf="!usuario.activo"
-                  class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700"
-                >
+                <span *ngIf="!usuario.activo" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
                   Inactivo
                 </span>
-
               </td>
 
              <div class="flex justify-center items-center gap-4">
@@ -252,165 +110,101 @@
 
             </tr>
 
-
             <!-- sin usuario -->
-
             <tr *ngIf="usuarios.length === 0">
-
-              <td
-                colspan="6"
-                class="text-center py-12 text-gray-500"
-              >
+              <td colspan="6" class="text-center py-12 text-gray-500">
                 No hay usuarios registrados.
               </td>
-
             </tr>
-
           </tbody>
-
         </table>
-
       </div>
 
     </main>
 
   </div>
 
-
-  <!-- modal -->
-
+  <!-- modal responsivo -->
   @if (modal) {
-
-    <div
-      class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-    >
-
-      <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-7"
-      >
-
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8 my-auto">
         <h2 class="text-2xl font-bold text-[#10203b] mb-6">
-
           {{ editar ? 'Editar usuario' : 'Nuevo usuario' }}
-
         </h2>
 
-
         <!-- nombre -->
-
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">
-          Nombre
-        </label>
-
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Nombre</label>
         <input
           type="text"
           [(ngModel)]="usuario.nombre"
           placeholder="Nombre"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
         >
 
-
         <!-- apellido -->
-
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">
-          Apellido
-        </label>
-
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Apellido</label>
         <input
           type="text"
           [(ngModel)]="usuario.apellido"
           placeholder="Apellido"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
         >
 
-
         <!-- correo -->
-
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">
-          Correo electrónico
-        </label>
-
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Correo electrónico</label>
         <input
           type="email"
           [(ngModel)]="usuario.email"
           placeholder="correo@ejemplo.com"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
         >
 
-
         <!-- contraseña -->
-
         @if (!editar) {
-
-          <label class="block text-sm font-semibold text-[#10203b] mb-2">
-            Contraseña
-          </label>
-
+          <label class="block text-sm font-semibold text-[#10203b] mb-2">Contraseña</label>
           <input
             type="password"
             [(ngModel)]="usuario.password"
             placeholder="Contraseña"
-            class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
           >
-
         }
 
-
         <!-- id del rol -->
-
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">
-          ID del rol
-        </label>
-
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">ID del rol</label>
         <input
           type="number"
           [(ngModel)]="usuario.id_rol"
           placeholder="ID del rol"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
         >
 
-
         <!-- usuario activo -->
-
-        <label class="flex items-center gap-3 mb-6">
-
+        <label class="flex items-center gap-3 mb-6 cursor-pointer">
           <input
             type="checkbox"
             [(ngModel)]="usuario.activo"
-            class="w-5 h-5"
+            class="w-5 h-5 accent-[#1d1b4f]"
           >
-
-          <span class="font-semibold text-[#10203b]">
-            Usuario activo
-          </span>
-
+          <span class="font-semibold text-[#10203b]">Usuario activo</span>
         </label>
 
-
         <!-- botones -->
-
-        <div class="flex justify-end gap-3">
-
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
           <button
             (click)="cerrarModal()"
-            class="px-5 py-2.5 rounded-lg bg-gray-300 text-gray-800 font-semibold"
+            class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition text-center"
           >
             Cancelar
           </button>
-
           <button
             (click)="guardar()"
-            class="px-6 py-2.5 rounded-lg bg-[#1d1b4f] text-white font-semibold"
+            class="px-6 py-2.5 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition text-center"
           >
             {{ editar ? 'Actualizar' : 'Guardar' }}
           </button>
-
         </div>
-
       </div>
-
     </div>
-
   }
-
-</div>  
+</div>

@@ -23,93 +23,31 @@ import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 
 export const routes: Routes = [
 
-  {
-    path: '',
-    component:Landepage
-  },
-  {path:'patologias', component:Patologias},
-    
-  {
-    path: 'formularioespecies',
-    component: FormularioEspecies
-  },
+  { path: '', component: Landepage },
+  { path: 'register', component: Register },
+  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent },
 
-  {
-    path: 'actualizarespecies/:id',
-    component: ActualizarEspecies
-  },
-
-  {
-    path: 'crearespecies',
-    component: CrearEspecies
-  },
-
-  {
-    path: 'listarespecies',
-    component: ListarEspecies
-  },
-
-  {
-    path: 'actualizarmedicamentos/:id',
-    component: ActualizarMedicamentos
-  },
-
-  {
-    path: 'listarmedicamentos',
-    component: ListarMedicamentos
-  },
-
-  {
-    path: 'crearmedicamentos',
-    component: CrearMedicamentos
-  },
-
-  {
-    path: 'formulariomedicamentos',
-    component: FormularioMedicamentos
-  },
-
+  // AQUÍ ESTÁ EL CAMBIO: 'inicio-admin' envuelve a todos los módulos con children
   {
     path: 'inicio-admin',
-    component: InicioAdministradorComponent
-  },
+    component: InicioAdministradorComponent,
+    children: [
+      { path: 'patologias', component: Patologias },
+      { path: 'examenes-clinicos', component: ExamenesClinicos },
+      { path: 'examen-clinico', component: ExamenClinico },
+      { path: 'editar-examen', component: EditarExamen },
+      { path: 'crear-pa', component: CrearPa },
+      { path: 'usuarios-roles', component: UsuariosRoles },
+      
+      { path: 'listarespecies', component: ListarEspecies },
+      { path: 'crearespecies', component: CrearEspecies },
+      { path: 'formularioespecies', component: FormularioEspecies },
+      { path: 'actualizarespecies/:id', component: ActualizarEspecies },
 
-  {
-    path: 'iniciodesesionadministrador',
-    component: InicioDeSesionAdministradorComponent
-  },
-
-
-
-  {
-    path: 'register',
-    component: Register
-  },
-
-  {path: 'examenes-clinicos', 
-    component:ExamenesClinicos},
-
-
-  {path:'patologias', 
-    component:Patologias},
-
-
-  {path:'examen-clinico',
-    component:ExamenClinico
-  },
-
-
-  {path:'editar-examen',
-    component:EditarExamen
-  },
-
-  {path:'crear-pa',
-    component:CrearPa
-  },
-
-     {
-    path: 'usuarios-roles',
-    component: UsuariosRoles
+      { path: 'listarmedicamentos', component: ListarMedicamentos },
+      { path: 'crearmedicamentos', component: CrearMedicamentos },
+      { path: 'formulariomedicamentos', component: FormularioMedicamentos },
+      { path: 'actualizarmedicamentos/:id', component: ActualizarMedicamentos }
+    ]
   }
-
 ];
