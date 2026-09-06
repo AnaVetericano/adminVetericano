@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-inicio-administrador',
@@ -21,8 +22,27 @@ export class InicioAdministradorComponent {
     avatarUrl: 'images/administradorperfil.svg'
   };
 
-  onLogout(): void {
-    console.log('Cerrando sesión de usuario');
-    this.router.navigate(['iniciodesesionadministrador']);
-  }
+onLogout(): void {
+  Swal.fire({
+    title: '¿Cerrar sesión?',
+    text: '¿Estás seguro de que deseas cerrar sesión?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, cerrar sesión',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#4141A5',
+    cancelButtonColor: '#ffffff',
+    customClass: {
+      cancelButton: '!text-black !border !border-gray-400'
+    }
+  }).then((result) => {
+
+    if (result.isConfirmed) {
+      console.log('Cerrando sesión de usuario');
+
+      this.router.navigate(['/']);
+    }
+
+  });
+}
 }
