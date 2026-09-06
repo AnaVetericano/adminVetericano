@@ -118,15 +118,29 @@ export class UsuariosRoles implements OnInit {
     };
 
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
-      next: () => {
-        alert('Usuario creado correctamente');
-        this.listarUsuarios();
-        this.cerrarModal();
-      },
-      error: (error) => {
-        console.error('Error al crear usuario:', error.error);
-        alert('Error al crear el usuario. Revisa la consola.');
-      }
+  next: () => {
+    Swal.fire({
+      title: '¡Éxito!',
+      text: 'Usuario creado correctamente',
+      icon: 'success',
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: '#4141A5'
+    }).then(() => {
+      // Es una buena práctica ejecutar estas acciones después de que el usuario cierra la alerta
+      this.listarUsuarios();
+      this.cerrarModal();
+    });
+  },
+  error: (error) => {
+    console.error('Error al crear usuario:', error.error);
+    Swal.fire({
+      title: 'Oops...',
+      text: 'Error al crear el usuario. Revisa la consola.',
+      icon: 'error',
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#d33'
+    });
+  }
     });
   }
 
