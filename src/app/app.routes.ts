@@ -1,14 +1,11 @@
 import { Routes } from '@angular/router';
 
-import { ActualizarEspecies } from './actualizar-especies/actualizar-especies';
 import { ActualizarMedicamentos } from './actualizar-medicamentos/actualizar-medicamentos';
-import { ListarEspecies } from './listar-especies/listar-especies';
 import { ListarMedicamentos } from './listar-medicamentos/listar-medicamentos';
-import { CrearEspecies } from './crear-especies/crear-especies';
 import { CrearMedicamentos } from './crear-medicamentos/crear-medicamentos';
 import { FormularioEspecies } from './formulario-especies/formulario-especies';
 import { FormularioMedicamentos } from './formulario-medicamentos/formulario-medicamentos';
-
+import { Especies } from './especies/especies';
 import { Landepage } from './landepage/landepage';
 import { Register } from './register/register';
 
@@ -36,12 +33,10 @@ export const routes: Routes = [
       { path: 'examen-clinico', component: ExamenClinico },
       { path: 'editar-examen', component: EditarExamen },
       { path: 'usuarios-roles', component: UsuariosRoles },
+      {path:'especies',component:Especies},
       { path: 'examenes-clinicos', component: ExamenClinico },
       
-      { path: 'listarespecies', component: ListarEspecies },
-      { path: 'crearespecies', component: CrearEspecies },
       { path: 'formularioespecies', component: FormularioEspecies },
-      { path: 'actualizarespecies/:id', component: ActualizarEspecies },
       
       { path: 'listarmedicamentos', component: ListarMedicamentos },
       { path: 'crearmedicamentos', component: CrearMedicamentos },
