@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -11,7 +10,7 @@ import { AuthService } from '../services/auth';
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, RouterLink, CommonModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })

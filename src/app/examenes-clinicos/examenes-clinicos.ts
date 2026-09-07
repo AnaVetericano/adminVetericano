@@ -15,7 +15,7 @@ export class ExamenesClinicos {
   }
 
   irACrearExamen() {
-    this.router.navigate(['/examen-clinico']);
+    this.router.navigate(['/inicio-admin/examen-clinico']);
   }
 
  
