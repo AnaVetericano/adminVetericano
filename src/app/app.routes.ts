@@ -18,7 +18,6 @@ import { Patologias } from './patologias/patologias';
 import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
 import { ExamenClinico } from './examen-clinico/examen-clinico';
 import { EditarExamen } from './editar-examen/editar-examen';
-import { CrearPa } from './crear-pa/crear-pa';
 import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 
 export const routes: Routes = [
@@ -36,14 +35,13 @@ export const routes: Routes = [
       { path: 'examenes-clinicos', component: ExamenesClinicos },
       { path: 'examen-clinico', component: ExamenClinico },
       { path: 'editar-examen', component: EditarExamen },
-      { path: 'crear-pa', component: CrearPa },
       { path: 'usuarios-roles', component: UsuariosRoles },
       
       { path: 'listarespecies', component: ListarEspecies },
       { path: 'crearespecies', component: CrearEspecies },
       { path: 'formularioespecies', component: FormularioEspecies },
       { path: 'actualizarespecies/:id', component: ActualizarEspecies },
-
+      
       { path: 'listarmedicamentos', component: ListarMedicamentos },
       { path: 'crearmedicamentos', component: CrearMedicamentos },
       { path: 'formulariomedicamentos', component: FormularioMedicamentos },
