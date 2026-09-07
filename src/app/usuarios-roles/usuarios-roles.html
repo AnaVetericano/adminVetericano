@@ -140,87 +140,94 @@
 
     </main>
 
-    <!-- MODAL RESPONSIVO -->
-    @if (modal) {
-        <div class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8 my-auto border border-gray-100">
-                <h2 class="text-2xl font-bold text-[#1B1947] mb-6">
-                    {{ editar ? 'Editar usuario' : 'Nuevo usuario' }}
-                </h2>
+  </div>
 
-                <!-- nombre -->
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
-                <input
-                    type="text"
-                    [(ngModel)]="usuario.nombre"
-                    placeholder="Nombre"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-                >
+  <!-- modal responsivo -->
+  @if (modal) {
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8 my-auto">
+        <h2 class="text-2xl font-bold text-[#10203b] mb-6">
+          {{ editar ? 'Editar usuario' : 'Nuevo usuario' }}
+        </h2>
 
-                <!-- apellido -->
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Apellido</label>
-                <input
-                    type="text"
-                    [(ngModel)]="usuario.apellido"
-                    placeholder="Apellido"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-                >
+        <!-- nombre -->
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Nombre</label>
+        <input
+          type="text"
+          [(ngModel)]="usuario.nombre"
+          placeholder="Nombre"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+        >
 
-                <!-- correo -->
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Correo electrónico</label>
-                <input
-                    type="email"
-                    [(ngModel)]="usuario.email"
-                    placeholder="correo@ejemplo.com"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-                >
+        <!-- apellido -->
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Apellido</label>
+        <input
+          type="text"
+          [(ngModel)]="usuario.apellido"
+          placeholder="Apellido"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+        >
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Numero de identificacion </label>
+        <input
+           type="text"
+          [(ngModel)]="usuario.identificacion"
+          placeholder="1234567899"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+        >
 
-                <!-- contraseña -->
-                @if (!editar) {
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
-                    <input
-                        type="password"
-                        [(ngModel)]="usuario.password"
-                        placeholder="Contraseña"
-                        class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-                    >
-                }
+        <!-- correo -->
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Correo electrónico</label>
+        <input
+          type="email"
+          [(ngModel)]="usuario.email"
+          placeholder="correo@ejemplo.com"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+        >
 
-                <!-- id del rol -->
-                <label class="block text-sm font-semibold text-gray-700 mb-2">ID del rol</label>
-                <input
-                    type="number"
-                    [(ngModel)]="usuario.id_rol"
-                    placeholder="ID del rol"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
-                >
+        <!-- contraseña -->
+        @if (!editar) {
+          <label class="block text-sm font-semibold text-[#10203b] mb-2">Contraseña</label>
+          <input
+            type="password"
+            [(ngModel)]="usuario.password"
+            placeholder="Contraseña"
+            class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+          >
+        }
 
-                <!-- usuario activo -->
-                <label class="flex items-center gap-3 mb-6 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        [(ngModel)]="usuario.activo"
-                        class="w-4 h-4 accent-[#1B1947] rounded-sm"
-                    >
-                    <span class="font-semibold text-sm text-gray-700">Usuario activo</span>
-                </label>
+        <!-- id del rol -->
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">ID del rol</label>
+        <input
+          type="number"
+          [(ngModel)]="usuario.id_rol"
+          placeholder="ID del rol"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+        >
 
-                <!-- botones -->
-                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
-                    <button
-                        (click)="cerrarModal()"
-                        class="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition text-sm"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        (click)="guardar()"
-                        class="px-6 py-2.5 rounded-xl bg-[#1B1947] hover:bg-[#2a2870] text-white font-semibold transition text-sm shadow-md"
-                    >
-                        {{ editar ? 'Actualizar' : 'Guardar' }}
-                    </button>
-                </div>
-            </div>
+        <!-- usuario activo -->
+        <label class="flex items-center gap-3 mb-6 cursor-pointer">
+          <input
+            type="checkbox"
+            [(ngModel)]="usuario.activo"
+            class="w-5 h-5 accent-[#1d1b4f]"
+          >
+          <span class="font-semibold text-[#10203b]">Usuario activo</span>
+        </label>
+
+        <!-- botones -->
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
+          <button
+            (click)="cerrarModal()"
+            class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition text-center"
+          >
+            Cancelar
+          </button>
+          <button
+            (click)="guardar()"
+            class="px-6 py-2.5 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition text-center"
+          >
+            {{ editar ? 'Actualizar' : 'Guardar' }}
+          </button>
         </div>
     }
 </div>
