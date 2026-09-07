@@ -1,210 +1,226 @@
-<div class="min-h-screen bg-white p-4 md:p-8">
-  <div class="max-w-7xl mx-auto">
+<div class="h-[100dvh] w-full bg-gray-50 flex flex-col text-slate-800 antialiased selection:bg-indigo-500 selection:text-white overflow-hidden">
 
-    <!-- contenido principal -->
-    <main class="w-full">
+    <!-- BARRA SUPERIOR -->
+    <header class="bg-[#1B1947] h-16 shrink-0 flex items-center px-6 shadow-md w-full lg:pl-20 transition-all duration-300">
+        <h1 class="text-xl font-extrabold tracking-widest text-white uppercase">
+            Gestión de Usuarios
+        </h1>
+    </header>
 
-      <!-- encabezado -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-[#10203b]">
-            Usuarios
-          </h1>
-          <p class="mt-2 text-gray-500">
-            Gestión de usuarios 
-          </p>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+
+        <!-- ACCIONES SUPERIORES (BUSCADOR Y BOTÓN CREAR) -->
+        <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 mb-4 shrink-0">
+
+            <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+            <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full md:w-2/3 h-12 shadow-sm hover:border-indigo-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all duration-300">
+                
+                <div class="flex items-center px-4 flex-1 gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Buscar usuario..."
+                        class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent">
+                </div>
+
+                <div class="h-5 w-px bg-gray-200"></div>
+
+                <button class="px-5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707v3.172a1 1 0 01-.553.894l-4 2A1 1 0 017 20.172v-9.172a1 1 0 00-.293-.707L.293 7.293A1 1 0 010 6.586V4z"/>
+                    </svg>
+                    Filtros
+                </button>
+            </div>
+
+            <!-- BOTÓN NUEVO USUARIO -->
+            <button
+                (click)="abrirModalCrear()"
+                class="flex items-center justify-center gap-2 bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold px-5 py-3 rounded-2xl shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-300 text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                + Nuevo Usuario
+            </button>
+
         </div>
 
-        <button
-          (click)="abrirModalCrear()"
-          class="px-6 py-3 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition w-full md:w-auto text-center"
-        >
-          + Nuevo usuario
-        </button>
-      </div>
+        <!-- TABLA DE DATOS RESPONSIVA CON SCROLL INTERNO -->
+        <div class="bg-white rounded-2xl shadow-md border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
+            <div class="overflow-y-auto flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">ID</th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Nombre</th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Correo</th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Rol</th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Estado</th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
 
-      <!-- tabla de usuarios (responsive con scroll horizontal) -->
-      <div class="w-full overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
-        <table class="w-full text-left border-collapse min-w-[700px]">
-          <thead class="bg-[#e4e2dd]">
-            <tr>
-              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">ID</th>
-              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Nombre</th>
-              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Correo</th>
-              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Rol</th>
-              <th class="px-5 py-4 text-sm font-bold text-[#10203b]">Estado</th>
-              <th class="px-5 py-4 text-center text-sm font-bold text-[#10203b]">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr
-              *ngFor="let usuario of usuarios"
-              class="hover:bg-gray-50 transition"
-            >
-              <td class="px-5 py-4 text-gray-600 font-medium">
-                {{ usuario.id_usuario }}
-              </td>
-              <td class="px-5 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-[#cbd5e1] flex items-center justify-center text-[#10203b] font-bold shrink-0">
-                    {{ usuario.nombre?.charAt(0) }}
-                  </div>
-                  <div>
-                    <p class="font-semibold text-[#10203b]">
-                      {{ usuario.nombre }} {{ usuario.apellido }}
-                    </p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-5 py-4 text-gray-600 truncate max-w-xs">
-                {{ usuario.email }}
-              </td>
-              <td class="px-5 py-4">
-                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
-                  {{ usuario.id_rol }}
-                </span>
-              </td>
-              <td class="px-5 py-4">
-                <span *ngIf="usuario.activo" class="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
-                  Activo
-                </span>
-                <span *ngIf="!usuario.activo" class="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
-                  Inactivo
-                </span>
-              </td>
+                        <tr *ngFor="let usuario of usuarios" class="hover:bg-indigo-50/30 transition-colors group">
+                            <td class="px-6 py-3.5 text-gray-600 font-medium">
+                                {{ usuario.id_usuario }}
+                            </td>
+                            <td class="px-6 py-3.5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[#1B1947] font-bold shrink-0 text-xs shadow-xs">
+                                        {{ usuario.nombre?.charAt(0) }}
+                                    </div>
+                                    <span class="font-bold text-gray-900">
+                                        {{ usuario.nombre }} {{ usuario.apellido }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3.5 text-gray-600 truncate max-w-xs">
+                                {{ usuario.email }}
+                            </td>
+                            <td class="px-6 py-3.5">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                    {{ usuario.id_rol }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3.5">
+                                <span *ngIf="usuario.activo" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    Activo
+                                </span>
+                                <span *ngIf="!usuario.activo" class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100">
+                                    Inactivo
+                                </span>
+                            </td>
+                            <td class="px-6 py-3.5">
+                                <div class="flex justify-center items-center gap-2">
+                                    <!-- BOTÓN EDITAR -->
+                                    <button
+                                        (click)="abrirModalEditar(usuario)"
+                                        class="bg-gray-100 hover:bg-[#F1C63C] hover:text-white text-gray-600 p-2 rounded-xl transition-all duration-200 shadow-xs hover:shadow-md flex items-center justify-center"
+                                        title="Editar"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                        </svg>
+                                    </button>
 
-             <div class="flex justify-center items-center gap-4">
+                                    <!-- SWITCH ACTIVAR / INACTIVAR -->
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        [attr.aria-checked]="usuario.activo"
+                                        (click)="eliminarUsuario(usuario)"
+                                        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none shadow-xs"
+                                        [ngClass]="usuario.activo ? 'bg-emerald-500' : 'bg-gray-300'"
+                                        title="Cambiar estado"
+                                    >
+                                        <span
+                                            class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300"
+                                            [ngClass]="usuario.activo ? 'translate-x-6' : 'translate-x-1'"
+                                        ></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
 
-  <!-- BOTÓN EDITAR -->
-            <button
-              (click)="abrirModalEditar(usuario)"
-              class="px-4 py-2 rounded-lg bg-[#f1c63c] text-[#10203b] font-semibold hover:opacity-80 transition"
-            >
-              Editar
-            </button>
+                        <!-- Sin usuarios -->
+                        <tr *ngIf="usuarios.length === 0">
+                            <td colspan="6" class="text-center py-12 text-gray-400">
+                                No hay usuarios registrados.
+                            </td>
+                        </tr>
 
-            <!-- SWITCH ACTIVAR / INACTIVAR -->
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="usuario.activo"
-              (click)="eliminarUsuario(usuario)"
-              class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2"
-              [ngClass]="usuario.activo 
-                ? 'bg-green-500 focus:ring-green-400' 
-                : 'bg-gray-300 focus:ring-gray-400'"
-            >
-
-    <!-- CÍRCULO DEL SWITCH -->
-              <span
-                class="inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300"
-                [ngClass]="usuario.activo 
-                  ? 'translate-x-6' 
-                  : 'translate-x-1'"
-              >
-              </span>
-
-            </button>
-
-          </div>
-
-            </tr>
-
-            <!-- sin usuario -->
-            <tr *ngIf="usuarios.length === 0">
-              <td colspan="6" class="text-center py-12 text-gray-500">
-                No hay usuarios registrados.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     </main>
 
-  </div>
+    <!-- MODAL RESPONSIVO -->
+    @if (modal) {
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8 my-auto border border-gray-100">
+                <h2 class="text-2xl font-bold text-[#1B1947] mb-6">
+                    {{ editar ? 'Editar usuario' : 'Nuevo usuario' }}
+                </h2>
 
-  <!-- modal responsivo -->
-  @if (modal) {
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8 my-auto">
-        <h2 class="text-2xl font-bold text-[#10203b] mb-6">
-          {{ editar ? 'Editar usuario' : 'Nuevo usuario' }}
-        </h2>
+                <!-- nombre -->
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
+                <input
+                    type="text"
+                    [(ngModel)]="usuario.nombre"
+                    placeholder="Nombre"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
+                >
 
-        <!-- nombre -->
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">Nombre</label>
-        <input
-          type="text"
-          [(ngModel)]="usuario.nombre"
-          placeholder="Nombre"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-        >
+                <!-- apellido -->
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Apellido</label>
+                <input
+                    type="text"
+                    [(ngModel)]="usuario.apellido"
+                    placeholder="Apellido"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
+                >
 
-        <!-- apellido -->
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">Apellido</label>
-        <input
-          type="text"
-          [(ngModel)]="usuario.apellido"
-          placeholder="Apellido"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-        >
+                <!-- correo -->
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Correo electrónico</label>
+                <input
+                    type="email"
+                    [(ngModel)]="usuario.email"
+                    placeholder="correo@ejemplo.com"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
+                >
 
-        <!-- correo -->
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">Correo electrónico</label>
-        <input
-          type="email"
-          [(ngModel)]="usuario.email"
-          placeholder="correo@ejemplo.com"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-        >
+                <!-- contraseña -->
+                @if (!editar) {
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contraseña</label>
+                    <input
+                        type="password"
+                        [(ngModel)]="usuario.password"
+                        placeholder="Contraseña"
+                        class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
+                    >
+                }
 
-        <!-- contraseña -->
-        @if (!editar) {
-          <label class="block text-sm font-semibold text-[#10203b] mb-2">Contraseña</label>
-          <input
-            type="password"
-            [(ngModel)]="usuario.password"
-            placeholder="Contraseña"
-            class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-          >
-        }
+                <!-- id del rol -->
+                <label class="block text-sm font-semibold text-gray-700 mb-2">ID del rol</label>
+                <input
+                    type="number"
+                    [(ngModel)]="usuario.id_rol"
+                    placeholder="ID del rol"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50"
+                >
 
-        <!-- id del rol -->
-        <label class="block text-sm font-semibold text-[#10203b] mb-2">ID del rol</label>
-        <input
-          type="number"
-          [(ngModel)]="usuario.id_rol"
-          placeholder="ID del rol"
-          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-        >
+                <!-- usuario activo -->
+                <label class="flex items-center gap-3 mb-6 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        [(ngModel)]="usuario.activo"
+                        class="w-4 h-4 accent-[#1B1947] rounded-sm"
+                    >
+                    <span class="font-semibold text-sm text-gray-700">Usuario activo</span>
+                </label>
 
-        <!-- usuario activo -->
-        <label class="flex items-center gap-3 mb-6 cursor-pointer">
-          <input
-            type="checkbox"
-            [(ngModel)]="usuario.activo"
-            class="w-5 h-5 accent-[#1d1b4f]"
-          >
-          <span class="font-semibold text-[#10203b]">Usuario activo</span>
-        </label>
-
-        <!-- botones -->
-        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
-          <button
-            (click)="cerrarModal()"
-            class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition text-center"
-          >
-            Cancelar
-          </button>
-          <button
-            (click)="guardar()"
-            class="px-6 py-2.5 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition text-center"
-          >
-            {{ editar ? 'Actualizar' : 'Guardar' }}
-          </button>
+                <!-- botones -->
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
+                    <button
+                        (click)="cerrarModal()"
+                        class="px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition text-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        (click)="guardar()"
+                        class="px-6 py-2.5 rounded-xl bg-[#1B1947] hover:bg-[#2a2870] text-white font-semibold transition text-sm shadow-md"
+                    >
+                        {{ editar ? 'Actualizar' : 'Guardar' }}
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  }
+    }
 </div>
