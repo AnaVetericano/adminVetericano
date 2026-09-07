@@ -28,6 +28,7 @@ export class UsuariosRoles implements OnInit {
 
   usuario = {
     id_usuario: 0,
+    identificacion:'',
     email: '',
     password: '',
     nombre: '',
@@ -63,6 +64,7 @@ export class UsuariosRoles implements OnInit {
   abrirModalCrear(): void {
     this.usuario = {
       id_usuario: 0,
+      identificacion:'',
       email: '',
       password: '',
       nombre: '',
@@ -79,6 +81,7 @@ export class UsuariosRoles implements OnInit {
   abrirModalEditar(usuarioSeleccionado: any): void {
     this.usuario = {
       id_usuario: usuarioSeleccionado.id_usuario,
+      identificacion:'',
       email: usuarioSeleccionado.email,
       password: '', // La contraseña no se muestra por seguridad
       nombre: usuarioSeleccionado.nombre,
@@ -110,6 +113,7 @@ export class UsuariosRoles implements OnInit {
   crearUsuario(): void {
     const nuevoUsuario = {
       email: this.usuario.email,
+      identificacion:this.usuario.identificacion,
       password: this.usuario.password,
       nombre: this.usuario.nombre,
       apellido: this.usuario.apellido,
@@ -118,10 +122,10 @@ export class UsuariosRoles implements OnInit {
     };
 
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
-  next: () => {
+  next: (response) => {
     Swal.fire({
       title: '¡Éxito!',
-      text: 'Usuario creado correctamente',
+      text: 'Usuario creado correctamente' + response,
       icon: 'success',
       confirmButtonText: 'Aceptar',
       confirmButtonColor: '#4141A5'
@@ -131,16 +135,36 @@ export class UsuariosRoles implements OnInit {
       this.cerrarModal();
     });
   },
-  error: (error) => {
-    console.error('Error al crear usuario:', error.error);
-    Swal.fire({
-      title: 'Oops...',
-      text: 'Error al crear el usuario. Revisa la consola.',
-      icon: 'error',
-      confirmButtonText: 'Cerrar',
-      confirmButtonColor: '#d33'
+error: (error) => {
+  console.error('Error al crear usuario:', error.error);
+  
+  // 1. Mensaje por defecto
+  let mensajeErrorHtml = 'Error al crear el usuario';
+
+  // 2. Construir una lista HTML con los errores y sus campos
+  if (error.error && typeof error.error === 'object') {
+    const listaErrores = Object.entries(error.error).map(([campo, mensajes]) => {
+      // Si el mensaje es un arreglo, lo unimos. Si no, lo mostramos directo.
+      const textoError = Array.isArray(mensajes) ? mensajes.join(', ') : mensajes;
+      // Formato: <li><strong>campo:</strong> mensaje de error</li>
+      return `<li><strong>${campo}:</strong> ${textoError}</li>`;
     });
+
+    if (listaErrores.length > 0) {
+      // Envolvemos los elementos en una etiqueta <ul> (lista desordenada)
+      mensajeErrorHtml = `<ul style="text-align: left;">${listaErrores.join('')}</ul>`;
+    }
   }
+
+  // 3. Mostrar el SweetAlert usando la propiedad 'html'
+  Swal.fire({
+    title: 'Oops...',
+    html: mensajeErrorHtml, // IMPORTANTE: Cambiar 'text' por 'html'
+    icon: 'error',
+    confirmButtonText: 'Cerrar',
+    confirmButtonColor: '#d33'
+  });
+}
     });
   }
 
@@ -148,6 +172,7 @@ export class UsuariosRoles implements OnInit {
 actualizarUsuario(): void {
 
   const usuarioActualizado = {
+    identificacion:this.usuario.identificacion, 
     email: this.usuario.email,
     nombre: this.usuario.nombre,
     apellido: this.usuario.apellido,
@@ -225,9 +250,12 @@ actualizarUsuario(): void {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: nuevoEstado ? '#16a34a' : '#ef4444',
-      cancelButtonColor: '#64748b',
+      cancelButtonColor: '#ffffff',
       confirmButtonText: `Sí, ${accion}`,
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+        customClass: {
+      cancelButton: '!text-black !border !border-gray-400'
+    }
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.inactivarUsuario(id_usuario, nuevoEstado).subscribe({
