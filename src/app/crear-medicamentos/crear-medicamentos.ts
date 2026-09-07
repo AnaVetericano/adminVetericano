@@ -31,7 +31,7 @@ export class CrearMedicamentos {
       next: (respuesta) => {
         alert('Medicamento creado correctamente');
         console.log(respuesta);
-        this.router.navigate(['/listarmedicamentos']);
+        this.router.navigate(['//listarmedicamentos']);
       },
       error: (err) => {
         console.log(err);

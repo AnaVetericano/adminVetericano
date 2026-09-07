@@ -36,6 +36,7 @@ export const routes: Routes = [
       { path: 'examen-clinico', component: ExamenClinico },
       { path: 'editar-examen', component: EditarExamen },
       { path: 'usuarios-roles', component: UsuariosRoles },
+      { path: 'examenes-clinicos', component: ExamenClinico },
       
       { path: 'listarespecies', component: ListarEspecies },
       { path: 'crearespecies', component: CrearEspecies },
