@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
+import { AuthService, CrearEspecie, ActualizarEspecie } from '../services/auth';
 
 @Component({
 selector: 'app-especies',
@@ -24,7 +25,7 @@ editar = false;
 textoBusqueda = '';
 
 // Endpoint de especies
-private apiUrl = `${environment.apiUrl}/especies/`;
+private apiUrl = `${environment.apiUrlespecies}/especies/`;
 
 especie = {
 id_especie: 0,
@@ -35,6 +36,7 @@ activo: true
 
 constructor(
 private http: HttpClient,
+private authService: AuthService,
 private cdr: ChangeDetectorRef,
 private router: Router
 ) {}
@@ -47,7 +49,7 @@ this.listarEspecies();
 
 listarEspecies(): void {
 
-this.http.get<any>(this.apiUrl).subscribe({
+this.authService.listarEspecies().subscribe({
 
   next: (respuesta) => {
 
@@ -190,17 +192,17 @@ if (this.editar) {
 
 crearEspecie(): void {
 
-const nuevaEspecie = {
+const nuevaEspecie: CrearEspecie = {
 
-  nombre: this.especie.nombre,
+  nombre: this.especie.nombre.trim(),
 
-  descripcion: this.especie.descripcion,
+  descripcion: this.especie.descripcion ? this.especie.descripcion.trim() : '',
 
   activo: this.especie.activo
 
 };
 
-this.http.post(this.apiUrl, nuevaEspecie).subscribe({
+this.authService.crearEspecie(nuevaEspecie).subscribe({
 
   next: () => {
 
@@ -221,11 +223,13 @@ this.http.post(this.apiUrl, nuevaEspecie).subscribe({
 
   error: (error) => {
 
-    console.error('Error al crear especie:', error.error);
+    console.error('Error al crear especie:', error);
+
+    const mensajeError = error?.error?.nombre?.[0] || error?.error?.detail || 'No se pudo crear la especie. Revisa la consola.';
 
     Swal.fire({
       title: 'Oops...',
-      text: 'No se pudo crear la especie. Revisa la consola.',
+      text: mensajeError,
       icon: 'error',
       confirmButtonText: 'Cerrar',
       confirmButtonColor: '#d33'
@@ -241,18 +245,18 @@ this.http.post(this.apiUrl, nuevaEspecie).subscribe({
 
 actualizarEspecie(): void {
 
-const especieActualizada = {
+const especieActualizada: ActualizarEspecie = {
 
-  nombre: this.especie.nombre,
+  nombre: this.especie.nombre.trim(),
 
-  descripcion: this.especie.descripcion,
+  descripcion: this.especie.descripcion ? this.especie.descripcion.trim() : '',
 
   activo: this.especie.activo
 
 };
 
-this.http.put(
-  `${this.apiUrl}${this.especie.id_especie}/`,
+this.authService.actualizarEspecie(
+  this.especie.id_especie,
   especieActualizada
 ).subscribe({
 
@@ -279,13 +283,15 @@ this.http.put(
 
     console.error(
       'Error al actualizar especie:',
-      error.error
+      error
     );
+
+    const mensajeError = error?.error?.nombre?.[0] || error?.error?.detail || 'No se pudo actualizar la especie.';
 
     Swal.fire({
       icon: 'error',
       title: 'Error al actualizar',
-      text: 'No se pudo actualizar la especie.',
+      text: mensajeError,
       confirmButtonText: 'Entendido',
       confirmButtonColor: '#4141A5'
     });
@@ -332,19 +338,9 @@ Swal.fire({
     return;
   }
 
-  const datosActualizados = {
-
-    nombre: especie.nombre,
-
-    descripcion: especie.descripcion,
-
-    activo: nuevoEstado
-
-  };
-
-  this.http.put(
-    `${this.apiUrl}${especie.id_especie}/`,
-    datosActualizados
+  this.authService.cambiarEstadoEspecie(
+    especie.id_especie,
+    nuevoEstado
   ).subscribe({
 
     next: () => {
@@ -364,12 +360,14 @@ Swal.fire({
 
       console.error(
         `Error al ${accion} especie:`,
-        error.error
+        error
       );
+
+      const mensajeError = error?.error?.detail || `No se pudo ${accion} la especie.`;
 
       Swal.fire({
         title: 'Error',
-        text: `No se pudo ${accion} la especie.`,
+        text: mensajeError,
         icon: 'error'
       });
 

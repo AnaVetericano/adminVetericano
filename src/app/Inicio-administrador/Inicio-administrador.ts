@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 

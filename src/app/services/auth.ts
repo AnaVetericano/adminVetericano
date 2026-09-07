@@ -41,6 +41,35 @@ export interface ConfirmarPasswordPayload {
   nueva_password: string;
 }
 
+export interface Especie {
+id_especie?: number;
+nombre: string;
+descripcion: string;
+activo: boolean;
+}
+
+export interface CrearEspecie {
+nombre: string;
+descripcion: string;
+activo: boolean;
+}
+
+export interface ActualizarEspecie {
+nombre: string;
+descripcion: string;
+activo: boolean;
+}
+
+export interface CambiarEstadoEspecie {
+activo: boolean;
+}
+
+export interface RespuestaEspecie {
+id_especie: number;
+nombre: string;
+descripcion: string;
+activo: boolean;
+}
 
 
 
@@ -48,7 +77,8 @@ export interface ConfirmarPasswordPayload {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = environment.apiUrl; 
+  private apiUrlespecies =environment.apiUrlespecies
 
   constructor(private http: HttpClient) {}
 
@@ -93,4 +123,45 @@ export class AuthService {
     );
   }
 
+  private get baseUrlEspecies(): string {
+    const base = (this.apiUrlespecies || '').replace(/\/+$/, '');
+    if (base.endsWith('/especies/especies')) {
+      return `${base}/`;
+    }
+    if (base.endsWith('/especies')) {
+      return `${base}/especies/`;
+    }
+    return `${base}/especies/especies/`;
+  }
+
+  listarEspecies(): Observable<any> {
+    return this.http.get<any>(this.baseUrlEspecies);
+  }
+
+  crearEspecie(especie: CrearEspecie): Observable<RespuestaEspecie> {
+    return this.http.post<RespuestaEspecie>(
+      this.baseUrlEspecies,
+      especie
+    );
+  }
+
+  actualizarEspecie(
+    id_especie: number,
+    especie: ActualizarEspecie
+  ): Observable<RespuestaEspecie> {
+    return this.http.put<RespuestaEspecie>(
+      `${this.baseUrlEspecies}${id_especie}/`,
+      especie
+    );
+  }
+
+  cambiarEstadoEspecie(
+    id_especie: number,
+    activo: boolean
+  ): Observable<RespuestaEspecie> {
+    return this.http.patch<RespuestaEspecie>(
+      `${this.baseUrlEspecies}${id_especie}/`,
+      { activo }
+    );
+  }
 }
