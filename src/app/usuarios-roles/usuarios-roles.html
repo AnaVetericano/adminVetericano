@@ -149,6 +149,13 @@
           placeholder="Apellido"
           class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
         >
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">Numero de identificacion </label>
+        <input
+           type="text"
+          [(ngModel)]="usuario.identificacion"
+          placeholder="1234567899"
+          class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+        >
 
         <!-- correo -->
         <label class="block text-sm font-semibold text-[#10203b] mb-2">Correo electrónico</label>
