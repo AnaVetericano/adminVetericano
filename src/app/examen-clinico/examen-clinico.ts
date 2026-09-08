@@ -14,7 +14,6 @@ import { AuthService } from '../services/auth';
 export class ExamenClinicoComponent {
   modalAbierto: boolean = false;
   
-  // Objeto que mapea lo que escribes en el HTML
   examen: any = {
     nombre_tipo: '',
     descripcion: '',
@@ -38,7 +37,6 @@ export class ExamenClinicoComponent {
   }
 
   guardarExamen() {
-    // Django solo necesita nombre_tipo según tu base de datos
     const payload = {
       nombre_tipo: this.examen.nombre || this.examen.nombre_tipo
     };
