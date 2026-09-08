@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 

@@ -1,10 +1,11 @@
 import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AuthService } from '../services/auth';
 import { Chart } from 'chart.js/auto';
+import { CommonModule, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-graficas',
-  imports: [],
+  imports: [NgIf, CommonModule],
   templateUrl: './graficas.html',
   styleUrl: './graficas.css',
 })
