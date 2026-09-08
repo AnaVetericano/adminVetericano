@@ -6,15 +6,16 @@ import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
+import { Graficas } from '../graficas/graficas';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, Graficas],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
-export class UsuariosRoles implements OnInit {
+export class UsuariosRoles implements OnInit{
 
   textoBusqueda: string = '';
 
@@ -50,7 +51,6 @@ usuariosFiltrados: any[] = [];
 
   ngOnInit(): void {
     this.listarUsuarios();
-   
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
