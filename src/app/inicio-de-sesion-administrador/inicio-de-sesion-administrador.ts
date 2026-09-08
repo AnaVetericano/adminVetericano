@@ -13,7 +13,7 @@ import { AuthService } from '../services/auth';
   styleUrl: './inicio-de-sesion-administrador.css'    
 })
 export class InicioDeSesionAdministradorComponent { 
-  
+
   usuario = {
     email: '',
     password: ''
