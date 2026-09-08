@@ -38,7 +38,7 @@ usuariosFiltrados: any[] = [];
     password: '',
     nombre: '',
     apellido: '',
-    id_rol: 0,
+    nombre_rol: '',
     activo: true
   };
 
@@ -73,6 +73,7 @@ usuariosFiltrados: any[] = [];
     }
 
   });
+  
 
 }
 
@@ -85,7 +86,7 @@ usuariosFiltrados: any[] = [];
       password: '',
       nombre: '',
       apellido: '',
-      id_rol: 0,
+      nombre_rol: '',
       activo: true
     };
 
@@ -103,7 +104,7 @@ usuariosFiltrados: any[] = [];
       nombre: usuarioSeleccionado.nombre,
       apellido: usuarioSeleccionado.apellido,
       // Maneja si id_rol viene como objeto o como número directo
-      id_rol: usuarioSeleccionado.id_rol?.id_rol || usuarioSeleccionado.id_rol,
+      nombre_rol: usuarioSeleccionado.id_rol?.nombre_rol || usuarioSeleccionado.nombre_rol,
       activo: usuarioSeleccionado.activo
     };
 
@@ -133,7 +134,7 @@ usuariosFiltrados: any[] = [];
       password: this.usuario.password,
       nombre: this.usuario.nombre,
       apellido: this.usuario.apellido,
-      id_rol: this.usuario.id_rol,
+      nombre_rol: this.usuario.nombre_rol,
       activo: this.usuario.activo
     };
 
@@ -192,7 +193,7 @@ actualizarUsuario(): void {
     email: this.usuario.email,
     nombre: this.usuario.nombre,
     apellido: this.usuario.apellido,
-    id_rol: this.usuario.id_rol,
+    nombre_rol: this.usuario.nombre_rol,
     activo: this.usuario.activo
   };
 
