@@ -48,22 +48,33 @@ usuariosFiltrados: any[] = [];
 
   ngOnInit(): void {
     this.listarUsuarios();
-    this.cdr.detectChanges()
+   
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
-  listarUsuarios(): void {
-    this.http.get<any>(this.apiUrl).subscribe({
-      next: (respuesta) => {
-        // Si Django devuelve paginación ({results: [...]}), toma results; si no, toma la respuesta directa.
-        this.usuarios = Array.isArray(respuesta) ? respuesta : (respuesta.results || []);
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error al listar usuarios:', error);
-      }
-    });
-  }
+ listarUsuarios(): void {
+
+  this.http.get<any>(this.apiUrl).subscribe({
+
+    next: (respuesta) => {
+
+      this.usuarios = Array.isArray(respuesta)
+        ? respuesta
+        : (respuesta.results || []);
+
+      // IMPORTANTE: cargar la lista que muestra la tabla
+      this.usuariosFiltrados = [...this.usuarios];
+
+      this.cdr.detectChanges();
+    },
+
+    error: (error) => {
+      console.error('Error al listar usuarios:', error);
+    }
+
+  });
+
+}
 
   // Abrir modal para crear
   abrirModalCrear(): void {
