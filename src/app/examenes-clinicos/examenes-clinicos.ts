@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
   styleUrl: './examenes-clinicos.css',
 })
 export class ExamenesClinicos implements OnInit {
+
   listaCatalogo: ProcedimientoCatalogo[] = [];
   listaFiltrada: ProcedimientoCatalogo[] = [];
   cargando: boolean = true;
@@ -59,6 +60,14 @@ export class ExamenesClinicos implements OnInit {
         this.listaCatalogo = [];
         this.listaFiltrada = [];
         this.cargando = false;
+        
+        // Notificación opcional si falla la carga inicial
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'No pudimos cargar la lista de exámenes. Revisa tu conexión.'
+        });
+        
         this.cdr.detectChanges();
       }
     });
@@ -103,8 +112,13 @@ export class ExamenesClinicos implements OnInit {
   }
 
   guardarExamen() {
+    // Validación visual con SweetAlert
     if (!this.examenActual.nombre_tipo || !this.examenActual.nombre_tipo.trim()) {
-      alert('Por favor ingresa el nombre del examen.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campo incompleto',
+        text: 'Por favor ingresa el nombre del examen antes de guardar.'
+      });
       return;
     }
 
@@ -113,10 +127,21 @@ export class ExamenesClinicos implements OnInit {
         next: () => {
           this.cerrarModal();
           this.cargarCatalogo();
+          Swal.fire({
+            icon: 'success',
+            title: '¡Actualizado!',
+            text: 'El examen clínico se ha actualizado correctamente.',
+            timer: 2000,
+            showConfirmButton: false
+          });
         },
         error: (err: any) => {
           console.error('Error al actualizar:', err);
-          alert('Error al actualizar el examen en el servidor.');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de servidor',
+            text: 'Hubo un problema al actualizar el examen en la base de datos.'
+          });
         }
       });
     } else {
@@ -124,10 +149,21 @@ export class ExamenesClinicos implements OnInit {
         next: () => {
           this.cerrarModal();
           this.cargarCatalogo();
+          Swal.fire({
+            icon: 'success',
+            title: '¡Creado!',
+            text: 'El examen clínico se ha registrado correctamente.',
+            timer: 2000,
+            showConfirmButton: false
+          });
         },
         error: (err: any) => {
           console.error('Error al crear:', err);
-          alert('Error al registrar el examen en el servidor.');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error de servidor',
+            text: 'Hubo un problema al registrar el examen en la base de datos.'
+          });
         }
       });
     }
@@ -135,15 +171,39 @@ export class ExamenesClinicos implements OnInit {
 
   eliminarExamen(id?: number) {
     if (!id) return;
-    if (confirm('¿Estás seguro de que deseas eliminar este examen?')) {
-      this.authService.eliminarCatalogo(id).subscribe({
-        next: () => {
-          this.cargarCatalogo();
-        },
-        error: (err: any) => {
-          console.error('Error al eliminar:', err);
-        }
-      });
-    }
+    
+    // Cuadro de confirmación interactivo
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "Esta acción eliminará el examen de forma permanente.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      // Solo si el usuario hace clic en "Sí, eliminar"
+      if (result.isConfirmed) {
+        this.authService.eliminarCatalogo(id).subscribe({
+          next: () => {
+            this.cargarCatalogo();
+            Swal.fire(
+              '¡Eliminado!',
+              'El examen ha sido eliminado del catálogo.',
+              'success'
+            );
+          },
+          error: (err: any) => {
+            console.error('Error al eliminar:', err);
+            Swal.fire(
+              'Error',
+              'No se pudo eliminar el examen. Es posible que esté asociado a una consulta médica.',
+              'error'
+            );
+          }
+        });
+      }
+    });
   }
 }
