@@ -6,20 +6,28 @@ import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
+import { Graficas } from '../graficas/graficas';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, Graficas],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
-export class UsuariosRoles implements OnInit {
+export class UsuariosRoles implements OnInit{
+
+  textoBusqueda: string = '';
+
+
+  
+usuariosFiltrados: any[] = [];
 
   usuarios: any[] = [];
 
   modal = false;
   editar = false;
+  mostrarFiltros = false;
 
   // URL unificada apuntando exactamente a endpoint de usuarios en Railway
   private apiUrl = `${environment.apiUrl}/usuarios/`;
@@ -32,7 +40,8 @@ export class UsuariosRoles implements OnInit {
     password: '',
     nombre: '',
     apellido: '',
-    id_rol: 0,
+    id_rol: null as number | null,
+    nombre_rol: '',
     activo: true
   };
 
@@ -42,22 +51,33 @@ export class UsuariosRoles implements OnInit {
 
   ngOnInit(): void {
     this.listarUsuarios();
-    this.cdr.detectChanges()
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
-  listarUsuarios(): void {
-    this.http.get<any>(this.apiUrl).subscribe({
-      next: (respuesta) => {
-        // Si Django devuelve paginación ({results: [...]}), toma results; si no, toma la respuesta directa.
-        this.usuarios = Array.isArray(respuesta) ? respuesta : (respuesta.results || []);
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error al listar usuarios:', error);
-      }
-    });
-  }
+ listarUsuarios(): void {
+
+  this.http.get<any>(this.apiUrl).subscribe({
+
+    next: (respuesta) => {
+
+      this.usuarios = Array.isArray(respuesta)
+        ? respuesta
+        : (respuesta.results || []);
+
+      // IMPORTANTE: cargar la lista que muestra la tabla
+      this.usuariosFiltrados = [...this.usuarios];
+
+      this.cdr.detectChanges();
+    },
+
+    error: (error) => {
+      console.error('Error al listar usuarios:', error);
+    }
+
+  });
+  
+
+}
 
   // Abrir modal para crear
   abrirModalCrear(): void {
@@ -68,25 +88,30 @@ export class UsuariosRoles implements OnInit {
       password: '',
       nombre: '',
       apellido: '',
-      id_rol: 0,
+      id_rol: null ,
+      nombre_rol: '',
       activo: true
     };
 
     this.editar = false;
     this.modal = true;
+    
   }
 
   // Abrir modal para editar
   abrirModalEditar(usuarioSeleccionado: any): void {
     this.usuario = {
       id_usuario: usuarioSeleccionado.id_usuario,
-      identificacion:'',
+      identificacion:usuarioSeleccionado.identificacion || '',
       email: usuarioSeleccionado.email,
       password: '', // La contraseña no se muestra por seguridad
       nombre: usuarioSeleccionado.nombre,
       apellido: usuarioSeleccionado.apellido,
       // Maneja si id_rol viene como objeto o como número directo
-      id_rol: usuarioSeleccionado.id_rol?.id_rol || usuarioSeleccionado.id_rol,
+      id_rol: typeof usuarioSeleccionado.id_rol === 'object'
+      ? usuarioSeleccionado.id_rol?.id_rol
+      : usuarioSeleccionado.id_rol,
+      nombre_rol: usuarioSeleccionado.nombre_rol ||'',
       activo: usuarioSeleccionado.activo
     };
 
@@ -305,6 +330,42 @@ actualizarUsuario(): void {
     }
 
   });
+}
+filtrarUsuarios(): void {
+  const texto = this.textoBusqueda.trim().toLowerCase();
+
+  if (!texto) {
+    this.usuariosFiltrados = [...this.usuarios];
+    return;
+  }
+
+  this.usuariosFiltrados = this.usuarios.filter(usuarios =>
+    usuarios.nombre?.toLowerCase().includes(texto) ||
+    usuarios.descripcion?.toLowerCase().includes(texto) ||
+    usuarios.id_especie?.toString().includes(texto)
+  );
+}
+filtrarPorRol(idRol: number | null): void {
+
+  // Si selecciona "Todos"
+  if (idRol === null) {
+    this.usuariosFiltrados = [...this.usuarios];
+    this.mostrarFiltros = false;
+    return;
+  }
+
+  // Filtrar por rol
+  this.usuariosFiltrados = this.usuarios.filter(usuario => {
+
+    const rolUsuario =
+      typeof usuario.id_rol === 'object'
+        ? usuario.id_rol?.id_rol
+        : usuario.id_rol;
+
+    return Number(rolUsuario) === idRol;
+  });
+
+  this.mostrarFiltros = false;
 }
 
   // Alias para llamar inactivarUsuario directamente

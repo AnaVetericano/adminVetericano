@@ -2,6 +2,7 @@
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
 
 @Component({
@@ -12,7 +13,7 @@ import { AuthService } from '../services/auth';
   styleUrl: './inicio-de-sesion-administrador.css'    
 })
 export class InicioDeSesionAdministradorComponent { 
-  
+
   usuario = {
     email: '',
     password: ''
@@ -38,8 +39,20 @@ export class InicioDeSesionAdministradorComponent {
   login() {
     // Validación corregida a 'email'
     if (this.usuario.email === '' || this.usuario.password === '') {
-      alert('Por favor, ingresa tu correo y contraseña.');
-      return; 
+    Swal.fire({
+      title: 'Ingrese su correo y contraseña por favor ',
+      text: 'Por favor ingrese su correo y su contraseña validos.',
+      icon: 'info',
+      confirmButtonText: 'Continuar',
+      confirmButtonColor: '#1B1947',
+      background: '#ffffff',
+      color: '#1B1947',
+      customClass: {
+        popup: 'rounded-3xl',
+        title: 'font-bold',
+        confirmButton: 'rounded-xl px-6 py-3 font-semibold'
+      }
+    })      
     }
 
     console.log('Credenciales enviadas:', this.usuario);
@@ -52,7 +65,20 @@ export class InicioDeSesionAdministradorComponent {
       },
       error: (err: any) => {
         const mensaje = err.error?.detail || err.error?.mensaje || err.error?.error || 'Credenciales incorrectas, intenta de nuevo.';
-        alert(mensaje);
+         Swal.fire({
+      title: 'Su usuario o contraseña no son validos',
+      text: mensaje,
+      icon: 'error',
+      confirmButtonText: 'Continuar',
+      confirmButtonColor: '#1B1947',
+      background: '#ffffff',
+      color: '#1B1947',
+      customClass: {
+        popup: 'rounded-3xl',
+        title: 'font-bold',
+        confirmButton: 'rounded-xl px-6 py-3 font-semibold'
+      }
+    })  
       }
     });
   }

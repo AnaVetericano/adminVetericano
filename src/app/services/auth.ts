@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface RegistroUsuario {
@@ -9,9 +9,8 @@ export interface RegistroUsuario {
   nombre: string;
   apellido: string;
 }
-export interface InactivarUsuario{
+export interface InactivarUsuario {
   activo: boolean;
-
 }
 
 export interface RespuestaRegistro {
@@ -42,33 +41,33 @@ export interface ConfirmarPasswordPayload {
 }
 
 export interface Especie {
-id_especie?: number;
-nombre: string;
-descripcion: string;
-activo: boolean;
+  id_especie?: number;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
 }
 
 export interface CrearEspecie {
-nombre: string;
-descripcion: string;
-activo: boolean;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
 }
 
 export interface ActualizarEspecie {
-nombre: string;
-descripcion: string;
-activo: boolean;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
 }
 
 export interface CambiarEstadoEspecie {
-activo: boolean;
+  activo: boolean;
 }
 
 export interface RespuestaEspecie {
-id_especie: number;
-nombre: string;
-descripcion: string;
-activo: boolean;
+  id_especie: number;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
 }
 export interface Patologia {
   id_patologia?: number;
@@ -96,56 +95,72 @@ export interface RespuestaPatologia {
   activo: boolean;
 }
 
-
+export interface ProcedimientoCatalogo {
+  id_procedimiento_catalogo?: number;
+  nombre_tipo: string;
+  tipo?: string;
+  descripcion?: string;
+  observaciones?: string;
+  estado?: string;
+}
+export interface UsersActives {
+  activo: boolean;
+  id_rol: number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private apiUrl = environment.apiUrl; 
-  private apiUrlespecies =environment.apiUrlespecies
+  private apiUrlespecies = environment.apiUrlespecies;
 
   constructor(private http: HttpClient) {}
 
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
-    return this.http.post<RespuestaRegistro>(
-      `${this.apiUrl}/register/`,
-      usuario
-    );
+    return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
-    return this.http.post<RespuestaLogin>(
-      `${this.apiUrl}/login/`,
-      credenciales
-    );
+    return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales);
   }
 
   solicitarRecuperacion(email: string): Observable<any> {
-    return this.http.post<any>(
-      `${this.apiUrl}/recuperar-password/`,
-      { email }
-    );
+    return this.http.post<any>(`${this.apiUrl}/recuperar-password/`, { email });
   }
 
   confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {   
-    return this.http.post<any>(
-      `${this.apiUrl}/confirmar-password/`,
-      payload
-    );
+    return this.http.post<any>(`${this.apiUrl}/confirmar-password/`, payload);
   }
 
   listarRoles(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/roles/`);
   }
 
-
   inactivarUsuario(id_usuario: number, activo: boolean = false): Observable<any> {
     const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
-    return this.http.patch<any>(
-      `${urlBase}/usuarios/${id_usuario}/`,
-      { activo }
-    );
+    return this.http.patch<any>(`${urlBase}/usuarios/${id_usuario}/`, { activo });
+  }
+
+  private getCleanUrl(): string {
+    const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
+    return urlBase.replace(/\/usuarios$/, '');
+  }
+
+  getCatalogo(): Observable<ProcedimientoCatalogo[]> {
+    return this.http.get<ProcedimientoCatalogo[]>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`);
+  }
+
+  crearCatalogo(catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
+    return this.http.post<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`, catalogo);
+  }
+
+  actualizarCatalogo(id: number, catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
+    return this.http.put<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`, catalogo);
+  }
+  
+  eliminarCatalogo(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`);
   }
 
   private get baseUrlEspecies(): string {
@@ -164,29 +179,28 @@ export class AuthService {
   }
 
   crearEspecie(especie: CrearEspecie): Observable<RespuestaEspecie> {
-    return this.http.post<RespuestaEspecie>(
-      this.baseUrlEspecies,
-      especie
-    );
+    return this.http.post<RespuestaEspecie>(this.baseUrlEspecies, especie);
   }
 
-  actualizarEspecie(
-    id_especie: number,
-    especie: ActualizarEspecie
-  ): Observable<RespuestaEspecie> {
-    return this.http.put<RespuestaEspecie>(
-      `${this.baseUrlEspecies}${id_especie}/`,
-      especie
-    );
+  actualizarEspecie(id_especie: number, especie: ActualizarEspecie): Observable<RespuestaEspecie> {
+    return this.http.put<RespuestaEspecie>(`${this.baseUrlEspecies}${id_especie}/`, especie);
   }
 
-  cambiarEstadoEspecie(
-    id_especie: number,
-    activo: boolean
-  ): Observable<RespuestaEspecie> {
-    return this.http.patch<RespuestaEspecie>(
-      `${this.baseUrlEspecies}${id_especie}/`,
-      { activo }
-    );
+  cambiarEstadoEspecie(id_especie: number, activo: boolean): Observable<RespuestaEspecie> {
+    return this.http.patch<RespuestaEspecie>(`${this.baseUrlEspecies}${id_especie}/`, { activo });
   }
+  
+  listUsersActive(){
+    return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(
+      map(
+        usuarios => usuarios.map(
+          (u:any) => ({
+            activo: u.activo, 
+            id_rol: u.id_rol
+          })
+        )
+      )
+    )
+  }
+
 }

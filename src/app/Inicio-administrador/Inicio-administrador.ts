@@ -1,12 +1,15 @@
-import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, inject, ViewChild } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
+import { Chart} from 'chart.js/auto';
+
+
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive, RouterLink],
+  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })
@@ -46,4 +49,5 @@ onLogout(): void {
 
   });
 }
+
 }
