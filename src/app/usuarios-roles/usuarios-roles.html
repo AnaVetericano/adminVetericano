@@ -157,7 +157,7 @@
 
                             <td class="px-6 py-3.5">
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                    {{ usuario.id_rol }}
+                                    {{ usuario.nombre_rol }}
                                 </span>
                             </td>
 
@@ -338,8 +338,8 @@
 
             <input
                 type="number"
-                [(ngModel)]="usuario.id_rol"
-                placeholder="ID del rol"
+                [(ngModel)]="usuario.nombre_rol"
+                placeholder="Rol a asignar"
                 class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
             >
 
