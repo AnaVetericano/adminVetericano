@@ -41,6 +41,18 @@ export interface ConfirmarPasswordPayload {
   nueva_password: string;
 }
 
+export interface ProcedimientoCatalogo {
+  id_procedimiento_catalogo?: number;
+  nombre_tipo: string;
+}
+
+export interface ProcedimientoRealizado {
+  id_procedimiento_realizado?: number;
+  id_consulta: number;
+  id_procedimiento_catalogo: number;
+  nombre_procedimiento?: string;
+  resultado_anexo_url?: string;
+}
 
 
 
@@ -91,6 +103,24 @@ export class AuthService {
       `${urlBase}/usuarios/${id_usuario}/`,
       { activo }
     );
+  }
+
+
+  private getCleanUrl(): string {
+    const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
+    return urlBase.replace(/\/usuarios$/, '');
+  }
+
+  getCatalogo(): Observable<ProcedimientoCatalogo[]> {
+    return this.http.get<ProcedimientoCatalogo[]>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`);
+  }
+
+  crearCatalogo(catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
+    return this.http.post<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`, catalogo);
+  }
+  
+  eliminarCatalogo(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`);
   }
 
 }
