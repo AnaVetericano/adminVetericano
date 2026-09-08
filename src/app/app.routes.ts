@@ -13,7 +13,7 @@ import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-admi
 import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 import { Patologias } from './patologias/patologias';
 import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
-import { ExamenClinico } from './examen-clinico/examen-clinico';
+import { ExamenClinicoComponent } from './examen-clinico/examen-clinico';
 import { EditarExamen } from './editar-examen/editar-examen';
 import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 
@@ -23,21 +23,17 @@ export const routes: Routes = [
   { path: 'register', component: Register },
   { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent },
 
-  // AQUÍ ESTÁ EL CAMBIO: 'inicio-admin' envuelve a todos los módulos con children
   {
     path: 'inicio-admin',
     component: InicioAdministradorComponent,
     children: [
       { path: 'patologias', component: Patologias },
       { path: 'examenes-clinicos', component: ExamenesClinicos },
-      { path: 'examen-clinico', component: ExamenClinico },
+      { path: 'examen-clinico', component: ExamenClinicoComponent },
       { path: 'editar-examen', component: EditarExamen },
       { path: 'usuarios-roles', component: UsuariosRoles },
-      {path:  'especies',component:Especies},
-      { path: 'examenes-clinicos', component: ExamenClinico },
-      
+      { path: 'especies', component: Especies },
       { path: 'formularioespecies', component: FormularioEspecies },
-      
       { path: 'listarmedicamentos', component: ListarMedicamentos },
       { path: 'crearmedicamentos', component: CrearMedicamentos },
       { path: 'formulariomedicamentos', component: FormularioMedicamentos },
