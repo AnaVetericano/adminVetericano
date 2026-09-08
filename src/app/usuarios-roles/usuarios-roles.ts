@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
+import { Chart } from 'chart.js/auto';
 
 @Component({
   selector: 'app-usuarios-roles',
@@ -14,7 +15,12 @@ import { AuthService } from '../services/auth';
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
-export class UsuariosRoles implements OnInit {
+export class UsuariosRoles implements OnInit, AfterViewInit{
+  @ViewChild('UsersActive') GraficUsers!: ElementRef<HTMLCanvasElement>
+  ngAfterViewInit(): void {
+    this.LoadGraficUsersActive()
+  }
+  private GraficUserConst: Chart | undefined
 
   textoBusqueda: string = '';
 
@@ -344,4 +350,31 @@ filtrarUsuarios(): void {
     this.eliminarUsuario(!activo, id_usuario);
   }
 
+  LoadGraficUsersActive(){
+    const activos = this.usuarios.filter(a => a.activo === true).length
+    const inactivos = this.usuarios.filter(a => a.activo === false).length
+    console.log(activos);
+    
+      this.GraficUserConst = new Chart(this.GraficUsers.nativeElement,
+        {
+          type: 'pie',
+          data: {
+            labels: ['Usuarios activos', 'Usuarios inactivos'],
+            datasets:[{
+              label: 'Cantidad',
+              data: [activos, inactivos],
+              backgroundColor: ['#10B981', '#F1C63C']
+            }]
+          },
+          options:{
+            responsive: true,
+            plugins:{
+              legend:{
+                position: 'top'
+              }
+            }
+          }
+        }
+      )
+    }
 }
