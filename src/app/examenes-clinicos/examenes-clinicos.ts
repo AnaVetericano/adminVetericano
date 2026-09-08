@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService, ProcedimientoCatalogo } from '../services/auth';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-examenes-clinicos',
@@ -69,8 +70,9 @@ export class ExamenesClinicos implements OnInit {
       this.listaFiltrada = [...this.listaCatalogo];
     } else {
       this.listaFiltrada = this.listaCatalogo.filter(item =>
-        item.nombre_tipo.toLowerCase().includes(texto) ||
-        (item.descripcion && item.descripcion.toLowerCase().includes(texto))
+        (item.nombre_tipo && item.nombre_tipo.toLowerCase().includes(texto)) ||
+        (item.descripcion && item.descripcion.toLowerCase().includes(texto)) ||
+        (item.tipo && item.tipo.toLowerCase().includes(texto))
       );
     }
   }
@@ -109,25 +111,23 @@ export class ExamenesClinicos implements OnInit {
     if (this.esEdicion && this.examenActual.id_procedimiento_catalogo) {
       this.authService.actualizarCatalogo(this.examenActual.id_procedimiento_catalogo, this.examenActual).subscribe({
         next: () => {
-          alert('¡Examen actualizado con éxito!');
           this.cerrarModal();
           this.cargarCatalogo();
         },
         error: (err: any) => {
           console.error('Error al actualizar:', err);
-          alert('Error al actualizar el examen.');
+          alert('Error al actualizar el examen en el servidor.');
         }
       });
     } else {
       this.authService.crearCatalogo(this.examenActual).subscribe({
         next: () => {
-          alert('¡Examen creado con éxito!');
           this.cerrarModal();
           this.cargarCatalogo();
         },
         error: (err: any) => {
           console.error('Error al crear:', err);
-          alert('Error al crear el examen.');
+          alert('Error al registrar el examen en el servidor.');
         }
       });
     }
@@ -142,7 +142,6 @@ export class ExamenesClinicos implements OnInit {
         },
         error: (err: any) => {
           console.error('Error al eliminar:', err);
-          alert('No se pudo eliminar el examen.');
         }
       });
     }

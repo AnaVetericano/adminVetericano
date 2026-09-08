@@ -28,7 +28,7 @@
             <button
                 type="button"
                 (click)="abrirModalCrear()"
-                class="flex items-center justify-center gap-2 bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold px-5 py-3 rounded-2xl shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-300 text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap">
+                class="flex items-center justify-center gap-2 bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold px-5 py-3 rounded-2xl shadow-lg transition-all text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -66,10 +66,10 @@
                                     <td class="px-6 py-3.5 text-center text-gray-600">{{ item.tipo || 'Clínico' }}</td>
                                     <td class="px-6 py-3.5">
                                         <div class="flex justify-center gap-2">
-                                            <button (click)="abrirModalEditar(item)" class="bg-gray-100 hover:bg-[#F1C63C] hover:text-white text-gray-600 p-2 rounded-xl transition-all duration-200 shadow-xs" title="Editar">
+                                            <button (click)="abrirModalEditar(item)" class="bg-gray-100 hover:bg-[#F1C63C] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs" title="Editar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                             </button>
-                                            <button (click)="eliminarExamen(item.id_procedimiento_catalogo)" class="bg-gray-100 hover:bg-red-600 hover:text-white text-gray-600 p-2 rounded-xl transition-all duration-200 shadow-xs" title="Eliminar">
+                                            <button (click)="eliminarExamen(item.id_procedimiento_catalogo)" class="bg-gray-100 hover:bg-red-600 hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs" title="Eliminar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
                                         </div>
@@ -89,9 +89,7 @@
         <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
             <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-5 sm:p-8 border border-gray-100 relative flex flex-col max-h-[95vh]">
                 
-                <button (click)="cerrarModal()" class="absolute top-5 right-5 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10">
-                    ✕
-                </button>
+                <button (click)="cerrarModal()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10">✕</button>
 
                 <h2 class="text-xl sm:text-2xl font-extrabold text-[#1B1947] mb-4 uppercase tracking-wider pr-8 shrink-0">
                     {{ esEdicion ? 'Editar Examen Clínico' : 'Crear Examen Clínico' }}
