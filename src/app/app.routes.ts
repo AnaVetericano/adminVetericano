@@ -16,6 +16,7 @@ import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
 import { ExamenClinicoComponent } from './examen-clinico/examen-clinico';
 import { EditarExamen } from './editar-examen/editar-examen';
 import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
+import { Graficas } from './graficas/graficas';
 
 export const routes: Routes = [
 
@@ -27,6 +28,7 @@ export const routes: Routes = [
     path: 'inicio-admin',
     component: InicioAdministradorComponent,
     children: [
+      { path: '', component: Graficas },
       { path: 'patologias', component: Patologias },
       { path: 'examenes-clinicos', component: ExamenesClinicos },
       { path: 'examen-clinico', component: ExamenClinicoComponent },
@@ -37,7 +39,8 @@ export const routes: Routes = [
       { path: 'listarmedicamentos', component: ListarMedicamentos },
       { path: 'crearmedicamentos', component: CrearMedicamentos },
       { path: 'formulariomedicamentos', component: FormularioMedicamentos },
-      { path: 'actualizarmedicamentos/:id', component: ActualizarMedicamentos }
+      { path: 'actualizarmedicamentos/:id', component: ActualizarMedicamentos },
+      { path: 'graficas', component: Graficas },
     ]
   }
 ];

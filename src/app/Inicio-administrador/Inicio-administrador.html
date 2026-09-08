@@ -1,9 +1,9 @@
 <div class="h-[100dvh] w-full flex overflow-hidden bg-white relative">
 
   <!-- BOTÓN MÓVIL -->
-  <button 
-    type="button" 
-    (click)="menuAbierto = !menuAbierto" 
+  <button
+    type="button"
+    (click)="menuAbierto = !menuAbierto"
     class="lg:hidden absolute top-3 left-3 z-50 p-2.5 rounded-xl bg-[#1B1947] text-white shadow-md focus:outline-none active:scale-95 transition-transform"
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -12,7 +12,7 @@
   </button>
 
   <!-- BARRA LATERAL (TAMAÑO EQUILIBRADO Y SIN FONDO AZUL) -->
-  <aside 
+  <aside
     [class.translate-x-0]="menuAbierto"
     [class.-translate-x-full]="!menuAbierto"
     class="group fixed lg:translate-x-0 inset-y-0 left-0 z-40 w-20 hover:w-[260px] bg-[#E3E1DC] flex flex-col transition-all duration-300 ease-in-out shadow-lg lg:shadow-sm border-r border-slate-300/60 overflow-hidden shrink-0"
@@ -39,6 +39,16 @@
 
     <!-- ENLACES (TEXTO ACTIVO EN OSCURO SIN FONDO AZUL) -->
     <nav class="flex-1 px-3 pt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
+
+      <a
+        routerLink="graficas"
+        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
+        (click)="menuAbierto = false"
+        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
+      >
+        <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
+        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Hogar</span>
+      </a>
 
       <a
         routerLink="patologias"
@@ -104,13 +114,13 @@
         <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Cerrar Sesión</span>
       </a>
     </div>
-    
+
   </aside>
 
   <!-- FONDO MÓVIL -->
-  <div 
-    *ngIf="menuAbierto" 
-    (click)="menuAbierto = false" 
+  <div
+    *ngIf="menuAbierto"
+    (click)="menuAbierto = false"
     class="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-sm transition-opacity"
   ></div>
 
@@ -118,6 +128,7 @@
   <main class="flex-1 bg-white h-full overflow-y-auto lg:ml-20 transition-all duration-300">
     <router-outlet></router-outlet>
   </main>
+
 
 
 </div>
