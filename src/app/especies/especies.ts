@@ -16,6 +16,8 @@ styleUrl: './especies.css',
 })
 export class Especies implements OnInit {
 
+  
+
 especies: any[] = [];
 especiesFiltradas: any[] = [];
 
@@ -83,26 +85,21 @@ this.authService.listarEspecies().subscribe({
 }
 
 // BUSCAR ESPECIES
-
 filtrarEspecies(): void {
+  const texto = this.textoBusqueda.trim().toLowerCase();
 
-const texto = this.textoBusqueda
-  .toLowerCase()
-  .trim();
+  if (!texto) {
+    this.especiesFiltradas = [...this.especies];
+    return;
+  }
 
-if (!texto) {
-
-  this.especiesFiltradas = [...this.especies];
-  return;
-
+  this.especiesFiltradas = this.especies.filter(especie =>
+    especie.nombre?.toLowerCase().includes(texto) ||
+    especie.descripcion?.toLowerCase().includes(texto) ||
+    especie.id_especie?.toString().includes(texto)
+  );
 }
 
-this.especiesFiltradas = this.especies.filter((especie) =>
-  especie.nombre?.toLowerCase().includes(texto) ||
-  especie.descripcion?.toLowerCase().includes(texto)
-);
-
-}
 
 // LIMPIAR BUSQUEDA
 

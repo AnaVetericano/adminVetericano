@@ -16,6 +16,12 @@ import { AuthService } from '../services/auth';
 })
 export class UsuariosRoles implements OnInit {
 
+  textoBusqueda: string = '';
+
+
+  
+usuariosFiltrados: any[] = [];
+
   usuarios: any[] = [];
 
   modal = false;
@@ -305,6 +311,20 @@ actualizarUsuario(): void {
     }
 
   });
+}
+filtrarUsuarios(): void {
+  const texto = this.textoBusqueda.trim().toLowerCase();
+
+  if (!texto) {
+    this.usuariosFiltrados = [...this.usuarios];
+    return;
+  }
+
+  this.usuariosFiltrados = this.usuarios.filter(usuarios =>
+    usuarios.nombre?.toLowerCase().includes(texto) ||
+    usuarios.descripcion?.toLowerCase().includes(texto) ||
+    usuarios.id_especie?.toString().includes(texto)
+  );
 }
 
   // Alias para llamar inactivarUsuario directamente
