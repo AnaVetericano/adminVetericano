@@ -44,26 +44,66 @@
 
                 <div class="h-5 w-px bg-gray-200"></div>
 
-                <button
-                    class="px-5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707v3.172a1 1 0 01-.553.894l-4 2A1 1 0 017 20.172v-9.172a1 1 0 00-.293-.707L.293 7.293A1 1 0 010 6.586V4z"
-                        />
-                    </svg>
+               <div class="relative">
+  <button
+    type="button"
+    (click)="mostrarFiltros = !mostrarFiltros"
+    class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50"
+  >
+    <span>Filtros</span>
+    <span>▼</span>
+  </button>
 
-                    Filtros
-                </button>
+  <!-- MENÚ DE FILTROS -->
+  <div
+    *ngIf="mostrarFiltros"
+    class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+  >
+    <div class="p-2">
+
+      <button
+        type="button"
+        (click)="filtrarPorRol(null)"
+        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+      >
+        Todos
+      </button>
+
+      <button
+        type="button"
+        (click)="filtrarPorRol(1)"
+        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+      >
+        Administrador
+      </button>
+
+      <button
+        type="button"
+        (click)="filtrarPorRol(2)"
+        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+      >
+        Jurídico
+      </button>
+
+      <button
+        type="button"
+        (click)="filtrarPorRol(3)"
+        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+      >
+        Veterinario
+      </button>
+
+      <button
+        type="button"
+        (click)="filtrarPorRol(4)"
+        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+      >
+        Peticionario
+      </button>
+
+    </div>
+  </div>
+</div>
             </div>
 
             <!-- BOTÓN NUEVO USUARIO -->
@@ -332,17 +372,34 @@
 
 
             <!-- ID DEL ROL -->
-            <label class="block text-sm font-semibold text-[#10203b] mb-2">
-                ID del rol
-            </label>
+        <label class="block text-sm font-semibold text-[#10203b] mb-2">
+    Rol
+</label>
 
-            <input
-                type="number"
-                [(ngModel)]="usuario.nombre_rol"
-                placeholder="Rol a asignar"
-                class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-            >
+<select
+    [(ngModel)]="usuario.id_rol"
+    class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 bg-white focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
+>
+    <option [ngValue]="null" disabled>
+        Selecciona un rol
+    </option>
 
+    <option [ngValue]="1">
+        Administrador
+    </option>
+
+    <option [ngValue]="2">
+        Veterinario
+    </option>
+
+    <option [ngValue]="3">
+        Jurídico
+    </option>
+
+    <option [ngValue]="4">
+        Peticionario
+    </option>
+</select>
 
             <!-- USUARIO ACTIVO -->
             <label class="flex items-center gap-3 mb-6 cursor-pointer">
