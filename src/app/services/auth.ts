@@ -73,6 +73,10 @@ export interface RespuestaEspecie {
 export interface ProcedimientoCatalogo {
   id_procedimiento_catalogo?: number;
   nombre_tipo: string;
+  tipo?: string;
+  descripcion?: string;
+  observaciones?: string;
+  estado?: string;
 }
 
 @Injectable({
@@ -109,7 +113,6 @@ export class AuthService {
     return this.http.patch<any>(`${urlBase}/usuarios/${id_usuario}/`, { activo });
   }
 
-  // Métodos para Exámenes Clínicos (Catálogo)
   private getCleanUrl(): string {
     const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
     return urlBase.replace(/\/usuarios$/, '');
@@ -122,12 +125,15 @@ export class AuthService {
   crearCatalogo(catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
     return this.http.post<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`, catalogo);
   }
+
+  actualizarCatalogo(id: number, catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
+    return this.http.put<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`, catalogo);
+  }
   
   eliminarCatalogo(id: number): Observable<any> {
     return this.http.delete<any>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`);
   }
 
-  // Métodos para Especies
   private get baseUrlEspecies(): string {
     const base = (this.apiUrlespecies || '').replace(/\/+$/, '');
     if (base.endsWith('/especies/especies')) {
