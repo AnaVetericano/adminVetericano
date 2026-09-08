@@ -33,11 +33,13 @@
                         />
                     </svg>
 
-                    <input
-                        type="text"
-                        placeholder="Buscar usuario..."
-                        class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
-                    >
+                   <input
+    type="text"
+    [(ngModel)]="textoBusqueda"
+    (input)="filtrarUsuarios()"
+    placeholder="Buscar usuario..."
+    class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
+>
                 </div>
 
                 <div class="h-5 w-px bg-gray-200"></div>
@@ -127,7 +129,7 @@
                     <tbody class="divide-y divide-gray-100 text-sm">
 
                         <tr
-                            *ngFor="let usuario of usuarios"
+                            *ngFor="let usuario of usuariosFiltrados"
                             class="hover:bg-indigo-50/30 transition-colors group"
                         >
 
