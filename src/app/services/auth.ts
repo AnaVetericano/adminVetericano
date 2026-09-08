@@ -70,6 +70,31 @@ nombre: string;
 descripcion: string;
 activo: boolean;
 }
+export interface Patologia {
+  id_patologia?: number;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+}
+
+export interface CrearPatologia {
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+}
+
+export interface ActualizarPatologia {
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+}
+
+export interface RespuestaPatologia {
+  id_patologia: number;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+}
 
 
 

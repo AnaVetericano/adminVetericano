@@ -15,11 +15,7 @@ export class Patologias {
   // Objeto para los datos de la patología
   patologia = {
     nombre: '',
-    tipo: '',
     descripcion: '',
-    signos: '',
-    especie: '',
-    observaciones: '',
     estado: ''
   };
 
