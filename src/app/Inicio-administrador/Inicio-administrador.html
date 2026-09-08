@@ -71,8 +71,8 @@
       </a>
 
       <a
-        routerLink="especies"
-        routerLinkActive="bg-[#1B1947]/10 text-[#1B1947]"
+        routerLink="listarespecies"
+        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
         (click)="menuAbierto = false"
         class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
@@ -119,4 +119,6 @@
     <router-outlet></router-outlet>
   </main>
 
+
+  <canvas #UsersActive></canvas> <!--Grafica tipo pie-->
 </div>

@@ -1,7 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, ElementRef, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
+import { Chart } from 'chart.js/auto';
+
 
 @Component({
   selector: 'app-inicio-administrador',
@@ -12,6 +14,7 @@ import Swal from 'sweetalert2';
 })
 export class InicioAdministradorComponent {
   private router = inject(Router);
+  @ViewChild('UsersActive') GraficUsers!: ElementRef<HTMLCanvasElement>
 
   // Control para abrir y cerrar el menú en móviles
   menuAbierto: boolean = true;
@@ -46,4 +49,19 @@ onLogout(): void {
 
   });
 }
+
+  // LoadGraficUsersActive(){
+  //   const GraficUserConst = new Chart(this.GraficUsers.nativeElement,
+  //     {
+  //       type: 'pie',
+  //       data: {
+  //         labels: ['Usuarios activos', 'Usuarios inactivos'],
+  //         datasets:[{
+  //           label: 'Cantidad',
+  //           data: usuarios
+  //         }]
+  //       }
+  //     }
+  //   )
+  // }
 }
