@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -113,6 +113,16 @@ export class InicioDeSesionAdministradorComponent {
       return;
     }
 
+    if (this.nuevaPassword.length < 8) {
+      this.mensajeError = 'La nueva contraseña debe tener al menos 8 caracteres.';
+      return;
+    }
+
+    if (this.nuevaPassword === this.nuevaPassword.toLowerCase()) {
+      this.mensajeError = 'La nueva contraseña debe incluir al menos una letra mayúscula.';
+      return;
+    }
+
     this.cargandoPaso2 = true;
     this.mensajeError = '';
     this.mensajeExito = '';
@@ -125,7 +135,7 @@ export class InicioDeSesionAdministradorComponent {
 
     this.authService.confirmarPassword(payload).subscribe({
       next: (res: any) => {
-        this.mensajeExito = res.mensaje || res.detail || '¡Contraseña actualizada con éxito!';
+        this.mensajeExito = res?.mensaje || res?.detail || '¡Contraseña actualizada con éxito!';
         this.cargandoPaso2 = false;
         
         setTimeout(() => {
