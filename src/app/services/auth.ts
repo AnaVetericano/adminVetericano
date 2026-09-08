@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface RegistroUsuario {
@@ -77,6 +77,10 @@ export interface ProcedimientoCatalogo {
   descripcion?: string;
   observaciones?: string;
   estado?: string;
+}
+export interface UsersActives {
+  activo: boolean;
+  id_rol: number;
 }
 
 @Injectable({
@@ -160,4 +164,18 @@ export class AuthService {
   cambiarEstadoEspecie(id_especie: number, activo: boolean): Observable<RespuestaEspecie> {
     return this.http.patch<RespuestaEspecie>(`${this.baseUrlEspecies}${id_especie}/`, { activo });
   }
+  
+  listUsersActive(){
+    return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(
+      map(
+        usuarios => usuarios.map(
+          (u:any) => ({
+            activo: u.activo, 
+            id_rol: u.id_rol
+          })
+        )
+      )
+    )
+  }
+
 }

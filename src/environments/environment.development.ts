@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://backendvetericano-production.up.railway.app/api/usuarios',
-  apiUrlespecies: 'https://backendvetericano-production.up.railway.app/api/especies'
+  apiUrl: 'http://localhost:4200/api/usuarios',
+  apiUrlespecies: 'http://localhost:4200/api/especies'
 };

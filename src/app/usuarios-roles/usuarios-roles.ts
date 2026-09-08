@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -6,21 +6,16 @@ import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
-import { Chart } from 'chart.js/auto';
+import { Graficas } from '../graficas/graficas';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, Graficas],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
-export class UsuariosRoles implements OnInit, AfterViewInit{
-  @ViewChild('UsersActive') GraficUsers!: ElementRef<HTMLCanvasElement>
-  ngAfterViewInit(): void {
-    this.LoadGraficUsersActive()
-  }
-  private GraficUserConst: Chart | undefined
+export class UsuariosRoles implements OnInit{
 
   textoBusqueda: string = '';
 
@@ -56,7 +51,6 @@ usuariosFiltrados: any[] = [];
 
   ngOnInit(): void {
     this.listarUsuarios();
-   
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
@@ -379,31 +373,4 @@ filtrarPorRol(idRol: number | null): void {
     this.eliminarUsuario(!activo, id_usuario);
   }
 
-  LoadGraficUsersActive(){
-    const activos = this.usuarios.filter(a => a.activo === true).length
-    const inactivos = this.usuarios.filter(a => a.activo === false).length
-    console.log(activos);
-    
-      this.GraficUserConst = new Chart(this.GraficUsers.nativeElement,
-        {
-          type: 'pie',
-          data: {
-            labels: ['Usuarios activos', 'Usuarios inactivos'],
-            datasets:[{
-              label: 'Cantidad',
-              data: [activos, inactivos],
-              backgroundColor: ['#10B981', '#F1C63C']
-            }]
-          },
-          options:{
-            responsive: true,
-            plugins:{
-              legend:{
-                position: 'top'
-              }
-            }
-          }
-        }
-      )
-    }
 }
