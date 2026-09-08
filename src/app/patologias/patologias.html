@@ -58,9 +58,20 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-sm">
-                        <tr class="hover:bg-indigo-50/30 transition-colors group">
-                            <td class="px-6 py-3.5 font-bold text-gray-900">Parvovirus</td>
-                            <td class="px-6 py-3.5 text-gray-600 max-w-xs sm:max-w-md truncate">Enfermedad viral grave que causa daño al intestino.</td>
+                        <!-- Mensaje de carga -->
+                        <tr *ngIf="cargando">
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-400 font-medium">Cargando patologías...</td>
+                        </tr>
+
+                        <!-- Mensaje si no hay registros -->
+                        <tr *ngIf="!cargando && patologias.length === 0">
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-400 font-medium">No hay patologías registradas.</td>
+                        </tr>
+
+                        <!-- Filas dinámicas respetando 100% tu diseño -->
+                        <tr *ngFor="let p of patologias" class="hover:bg-indigo-50/30 transition-colors group">
+                            <td class="px-6 py-3.5 font-bold text-gray-900">{{ p.nombre }}</td>
+                            <td class="px-6 py-3.5 text-gray-600 max-w-xs sm:max-w-md truncate">{{ p.descripcion }}</td>
                             <td class="px-6 py-3.5">
                                 <div class="flex justify-center gap-2">
                                     <button class="bg-gray-100 hover:bg-[#F1C63C] hover:text-white text-gray-600 p-2 rounded-xl transition-all duration-200 shadow-xs" title="Editar">
@@ -100,8 +111,6 @@
                         <input type="text" [(ngModel)]="patologia.nombre" placeholder="Nombre de la patología" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
                     </div>
 
-                   
-
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Descripción</label>
                         <input type="text" [(ngModel)]="patologia.descripcion" placeholder="Descripción" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
@@ -109,7 +118,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Estado</label>
-                        <input type="text" [(ngModel)]="patologia.estado" placeholder="Estado" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                        <input type="text" [(ngModel)]="patologia.activo" placeholder="Estado" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
                     </div>
                 </div>
 

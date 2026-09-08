@@ -189,6 +189,28 @@ export class AuthService {
   cambiarEstadoEspecie(id_especie: number, activo: boolean): Observable<RespuestaEspecie> {
     return this.http.patch<RespuestaEspecie>(`${this.baseUrlEspecies}${id_especie}/`, { activo });
   }
+  //PATOLOGIAS R
+  private get baseUrlPatologias(): string {
+    return `${this.getCleanUrl()}/patologias/patologias/`;
+  }
+
+  listarPatologias(): Observable<Patologia[]> {
+    return this.http.get<Patologia[]>(this.baseUrlPatologias);
+  }
+
+  crearPatologia(patologia: CrearPatologia): Observable<RespuestaPatologia> {
+    return this.http.post<RespuestaPatologia>(this.baseUrlPatologias, patologia);
+  }
+
+  actualizarPatologia(id_patologia: number, patologia: ActualizarPatologia): Observable<RespuestaPatologia> {
+    return this.http.put<RespuestaPatologia>(`${this.baseUrlPatologias}${id_patologia}/`, patologia);
+  }
+
+  cambiarEstadoPatologia(id_patologia: number, activo: boolean): Observable<RespuestaPatologia> {
+    return this.http.patch<RespuestaPatologia>(`${this.baseUrlPatologias}${id_patologia}/`, { activo });
+  }
+  
+  
   
   listUsersActive(){
     return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(
