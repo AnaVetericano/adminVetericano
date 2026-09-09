@@ -25,13 +25,13 @@ export class CrearMedicamentos {
   ) {}
 
   guardarMedicamento() {
-    this.http.post('https://tu-api.com/rest/v1/medicamentos', this.medicamento, {
+    this.http.post('http://127.0.0.1:8000/api/medicamentos/', this.medicamento, {
       headers: { 'Content-Type': 'application/json' }
     }).subscribe({
       next: (respuesta) => {
         alert('Medicamento creado correctamente');
         console.log(respuesta);
-        this.router.navigate(['//listarmedicamentos']);
+        this.router.navigate(['/listarmedicamentos']);
       },
       error: (err) => {
         console.log(err);
