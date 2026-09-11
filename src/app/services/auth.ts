@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface RegistroUsuario {
@@ -9,6 +9,7 @@ export interface RegistroUsuario {
   nombre: string;
   apellido: string;
 }
+
 export interface InactivarUsuario {
   activo: boolean;
 }
@@ -112,7 +113,7 @@ export interface UsersActives {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl; 
+  private apiUrl = environment.apiUrl;
   private apiUrlespecies = environment.apiUrlespecies;
 
   constructor(private http: HttpClient) {}
