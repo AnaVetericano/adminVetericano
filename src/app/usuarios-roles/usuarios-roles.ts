@@ -54,29 +54,34 @@ usuariosFiltrados: any[] = [];
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
- listarUsuarios(): void {
-
+listarUsuarios(): void {
   this.http.get<any>(this.apiUrl).subscribe({
-
     next: (respuesta) => {
+      const lista = Array.isArray(respuesta) ? respuesta : (respuesta.results || []);
 
-      this.usuarios = Array.isArray(respuesta)
-        ? respuesta
-        : (respuesta.results || []);
+      // Mapeamos los usuarios para asegurar que si no tienen rol, diga 'Indefinido'
+      this.usuarios = lista.map((u: any) => {
+        // Extraemos el nombre del rol dependiendo de cómo lo devuelva tu backend (string u objeto)
+        let rolTexto = u.nombre_rol;
+        
+        if (!rolTexto && u.id_rol) {
+          // Si por alguna razón solo llega el ID o viene en un objeto
+          rolTexto = typeof u.id_rol === 'object' ? u.id_rol?.nombre_rol : null;
+        }
 
-      // IMPORTANTE: cargar la lista que muestra la tabla
+        return {
+          ...u,
+          nombre_rol: rolTexto && rolTexto.trim() !== '' ? rolTexto : 'Indefinido'
+        };
+      });
+
       this.usuariosFiltrados = [...this.usuarios];
-
       this.cdr.detectChanges();
     },
-
     error: (error) => {
       console.error('Error al listar usuarios:', error);
     }
-
   });
-  
-
 }
 
   // Abrir modal para crear
@@ -339,10 +344,11 @@ filtrarUsuarios(): void {
     return;
   }
 
-  this.usuariosFiltrados = this.usuarios.filter(usuarios =>
-    usuarios.nombre?.toLowerCase().includes(texto) ||
-    usuarios.descripcion?.toLowerCase().includes(texto) ||
-    usuarios.id_especie?.toString().includes(texto)
+  this.usuariosFiltrados = this.usuarios.filter(usuario =>
+    usuario.nombre?.toLowerCase().includes(texto) ||
+    usuario.apellido?.toLowerCase().includes(texto) ||
+    usuario.email?.toLowerCase().includes(texto) ||
+    usuario.identificacion?.toLowerCase().includes(texto)
   );
 }
 filtrarPorRol(idRol: number | null): void {
