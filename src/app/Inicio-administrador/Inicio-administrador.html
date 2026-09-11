@@ -15,7 +15,7 @@
   <aside
     [class.translate-x-0]="menuAbierto"
     [class.-translate-x-full]="!menuAbierto"
-    class="group fixed lg:translate-x-0 inset-y-0 left-0 z-40 w-20 hover:w-[260px] bg-[#E3E1DC] flex flex-col transition-all duration-300 ease-in-out shadow-lg lg:shadow-sm border-r border-slate-300/60 overflow-hidden shrink-0"
+    class="group fixed lg:translate-x-0 inset-y-0 left-0 z-40 w-20 hover:w-[260px] bg-[#170b3d] flex flex-col transition-all duration-300 ease-in-out shadow-lg lg:shadow-sm border-r border-slate-300/60 overflow-hidden shrink-0"
   >
 
     <!-- AVATAR -->
@@ -28,10 +28,10 @@
         />
       </div>
       <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
-        <h2 class="text-xs font-extrabold text-slate-800 truncate">
+        <h2 class="text-white text-xs font-extrabold text-slate-800 truncate">
           {{ adminUser.name }}
         </h2>
-        <p class="text-[9px] text-slate-500 font-bold tracking-wider uppercase truncate">
+        <p class="text-w text-[9px] text-slate-500 font-bold tracking-wider uppercase truncate">
           {{ adminUser.role }}
         </p>
       </div>
@@ -49,7 +49,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 text-slate-700 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dashboard</span>
+        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dashboard</span>
       </a>
 
       
@@ -62,17 +62,17 @@
         class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Hogar</span>
+        <span class=" text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Hogar</span>
       </a>
 
       <a
         routerLink="patologias"
         routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
         (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
+        class="text-white flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconpatologia.svg" alt="Icono Patología" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Patología</span>
+        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Patología</span>
       </a>
 
       <a
@@ -82,7 +82,7 @@
         class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconexamnesmedicos.svg" alt="Icono Exámenes" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Exámenes Clínicos</span>
+        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Exámenes Clínicos</span>
       </a>
 
       <a
@@ -92,7 +92,7 @@
         class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconmedication.svg" alt="Icono Medicamentos" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Medicamentos</span>
+        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Medicamentos</span>
       </a>
 
       <a
@@ -102,7 +102,7 @@
         class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconpetsespecies.svg" alt="Icono Especies" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Especies</span>
+        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Especies</span>
       </a>
 
       <a
@@ -112,7 +112,7 @@
         class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Usuarios</span>
+        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Usuarios</span>
       </a>
 
     </nav>
