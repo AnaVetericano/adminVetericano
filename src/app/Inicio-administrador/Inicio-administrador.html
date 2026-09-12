@@ -19,23 +19,16 @@
   >
 
     <!-- AVATAR -->
-    <div class="flex items-center gap-3 py-4 px-3.5 border-b border-slate-300/70 whitespace-nowrap">
-      <div class="w-11 h-11 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-300 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-        <img
-          [src]="adminUser.avatarUrl"
-          [alt]="adminUser.name"
-          class="w-full h-full eobject-cover"
-        />
-      </div>
-      <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
-        <h2 class="text-white text-xs font-extrabold text-slate-800 truncate">
-          {{ adminUser.name }}
-        </h2>
-        <p class="text-w text-[9px] text-slate-500 font-bold tracking-wider uppercase truncate">
-          {{ adminUser.role }}
-        </p>
-      </div>
-    </div>
+   <div class="flex items-center gap-3 py-4 px-3.5 border-b border-slate-300/70 whitespace-nowrap group">
+  <div class="w-21 h-21 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-300 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+    <img
+      [src]="adminUser.avatarUrl" class="w-full h-full object-cover object-center justify-center"
+    />
+  </div>
+  <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+  
+  </div>
+</div>
 
     <!-- ENLACES (TEXTO ACTIVO EN OSCURO SIN FONDO AZUL) -->
     <nav class="flex-1 px-3 pt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
@@ -109,7 +102,7 @@
         routerLink="usuarios-roles"
         routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
         (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
+        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-100/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
       >
         <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
         <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Usuarios</span>
