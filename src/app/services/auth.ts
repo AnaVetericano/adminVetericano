@@ -9,9 +9,11 @@ export interface RegistroUsuario {
   nombre: string;
   apellido: string;
 }
+export interface InactivarUsuario{
 
-export interface InactivarUsuario {
+
   activo: boolean;
+
 }
 
 export interface RespuestaRegistro {
@@ -114,23 +116,40 @@ export interface UsersActives {
 })
 export class AuthService {
   private apiUrl = environment.apiUrl;
+
   private apiUrlespecies = environment.apiUrlespecies;
 
   constructor(private http: HttpClient) {}
 
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
+    return this.http.post<RespuestaRegistro>(
+      `${this.apiUrl}/register/`,
+      usuario
+    );
     return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
+    return this.http.post<RespuestaLogin>(
+      `${this.apiUrl}/login/`,
+      credenciales
+    );
     return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales);
   }
 
   solicitarRecuperacion(email: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/recuperar-password/`,
+      { email }
+    );
     return this.http.post<any>(`${this.apiUrl}/recuperar-password/`, { email });
   }
 
   confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {   
+    return this.http.post<any>(
+      `${this.apiUrl}/confirmar-password/`,
+      payload
+    );
     return this.http.post<any>(`${this.apiUrl}/confirmar-password/`, payload);
   }
 
@@ -143,6 +162,7 @@ export class AuthService {
     return this.http.patch<any>(`${urlBase}/usuarios/${id_usuario}/`, { activo });
   }
 
+ 
   private getCleanUrl(): string {
     const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
     return urlBase.replace(/\/usuarios$/, '');
