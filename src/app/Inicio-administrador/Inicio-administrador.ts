@@ -20,9 +20,8 @@ export class InicioAdministradorComponent {
 
   // Datos para mostrar en el perfil del sidebar
   adminUser = {
-    name: 'Julian M.',
-    role: 'ADMINISTRADOR',
-    avatarUrl: 'images/administradorperfil.svg'
+
+    avatarUrl: 'images/logoVet.svg'
   };
 
 onLogout(): void {

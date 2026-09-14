@@ -18,9 +18,6 @@ import { Graficas } from '../graficas/graficas';
 export class UsuariosRoles implements OnInit{
 
   textoBusqueda: string = '';
-
-
-  
 usuariosFiltrados: any[] = [];
 
   usuarios: any[] = [];
