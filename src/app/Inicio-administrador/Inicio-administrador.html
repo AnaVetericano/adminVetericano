@@ -1,122 +1,163 @@
-<div class="h-[100dvh] w-full flex overflow-hidden bg-white relative">
+<div class="h-[100dvh] w-full flex overflow-hidden bg-[#F4F5F7] relative">
 
   <!-- BOTÓN MÓVIL -->
   <button
     type="button"
     (click)="menuAbierto = !menuAbierto"
-    class="lg:hidden absolute top-3 left-3 z-50 p-2.5 rounded-xl bg-[#1B1947] text-white shadow-md focus:outline-none active:scale-95 transition-transform"
+    class="lg:hidden absolute top-3 left-3 z-50 p-2.5 rounded-xl bg-[#170b3d] text-white shadow-md focus:outline-none active:scale-95 transition-transform"
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   </button>
 
-  <!-- BARRA LATERAL (TAMAÑO EQUILIBRADO Y SIN FONDO AZUL) -->
+  <!-- BARRA LATERAL -->
   <aside
     [class.translate-x-0]="menuAbierto"
     [class.-translate-x-full]="!menuAbierto"
-    class="group fixed lg:translate-x-0 inset-y-0 left-0 z-40 w-20 hover:w-[260px] bg-[#170b3d] flex flex-col transition-all duration-300 ease-in-out shadow-lg lg:shadow-sm border-r border-slate-300/60 overflow-hidden shrink-0"
+    class="group fixed lg:translate-x-0 inset-y-0 left-0 z-40 w-20 hover:w-[260px] bg-primary flex flex-col transition-all duration-300 ease-in-out shadow-xl lg:shadow-md border-r border-white/10 overflow-hidden shrink-0"
   >
 
-    <!-- AVATAR -->
-   <div class="flex items-center gap-3 py-4 px-3.5 border-b border-slate-300/70 whitespace-nowrap group">
-  <div class="w-21 h-21 shrink-0 rounded-full overflow-hidden border-2 border-white shadow-sm bg-slate-300 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-    <img
-      [src]="adminUser.avatarUrl" class="w-full h-full object-cover object-center justify-center"
-    />
-  </div>
-  <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
-  
-  </div>
-</div>
+    <!-- PERFIL / AVATAR -->
+    <div class="flex items-center gap-3.5 py-4 px-3.5 border-b border-white/10 whitespace-nowrap">
+      <div class="w-12 h-12 shrink-0 rounded-full overflow-hidden border-2 border-[#4141A5] shadow-sm bg-white/10 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+        <img
+          [src]="adminUser.avatarUrl"
+          alt="Avatar Admin"
+          class="w-full h-full object-cover object-center"
+        />
+      </div>
+      <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden leading-tight">
+        <p class="text-xs font-bold text-white tracking-wide truncate">Panel Administrador</p>
+        <p class="text-[11px] text-white/60 font-medium truncate">En línea</p>
+      </div>
+    </div>
 
-    <!-- ENLACES (TEXTO ACTIVO EN OSCURO SIN FONDO AZUL) -->
-    <nav class="flex-1 px-3 pt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
+    <!-- ENLACES DE NAVEGACIÓN -->
+   <nav class="flex-1 px-2.5 pt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
 
-       <a
-        routerLink="/inicio-admin"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 text-slate-700 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dashboard</span>
-      </a>
+  <!-- 1. DASHBOARD (con exact: true para que no se quede pegado) -->
+  <a
+    routerLink="/inicio-admin"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    [routerLinkActiveOptions]="{ exact: true }"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Panel / Dashboard -->
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  viewBox="0 0 1024 1024" 
+  fill="currentColor"
+  class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110"
+>
+  <path d="M946.5 505L560.1 118.8l-25.9-25.9a31.5 31.5 0 0 0-44.4 0L77.5 505a63.9 63.9 0 0 0-18.8 46c.4 35.2 29.7 63.3 64.9 63.3h42.5V940h691.8V614.3h43.4c17.1 0 33.2-6.7 45.3-18.8a63.6 63.6 0 0 0 18.7-45.3c0-17-6.7-33.1-18.8-45.2M568 868H456V664h112zm217.9-325.7V868H632V640c0-22.1-17.9-40-40-40H432c-22.1 0-40 17.9-40 40v228H238.1V542.3h-96l370-369.7l23.1 23.1L882 542.3z" />
+</svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dashboard</span>
+  </a>
 
-      
+  <!-- 2. PATOLOGÍA -->
+  <a
+    routerLink="patologias"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Microscopio Moderno -->
+<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">
+    <path d="m16 5.5l4.5 7l-4.5 7H8l-4.5-7l4.5-7zm4.5 7h3m-23 0h3m12.5-7l2.5-3M8 5.5l-2.5-3m10.5 17l2.5 3M8 19.5l-2.5 3" />
+    <path d="m11.5 16.5l-1.5 1l-1.5-1V15l1.5-1l1.5 1zm4-4.5L13 13.5L10.5 12V9L13 7.5L15.5 9z" />
+  </g>
+</svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Patología</span>
+  </a>
 
-      <a
-        *ngIf="false"
-        routerLink="graficas"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class=" text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Hogar</span>
-      </a>
+  <!-- 3. EXÁMENES CLÍNICOS -->
+  <a
+    routerLink="examenes-clinicos"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Historial Clínico / Reporte -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h4" />
+    </svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Exámenes Clínicos</span>
+  </a>
 
-      <a
-        routerLink="patologias"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="text-white flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <img src="images/iconpatologia.svg" alt="Icono Patología" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Patología</span>
-      </a>
+  <!-- 4. MEDICAMENTOS -->
+  <a
+    routerLink="listarmedicamentos"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Cápsula / Píldora Médica -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m10.5 20.5 10-10a4.95 4.95 0 10-7-7l-10 10a4.95 4.95 0 107 7Z" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="m8.5 8.5 7 7" />
+    </svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Medicamentos</span>
+  </a>
 
-      <a
-        routerLink="examenes-clinicos"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <img src="images/iconexamnesmedicos.svg" alt="Icono Exámenes" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Exámenes Clínicos</span>
-      </a>
+  <!-- 5. ESPECIES -->
+  <a
+    routerLink="especies"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Huella Animal Minimalista -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 17.5c-1.5 0-3-.7-3-2 0-1.7 1.3-3 3-3s3 1.3 3 3c0 1.3-1.5 2-3 2z" />
+      <circle cx="6.5" cy="11.5" r="1.75" />
+      <circle cx="17.5" cy="11.5" r="1.75" />
+      <circle cx="9.5" cy="6.5" r="1.75" />
+      <circle cx="14.5" cy="6.5" r="1.75" />
+    </svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Especies</span>
+  </a>
 
-      <a
-        routerLink="listarmedicamentos"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <img src="images/iconmedication.svg" alt="Icono Medicamentos" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Medicamentos</span>
-      </a>
+  <!-- 6. USUARIOS -->
+  <a
+    routerLink="usuarios-roles"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Usuarios / Equipo -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Usuarios</span>
+  </a>
 
-      <a
-        routerLink="especies"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-300/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <img src="images/iconpetsespecies.svg" alt="Icono Especies" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Especies</span>
-      </a>
+  <!-- 7. VOLUNTARIOS -->
+  <a
+    routerLink="voluntarios"
+    routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
+    (click)="menuAbierto = false"
+    class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
+  >
+    <!-- Icono Corazón / Voluntarios -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Voluntarios</span>
+  </a>
 
-      <a
-        routerLink="usuarios-roles"
-        routerLinkActive="text-[#1B1947] font-extrabold scale-[1.02]"
-        (click)="menuAbierto = false"
-        class="flex items-center gap-4 px-3.5 py-3 rounded-xl hover:bg-slate-100/50 transition-all duration-200 cursor-pointer text-slate-700 whitespace-nowrap group/item"
-      >
-        <img src="images/iconusuario.svg" alt="Icono Usuarios" class="w-6 h-6 object-contain shrink-0 transition-transform duration-200 group-hover/item:scale-110">
-        <span class="text-white text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Usuarios</span>
-      </a>
-
-    </nav>
+</nav>
 
     <!-- CERRAR SESIÓN -->
-    <div class="px-3 pb-4 pt-3 border-t border-slate-300/75 whitespace-nowrap">
+    <div class="px-2.5 pb-4 pt-3 border-t border-white/10 whitespace-nowrap">
       <a
         (click)="onLogout()"
-        class="flex items-center gap-4 px-3.5 py-2.5 rounded-xl cursor-pointer text-xs font-bold text-red-600 hover:bg-red-50 tracking-wider uppercase transition-all duration-200 group/logout"
+        class="flex items-center gap-4 px-3.5 py-2.5 rounded-xl cursor-pointer text-xs font-bold text-rose-300 hover:text-rose-100 hover:bg-rose-500/15 tracking-wider uppercase transition-all duration-200 group/logout"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/logout:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 text-rose-400 transition-transform duration-200 group-hover/logout:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>
         <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">Cerrar Sesión</span>
@@ -125,18 +166,16 @@
 
   </aside>
 
-  <!-- FONDO MÓVIL -->
+  <!-- FONDO OSCURO EN MÓVIL (BACKDROP) -->
   <div
     *ngIf="menuAbierto"
     (click)="menuAbierto = false"
-    class="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-sm transition-opacity"
+    class="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-xs transition-opacity"
   ></div>
 
-  <!-- CONTENEDOR PRINCIPAL AJUSTADO A w-20 -->
-  <main class="flex-1 bg-white h-full overflow-y-auto lg:ml-20 transition-all duration-300">
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="flex-1 bg-[#F4F5F7] h-full overflow-y-auto lg:ml-20 transition-all duration-300">
     <router-outlet></router-outlet>
   </main>
-
-
 
 </div>
