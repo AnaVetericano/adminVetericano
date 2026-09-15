@@ -2,8 +2,8 @@
 <div class="h-[100dvh] w-full bg-gray-50 flex flex-col text-slate-800 antialiased selection:bg-indigo-500 selection:text-white overflow-hidden">
 
     <!-- BARRA SUPERIOR -->
-    <header class="bg-[#1B1947] h-16 shrink-0 flex items-center px-6 shadow-md w-full lg:pl-20 transition-all duration-300">
-        <h1 class="text-xl font-extrabold tracking-widest text-white uppercase">
+    <header class="bg-white h-16 shrink-0 flex items-center px-6 shadow-md w-full lg:pl-20 transition-all duration-300">
+        <h1 class="text-xl font-extrabold tracking-widest text-black uppercase">
             Gestión de Usuarios
         </h1>
     </header>
@@ -148,7 +148,7 @@
             <th class="px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
                 Correo
             </th>
-            <th class="w-24 sm:w-32 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+            <th class="w-40 sm:w-48 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
                 Rol
             </th>
             <th class="w-24 sm:w-28 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
@@ -179,110 +179,45 @@
             </td>
             <td class="px-2 sm:px-4 py-3.5 text-gray-600 truncate">
                 {{ usuario.email }}
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 truncate">
-                <span class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 truncate max-w-full">
-                    {{ usuario.nombre_rol || 'Indefinido' }}
-                </span>
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 text-center">
-                <span
-                    *ngIf="usuario.activo"
-                    class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100"
-                >
-                    Activo
-                </span>
-                <span
-                    *ngIf="!usuario.activo"
-                    class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100"
-                >
-                    Inactivo
-                </span>
             </td>
             <td class="px-2 sm:px-4 py-3.5">
-                <div class="flex justify-center items-center gap-2">
-                    <!-- BOTÓN EDITAR -->
-                    <button
-                        (click)="abrirModalEditar(usuario)"
-                        class="bg-gray-100 hover:bg-[#F1C63C] hover:text-white text-gray-600 p-2 rounded-xl transition-all duration-200 shadow-xs hover:shadow-md flex items-center justify-center shrink-0"
-                        title="Editar"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                        </svg>
-                    </button>
-                    <!-- SWITCH ACTIVAR / INACTIVAR -->
+                <div class="relative inline-block text-left">
                     <button
                         type="button"
-                        role="switch"
-                        [attr.aria-checked]="usuario.activo"
-                        (click)="eliminarUsuario(usuario)"
-                        class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none shadow-xs"
-                        [ngClass]="usuario.activo ? 'bg-emerald-500' : 'bg-gray-300'"
-                        title="Cambiar estado"
+                        (click)="toggleMenuRol(usuario, $event)"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70 hover:bg-indigo-100 hover:border-indigo-300 transition-all duration-150 cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
+                        title="Cambiar rol"
                     >
-                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300" [ngClass]="usuario.activo ? 'translate-x-6' : 'translate-x-1'"></span>
+                        <span>{{ usuario.nombre_rol || 'Indefinido' }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-700 transition-transform duration-200" [class.rotate-180]="usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </button>
-                </div>
-            </td>
-        </tr>
-        <!-- SIN USUARIOS -->
-        <tr *ngIf="usuarios.length === 0">
-            <td colspan="6" class="text-center py-12 text-gray-400">
-                No hay usuarios registrados.
-            </td>
-        </tr>
-    </tbody>
-</table><table class="w-full text-left border-collapse table-fixed">
-    <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
-        <tr>
-            <th class="w-12 sm:w-16 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                ID
-            </th>
-            <th class="px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Nombre
-            </th>
-            <th class="px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Correo
-            </th>
-            <th class="w-24 sm:w-32 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Rol
-            </th>
-            <th class="w-24 sm:w-28 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
-                Estado
-            </th>
-            <th class="w-28 sm:w-32 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
-                Acciones
-            </th>
-        </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100 text-sm">
-        <tr
-            *ngFor="let usuario of usuariosFiltrados"
-            class="hover:bg-indigo-50/30 transition-colors group"
-        >
-            <td class="px-2 sm:px-4 py-3.5 text-gray-600 font-medium truncate">
-                {{ usuario.id_usuario }}
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 truncate">
-                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[#1B1947] font-bold shrink-0 text-xs shadow-xs">
-                        {{ usuario.nombre?.charAt(0) }}
+
+                    <!-- MENÚ FLOTANTE DE ROLES -->
+                    <div
+                        *ngIf="usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario"
+                        class="absolute left-0 mt-1.5 w-44 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 z-50 animate-in fade-in duration-100"
+                    >
+                        <div class="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-1">
+                            Cambiar a:
+                        </div>
+                        <button
+                            *ngFor="let rol of rolesDisponibles"
+                            type="button"
+                            (click)="seleccionarNuevoRol(usuario, rol)"
+                            class="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition-colors"
+                            [ngClass]="(usuario.id_rol === (rol.id_rol || rol.id) || usuario.nombre_rol === (rol.nombre_rol || rol.nombre)) ? 'text-indigo-700 font-bold bg-indigo-50/60' : 'text-gray-700'"
+                        >
+                            <span>{{ rol.nombre_rol || rol.nombre }}</span>
+                            <svg *ngIf="usuario.id_rol === (rol.id_rol || rol.id) || usuario.nombre_rol === (rol.nombre_rol || rol.nombre)" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
                     </div>
-                    <span class="font-bold text-gray-900 truncate">
-                        {{ usuario.nombre }} {{ usuario.apellido }}
-                    </span>
                 </div>
             </td>
-            <td class="px-2 sm:px-4 py-3.5 text-gray-600 truncate">
-                {{ usuario.email }}
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 truncate">
-                <span class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 truncate max-w-full">
-                    {{ usuario.nombre_rol || 'Indefinido' }}
-                </span>
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 text-center">
+            <td class="px-2 sm:px-4 py-3.5 text-center">    
                 <span
                     *ngIf="usuario.activo"
                     class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100"
