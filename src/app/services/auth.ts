@@ -137,6 +137,20 @@ export interface PostulacionVoluntariado {
 
 
 
+export interface CrearMedicamento {
+  nombre: string;
+  descripcion?: string;
+  activo: boolean;
+}
+
+export interface ActualizarMedicamento {
+  nombre: string;
+  descripcion?: string;
+  activo: boolean;
+}
+
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -144,6 +158,7 @@ export class AuthService {
   private apiUrl = environment.apiUrl;
 
   private apiUrlespecies = environment.apiUrlespecies;
+  private apiUrlMedicamentos = environment.apiUrlMedicamentos;
 
   constructor(private http: HttpClient) {}
 
@@ -315,4 +330,29 @@ export class AuthService {
       `${this.baseUrlVoluntariado}/postulaciones/${id}/`
     );
   }
+
+  // AnaC
+
+  listarMedicamentos(): Observable<any> {
+    return this.http.get<any>(this.apiUrlMedicamentos);
+  }
+
+  crearMedicamento(medicamento: CrearMedicamento): Observable<any> {
+    return this.http.post<any>(this.apiUrlMedicamentos, medicamento);
+  }
+
+  actualizarMedicamento(id: any, medicamento: ActualizarMedicamento): Observable<any> {
+  const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
+  return this.http.put<any>(`${this.apiUrlMedicamentos}${idReal}/`, medicamento);
 }
+
+cambiarEstadoMedicamento(id: any, activo: boolean): Observable<any> {
+  const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
+  return this.http.patch<any>(`${this.apiUrlMedicamentos}${idReal}/`, { activo });
+}
+  // AnaC
+
+}
+
+
+

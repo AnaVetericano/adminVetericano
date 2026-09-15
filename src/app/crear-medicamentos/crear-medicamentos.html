@@ -1,22 +1,156 @@
-<div class="min-h-screen bg-[#1B194]/90 flex items-center justify-center p-4">
-  <div class="w-full max-w-md bg-[#ECECF6] rounded-2xl overflow-hidden shadow-xl">
-    <div class="bg-[#1B1947] px-6 py-4 flex justify-between items-center">
-      <h2 class="text-white text-lg font-bold tracking-wider uppercase">CREAR MEDICAMENTOS</h2>
-      <a routerLink="/listarmedicamentos" class="text-white text-xl font-bold">&times;</a>
+<div class="p-6 max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">GESTIÓN DE MEDICAMENTOS</h1>
+    <button 
+      (click)="abrirModalCrear()" 
+      class="bg-[#4141A5] hover:bg-[#323282] text-white px-4 py-2 rounded-lg font-medium transition duration-200">
+      + Nuevo Medicamento
+    </button>
+  </div>
+
+  <!-- BÚSQUEDA Y FILTROS -->
+  <div class="flex gap-4 mb-6">
+    <div class="relative flex-1">
+      <input 
+        type="text" 
+        [(ngModel)]="filtroBusqueda" 
+        (input)="filtrarMedicamentos()" 
+        placeholder="Buscar medicamento..." 
+        class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+      />
     </div>
 
-    <form (ngSubmit)="guardarMedicamento()" class="p-6 space-y-4">
-      <input [(ngModel)]="medicamento.nombre" name="nombre" type="text" placeholder="Nombre del medicamento" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" required />
-      <input [(ngModel)]="medicamento.tipo" name="tipo" type="text" placeholder="Tipo de medicamento" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input [(ngModel)]="medicamento.descripcion" name="descripcion" type="text" placeholder="Descripción" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input [(ngModel)]="medicamento.observaciones" name="observaciones" type="text" placeholder="Observaciones" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
-      <input [(ngModel)]="medicamento.estado" name="estado" type="text" placeholder="Estado" class="w-full px-4 py-2.5 rounded-full bg-white text-slate-800 text-sm border border-slate-300 focus:outline-none" />
+    <div class="relative">
+      <button 
+        (click)="toggleMenuFiltro()" 
+        class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+        <span>Filtrar</span>
+      </button>
 
-      <div class="pt-2 flex justify-center">
-        <button type="submit" class="bg-[#F5C842] hover:bg-yellow-400 text-slate-900 font-bold px-8 py-2 rounded-lg text-xs uppercase shadow">
-          CREAR
+      <div *ngIf="menuFiltroAbierto" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+        <button (click)="filtrarPorEstado(null)" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">Todos</button>
+        <button (click)="filtrarPorEstado(true)" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-green-600">Activos</button>
+        <button (click)="filtrarPorEstado(false)" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600">Inactivos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA DE MEDICAMENTOS -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-gray-100 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase">
+          <th class="p-4">Nombre</th>
+          <th class="p-4">Tipo</th>
+          <th class="p-4">Cantidad (ml)</th>
+          <th class="p-4">Descripción</th>
+          <th class="p-4">Estado</th>
+          <th class="p-4 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of medicamentos" class="border-b border-gray-200 hover:bg-gray-50">
+          <td class="p-4 font-medium text-gray-800">{{ m.nombre }}</td>
+          <td class="p-4 text-gray-600">{{ m.tipo || '-' }}</td>
+          <td class="p-4 text-gray-600">{{ m.cantidad_ml ?? '-' }}</td>
+          <td class="p-4 text-gray-600">{{ m.descripcion || 'Sin descripción' }}</td>
+          <td class="p-4">
+            <span [ngClass]="m.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 rounded-full text-xs font-semibold">
+              {{ m.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="p-4 text-center">
+            <div class="flex justify-center items-center gap-2">
+              <button (click)="abrirModalEditar(m)" class="p-1 hover:text-[#4141A5]" title="Editar">
+                ✏️
+              </button>
+              <button (click)="cambiarEstado(m)" class="p-1 hover:text-red-600" title="Cambiar Estado">
+                🔄
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="medicamentos.length === 0">
+          <td colspan="6" class="p-4 text-center text-gray-500">
+            No se encontraron medicamentos.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MODAL CREAR / EDITAR -->
+  <div *ngIf="modalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">
+        {{ editandoId !== null ? 'Editar medicamento' : 'Nuevo medicamento' }}
+      </h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="medicamento.nombre" 
+            placeholder="Ej. Amoxicilina"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="medicamento.tipo" 
+            placeholder="Ej. Antibiótico, Analgésico, Vacuna..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad (ml) *</label>
+          <input 
+            type="number" 
+            [(ngModel)]="medicamento.cantidad_ml" 
+            placeholder="Ej. 100"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <textarea 
+            [(ngModel)]="medicamento.descripcion" 
+            rows="3" 
+            placeholder="Descripción opcional..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]">
+          </textarea>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input 
+            type="checkbox" 
+            id="activo" 
+            [(ngModel)]="medicamento.activo" 
+            class="h-4 w-4 text-[#4141A5] rounded border-gray-300" 
+          />
+          <label for="activo" class="text-sm text-gray-700">Activo</label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button 
+          (click)="cerrarModal()" 
+          class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
+          Cancelar
+        </button>
+        <button 
+          (click)="guardarMedicamento()" 
+          class="px-4 py-2 bg-[#4141A5] text-white rounded-lg hover:bg-[#323282]">
+          {{ editandoId !== null ? 'Actualizar' : 'Guardar' }}
         </button>
       </div>
-    </form>
+    </div>
   </div>
 </div>

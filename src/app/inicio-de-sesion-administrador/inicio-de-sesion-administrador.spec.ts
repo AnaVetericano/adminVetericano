@@ -1,17 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador';
 
-import { InicioDeSesionAdministrador } from './inicio-de-sesion-administrador';
-
-describe('InicioDeSesionAdministrador', () => {
-  let component: InicioDeSesionAdministrador;
-  let fixture: ComponentFixture<InicioDeSesionAdministrador>;
+describe('InicioDeSesionAdministradorComponent', () => {
+  let component: InicioDeSesionAdministradorComponent;
+  let fixture: ComponentFixture<InicioDeSesionAdministradorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InicioDeSesionAdministrador],
+      imports: [InicioDeSesionAdministradorComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(InicioDeSesionAdministrador);
+    fixture = TestBed.createComponent(InicioDeSesionAdministradorComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
