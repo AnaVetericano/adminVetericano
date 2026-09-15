@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -18,13 +18,21 @@ import { Graficas } from '../graficas/graficas';
 export class UsuariosRoles implements OnInit{
 
   textoBusqueda: string = '';
-usuariosFiltrados: any[] = [];
+  usuariosFiltrados: any[] = [];
 
   usuarios: any[] = [];
 
   modal = false;
   editar = false;
   mostrarFiltros = false;
+
+  usuarioSeleccionadoRol: any = null;
+  rolesDisponibles: any[] = [
+    { id_rol: 1, nombre_rol: 'Administrador' },
+    { id_rol: 2, nombre_rol: 'Veterinario' },
+    { id_rol: 3, nombre_rol: 'Jurídico' },
+    { id_rol: 4, nombre_rol: 'Peticionario' }
+  ];
 
   // URL unificada apuntando exactamente a endpoint de usuarios en Railway
   private apiUrl = `${environment.apiUrl}/usuarios/`;
@@ -48,6 +56,7 @@ usuariosFiltrados: any[] = [];
 
   ngOnInit(): void {
     this.listarUsuarios();
+    this.cargarRoles();
   }
 
   // Listar usuarios con protección por si la API responde con paginación o lista directa
@@ -374,6 +383,119 @@ filtrarPorRol(idRol: number | null): void {
   // Alias para llamar inactivarUsuario directamente
   inactivarUsuario(id_usuario: number, activo: boolean = false): void {
     this.eliminarUsuario(!activo, id_usuario);
+  }
+
+  // Cargar lista de roles desde el servicio si está disponible
+  cargarRoles(): void {
+    this.authService.listarRoles().subscribe({
+      next: (roles: any) => {
+        if (Array.isArray(roles) && roles.length > 0) {
+          this.rolesDisponibles = roles;
+        }
+      },
+      error: () => {
+        // Mantiene la lista por defecto si la API de roles no responde
+      }
+    });
+  }
+
+  // Abrir o cerrar el menú desplegable del rol de un usuario
+  toggleMenuRol(usuario: any, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario) {
+      this.usuarioSeleccionadoRol = null;
+    } else {
+      this.usuarioSeleccionadoRol = usuario;
+    }
+  }
+
+  // Cerrar el menú desplegable al hacer clic en cualquier parte fuera
+  @HostListener('document:click')
+  cerrarMenuRolFuera(): void {
+    this.usuarioSeleccionadoRol = null;
+  }
+
+  // Pedir confirmación con SweetAlert2 para cambiar el rol
+  seleccionarNuevoRol(usuario: any, rol: any): void {
+    this.usuarioSeleccionadoRol = null;
+
+    const nuevoIdRol = rol.id_rol ?? rol.id;
+    const nuevoNombreRol = rol.nombre_rol ?? rol.nombre;
+
+    const rolActualId = typeof usuario.id_rol === 'object' ? usuario.id_rol?.id_rol : usuario.id_rol;
+
+    // Si ya tiene ese mismo rol, no hacemos nada
+    if (Number(rolActualId) === Number(nuevoIdRol) || usuario.nombre_rol === nuevoNombreRol) {
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Confirmar cambio de rol?',
+      html: `¿Estás seguro de que deseas cambiar el rol de <b>${usuario.nombre} ${usuario.apellido}</b> a <span class="text-indigo-700 font-bold">${nuevoNombreRol}</span>?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar rol',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1d1b4f',
+      cancelButtonColor: '#C4C4C4',
+      reverseButtons: true,
+      background: '#FFFFFF',
+      color: '#170B3D',
+      customClass: {
+        popup: 'rounded-2xl shadow-2xl',
+        confirmButton: 'rounded-xl px-5 py-2.5 font-semibold shadow-md',
+        cancelButton: 'rounded-xl px-5 py-2.5 font-semibold text-gray-700'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.ejecutarCambioRol(usuario, nuevoIdRol, nuevoNombreRol);
+      }
+    });
+  }
+
+  // Ejecutar la actualización del rol en la API
+  ejecutarCambioRol(usuario: any, nuevoIdRol: number, nuevoNombreRol: string): void {
+    const usuarioActualizado = {
+      identificacion: usuario.identificacion || '',
+      email: usuario.email,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      id_rol: nuevoIdRol,
+      activo: usuario.activo
+    };
+
+    this.http.put(`${this.apiUrl}${usuario.id_usuario}/`, usuarioActualizado).subscribe({
+      next: () => {
+        usuario.id_rol = nuevoIdRol;
+        usuario.nombre_rol = nuevoNombreRol;
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Rol actualizado!',
+          text: `El rol de ${usuario.nombre} se actualizó a ${nuevoNombreRol} correctamente.`,
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#4141A5',
+          background: '#FFFFFF',
+          color: '#170B3D',
+          timer: 2200,
+          timerProgressBar: true
+        });
+
+        this.listarUsuarios();
+      },
+      error: (error) => {
+        console.error('Error al actualizar rol:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al cambiar rol',
+          text: 'No se pudo actualizar el rol del usuario. Intenta nuevamente.',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#4141A5',
+          background: '#FFFFFF',
+          color: '#170B3D'
+        });
+      }
+    });
   }
 
 }
