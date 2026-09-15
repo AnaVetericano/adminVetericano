@@ -111,6 +111,32 @@ export interface UsersActives {
   id_rol: number;
 }
 
+
+
+
+export interface EventoVoluntariado {
+  id?: number;
+  titulo: string;
+  descripcion: string;
+  imagen: string;
+  fecha: string;
+}
+
+export interface PostulacionVoluntariado {
+  id?: number;
+  evento: number | null;
+  correo: string;
+  identificacion: string;
+  nombre_completo: string;
+  edad: number;
+  telefono: string;
+  fecha_postulacion?: string;
+}
+
+
+
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -246,4 +272,47 @@ export class AuthService {
     )
   }
 
+
+
+  // VOLUNTARIADO
+  private get baseUrlVoluntariado(): string {
+    return `${this.getCleanUrl()}/voluntariado`;
+  }
+
+  listarEventosVoluntariado() {
+    return this.http.get<EventoVoluntariado[]>(
+      `${this.baseUrlVoluntariado}/eventos/`
+    );
+  }
+
+  listarPostulacionesVoluntariado() {
+    return this.http.get<PostulacionVoluntariado[]>(
+      `${this.baseUrlVoluntariado}/postulaciones/`
+    );
+  }
+
+  crearPostulacionVoluntariado(
+    postulacion: PostulacionVoluntariado
+  ) {
+    return this.http.post(
+      `${this.baseUrlVoluntariado}/postulaciones/`,
+      postulacion
+    );
+  }
+
+  actualizarPostulacionVoluntariado(
+    id: number,
+    postulacion: PostulacionVoluntariado
+  ) {
+    return this.http.put(
+      `${this.baseUrlVoluntariado}/postulaciones/${id}/`,
+      postulacion
+    );
+  }
+
+  eliminarPostulacionVoluntariado(id: number) {
+    return this.http.delete(
+      `${this.baseUrlVoluntariado}/postulaciones/${id}/`
+    );
+  }
 }
