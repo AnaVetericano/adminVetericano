@@ -9,9 +9,11 @@ export interface RegistroUsuario {
   nombre: string;
   apellido: string;
 }
+export interface InactivarUsuario{
 
-export interface InactivarUsuario {
+
   activo: boolean;
+
 }
 
 export interface RespuestaRegistro {
@@ -109,6 +111,32 @@ export interface UsersActives {
   id_rol: number;
 }
 
+
+
+
+export interface EventoVoluntariado {
+  id?: number;
+  titulo: string;
+  descripcion: string;
+  imagen: string;
+  fecha: string;
+}
+
+export interface PostulacionVoluntariado {
+  id?: number;
+  evento: number | null;
+  correo: string;
+  identificacion: string;
+  nombre_completo: string;
+  edad: number;
+  telefono: string;
+  fecha_postulacion?: string;
+}
+
+
+
+
+
 export interface CrearMedicamento {
   nombre: string;
   descripcion?: string;
@@ -128,24 +156,41 @@ export interface ActualizarMedicamento {
 })
 export class AuthService {
   private apiUrl = environment.apiUrl;
+
   private apiUrlespecies = environment.apiUrlespecies;
   private apiUrlMedicamentos = environment.apiUrlMedicamentos;
 
   constructor(private http: HttpClient) {}
 
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
+    return this.http.post<RespuestaRegistro>(
+      `${this.apiUrl}/register/`,
+      usuario
+    );
     return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
+    return this.http.post<RespuestaLogin>(
+      `${this.apiUrl}/login/`,
+      credenciales
+    );
     return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales);
   }
 
   solicitarRecuperacion(email: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/recuperar-password/`,
+      { email }
+    );
     return this.http.post<any>(`${this.apiUrl}/recuperar-password/`, { email });
   }
 
   confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {   
+    return this.http.post<any>(
+      `${this.apiUrl}/confirmar-password/`,
+      payload
+    );
     return this.http.post<any>(`${this.apiUrl}/confirmar-password/`, payload);
   }
 
@@ -158,6 +203,7 @@ export class AuthService {
     return this.http.patch<any>(`${urlBase}/usuarios/${id_usuario}/`, { activo });
   }
 
+ 
   private getCleanUrl(): string {
     const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
     return urlBase.replace(/\/usuarios$/, '');
@@ -240,6 +286,51 @@ export class AuthService {
       )
     )
   }
+
+
+
+  // VOLUNTARIADO
+  private get baseUrlVoluntariado(): string {
+    return `${this.getCleanUrl()}/voluntariado`;
+  }
+
+  listarEventosVoluntariado() {
+    return this.http.get<EventoVoluntariado[]>(
+      `${this.baseUrlVoluntariado}/eventos/`
+    );
+  }
+
+  listarPostulacionesVoluntariado() {
+    return this.http.get<PostulacionVoluntariado[]>(
+      `${this.baseUrlVoluntariado}/postulaciones/`
+    );
+  }
+
+  crearPostulacionVoluntariado(
+    postulacion: PostulacionVoluntariado
+  ) {
+    return this.http.post(
+      `${this.baseUrlVoluntariado}/postulaciones/`,
+      postulacion
+    );
+  }
+
+  actualizarPostulacionVoluntariado(
+    id: number,
+    postulacion: PostulacionVoluntariado
+  ) {
+    return this.http.put(
+      `${this.baseUrlVoluntariado}/postulaciones/${id}/`,
+      postulacion
+    );
+  }
+
+  eliminarPostulacionVoluntariado(id: number) {
+    return this.http.delete(
+      `${this.baseUrlVoluntariado}/postulaciones/${id}/`
+    );
+  }
+
   // AnaC
 
   listarMedicamentos(): Observable<any> {
@@ -261,7 +352,7 @@ cambiarEstadoMedicamento(id: any, activo: boolean): Observable<any> {
 }
   // AnaC
 
-} 
+}
 
 
 

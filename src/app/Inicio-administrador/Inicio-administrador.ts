@@ -23,6 +23,10 @@ export class InicioAdministradorComponent {
 
     avatarUrl: 'images/logoVet.svg'
   };
+    logoVetWhite = {
+
+    avatarUrl: 'images/logoVetWhite.svg'
+  };
 
 onLogout(): void {
   Swal.fire({
