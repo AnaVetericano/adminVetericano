@@ -43,6 +43,7 @@ export class EventosVoluntariado implements OnInit {
     this.obtenerEventos();
   }
 
+  
   // obtener eventos
 
   obtenerEventos(): void {
