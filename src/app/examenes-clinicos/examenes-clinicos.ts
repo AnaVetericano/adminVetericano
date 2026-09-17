@@ -22,12 +22,13 @@ export class ExamenesClinicos implements OnInit {
 
   modalAbierto: boolean = false;
   esEdicion: boolean = false;
-  examenActual: ProcedimientoCatalogo = { 
-    nombre_tipo: '', 
-    tipo: '', 
-    descripcion: '', 
-    observaciones: '', 
-    estado: '' 
+  
+  examenActual: any = {
+    id_procedimiento_catalogo: null,
+    nombre_tipo: '',
+    tipo: '',
+    descripcion: '',
+    estado: 'activo'
   };
 
   constructor(
@@ -49,8 +50,9 @@ export class ExamenesClinicos implements OnInit {
   cargarCatalogo() {
     this.cargando = true;
     this.authService.getCatalogo().subscribe({
-      next: (data: ProcedimientoCatalogo[]) => {
-        this.listaCatalogo = data || [];
+      next: (data: any) => {
+        const resultados = Array.isArray(data) ? data : (data?.results || []);
+        this.listaCatalogo = resultados;
         this.listaFiltrada = [...this.listaCatalogo];
         this.cargando = false;
         this.cdr.detectChanges();
@@ -60,14 +62,11 @@ export class ExamenesClinicos implements OnInit {
         this.listaCatalogo = [];
         this.listaFiltrada = [];
         this.cargando = false;
-        
-        // Notificación opcional si falla la carga inicial
         Swal.fire({
           icon: 'error',
           title: 'Oops...',
           text: 'No pudimos cargar la lista de exámenes. Revisa tu conexión.'
         });
-        
         this.cdr.detectChanges();
       }
     });
@@ -86,22 +85,74 @@ export class ExamenesClinicos implements OnInit {
     }
   }
 
+  verificarEstadoActivo(item: any): boolean {
+    if (!item || item.estado === undefined || item.estado === null) return true;
+    const val = String(item.estado).toLowerCase().trim();
+    return val === 'activo' || val === 'true' || val === '1';
+  }
+
+  toggleEstado(item: any) {
+    const estadoActual = this.verificarEstadoActivo(item);
+    const nuevoEstado = estadoActual ? 'inactivo' : 'activo';
+    const idARecuperar = item.id_procedimiento_catalogo || item.id_examen || item.id;
+
+    if (!idARecuperar) {
+      Swal.fire('Error', 'No se encontró el identificador del examen.', 'error');
+      return;
+    }
+
+    const payload = {
+      ...item,
+      id_procedimiento_catalogo: idARecuperar,
+      id_examen: idARecuperar,
+      estado: nuevoEstado
+    };
+
+    this.authService.actualizarCatalogo(idARecuperar, payload).subscribe({
+      next: (res: any) => {
+        const estadoFinal = (res && res.estado) ? res.estado.toString().toLowerCase().trim() : nuevoEstado;
+        item.estado = estadoFinal;
+        const target = this.listaCatalogo.find(x => (x.id_procedimiento_catalogo || x.id_examen || (x as any).id) === idARecuperar);
+        if (target) {
+          target.estado = estadoFinal;
+        }
+        this.cdr.detectChanges();
+        Swal.fire({
+          icon: 'success',
+          title: '¡Estado actualizado!',
+          text: `El examen ahora está ${estadoFinal}.`,
+          timer: 1500,
+          showConfirmButton: false
+        });
+      },
+      error: (err: any) => {
+        console.error('Error al cambiar estado:', err);
+        Swal.fire('Error', 'No se pudo cambiar el estado del examen.', 'error');
+      }
+    });
+  }
+
   abrirModalCrear() {
     this.esEdicion = false;
-    this.examenActual = { 
-      nombre_tipo: '', 
-      tipo: '', 
-      descripcion: '', 
-      observaciones: '', 
-      estado: '' 
+    this.examenActual = {
+      id_procedimiento_catalogo: null,
+      nombre_tipo: '',
+      tipo: '',
+      descripcion: '',
+      estado: 'activo' // Valor inicial por defecto, pero libre de cambiarse en el select
     };
     this.modalAbierto = true;
     this.cdr.detectChanges();
   }
 
-  abrirModalEditar(item: ProcedimientoCatalogo) {
+  abrirModalEditar(item: any) {
     this.esEdicion = true;
-    this.examenActual = { ...item };
+    const esActivo = this.verificarEstadoActivo(item);
+    this.examenActual = { 
+      ...item,
+      id_procedimiento_catalogo: item.id_procedimiento_catalogo || item.id_examen || item.id,
+      estado: esActivo ? 'activo' : 'inactivo'
+    };
     this.modalAbierto = true;
     this.cdr.detectChanges();
   }
@@ -112,7 +163,6 @@ export class ExamenesClinicos implements OnInit {
   }
 
   guardarExamen() {
-    // Validación visual con SweetAlert
     if (!this.examenActual.nombre_tipo || !this.examenActual.nombre_tipo.trim()) {
       Swal.fire({
         icon: 'warning',
@@ -122,26 +172,30 @@ export class ExamenesClinicos implements OnInit {
       return;
     }
 
-    if (this.esEdicion && this.examenActual.id_procedimiento_catalogo) {
-      this.authService.actualizarCatalogo(this.examenActual.id_procedimiento_catalogo, this.examenActual).subscribe({
+    // Envía estrictamente la opción elegida en el select (activo o inactivo)
+    this.examenActual.estado = this.examenActual.estado ? this.examenActual.estado.toLowerCase().trim() : 'activo';
+
+    const idARecuperar = this.examenActual.id_procedimiento_catalogo || this.examenActual.id_examen || this.examenActual.id;
+
+    if (this.esEdicion && idARecuperar) {
+      this.examenActual.id_procedimiento_catalogo = idARecuperar;
+      this.examenActual.id_examen = idARecuperar;
+
+      this.authService.actualizarCatalogo(idARecuperar, this.examenActual).subscribe({
         next: () => {
           this.cerrarModal();
           this.cargarCatalogo();
           Swal.fire({
             icon: 'success',
             title: '¡Actualizado!',
-            text: 'El examen clínico se ha actualizado correctamente.',
-            timer: 2000,
+            text: 'El estado y datos se han actualizado correctamente.',
+            timer: 1500,
             showConfirmButton: false
           });
         },
         error: (err: any) => {
           console.error('Error al actualizar:', err);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error de servidor',
-            text: 'Hubo un problema al actualizar el examen en la base de datos.'
-          });
+          Swal.fire('Error', 'No se pudo actualizar el examen.', 'error');
         }
       });
     } else {
@@ -153,29 +207,28 @@ export class ExamenesClinicos implements OnInit {
             icon: 'success',
             title: '¡Creado!',
             text: 'El examen clínico se ha registrado correctamente.',
-            timer: 2000,
+            timer: 1500,
             showConfirmButton: false
           });
         },
         error: (err: any) => {
           console.error('Error al crear:', err);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error de servidor',
-            text: 'Hubo un problema al registrar el examen en la base de datos.'
-          });
+          Swal.fire('Error', 'No se pudo registrar el examen.', 'error');
         }
       });
     }
   }
 
-  eliminarExamen(id?: number) {
-    if (!id) return;
-    
-    // Cuadro de confirmación interactivo
+  eliminarExamen(item: any) {
+    const idParaEliminar = item.id_procedimiento_catalogo || item.id_examen || item.id;
+    if (!idParaEliminar) {
+      Swal.fire('Error', 'No se encontró el identificador del examen.', 'error');
+      return;
+    }
+
     Swal.fire({
       title: '¿Estás seguro?',
-      text: "Esta acción eliminará el examen de forma permanente.",
+      text: 'Esta acción eliminará el examen de forma permanente.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -183,24 +236,15 @@ export class ExamenesClinicos implements OnInit {
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
-      // Solo si el usuario hace clic en "Sí, eliminar"
       if (result.isConfirmed) {
-        this.authService.eliminarCatalogo(id).subscribe({
+        this.authService.eliminarCatalogo(idParaEliminar).subscribe({
           next: () => {
             this.cargarCatalogo();
-            Swal.fire(
-              '¡Eliminado!',
-              'El examen ha sido eliminado del catálogo.',
-              'success'
-            );
+            Swal.fire('¡Eliminado!', 'El examen ha sido eliminado del catálogo.', 'success');
           },
           error: (err: any) => {
             console.error('Error al eliminar:', err);
-            Swal.fire(
-              'Error',
-              'No se pudo eliminar el examen. Es posible que esté asociado a una consulta médica.',
-              'error'
-            );
+            Swal.fire('Error', 'No se pudo eliminar el examen.', 'error');
           }
         });
       }
