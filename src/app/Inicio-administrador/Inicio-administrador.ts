@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
+import { Header } from '../header/header';
 
 
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule],
+  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule, Header],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })

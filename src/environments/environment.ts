@@ -1,6 +1,6 @@
 export const environment = {
-  production: true,
+  production: false,
   apiUrl: 'https://backendvetericano-production.up.railway.app/api/usuarios',
-  apiUrlespecies: 'https://backendvetericano-production.up.railway.app/api/especies',
+  apiUrlespecies: 'https://backendvetericano-production.up.railway.app/api/especies/',
   apiUrlMedicamentos: 'https://backendvetericano-production.up.railway.app/api/medicamentos/'
 };

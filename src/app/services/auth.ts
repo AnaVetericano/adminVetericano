@@ -5,15 +5,14 @@ import { environment } from '../../environments/environment';
 
 export interface RegistroUsuario {
   email: string;
+  identificacion?: string;
   password: string;
   nombre: string;
   apellido: string;
 }
-export interface InactivarUsuario{
 
-
+export interface InactivarUsuario {
   activo: boolean;
-
 }
 
 export interface RespuestaRegistro {
@@ -72,6 +71,7 @@ export interface RespuestaEspecie {
   descripcion: string;
   activo: boolean;
 }
+
 export interface Patologia {
   id_patologia?: number;
   nombre: string;
@@ -100,19 +100,20 @@ export interface RespuestaPatologia {
 
 export interface ProcedimientoCatalogo {
   id_procedimiento_catalogo?: number;
-  nombre_tipo: string;
+  id_examen?: number;
+  id_consulta?: any;
+  nombre_tipo?: string;
   tipo?: string;
   descripcion?: string;
   observaciones?: string;
   estado?: string;
+  solicitado?: boolean;
 }
+
 export interface UsersActives {
   activo: boolean;
   id_rol: number;
 }
-
-
-
 
 export interface EventoVoluntariado {
   id?: number;
@@ -133,10 +134,6 @@ export interface PostulacionVoluntariado {
   fecha_postulacion?: string;
 }
 
-
-
-
-
 export interface CrearMedicamento {
   nombre: string;
   descripcion?: string;
@@ -149,48 +146,29 @@ export interface ActualizarMedicamento {
   activo: boolean;
 }
 
-
-
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private apiUrl = environment.apiUrl;
-
   private apiUrlespecies = environment.apiUrlespecies;
   private apiUrlMedicamentos = environment.apiUrlMedicamentos;
 
   constructor(private http: HttpClient) {}
 
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
-    return this.http.post<RespuestaRegistro>(
-      `${this.apiUrl}/register/`,
-      usuario
-    );
     return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
-    return this.http.post<RespuestaLogin>(
-      `${this.apiUrl}/login/`,
-      credenciales
-    );
     return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales);
   }
 
   solicitarRecuperacion(email: string): Observable<any> {
-    return this.http.post<any>(
-      `${this.apiUrl}/recuperar-password/`,
-      { email }
-    );
     return this.http.post<any>(`${this.apiUrl}/recuperar-password/`, { email });
   }
 
-  confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {   
-    return this.http.post<any>(
-      `${this.apiUrl}/confirmar-password/`,
-      payload
-    );
+  confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/confirmar-password/`, payload);
   }
 
@@ -203,36 +181,31 @@ export class AuthService {
     return this.http.patch<any>(`${urlBase}/usuarios/${id_usuario}/`, { activo });
   }
 
- 
   private getCleanUrl(): string {
     const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
     return urlBase.replace(/\/usuarios$/, '');
   }
 
   getCatalogo(): Observable<ProcedimientoCatalogo[]> {
-    return this.http.get<ProcedimientoCatalogo[]>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`);
+    return this.http.get<ProcedimientoCatalogo[]>(`${this.getCleanUrl()}/examenes-clinicos/examenes/`);
   }
 
   crearCatalogo(catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
-    return this.http.post<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/`, catalogo);
+    return this.http.post<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/examenes/`, catalogo);
   }
 
   actualizarCatalogo(id: number, catalogo: ProcedimientoCatalogo): Observable<ProcedimientoCatalogo> {
-    return this.http.put<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`, catalogo);
+    return this.http.patch<ProcedimientoCatalogo>(`${this.getCleanUrl()}/examenes-clinicos/examenes/${id}/`, catalogo);
   }
-  
+
   eliminarCatalogo(id: number): Observable<any> {
-    return this.http.delete<any>(`${this.getCleanUrl()}/examenes-clinicos/catalogo/${id}/`);
+    return this.http.delete<any>(`${this.getCleanUrl()}/examenes-clinicos/examenes/${id}/`);
   }
 
   private get baseUrlEspecies(): string {
     const base = (this.apiUrlespecies || '').replace(/\/+$/, '');
-    if (base.endsWith('/especies/especies')) {
-      return `${base}/`;
-    }
-    if (base.endsWith('/especies')) {
-      return `${base}/especies/`;
-    }
+    if (base.endsWith('/especies/especies')) return `${base}/`;
+    if (base.endsWith('/especies')) return `${base}/especies/`;
     return `${base}/especies/especies/`;
   }
 
@@ -251,7 +224,7 @@ export class AuthService {
   cambiarEstadoEspecie(id_especie: number, activo: boolean): Observable<RespuestaEspecie> {
     return this.http.patch<RespuestaEspecie>(`${this.baseUrlEspecies}${id_especie}/`, { activo });
   }
-  //PATOLOGIAS R
+
   private get baseUrlPatologias(): string {
     return `${this.getCleanUrl()}/patologias/patologias/`;
   }
@@ -271,25 +244,16 @@ export class AuthService {
   cambiarEstadoPatologia(id_patologia: number, activo: boolean): Observable<RespuestaPatologia> {
     return this.http.patch<RespuestaPatologia>(`${this.baseUrlPatologias}${id_patologia}/`, { activo });
   }
-  
-  
-  
-  listUsersActive(){
+
+  listUsersActive() {
     return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(
-      map(
-        usuarios => usuarios.map(
-          (u:any) => ({
-            activo: u.activo, 
-            id_rol: u.id_rol
-          })
-        )
-      )
-    )
+      map(usuarios => usuarios.map((u: any) => ({
+        activo: u.activo,
+        id_rol: u.id_rol
+      })))
+    );
   }
 
-
-
-  // VOLUNTARIADO
   private get baseUrlVoluntariado(): string {
     return `${this.getCleanUrl()}/voluntariado`;
   }
@@ -321,37 +285,20 @@ export class AuthService {
   }
 
   listarPostulacionesVoluntariado() {
-    return this.http.get<PostulacionVoluntariado[]>(
-      `${this.baseUrlVoluntariado}/postulaciones/`
-    );
+    return this.http.get<PostulacionVoluntariado[]>(`${this.baseUrlVoluntariado}/postulaciones/`);
   }
 
-  crearPostulacionVoluntariado(
-    postulacion: PostulacionVoluntariado
-  ) {
-    return this.http.post(
-      `${this.baseUrlVoluntariado}/postulaciones/`,
-      postulacion
-    );
+  crearPostulacionVoluntariado(postulacion: PostulacionVoluntariado) {
+    return this.http.post(`${this.baseUrlVoluntariado}/postulaciones/`, postulacion);
   }
 
-  actualizarPostulacionVoluntariado(
-    id: number,
-    postulacion: PostulacionVoluntariado
-  ) {
-    return this.http.put(
-      `${this.baseUrlVoluntariado}/postulaciones/${id}/`,
-      postulacion
-    );
+  actualizarPostulacionVoluntariado(id: number, postulacion: PostulacionVoluntariado) {
+    return this.http.put(`${this.baseUrlVoluntariado}/postulaciones/${id}/`, postulacion);
   }
 
   eliminarPostulacionVoluntariado(id: number) {
-    return this.http.delete(
-      `${this.baseUrlVoluntariado}/postulaciones/${id}/`
-    );
+    return this.http.delete(`${this.baseUrlVoluntariado}/postulaciones/${id}/`);
   }
-
-  // AnaC
 
   listarMedicamentos(): Observable<any> {
     return this.http.get<any>(this.apiUrlMedicamentos);
@@ -362,17 +309,12 @@ export class AuthService {
   }
 
   actualizarMedicamento(id: any, medicamento: ActualizarMedicamento): Observable<any> {
-  const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
-  return this.http.put<any>(`${this.apiUrlMedicamentos}${idReal}/`, medicamento);
+    const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
+    return this.http.put<any>(`${this.apiUrlMedicamentos}${idReal}/`, medicamento);
+  }
+
+  cambiarEstadoMedicamento(id: any, activo: boolean): Observable<any> {
+    const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
+    return this.http.patch<any>(`${this.apiUrlMedicamentos}${idReal}/`, { activo });
+  }
 }
-
-cambiarEstadoMedicamento(id: any, activo: boolean): Observable<any> {
-  const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
-  return this.http.patch<any>(`${this.apiUrlMedicamentos}${idReal}/`, { activo });
-}
-  // AnaC
-
-}
-
-
-

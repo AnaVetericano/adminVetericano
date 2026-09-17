@@ -16,6 +16,11 @@
 
             <div class="space-y-4">
                 <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ID Consulta Médica *</label>
+                    <input type="number" [(ngModel)]="examen.id_consulta" placeholder="Ej. 1" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                </div>
+
+                <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nombre del examen</label>
                     <input type="text" [(ngModel)]="examen.nombre" placeholder="Ej. Ecografía" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
                 </div>
@@ -37,7 +42,10 @@
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Estado</label>
-                    <input type="text" [(ngModel)]="examen.estado" placeholder="Estado" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                    <select [(ngModel)]="examen.estado" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50 cursor-pointer">
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
                 </div>
             </div>
 
