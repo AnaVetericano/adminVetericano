@@ -258,8 +258,30 @@ export class AuthService {
     return `${this.getCleanUrl()}/voluntariado`;
   }
 
-  listarEventosVoluntariado() {
-    return this.http.get<EventoVoluntariado[]>(`${this.baseUrlVoluntariado}/eventos/`);
+  listarEventosVoluntariado(): Observable<EventoVoluntariado[]> {
+    return this.http.get<EventoVoluntariado[]>(
+      `${this.baseUrlVoluntariado}/eventos/`
+    );
+  }
+
+  crearEventoVoluntariado(eventoData: FormData): Observable<EventoVoluntariado> {
+    return this.http.post<EventoVoluntariado>(
+      `${this.baseUrlVoluntariado}/eventos/`,
+      eventoData
+    );
+  }
+
+  actualizarEventoVoluntariado(id: number, eventoData: FormData): Observable<EventoVoluntariado> {
+    return this.http.patch<EventoVoluntariado>(
+      `${this.baseUrlVoluntariado}/eventos/${id}/`,
+      eventoData
+    );
+  }
+
+  eliminarEventoVoluntariado(id: number): Observable<any> {
+    return this.http.delete<any>(
+      `${this.baseUrlVoluntariado}/eventos/${id}/`
+    );
   }
 
   listarPostulacionesVoluntariado() {
