@@ -89,6 +89,7 @@
   </a>
 
   <!-- 4. MEDICAMENTOS -->
+
   <a
     routerLink="listarmedicamentos"
     routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
@@ -149,8 +150,14 @@
     <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Voluntarios</span>
   </a>
 
+
    <a
     routerLink="peticion"
+
+>
+  <a
+    routerLink="eventos-voluntariado"
+>>>>>>> a204ed897a3ef93457ee43b82ec95c4e75f83d29
     routerLinkActive="bg-[#4141A5] text-white shadow-sm ring-1 ring-white/15"
     (click)="menuAbierto = false"
     class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item"
@@ -162,6 +169,13 @@
     <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">peticion</span>
   </a>
 
+
+    <!-- Icono Calendario / Eventos -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+    <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Jornadas</span>
+  </a>
 
 </nav>
 

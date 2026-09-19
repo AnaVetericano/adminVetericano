@@ -38,10 +38,10 @@ export class ExamenClinicoComponent {
 
   guardarExamen() {
     const payload = {
-      nombre_tipo: this.examen.nombre || this.examen.nombre_tipo
+      id_consulta: this.examen.nombre || this.examen.nombre_tipo
     };
 
-    if (!payload.nombre_tipo) {
+    if (!payload.id_consulta) {
       alert('Por favor ingresa el nombre del examen.');
       return;
     }

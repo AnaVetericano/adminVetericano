@@ -16,6 +16,7 @@ import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 import { Graficas } from './graficas/graficas';
 import { Peticion } from './peticion/peticion';
 import { Voluntarios } from './voluntarios/voluntarios';
+import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado';
 
 
 export const routes: Routes = [
@@ -41,6 +42,7 @@ export const routes: Routes = [
       { path: 'graficas', component: Graficas },
       {path:'voluntarios',component:Voluntarios},
       {path:'peticion', component:Peticion},
+      { path: 'eventos-voluntariado', component: EventosVoluntariado },
     ]
   }
 ];

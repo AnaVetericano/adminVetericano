@@ -5,13 +5,23 @@
          BARRA SUPERIOR
     ====================================================== -->
 
-    <header class="h-16 shrink-0 flex items-center px-4 sm:px-6
+    <header class="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6
                    shadow-md w-full lg:pl-20 transition-all duration-300">
 
         <h1 class="text-lg sm:text-xl font-extrabold tracking-widest
                    text-black uppercase">
             Voluntarios
         </h1>
+
+        <!-- Enlace a Gestión de Jornadas / Eventos -->
+        <a routerLink="/inicio-admin/eventos-voluntariado"
+           class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold
+                  text-[#1B1947] bg-gray-100 hover:bg-gray-200 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Gestionar Jornadas</span>
+        </a>
 
     </header>
 
