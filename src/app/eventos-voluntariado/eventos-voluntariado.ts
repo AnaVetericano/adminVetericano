@@ -15,9 +15,7 @@ import { AuthService, EventoVoluntariado } from '../services/auth';
 })
 export class EventosVoluntariado implements OnInit {
 
-  // =========================================================
   // VARIABLES DE ESTADO
-  // =========================================================
 
   eventos: EventoVoluntariado[] = [];
   eventosFiltrados: EventoVoluntariado[] = [];
@@ -43,7 +41,7 @@ export class EventosVoluntariado implements OnInit {
     this.obtenerEventos();
   }
 
-  
+
   // obtener eventos
 
   obtenerEventos(): void {
