@@ -14,6 +14,7 @@ import { ExamenClinicoComponent } from './examen-clinico/examen-clinico';
 import { EditarExamen } from './editar-examen/editar-examen';
 import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 import { Graficas } from './graficas/graficas';
+import { Peticion } from './peticion/peticion';
 import { Voluntarios } from './voluntarios/voluntarios';
 
 
@@ -39,6 +40,7 @@ export const routes: Routes = [
       { path: 'crear-medicamentos', component: Medicamentos },
       { path: 'graficas', component: Graficas },
       {path:'voluntarios',component:Voluntarios},
+      {path:'peticion', component:Peticion},
     ]
   }
 ];
