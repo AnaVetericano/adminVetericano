@@ -60,6 +60,9 @@ export class InicioDeSesionAdministradorComponent {
     // Petición a la API usando AuthService
     this.authService.login(this.usuario).subscribe({
       next: (res: any) => {
+        console.log(res.tokens.refresh);
+        
+        
         // NOTA: Guardar token pospuesto hasta que el usuario lo indique
         this.router.navigate(['/inicio-admin']);
       },
