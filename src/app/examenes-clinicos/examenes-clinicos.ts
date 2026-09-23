@@ -244,7 +244,7 @@ export class ExamenesClinicos implements OnInit {
       cancelButtonColor: '#170B3D',  // Color secundario
       confirmButtonText: `Sí, ${accion}`,
       cancelButtonText: 'Cancelar',
-      iconColor: '#4141a5'
+      iconColor: '#F1C63C'
     }).then((result) => {
       if (result.isConfirmed) {
         this.toggleEstado(item);
