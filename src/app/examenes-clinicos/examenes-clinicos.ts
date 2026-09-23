@@ -85,6 +85,12 @@ export class ExamenesClinicos implements OnInit {
     }
   }
 
+  // MÉTODO AGREGADO PARA EL BOTÓN LIMPIAR EN LA BARRA DE BÚSQUEDA
+  limpiarBusqueda() {
+    this.filtroBusqueda = '';
+    this.filtrarExamenes();
+  }
+
   verificarEstadoActivo(item: any): boolean {
     if (!item || item.estado === undefined || item.estado === null) return true;
     const val = String(item.estado).toLowerCase().trim();
@@ -139,7 +145,7 @@ export class ExamenesClinicos implements OnInit {
       nombre_tipo: '',
       tipo: '',
       descripcion: '',
-      estado: 'activo' // Valor inicial por defecto, pero libre de cambiarse en el select
+      estado: 'activo'
     };
     this.modalAbierto = true;
     this.cdr.detectChanges();
@@ -172,7 +178,6 @@ export class ExamenesClinicos implements OnInit {
       return;
     }
 
-    // Envía estrictamente la opción elegida en el select (activo o inactivo)
     this.examenActual.estado = this.examenActual.estado ? this.examenActual.estado.toLowerCase().trim() : 'activo';
 
     const idARecuperar = this.examenActual.id_procedimiento_catalogo || this.examenActual.id_examen || this.examenActual.id;
@@ -219,34 +224,30 @@ export class ExamenesClinicos implements OnInit {
     }
   }
 
+  // MÉTODO ACTUALIZADO: REEMPLAZA "ELIMINAR" POR "INACTIVAR" Y USA COLORES DE LA APP (#4141a5 Y #170B3D)
   eliminarExamen(item: any) {
-    const idParaEliminar = item.id_procedimiento_catalogo || item.id_examen || item.id;
-    if (!idParaEliminar) {
+    const idParaInactivar = item.id_procedimiento_catalogo || item.id_examen || item.id;
+    if (!idParaInactivar) {
       Swal.fire('Error', 'No se encontró el identificador del examen.', 'error');
       return;
     }
 
+    const esActivo = this.verificarEstadoActivo(item);
+    const accion = esActivo ? 'inactivar' : 'activar';
+
     Swal.fire({
       title: '¿Estás seguro?',
-      text: 'Esta acción eliminará el examen de forma permanente.',
+      text: `¿Deseas ${accion} el examen clínico "${item.nombre_tipo}"?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonColor: '#4141a5', // Color primario
+      cancelButtonColor: '#170B3D',  // Color secundario
+      confirmButtonText: `Sí, ${accion}`,
+      cancelButtonText: 'Cancelar',
+      iconColor: '#F1C63C'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.authService.eliminarCatalogo(idParaEliminar).subscribe({
-          next: () => {
-            this.cargarCatalogo();
-            Swal.fire('¡Eliminado!', 'El examen ha sido eliminado del catálogo.', 'success');
-          },
-          error: (err: any) => {
-            console.error('Error al eliminar:', err);
-            Swal.fire('Error', 'No se pudo eliminar el examen.', 'error');
-          }
-        });
+        this.toggleEstado(item);
       }
     });
   }
