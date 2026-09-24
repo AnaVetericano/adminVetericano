@@ -3,8 +3,16 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-
 import { AuthService, EventoVoluntariado } from '../services/auth';
+
+export interface VoluntarioPostulado {
+  id?: number;
+  nombre: string;
+  apellido?: string;
+  email: string;
+  telefono?: string;
+  fechaPostulacion?: string;
+}
 
 @Component({
   selector: 'app-eventos-voluntariado',
@@ -27,6 +35,12 @@ export class EventosVoluntariado implements OnInit {
   editandoId: number | null = null;
   filtroBusqueda: string = '';
 
+  // Variables para Modal de Postulados
+  modalPostuladosAbierto: boolean = false;
+  cargandoPostulados: boolean = false;
+  jornadaSeleccionada: EventoVoluntariado | null = null;
+  postulados: VoluntarioPostulado[] = [];
+
   // Modelo para el formulario
   eventoForm = {
     titulo: '',
@@ -43,9 +57,7 @@ export class EventosVoluntariado implements OnInit {
     this.obtenerEventos();
   }
 
-  
   // obtener eventos
-
   obtenerEventos(): void {
     this.cargando = true;
     this.authService.listarEventosVoluntariado().subscribe({
@@ -68,7 +80,6 @@ export class EventosVoluntariado implements OnInit {
   }
 
   // filtrar eventos
-
   filtrarEventos(): void {
     const query = this.filtroBusqueda.trim().toLowerCase();
     if (!query) {
@@ -84,8 +95,7 @@ export class EventosVoluntariado implements OnInit {
     });
   }
 
-  // CONTROL DE MODAL
-
+  // CONTROL DE MODAL CREAR / EDITAR
   abrirModalCrear(): void {
     this.editandoId = null;
     this.eventoForm = {
@@ -118,13 +128,11 @@ export class EventosVoluntariado implements OnInit {
   }
 
   // GESTIÓN DE IMÁGENES
-
   onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const archivo = input.files[0];
 
-      // Validar tipo de archivo
       if (!archivo.type.startsWith('image/')) {
         Swal.fire({
           title: 'Formato inválido',
@@ -136,7 +144,6 @@ export class EventosVoluntariado implements OnInit {
         return;
       }
 
-      // Validar tamaño máximo (ej. 5MB)
       if (archivo.size > 5 * 1024 * 1024) {
         Swal.fire({
           title: 'Imagen muy pesada',
@@ -150,7 +157,6 @@ export class EventosVoluntariado implements OnInit {
 
       this.archivoImagenSeleccionado = archivo;
 
-      // Generar preview
       const reader = new FileReader();
       reader.onload = () => {
         this.vistaPreviaImagen = reader.result as string;
@@ -165,9 +171,7 @@ export class EventosVoluntariado implements OnInit {
   }
 
   // guardar (CREAR O EDITAR)
-
   guardarEvento(): void {
-    // Validaciones
     if (!this.eventoForm.titulo.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
@@ -198,7 +202,6 @@ export class EventosVoluntariado implements OnInit {
       return;
     }
 
-    // Al crear es obligatorio subir la imagen
     if (this.editandoId === null && !this.archivoImagenSeleccionado) {
       Swal.fire({
         title: 'Imagen requerida',
@@ -220,7 +223,6 @@ export class EventosVoluntariado implements OnInit {
 
     this.guardando = true;
 
-    // actualizar
     if (this.editandoId !== null) {
       this.authService.actualizarEventoVoluntariado(this.editandoId, formData).subscribe({
         next: () => {
@@ -249,7 +251,6 @@ export class EventosVoluntariado implements OnInit {
       return;
     }
 
-    // crear
     this.authService.crearEventoVoluntariado(formData).subscribe({
       next: () => {
         this.guardando = false;
@@ -276,10 +277,7 @@ export class EventosVoluntariado implements OnInit {
     });
   }
 
-
   // eliminar evento
-
-
   eliminarEvento(evento: EventoVoluntariado): void {
     if (!evento.id) return;
 
@@ -319,13 +317,48 @@ export class EventosVoluntariado implements OnInit {
     });
   }
 
+  // CONTROL DE MODAL VER POSTULADOS
+  verPostulados(evento: EventoVoluntariado): void {
+    this.jornadaSeleccionada = evento;
+    this.modalPostuladosAbierto = true;
+    this.cargandoPostulados = true;
+    this.postulados = [];
 
+    if (!evento.id) {
+      this.cargandoPostulados = false;
+      return;
+    }
 
+    // ESPACIO PARA CONSUMIR EL ENDPOINT DEL BACKEND (Descomentar al recibirlo):
+    /*
+    this.authService.obtenerPostuladosPorJornada(evento.id).subscribe({
+      next: (data: VoluntarioPostulado[]) => {
+        this.postulados = data;
+        this.cargandoPostulados = false;
+      },
+      error: (err) => {
+        console.error('Error al obtener postulados:', err);
+        this.cargandoPostulados = false;
+      }
+    });
+    */
 
+    // Mock temporal
+    setTimeout(() => {
+      this.postulados = [];
+      this.cargandoPostulados = false;
+    }, 800);
+  }
+
+  cerrarModalPostulados(): void {
+    this.modalPostuladosAbierto = false;
+    this.jornadaSeleccionada = null;
+    this.postulados = [];
+  }
 
   limpiarTexto(texto?: string): string {
     if (!texto) return '';
     return texto.replace(/^["']|["']$/g, '').trim();
   }
-}
 
+}
