@@ -3,8 +3,16 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 1. Impo
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-
 import { AuthService, EventoVoluntariado } from '../services/auth';
+
+export interface VoluntarioPostulado {
+  id?: number;
+  nombre: string;
+  apellido?: string;
+  email: string;
+  telefono?: string;
+  fechaPostulacion?: string;
+}
 
 @Component({
   selector: 'app-eventos-voluntariado',
@@ -27,6 +35,13 @@ export class EventosVoluntariado implements OnInit {
   editandoId: number | null = null;
   filtroBusqueda: string = '';
 
+  // Variables para Modal de Postulados
+  modalPostuladosAbierto: boolean = false;
+  cargandoPostulados: boolean = false;
+  jornadaSeleccionada: EventoVoluntariado | null = null;
+  postulados: VoluntarioPostulado[] = [];
+
+  // Modelo para el formulario
   eventoForm = {
     titulo: '',
     descripcion: '',
@@ -46,7 +61,7 @@ export class EventosVoluntariado implements OnInit {
     this.obtenerEventos();
   }
 
-  // Obtener eventos
+  // obtener eventos
   obtenerEventos(): void {
     this.cargando = true;
     this.authService.listarEventosVoluntariado().subscribe({
@@ -72,6 +87,7 @@ export class EventosVoluntariado implements OnInit {
     });
   }
 
+  // filtrar eventos
   filtrarEventos(): void {
     const query = this.filtroBusqueda.trim().toLowerCase();
     if (!query) {
@@ -87,6 +103,7 @@ export class EventosVoluntariado implements OnInit {
     });
   }
 
+  // CONTROL DE MODAL CREAR / EDITAR
   abrirModalCrear(): void {
     this.editandoId = null;
     this.eventoForm = { titulo: '', descripcion: '', fecha: '' };
@@ -114,6 +131,7 @@ export class EventosVoluntariado implements OnInit {
     this.vistaPreviaImagen = null;
   }
 
+  // GESTIÓN DE IMÁGENES
   onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -156,11 +174,32 @@ export class EventosVoluntariado implements OnInit {
     this.vistaPreviaImagen = null;
   }
 
+  // guardar (CREAR O EDITAR)
   guardarEvento(): void {
-    if (!this.eventoForm.titulo.trim() || !this.eventoForm.fecha || !this.eventoForm.descripcion.trim()) {
+    if (!this.eventoForm.titulo.trim()) {
       Swal.fire({
         title: 'Campos obligatorios',
         text: 'Por favor completa todos los campos obligatorios.',
+        icon: 'warning',
+        confirmButtonColor: '#1B1947'
+      });
+      return;
+    }
+
+    if (!this.eventoForm.fecha) {
+      Swal.fire({
+        title: 'Campo obligatorio',
+        text: 'La fecha de la jornada es obligatoria.',
+        icon: 'warning',
+        confirmButtonColor: '#1B1947'
+      });
+      return;
+    }
+
+    if (!this.eventoForm.descripcion.trim()) {
+      Swal.fire({
+        title: 'Campo obligatorio',
+        text: 'La descripción de la jornada es obligatoria.',
         icon: 'warning',
         confirmButtonColor: '#1B1947'
       });
@@ -222,6 +261,7 @@ export class EventosVoluntariado implements OnInit {
     });
   }
 
+  // eliminar evento
   eliminarEvento(evento: EventoVoluntariado): void {
     if (!evento.id) return;
 
@@ -249,6 +289,45 @@ export class EventosVoluntariado implements OnInit {
         });
       }
     });
+  }
+
+  // CONTROL DE MODAL VER POSTULADOS
+  verPostulados(evento: EventoVoluntariado): void {
+    this.jornadaSeleccionada = evento;
+    this.modalPostuladosAbierto = true;
+    this.cargandoPostulados = true;
+    this.postulados = [];
+
+    if (!evento.id) {
+      this.cargandoPostulados = false;
+      return;
+    }
+
+    // ESPACIO PARA CONSUMIR EL ENDPOINT DEL BACKEND (Descomentar al recibirlo):
+    /*
+    this.authService.obtenerPostuladosPorJornada(evento.id).subscribe({
+      next: (data: VoluntarioPostulado[]) => {
+        this.postulados = data;
+        this.cargandoPostulados = false;
+      },
+      error: (err) => {
+        console.error('Error al obtener postulados:', err);
+        this.cargandoPostulados = false;
+      }
+    });
+    */
+
+    // Mock temporal
+    setTimeout(() => {
+      this.postulados = [];
+      this.cargandoPostulados = false;
+    }, 800);
+  }
+
+  cerrarModalPostulados(): void {
+    this.modalPostuladosAbierto = false;
+    this.jornadaSeleccionada = null;
+    this.postulados = [];
   }
 
   limpiarTexto(texto?: string): string {
