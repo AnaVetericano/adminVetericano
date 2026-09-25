@@ -1,55 +1,47 @@
-<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased
-            selection:bg-indigo-500 selection:text-white overflow-hidden relative">
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
 
     <!-- =====================================================
          BARRA SUPERIOR
     ====================================================== -->
-    <header class="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6
-                   bg-white shadow-sm w-full lg:pl-24 transition-all duration-300 border-b border-gray-100">
+    <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+        <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
+            <div class="flex items-center gap-3.5">
+                <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+                        Jornadas de Voluntariado
+                    </h1>
+                    <p class="text-xs sm:text-sm text-gray-500 font-medium">
+                        Crea y administra las jornadas a las que se postularán los voluntarios
+                    </p>
+                </div>
+            </div>
 
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-[#1B1947]/10 flex items-center justify-center text-[#1B1947]">
-                <!-- Icono Calendario / Jornadas -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <!-- Botón rápido para ir a voluntarios postulados -->
+            <a routerLink="/inicio-admin/voluntarios"
+               class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-[#4141a5] bg-[#4141a5]/10 hover:bg-[#4141a5]/20 border border-[#4141a5]/20 transition-all active:scale-95 uppercase tracking-wider">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-            </div>
-            <div>
-                <h1 class="text-base sm:text-lg font-extrabold tracking-wider text-[#1B1947] uppercase">
-                    Jornadas de Voluntariado
-                </h1>
-                <p class="text-[11px] text-gray-500 hidden sm:block">
-                    Crea y administra las jornadas a las que se postularán los voluntarios
-                </p>
-            </div>
+                <span>Ver Postulados</span>
+            </a>
         </div>
-
-        <!-- Botón rápido para ir a voluntarios postulados -->
-        <a routerLink="/inicio-admin/voluntarios"
-           class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold
-                  text-[#1B1947] bg-gray-100 hover:bg-gray-200 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Ver Postulados</span>
-        </a>
-
     </header>
-
 
     <!-- =====================================================
          CONTENEDOR PRINCIPAL
     ====================================================== -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6
-                 flex flex-col overflow-hidden lg:pl-24">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
 
         <!-- BUSCADOR Y BOTÓN CREAR -->
-        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-6 shrink-0">
+        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
 
             <!-- Buscador -->
-            <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full sm:w-2/3 h-12
-                        shadow-sm hover:border-indigo-300 focus-within:border-indigo-500
-                        focus-within:ring-2 focus-within:ring-indigo-100 transition-all duration-300 px-4 gap-3">
+            <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full sm:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300 px-4 gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
@@ -59,20 +51,21 @@
                     (input)="filtrarEventos()"
                     placeholder="Buscar por título, fecha o descripción..."
                     class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
-                <span *ngIf="filtroBusqueda"
-                      (click)="filtroBusqueda = ''; filtrarEventos()"
-                      class="text-xs text-gray-400 hover:text-gray-600 cursor-pointer font-bold px-1">
-                    ✕
-                </span>
+                <button 
+                    *ngIf="filtroBusqueda"
+                    type="button"
+                    (click)="filtroBusqueda = ''; filtrarEventos()"
+                    class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0">
+                    Limpiar
+                </button>
             </div>
 
             <!-- Botón Crear Jornada -->
             <button
+                type="button"
                 (click)="abrirModalCrear()"
-                class="flex items-center justify-center gap-2 bg-[#1B1947] hover:bg-[#2a2870] text-white
-                       px-5 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300
-                       font-bold text-xs uppercase tracking-wider shrink-0 cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-5 py-3 rounded-2xl shadow-md transition-all text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap active:scale-95 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
                 <span>Nueva Jornada</span>
@@ -84,7 +77,7 @@
              ESTADO: CARGANDO
         ====================================================== -->
         <div *ngIf="cargando" class="flex-1 flex flex-col items-center justify-center gap-3">
-            <div class="w-10 h-10 border-4 border-indigo-200 border-t-[#1B1947] rounded-full animate-spin"></div>
+            <div class="w-10 h-10 border-4 border-[#4141a5]/20 border-t-[#4141a5] rounded-full animate-spin"></div>
             <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cargando jornadas...</p>
         </div>
 
@@ -92,13 +85,13 @@
              ESTADO: SIN JORNADAS
         ====================================================== -->
         <div *ngIf="!cargando && eventosFiltrados.length === 0"
-             class="flex-1 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-gray-300 p-8 text-center shadow-sm">
-            <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#1B1947] mb-4">
+             class="flex-1 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-gray-200 p-8 text-center shadow-xs">
+            <div class="w-16 h-16 rounded-2xl bg-[#4141a5]/10 flex items-center justify-center text-[#4141a5] mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             </div>
-            <h3 class="text-base font-extrabold text-[#1B1947] uppercase tracking-wider mb-1">
+            <h3 class="text-base font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
                 {{ filtroBusqueda ? 'No se encontraron jornadas' : 'No hay jornadas registradas' }}
             </h3>
             <p class="text-xs text-gray-500 max-w-sm mb-5">
@@ -107,7 +100,7 @@
             <button
                 *ngIf="!filtroBusqueda"
                 (click)="abrirModalCrear()"
-                class="bg-[#1B1947] hover:bg-[#2a2870] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow transition">
+                class="bg-[#4141a5] hover:bg-[#33338b] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-95">
                 + Crear primera jornada
             </button>
         </div>
@@ -120,7 +113,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-6">
 
                 <div *ngFor="let evento of eventosFiltrados"
-                     class="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden group">
+                     class="bg-white rounded-3xl border border-gray-100 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden group">
 
                     <!-- Imagen de la jornada -->
                     <div class="relative w-full h-44 bg-gray-100 overflow-hidden">
@@ -129,7 +122,7 @@
                             [src]="evento.imagen"
                             [alt]="limpiarTexto(evento.titulo)"
                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            onerror="this.src='https://placehold.co/600x400/e2e8f0/1B1947?text=Jornada+Voluntariado'">
+                            onerror="this.src='https://placehold.co/600x400/e2e8f0/170B3D?text=Jornada+Voluntariado'">
 
                         <div *ngIf="!evento.imagen"
                              class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
@@ -138,9 +131,9 @@
                             </svg>
                         </div>
 
-                        <!-- Badge de Fecha -->
-                        <div class="absolute top-3 left-3 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-xl shadow-xs flex items-center gap-1.5 text-xs font-bold text-[#1B1947]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <!-- Badge de Fecha estilo examenes-clinicos -->
+                        <div class="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-3 py-1 rounded-xl shadow-xs flex items-center gap-1.5 text-xs font-bold text-[#170B3D] border border-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             <span>{{ evento.fecha | date:'mediumDate' }}</span>
@@ -150,7 +143,7 @@
                     <!-- Contenido -->
                     <div class="p-5 flex-1 flex flex-col justify-between">
                         <div>
-                            <h3 class="text-base font-extrabold text-gray-900 line-clamp-1 mb-2">
+                            <h3 class="text-base font-extrabold text-[#170B3D] line-clamp-1 mb-2">
                                 {{ limpiarTexto(evento.titulo) }}
                             </h3>
                             <p class="text-xs text-gray-600 line-clamp-3 leading-relaxed">
@@ -163,17 +156,17 @@
                             <!-- Botón Editar -->
                             <button
                                 (click)="abrirModalEditar(evento)"
-                                class="p-2 rounded-xl text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer"
+                                class="bg-gray-100 hover:bg-[#170B3D] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95"
                                 title="Editar jornada">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                 </svg>
                             </button>
 
                             <!-- Botón Eliminar -->
                             <button
                                 (click)="eliminarEvento(evento)"
-                                class="p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                class="bg-gray-100 hover:bg-rose-600 hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95"
                                 title="Eliminar jornada">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -193,41 +186,28 @@
          MODAL CREAR / EDITAR JORNADA
     ====================================================== -->
     <div *ngIf="modalAbierto"
-         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-
-        <!-- Backdrop -->
-        <div (click)="cerrarModal()"
-             class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-fade-in"></div>
+         class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
 
         <!-- Ventana Modal -->
-        <div class="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col z-10 max-h-[90vh]">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl p-5 sm:p-8 border border-gray-100 relative flex flex-col max-h-[95vh]">
 
             <!-- Modal Header -->
-            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-[#1B1947]/10 flex items-center justify-center text-[#1B1947]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <h2 class="text-base font-extrabold text-[#1B1947] uppercase tracking-wider">
-                        {{ editandoId !== null ? 'Editar Jornada' : 'Crear Nueva Jornada' }}
-                    </h2>
-                </div>
+            <button
+                (click)="cerrarModal()"
+                class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10">
+                ✕
+            </button>
 
-                <button
-                    (click)="cerrarModal()"
-                    class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 flex items-center justify-center transition cursor-pointer">
-                    ✕
-                </button>
-            </div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-[#170B3D] mb-4 uppercase tracking-wider pr-8 shrink-0">
+                {{ editandoId !== null ? 'Editar Jornada' : 'Crear Nueva Jornada' }}
+            </h2>
 
             <!-- Modal Body con Scroll -->
-            <div class="p-6 overflow-y-auto space-y-4 flex-1">
+            <div class="space-y-3 sm:space-y-4 overflow-y-auto flex-1 pr-1 py-1">
 
                 <!-- TÍTULO -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
                         Título de la Jornada <span class="text-rose-500">*</span>
                     </label>
                     <input
@@ -235,23 +215,23 @@
                         [(ngModel)]="eventoForm.titulo"
                         placeholder="Ej. Jornada de vacunación y rescate"
                         maxlength="150"
-                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                 </div>
 
                 <!-- FECHA -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
                         Fecha del Evento <span class="text-rose-500">*</span>
                     </label>
                     <input
                         type="date"
                         [(ngModel)]="eventoForm.fecha"
-                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                 </div>
 
                 <!-- IMAGEN (SUBIDA DE ARCHIVO) -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
                         Imagen de la Jornada <span *ngIf="editandoId === null" class="text-rose-500">*</span>
                     </label>
 
@@ -259,7 +239,7 @@
                     <div *ngIf="vistaPreviaImagen" class="relative w-full h-44 rounded-2xl overflow-hidden border border-gray-200 mb-3 group">
                         <img [src]="vistaPreviaImagen" alt="Vista previa" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                            <label class="cursor-pointer bg-white text-[#1B1947] px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-gray-100 transition">
+                            <label class="cursor-pointer bg-white text-[#170B3D] px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-gray-100 transition">
                                 Cambiar foto
                                 <input type="file" accept="image/*" (change)="onArchivoSeleccionado($event)" class="hidden">
                             </label>
@@ -274,9 +254,9 @@
 
                     <!-- Dropzone si no hay imagen seleccionada -->
                     <label *ngIf="!vistaPreviaImagen"
-                           class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-indigo-400 bg-gray-50/50 hover:bg-indigo-50/30 transition-all group">
+                           class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-[#4141a5] bg-gray-50/50 hover:bg-[#4141a5]/5 transition-all group">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400 group-hover:text-indigo-600 mb-2 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400 group-hover:text-[#4141a5] mb-2 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             <p class="text-xs text-gray-600 font-bold mb-0.5">
@@ -292,25 +272,25 @@
 
                 <!-- DESCRIPCIÓN -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
                         Descripción de la Jornada <span class="text-rose-500">*</span>
                     </label>
                     <textarea
                         [(ngModel)]="eventoForm.descripcion"
                         rows="4"
                         placeholder="Detalla de qué se trata la jornada, qué labores harán los voluntarios, ubicación, requisitos..."
-                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50 resize-none"></textarea>
+                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 resize-none leading-relaxed"></textarea>
                 </div>
 
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50/50 shrink-0">
+            <div class="flex items-center justify-end gap-3 mt-4 pt-3 sm:pt-4 border-t border-gray-100 shrink-0">
                 <button
                     type="button"
                     (click)="cerrarModal()"
                     [disabled]="guardando"
-                    class="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+                    class="px-4 sm:px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs uppercase tracking-wider transition cursor-pointer">
                     Cancelar
                 </button>
 
@@ -318,7 +298,7 @@
                     type="button"
                     (click)="guardarEvento()"
                     [disabled]="guardando"
-                    class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer disabled:opacity-50">
+                    class="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold text-xs uppercase tracking-wider shadow-md transition cursor-pointer disabled:opacity-50 active:scale-95">
                     <div *ngIf="guardando" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>{{ editandoId !== null ? 'Actualizar Jornada' : 'Crear Jornada' }}</span>
                 </button>
@@ -329,4 +309,3 @@
     </div>
 
 </div>
-

@@ -20,7 +20,7 @@ export class Medicamentos implements OnInit {
   menuFiltroAbierto: boolean = false;
   cargando: boolean = true;
 
-  editandoId: number | null = null; // Controla si estamos editando o creando
+  editandoId: number | null = null;
 
   medicamento = {
     nombre: '',
@@ -221,7 +221,7 @@ export class Medicamentos implements OnInit {
       text: `El medicamento "${m.nombre}" será ${nuevoEstado ? 'activado' : 'inactivado'}.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: nuevoEstado ? '#16a34a' : '#ef4444',
+      confirmButtonColor: '#4141A5',
       cancelButtonColor: '#64748b',
       confirmButtonText: `Sí, ${accion}`,
       cancelButtonText: 'Cancelar'
@@ -230,20 +230,22 @@ export class Medicamentos implements OnInit {
 
       this.authService.cambiarEstadoMedicamento(idReal, nuevoEstado).subscribe({
         next: () => {
+          // Actualizamos directo en la lista local sin volver a llamar a obtenerMedicamentos()
           m.activo = nuevoEstado;
+          this.medicamentosOriginales = [...this.medicamentos];
           this.cdr.detectChanges();
+
           Swal.fire({
             title: `Medicamento ${nuevoEstado ? 'activado' : 'inactivado'} correctamente`,
             icon: 'success',
             timer: 1800,
             showConfirmButton: false
           });
-          this.obtenerMedicamentos();
         },
         error: (err: any) => {
           console.error(`Error al ${accion}:`, err);
           const msj = err?.error?.detail || `No se pudo ${accion} el medicamento.`;
-          Swal.fire({ title: 'Error', text: msj, icon: 'error' });
+          Swal.fire({ title: 'Error', text: msj, icon: 'error', confirmButtonColor: '#4141A5' });
         }
       });
     });
