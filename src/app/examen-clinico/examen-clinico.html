@@ -1,48 +1,61 @@
-<div class="h-[100dvh] w-full bg-gray-50 flex flex-col text-slate-800 antialiased selection:bg-indigo-500 selection:text-white overflow-hidden relative">
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
 
-    <header class="bg-white h-16 shrink-0 flex items-center px-4 sm:px-6 shadow-md w-full lg:pl-20 transition-all duration-300">
-        <h1 class="text-lg sm:text-xl font-extrabold tracking-widest text-black uppercase">
-            Crear Examen Clínico
-        </h1>
+    <!-- ENCABEZADO CON ICONO Y SUBTÍTULO -->
+    <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+        <div class="flex items-center gap-3.5 max-w-7xl mx-auto">
+            <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+                    Crear Examen Clínico
+                </h1>
+                <p class="text-xs sm:text-sm text-gray-500 font-medium">
+                    Completa los datos del procedimiento para agregarlo al sistema
+                </p>
+            </div>
+        </div>
     </header>
 
     <main class="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center overflow-y-auto lg:pl-20">
-        <div class="bg-white rounded-3xl shadow-xl p-6 sm:p-8 border border-gray-100 flex flex-col gap-5">
+        <div class="bg-white rounded-3xl shadow-xs p-6 sm:p-8 border border-gray-100 flex flex-col gap-5">
             
             <div class="border-b border-gray-100 pb-4">
-                <h2 class="text-xl font-extrabold text-[#1B1947] uppercase tracking-wider">Nuevo Examen Clínico</h2>
-                <p class="text-xs text-gray-500 mt-1">Completa los datos del procedimiento para agregarlo al sistema.</p>
+                <h2 class="text-xl font-extrabold text-[#170B3D] uppercase tracking-wider">Nuevo Examen Clínico</h2>
+                <p class="text-xs text-gray-500 mt-1">Completa los datos del procedimiento para registrarlo en el sistema</p>
             </div>
 
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ID Consulta Médica *</label>
-                    <input type="number" [(ngModel)]="examen.id_consulta" placeholder="Ej. 1" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                    <input type="number" [(ngModel)]="examen.id_consulta" placeholder="Ej. 1" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nombre del examen</label>
-                    <input type="text" [(ngModel)]="examen.nombre" placeholder="Ej. Ecografía" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                    <input type="text" [(ngModel)]="examen.nombre" placeholder="Ej. Ecografía" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Tipo de examen</label>
-                    <input type="text" [(ngModel)]="examen.tipo" placeholder="Ej. Clínico" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                    <input type="text" [(ngModel)]="examen.tipo" placeholder="Ej. Clínico" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Descripción</label>
-                    <input type="text" [(ngModel)]="examen.descripcion" placeholder="Descripción del examen" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                    <textarea [(ngModel)]="examen.descripcion" placeholder="Descripción del examen" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 resize-none leading-relaxed"></textarea>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Observaciones</label>
-                    <input type="text" [(ngModel)]="examen.observaciones" placeholder="Observaciones adicionales" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50">
+                    <textarea [(ngModel)]="examen.observaciones" placeholder="Observaciones adicionales" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 resize-none leading-relaxed"></textarea>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Estado</label>
-                    <select [(ngModel)]="examen.estado" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50/50 cursor-pointer">
+                    <select [(ngModel)]="examen.estado" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
                         <option value="activo">Activo</option>
                         <option value="inactivo">Inactivo</option>
                     </select>
@@ -50,10 +63,10 @@
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button (click)="cerrarModal()" class="px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider">
+                <button (click)="cerrarModal()" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider">
                     Cancelar
                 </button>
-                <button (click)="guardarExamen()" class="px-6 py-3 rounded-xl bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold transition text-xs uppercase tracking-wider shadow-md">
+                <button (click)="guardarExamen()" class="px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95">
                     Guardar Examen
                 </button>
             </div>

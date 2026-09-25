@@ -1,432 +1,394 @@
-
-<div class="h-[100dvh] w-full bg-gray-50 flex flex-col text-slate-800 antialiased selection:bg-indigo-500 selection:text-white overflow-hidden">
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
 
     <!-- BARRA SUPERIOR -->
-    <header class="bg-white h-16 shrink-0 flex items-center px-6 shadow-md w-full lg:pl-20 transition-all duration-300">
-        <h1 class="text-xl font-extrabold tracking-widest text-black uppercase">
-            Gestión de Usuarios
-        </h1>
+    <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+        <div class="flex items-center gap-3.5 max-w-7xl mx-auto">
+            <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+                    Gestión de Usuarios
+                </h1>
+                <p class="text-xs sm:text-sm text-gray-500 font-medium">
+                    Administra los usuarios del sistema, asigna roles y gestiona accesos
+                </p>
+            </div>
+        </div>
     </header>
 
     <!-- CONTENEDOR PRINCIPAL -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
 
         <!-- ACCIONES SUPERIORES (BUSCADOR Y BOTÓN CREAR) -->
         <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 mb-4 shrink-0">
 
             <!-- BARRA DE BÚSQUEDA Y FILTROS -->
-            <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full md:w-2/3 h-12 shadow-sm hover:border-indigo-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all duration-300">
+            <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full md:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300">
 
-                <div class="flex items-center px-4 flex-1 gap-3">
+                <div class="flex items-center px-4 flex-1 gap-3 min-w-0">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="w-5 h-5 text-gray-400 shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
 
-                   <input
-    type="text"
-    [(ngModel)]="textoBusqueda"
-    (input)="filtrarUsuarios()"
-    placeholder="Buscar usuario..."
-    class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
->
+                    <input
+                        type="text"
+                        [(ngModel)]="textoBusqueda"
+                        (input)="filtrarUsuarios()"
+                        placeholder="Buscar usuario por nombre o correo..."
+                        class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+
+                    @if (textoBusqueda) {
+                        <button 
+                            type="button" 
+                            (click)="textoBusqueda = ''; filtrarUsuarios()" 
+                            class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0">
+                            Limpiar
+                        </button>
+                    }
                 </div>
 
-                <div class="h-5 w-px bg-gray-200"></div>
+                <div class="h-5 w-px bg-gray-200 shrink-0"></div>
 
-               <div class="relative">
-  <button
-    type="button"
-    (click)="mostrarFiltros = !mostrarFiltros"
-    class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50"
-  >
-    <span>Filtros</span>
-    <span>▼</span>
-  </button>
+                <!-- FILTRO POR ROL -->
+                <div class="relative">
+                    <button
+                        type="button"
+                        (click)="mostrarFiltros = !mostrarFiltros"
+                        class="px-4 sm:px-5 text-xs sm:text-sm font-bold text-gray-600 hover:text-[#4141a5] transition-colors flex items-center gap-2 shrink-0 h-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707v3.172a1 1 0 01-.553.894l-4 2A1 1 0 017 20.172v-9.172a1 1 0 00-.293-.707L.293 7.293A1 1 0 010 6.586V4z"/>
+                        </svg>
+                        Filtros
+                    </button>
 
-  <!-- MENÚ DE FILTROS -->
-  <div
-    *ngIf="mostrarFiltros"
-    class="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-  >
-    <div class="p-2">
-
-      <button
-        type="button"
-        (click)="filtrarPorRol(null)"
-        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-      >
-        Todos
-      </button>
-
-      <button
-        type="button"
-        (click)="filtrarPorRol(1)"
-        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-      >
-        Administrador
-      </button>
-
-      <button
-        type="button"
-        (click)="filtrarPorRol(2)"
-        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-      >
-        Jurídico
-      </button>
-
-      <button
-        type="button"
-        (click)="filtrarPorRol(3)"
-        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-      >
-        Veterinario
-      </button>
-
-      <button
-        type="button"
-        (click)="filtrarPorRol(4)"
-        class="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
-      >
-        Peticionario
-      </button>
-
-    </div>
-  </div>
-</div>
+                    <!-- MENÚ DE FILTROS -->
+                    <div
+                        *ngIf="mostrarFiltros"
+                        class="absolute right-0 mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 py-2">
+                        <div class="p-1">
+                            <button
+                                type="button"
+                                (click)="filtrarPorRol(null)"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] rounded-xl transition-colors">
+                                Todos
+                            </button>
+                            <button
+                                type="button"
+                                (click)="filtrarPorRol(1)"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] rounded-xl transition-colors">
+                                Administrador
+                            </button>
+                            <button
+                                type="button"
+                                (click)="filtrarPorRol(2)"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] rounded-xl transition-colors">
+                                Jurídico
+                            </button>
+                            <button
+                                type="button"
+                                (click)="filtrarPorRol(3)"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] rounded-xl transition-colors">
+                                Veterinario
+                            </button>
+                            <button
+                                type="button"
+                                (click)="filtrarPorRol(4)"
+                                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] rounded-xl transition-colors">
+                                Peticionario
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- BOTÓN NUEVO USUARIO -->
             <button
+                type="button"
                 (click)="abrirModalCrear()"
-                class="flex items-center justify-center gap-2 bg-[#1B1947] hover:bg-[#2a2870] text-white font-bold px-5 py-3 rounded-2xl shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-300 text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap"
-            >
+                class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-5 py-3 rounded-2xl shadow-md transition-all text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap active:scale-95">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="w-4 h-4"
+                    class="w-4 h-4 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4v16m8-8H4"
-                    />
+                    stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-
                 Nuevo Usuario
             </button>
 
         </div>
 
         <!-- TABLA DE DATOS RESPONSIVA CON SCROLL INTERNO -->
-        <div class="bg-white rounded-2xl shadow-md border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
+        <div class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
+            <div class="overflow-x-auto overflow-y-auto flex-1">
+                <table class="w-full text-left border-collapse min-w-[750px]">
+                    <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
+                        <tr>
+                            <th class="w-16 px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                                ID
+                            </th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                                Nombre
+                            </th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
+                                Correo
+                            </th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
+                                Rol
+                            </th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
+                                Estado
+                            </th>
+                            <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        <!-- SIN USUARIOS -->
+                        <tr *ngIf="usuarios.length === 0">
+                            <td colspan="6" class="text-center py-8 text-gray-400 font-medium">
+                                No hay usuarios registrados.
+                            </td>
+                        </tr>
 
-            <div class="overflow-y-auto flex-1">
+                        <tr
+                            *ngFor="let usuario of usuariosFiltrados"
+                            class="hover:bg-[#4141a5]/5 transition-colors group">
+                            <td class="px-6 py-3.5 text-gray-500 font-medium">
+                                {{ usuario.id_usuario }}
+                            </td>
+                            <td class="px-6 py-3.5 truncate">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-9 h-9 rounded-2xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center font-bold shrink-0 text-xs shadow-xs">
+                                        {{ usuario.nombre?.charAt(0)?.toUpperCase() }}
+                                    </div>
+                                    <span class="font-bold text-[#170B3D] truncate">
+                                        {{ usuario.nombre }} {{ usuario.apellido }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3.5 text-gray-600 truncate">
+                                {{ usuario.email }}
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <div class="relative inline-block text-left">
+                                    <button
+                                        type="button"
+                                        (click)="toggleMenuRol(usuario, $event)"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/30 hover:bg-[#4141a5]/20 transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
+                                        title="Cambiar rol">
+                                        <span>{{ usuario.nombre_rol || 'Indefinido' }}</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5] transition-transform duration-200" [class.rotate-180]="usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
 
-             <table class="w-full text-left border-collapse table-fixed">
-    <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
-        <tr>
-            <th class="w-12 sm:w-16 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                ID
-            </th>
-            <th class="px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Nombre
-            </th>
-            <th class="px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Correo
-            </th>
-            <th class="w-40 sm:w-48 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Rol
-            </th>
-            <th class="w-24 sm:w-28 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
-                Estado
-            </th>
-            <th class="w-28 sm:w-32 px-2 sm:px-4 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">
-                Acciones
-            </th>
-        </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100 text-sm">
-        <tr
-            *ngFor="let usuario of usuariosFiltrados"
-            class="hover:bg-indigo-50/30 transition-colors group"
-        >
-            <td class="px-2 sm:px-4 py-3.5 text-gray-600 font-medium truncate">
-                {{ usuario.id_usuario }}
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 truncate">
-                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-indigo-100 flex items-center justify-center text-[#1B1947] font-bold shrink-0 text-xs shadow-xs">
-                        {{ usuario.nombre?.charAt(0) }}
-                    </div>
-                    <span class="font-bold text-gray-900 truncate">
-                        {{ usuario.nombre }} {{ usuario.apellido }}
-                    </span>
-                </div>
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 text-gray-600 truncate">
-                {{ usuario.email }}
-            </td>
-            <td class="px-2 sm:px-4 py-3.5">
-                <div class="relative inline-block text-left">
-                    <button
-                        type="button"
-                        (click)="toggleMenuRol(usuario, $event)"
-                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/70 hover:bg-indigo-100 hover:border-indigo-300 transition-all duration-150 cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
-                        title="Cambiar rol"
-                    >
-                        <span>{{ usuario.nombre_rol || 'Indefinido' }}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-700 transition-transform duration-200" [class.rotate-180]="usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-
-                    <!-- MENÚ FLOTANTE DE ROLES -->
-                    <div
-                        *ngIf="usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario"
-                        class="absolute left-0 mt-1.5 w-44 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 z-50 animate-in fade-in duration-100"
-                    >
-                        <div class="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-1">
-                            Cambiar a:
-                        </div>
-                        <button
-                            *ngFor="let rol of rolesDisponibles"
-                            type="button"
-                            (click)="seleccionarNuevoRol(usuario, rol)"
-                            class="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition-colors"
-                            [ngClass]="(usuario.id_rol === (rol.id_rol || rol.id) || usuario.nombre_rol === (rol.nombre_rol || rol.nombre)) ? 'text-indigo-700 font-bold bg-indigo-50/60' : 'text-gray-700'"
-                        >
-                            <span>{{ rol.nombre_rol || rol.nombre }}</span>
-                            <svg *ngIf="usuario.id_rol === (rol.id_rol || rol.id) || usuario.nombre_rol === (rol.nombre_rol || rol.nombre)" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </td>
-            <td class="px-2 sm:px-4 py-3.5 text-center">    
-                <span
-                    *ngIf="usuario.activo"
-                    class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100"
-                >
-                    Activo
-                </span>
-                <span
-                    *ngIf="!usuario.activo"
-                    class="inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100"
-                >
-                    Inactivo
-                </span>
-            </td>
-            <td class="px-2 sm:px-4 py-3.5">
-                <div class="flex justify-center items-center gap-2">
-                    <!-- BOTÓN EDITAR -->
-                    <button
-                        (click)="abrirModalEditar(usuario)"
-                        class="bg-gray-100 hover:bg-[#F1C63C] hover:text-white text-gray-600 p-2 rounded-xl transition-all duration-200 shadow-xs hover:shadow-md flex items-center justify-center shrink-0"
-                        title="Editar"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                        </svg>
-                    </button>
-                    <!-- SWITCH ACTIVAR / INACTIVAR -->
-                    <button
-                        type="button"
-                        role="switch"
-                        [attr.aria-checked]="usuario.activo"
-                        (click)="eliminarUsuario(usuario)"
-                        class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none shadow-xs"
-                        [ngClass]="usuario.activo ? 'bg-emerald-500' : 'bg-gray-300'"
-                        title="Cambiar estado"
-                    >
-                        <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300" [ngClass]="usuario.activo ? 'translate-x-6' : 'translate-x-1'"></span>
-                    </button>
-                </div>
-            </td>
-        </tr>
-        <!-- SIN USUARIOS -->
-        <tr *ngIf="usuarios.length === 0">
-            <td colspan="6" class="text-center py-12 text-gray-400">
-                No hay usuarios registrados.
-            </td>
-        </tr>
-    </tbody>
-</table>
-
+                                    <!-- MENÚ FLOTANTE DE ROLES -->
+                                    <div
+                                        *ngIf="usuarioSeleccionadoRol?.id_usuario === usuario.id_usuario"
+                                        class="absolute left-0 mt-1.5 w-44 bg-white rounded-2xl shadow-2xl border border-gray-100 py-1.5 z-50 animate-in fade-in duration-100">
+                                        <div class="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 mb-1">
+                                            Cambiar a:
+                                        </div>
+                                        <button
+                                            *ngFor="let rol of rolesDisponibles"
+                                            type="button"
+                                            (click)="seleccionarNuevoRol(usuario, rol)"
+                                            class="w-full text-left px-3 py-1.5 text-xs font-medium hover:bg-[#4141a5]/5 hover:text-[#4141a5] flex items-center justify-between transition-colors rounded-lg"
+                                            [ngClass]="(usuario.id_rol === (rol.id_rol || rol.id) || usuario.nombre_rol === (rol.nombre_rol || rol.nombre)) ? 'text-[#4141a5] font-bold bg-[#4141a5]/10' : 'text-gray-700'">
+                                            <span>{{ rol.nombre_rol || rol.nombre }}</span>
+                                            <svg *ngIf="usuario.id_rol === (rol.id_rol || rol.id) || usuario.nombre_rol === (rol.nombre_rol || rol.nombre)" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">    
+                                <span class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border"
+                                    [ngClass]="usuario.activo
+                                        ? 'bg-[#4141a5]/10 text-[#4141a5] border-[#4141a5]/30'
+                                        : 'bg-slate-100 text-slate-500 border-slate-200'">
+                                    <span class="w-2 h-2 rounded-full"
+                                        [ngClass]="usuario.activo ? 'bg-[#4141a5]' : 'bg-slate-400'"></span>
+                                    {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3.5">
+                                <div class="flex items-center justify-center gap-3">
+                                    <!-- BOTÓN EDITAR -->
+                                    <button
+                                        (click)="abrirModalEditar(usuario)"
+                                        type="button"
+                                        class="bg-gray-100 hover:bg-[#170B3D] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95"
+                                        title="Editar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                        </svg>
+                                    </button>
+                                    <!-- SWITCH ACTIVAR / INACTIVAR -->
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        [attr.aria-checked]="usuario.activo"
+                                        (click)="eliminarUsuario(usuario)"
+                                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                                        [ngClass]="usuario.activo ? 'bg-[#4141a5]' : 'bg-slate-300'"
+                                        title="Cambiar estado">
+                                        <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                                            [ngClass]="usuario.activo ? 'translate-x-5' : 'translate-x-0'"></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-
         </div>
 
     </main>
 
-</div>
+    <!-- MODAL RESPONSIVO -->
+    @if (modal) {
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-5 sm:p-8 border border-gray-100 relative flex flex-col max-h-[95vh]">
 
+                <button (click)="cerrarModal()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10">✕</button>
 
-<!-- MODAL RESPONSIVO -->
-@if (modal) {
+                <h2 class="text-xl sm:text-2xl font-extrabold text-[#170B3D] mb-4 uppercase tracking-wider pr-8 shrink-0">
+                    {{ editar ? 'Editar Usuario' : 'Nuevo Usuario' }}
+                </h2>
 
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div class="space-y-3 sm:space-y-4 overflow-y-auto flex-1 pr-1 py-1">
+                    <!-- NOMBRE -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Nombre
+                        </label>
+                        <input
+                            type="text"
+                            [(ngModel)]="usuario.nombre"
+                            placeholder="Nombre"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
+                    </div>
 
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 md:p-8 my-auto">
+                    <!-- APELLIDO -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Apellido
+                        </label>
+                        <input
+                            type="text"
+                            [(ngModel)]="usuario.apellido"
+                            placeholder="Apellido"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
+                    </div>
 
-            <h2 class="text-2xl font-bold text-[#10203b] mb-6">
-                {{ editar ? 'Editar usuario' : 'Nuevo usuario' }}
-            </h2>
+                    <!-- IDENTIFICACIÓN -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Número de identificación
+                        </label>
+                        <input
+                            type="text"
+                            [(ngModel)]="usuario.identificacion"
+                            placeholder="1234567899"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
+                    </div>
 
+                    <!-- CORREO -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Correo electrónico
+                        </label>
+                        <input
+                            type="email"
+                            [(ngModel)]="usuario.email"
+                            placeholder="correo@ejemplo.com"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
+                    </div>
 
-            <!-- NOMBRE -->
-            <label class="block text-sm font-semibold text-[#10203b] mb-2">
-                Nombre
-            </label>
+                    <!-- CONTRASEÑA -->
+                    @if (!editar) {
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                                Contraseña
+                            </label>
+                            <input
+                                type="password"
+                                [(ngModel)]="usuario.password"
+                                placeholder="Contraseña"
+                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
+                        </div>
+                    }
 
-            <input
-                type="text"
-                [(ngModel)]="usuario.nombre"
-                placeholder="Nombre"
-                class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-            >
+                    <!-- ROL -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Rol
+                        </label>
+                        <select
+                            [(ngModel)]="usuario.id_rol"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
+                            <option [ngValue]="null">
+                                Indefinido
+                            </option>
+                            <option [ngValue]="1">
+                                Administrador
+                            </option>
+                            <option [ngValue]="2">
+                                Veterinario
+                            </option>
+                            <option [ngValue]="3">
+                                Jurídico
+                            </option>
+                            <option [ngValue]="4">
+                                Peticionario
+                            </option>
+                        </select>
+                    </div>
 
+                    <!-- USUARIO ACTIVO -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <input
+                            type="checkbox"
+                            id="usuarioActivo"
+                            [(ngModel)]="usuario.activo"
+                            class="h-4 w-4 text-[#4141a5] rounded border-gray-300 focus:ring-[#4141a5] accent-[#4141a5] cursor-pointer">
+                        <label for="usuarioActivo" class="text-sm font-bold text-gray-600 uppercase cursor-pointer">
+                            Usuario activo
+                        </label>
+                    </div>
+                </div>
 
-            <!-- APELLIDO -->
-            <label class="block text-sm font-semibold text-[#10203b] mb-2">
-                Apellido
-            </label>
-
-            <input
-                type="text"
-                [(ngModel)]="usuario.apellido"
-                placeholder="Apellido"
-                class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-            >
-
-
-            <!-- IDENTIFICACIÓN -->
-            <label class="block text-sm font-semibold text-[#10203b] mb-2">
-                Numero de identificacion
-            </label>
-
-            <input
-                type="text"
-                [(ngModel)]="usuario.identificacion"
-                placeholder="1234567899"
-                class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-            >
-
-
-            <!-- CORREO -->
-            <label class="block text-sm font-semibold text-[#10203b] mb-2">
-                Correo electrónico
-            </label>
-
-            <input
-                type="email"
-                [(ngModel)]="usuario.email"
-                placeholder="correo@ejemplo.com"
-                class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-            >
-
-
-            <!-- CONTRASEÑA -->
-            @if (!editar) {
-
-                <label class="block text-sm font-semibold text-[#10203b] mb-2">
-                    Contraseña
-                </label>
-
-                <input
-                    type="password"
-                    [(ngModel)]="usuario.password"
-                    placeholder="Contraseña"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
-                >
-
-            }
-
-
-            <!-- ID DEL ROL -->
-        <!-- ID DEL ROL -->
-<label class="block text-sm font-semibold text-[#10203b] mb-2">
-    Rol
-</label>
-
-<select
-    [(ngModel)]="usuario.id_rol"
-    class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 bg-white focus:outline-none focus:ring-2 focus:ring-[#1d1b4f]"
->
-    <option [ngValue]="null">
-        Indefinido
-    </option>
-
-    <option [ngValue]="1">
-        Administrador
-    </option>
-
-    <option [ngValue]="2">
-        Veterinario
-    </option>
-
-    <option [ngValue]="3">
-        Jurídico
-    </option>
-
-    <option [ngValue]="4">
-        Peticionario
-    </option>
-</select>
-
-            <!-- USUARIO ACTIVO -->
-            <label class="flex items-center gap-3 mb-6 cursor-pointer">
-
-                <input
-                    type="checkbox"
-                    [(ngModel)]="usuario.activo"
-                    class="w-5 h-5 accent-[#1d1b4f]"
-                >
-
-                <span class="font-semibold text-[#10203b]">
-                    Usuario activo
-                </span>
-
-            </label>
-
-
-            <!-- BOTONES -->
-            <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
-
-                <button
-                    (click)="cerrarModal()"
-                    class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition text-center"
-                >
-                    Cancelar
-                </button>
-
-                <button
-                    (click)="guardar()"
-                    class="px-6 py-2.5 rounded-lg bg-[#1d1b4f] text-white font-semibold hover:bg-[#292665] transition text-center"
-                >
-                    {{ editar ? 'Actualizar' : 'Guardar' }}
-                </button>
+                <!-- BOTONES -->
+                <div class="flex items-center justify-end gap-3 mt-4 pt-3 sm:pt-4 border-t border-gray-100 shrink-0">
+                    <button
+                        (click)="cerrarModal()"
+                        class="px-4 sm:px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider">
+                        Cancelar
+                    </button>
+                    <button
+                        (click)="guardar()"
+                        class="px-5 sm:px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95">
+                        {{ editar ? 'Actualizar' : 'Guardar' }}
+                    </button>
+                </div>
 
             </div>
-
         </div>
+    }
 
-    </div>
-
-}
-
-
+</div>
