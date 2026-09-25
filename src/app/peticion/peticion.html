@@ -187,34 +187,59 @@
             </label>
 
             <!-- Campo ubicación -->
-            <input
-              type="text"
-              formControlName="ubicacion"
-              placeholder="Usa el botón para obtener tu ubicación..."
-              readonly
-              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-gray-50 text-[#170B3D]">
+            <!-- Campo ubicación -->
+<div class="flex gap-2">
 
-            <div class="w-full h-64 bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 shadow-inner">
-              <!-- Google Maps -->
-              <iframe
-                *ngIf="mapaUrl"
-                [src]="mapaUrl"
-                width="100%"
-                height="100%"
-                style="border:0;"
-                loading="lazy"
-                allowfullscreen
-                referrerpolicy="no-referrer-when-downgrade">
-              </iframe>
+  <input
+    type="text"
+    formControlName="ubicacion"
+    placeholder="Ej: El Centro, La Esmeralda, Popayán..."
+    (keyup.enter)="buscarUbicacion()"
+    class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm
+           focus:outline-none focus:ring-2 focus:ring-[#4141A5]
+           bg-white text-[#170B3D]">
 
-              <!-- Sin ubicación -->
-              <div
-                *ngIf="!mapaUrl"
-                class="w-full h-full flex flex-col items-center justify-center text-gray-500 text-xs font-medium gap-1">
-                <span class="font-bold text-[#170B3D]">Presiona "Usar mi ubicación"</span>
-                <span class="text-gray-400">para mostrar el mapa</span>
-              </div>
-            </div>
+  <button
+    type="button"
+    (click)="buscarUbicacion()"
+    class="bg-[#4141A5] text-white px-4 py-2.5 rounded-xl
+           hover:bg-[#170B3D] transition font-semibold text-sm">
+
+    🔍 Buscar
+  </button>
+
+</div>
+<!-- MAPA -->
+<div class="w-full h-64 bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 shadow-inner">
+
+  <!-- Google Maps -->
+  <iframe
+    *ngIf="mapaUrl"
+    [src]="mapaUrl"
+    width="100%"
+    height="100%"
+    style="border:0;"
+    loading="lazy"
+    allowfullscreen
+    referrerpolicy="no-referrer-when-downgrade">
+  </iframe>
+
+  <!-- Mensaje cuando todavía no hay ubicación -->
+  <div
+    *ngIf="!mapaUrl"
+    class="w-full h-full flex flex-col items-center justify-center text-gray-500 text-xs font-medium gap-1">
+
+    <span class="font-bold text-[#170B3D]">
+      Presiona "Usar mi ubicación"
+    </span>
+
+    <span class="text-gray-400">
+      para mostrar el mapa
+    </span>
+
+  </div>
+
+</div>
 
             <!-- ESTADO UBICACIÓN -->
             <div
@@ -243,40 +268,10 @@
             </button>
 
             <!-- BOTONES GOOGLE MAPS -->
-            <div
-              *ngIf="ubicacionObtenida"
-              class="grid grid-cols-2 gap-3">
-              <!-- Abrir Google Maps -->
-              <button
-                type="button"
-                (click)="abrirGoogleMaps()"
-                class="py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow-xs active:scale-95 cursor-pointer">
-                🗺️ Abrir Maps
-              </button>
-
-              <!-- Compartir -->
-              <button
-                type="button"
-                (click)="compartirUbicacion()"
-                class="py-2.5 bg-gray-100 hover:bg-[#170B3D] hover:text-white text-[#170B3D] font-bold rounded-xl text-xs uppercase tracking-wider transition shadow-xs active:scale-95 cursor-pointer">
-                📤 Compartir
-              </button>
-            </div>
+          
 
             <!-- COORDENADAS -->
-            <div
-              *ngIf="ubicacionObtenida"
-              class="bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs">
-              <p class="font-bold text-[#170B3D] uppercase tracking-wider mb-1">
-                Coordenadas
-              </p>
-              <p class="text-gray-600">
-                Latitud: {{ latitud }}
-              </p>
-              <p class="text-gray-600">
-                Longitud: {{ longitud }}
-              </p>
-            </div>
+       
 
           </div>
 

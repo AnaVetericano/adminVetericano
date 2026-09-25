@@ -1,4 +1,3 @@
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -7,7 +6,11 @@ import {
   Validators,
   ReactiveFormsModule
 } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {
+  DomSanitizer,
+  SafeResourceUrl
+} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-peticion',
@@ -21,56 +24,156 @@ import { HttpClient } from '@angular/common/http';
 })
 export class Peticion implements OnInit {
 
-  // ==============================
-  // FORMULARIO
-  // ==============================
-
   reporteForm!: FormGroup;
-
-  // ==============================
-  // ARCHIVO
-  // ==============================
-
   archivoSeleccionado: File | null = null;
-
-  // ==============================
-  // UBICACIÓN
-  // ==============================
 
   latitud: number | null = null;
   longitud: number | null = null;
 
   ubicacionObtenida = false;
   cargandoUbicacion = false;
-
   mensajeUbicacion = '';
 
-  mapaUrl: string = '';
+  mapaUrl: SafeResourceUrl | null = null;
 
-  // ==============================
-  // API
-  // ==============================
-
-  private apiUrl = 'http://127.0.0.1:8000/api/peticiones/';
+  private apiUrl =
+    'https://backendvetericano-production.up.railway.app/api/peticiones/iniciar/';
 
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient
+    private http: HttpClient,
+    private sanitizer: DomSanitizer
   ) {}
 
-  // ==============================
-  // INICIALIZAR
-  // ==============================
-
   ngOnInit(): void {
-
     this.reporteForm = this.fb.group({
-      tipoPeticion: ['maltrato', Validators.required],
+      tipoPeticion: [
+        'maltrato',
+        Validators.required
+      ],
       otroEspecificacion: [''],
-      descripcion: ['', Validators.required],
-      ubicacion: ['', Validators.required]
+      descripcion: [
+        '',
+        Validators.required
+      ],
+      ubicacion: [
+        '',
+        Validators.required
+      ]
     });
+  }
 
+  buscarUbicacion(): void {
+    const ubicacion =
+      this.reporteForm
+        .get('ubicacion')
+        ?.value
+        ?.trim();
+
+    if (!ubicacion) {
+      this.mensajeUbicacion =
+        'Escribe una ubicación primero.';
+      return;
+    }
+
+    console.log(
+      'Buscando ubicación:',
+      ubicacion
+    );
+
+    // Crear mapa usando el texto escrito
+    const url =
+      `https://www.google.com/maps?q=${encodeURIComponent(
+        ubicacion
+      )}&output=embed`;
+
+    this.mapaUrl =
+      this.sanitizer
+        .bypassSecurityTrustResourceUrl(url);
+
+    this.ubicacionObtenida = true;
+
+    this.mensajeUbicacion =
+      `Ubicación encontrada: ${ubicacion}`;
+
+    console.log(
+      'Mapa:',
+      url
+    );
+  }
+
+  // ==============================
+  // OBTENER DIRECCIÓN DESDE GPS
+  // ==============================
+
+  async obtenerDireccion(
+    latitud: number,
+    longitud: number
+  ): Promise<void> {
+    try {
+      const url =
+        `https://nominatim.openstreetmap.org/reverse` +
+        `?format=jsonv2` +
+        `&lat=${latitud}` +
+        `&lon=${longitud}` +
+        `&zoom=18` +
+        `&addressdetails=1` +
+        `&accept-language=es`;
+
+      console.log(
+        'Consultando dirección:',
+        url
+      );
+
+      const respuesta =
+        await fetch(url);
+
+      if (!respuesta.ok) {
+        throw new Error(
+          'No se pudo obtener la dirección'
+        );
+      }
+
+      const datos =
+        await respuesta.json();
+
+      console.log(
+        'Respuesta de dirección:',
+        datos
+      );
+
+      if (datos.display_name) {
+        // Mostrar la dirección en el formulario
+        this.reporteForm.patchValue({
+          ubicacion:
+            datos.display_name
+        });
+
+        this.mensajeUbicacion =
+          'Dirección obtenida correctamente.';
+      } else {
+        this.reporteForm.patchValue({
+          ubicacion:
+            'Dirección no disponible'
+        });
+
+        this.mensajeUbicacion =
+          'No se encontró una dirección para esta ubicación.';
+      }
+    } catch (error) {
+      console.error(
+        'Error obteniendo dirección:',
+        error
+      );
+
+      this.reporteForm.patchValue({
+        ubicacion:
+          'No se pudo obtener la dirección'
+      });
+
+      this.mensajeUbicacion =
+        'Se obtuvo el GPS, pero no se pudo obtener la dirección.';
+    }
   }
 
   // ==============================
@@ -78,30 +181,28 @@ export class Peticion implements OnInit {
   // ==============================
 
   onFileSelected(event: Event): void {
+    const input =
+      event.target as HTMLInputElement;
 
-    const input = event.target as HTMLInputElement;
-
-    if (input.files && input.files.length > 0) {
-
-      this.archivoSeleccionado = input.files[0];
-
+    if (
+      input.files &&
+      input.files.length > 0
+    ) {
+      this.archivoSeleccionado =
+        input.files[0];
     }
-
   }
 
   // ==============================
-  // OBTENER UBICACIÓN
+  // USAR MI UBICACIÓN
   // ==============================
 
   usarMiUbicacion(): void {
-
     if (!navigator.geolocation) {
-
       this.mensajeUbicacion =
         'Tu navegador no soporta la geolocalización.';
 
       this.ubicacionObtenida = false;
-
       return;
     }
 
@@ -111,32 +212,63 @@ export class Peticion implements OnInit {
       'Obteniendo tu ubicación actual...';
 
     navigator.geolocation.getCurrentPosition(
+      // ==============================
+      // UBICACIÓN OBTENIDA
+      // ==============================
+      async (position) => {
+        // Guardar coordenadas
+        this.latitud =
+          position.coords.latitude;
 
-      (position) => {
+        this.longitud =
+          position.coords.longitude;
 
-        this.latitud = position.coords.latitude;
-        this.longitud = position.coords.longitude;
+        console.log(
+          'Latitud:',
+          this.latitud
+        );
+
+        console.log(
+          'Longitud:',
+          this.longitud
+        );
+
+        // ==============================
+        // CREAR MAPA
+        // ==============================
+
+        const url =
+          `https://www.google.com/maps?q=${this.latitud},${this.longitud}&output=embed`;
+
+        this.mapaUrl =
+          this.sanitizer
+            .bypassSecurityTrustResourceUrl(url);
+
+        console.log(
+          'Mapa:',
+          url
+        );
+
+        // ==============================
+        // OBTENER DIRECCIÓN
+        // ==============================
+
+        await this.obtenerDireccion(
+          this.latitud,
+          this.longitud
+        );
+
+        // ==============================
+        // FINALIZAR
+        // ==============================
 
         this.ubicacionObtenida = true;
         this.cargandoUbicacion = false;
-
-        // Guardamos las coordenadas en el formulario
-        this.reporteForm.patchValue({
-          ubicacion:
-            `${this.latitud}, ${this.longitud}`
-        });
-
-        // Crear URL para mostrar Google Maps
-        this.mapaUrl =
-          `https://www.google.com/maps?q=${this.latitud},${this.longitud}&output=embed`;
-
-        this.mensajeUbicacion =
-          'Ubicación obtenida correctamente.';
-
       },
-
+      // ==============================
+      // ERROR GPS
+      // ==============================
       (error) => {
-
         console.error(
           'Error obteniendo ubicación:',
           error
@@ -146,46 +278,33 @@ export class Peticion implements OnInit {
         this.ubicacionObtenida = false;
 
         switch (error.code) {
-
           case error.PERMISSION_DENIED:
-
             this.mensajeUbicacion =
               'Permiso de ubicación denegado. Activa la ubicación en tu navegador.';
-
             break;
-
           case error.POSITION_UNAVAILABLE:
-
             this.mensajeUbicacion =
               'No se pudo obtener tu ubicación.';
-
             break;
-
           case error.TIMEOUT:
-
             this.mensajeUbicacion =
               'Se agotó el tiempo para obtener tu ubicación.';
-
             break;
-
           default:
-
             this.mensajeUbicacion =
               'Ocurrió un error al obtener la ubicación.';
-
             break;
         }
-
       },
-
+      // ==============================
+      // CONFIGURACIÓN GPS
+      // ==============================
       {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0
       }
-
     );
-
   }
 
   // ==============================
@@ -193,21 +312,20 @@ export class Peticion implements OnInit {
   // ==============================
 
   abrirGoogleMaps(): void {
-
     if (
       this.latitud === null ||
       this.longitud === null
     ) {
-
       return;
-
     }
 
     const url =
       `https://www.google.com/maps?q=${this.latitud},${this.longitud}`;
 
-    window.open(url, '_blank');
-
+    window.open(
+      url,
+      '_blank'
+    );
   }
 
   // ==============================
@@ -215,14 +333,11 @@ export class Peticion implements OnInit {
   // ==============================
 
   compartirUbicacion(): void {
-
     if (
       this.latitud === null ||
       this.longitud === null
     ) {
-
       return;
-
     }
 
     const url =
@@ -231,34 +346,33 @@ export class Peticion implements OnInit {
     const texto =
       `Ubicación del reporte: ${url}`;
 
-    // Si el navegador soporta compartir
-    if (navigator.share) {
+    // ==============================
+    // COMPARTIR
+    // ==============================
 
+    if (navigator.share) {
       navigator.share({
-        title: 'Ubicación del reporte',
-        text: texto,
-        url: url
+        title:
+          'Ubicación del reporte',
+        text:
+          texto,
+        url:
+          url
       })
       .catch((error) => {
-
         console.log(
           'Compartir cancelado:',
           error
         );
-
       });
-
     } else {
-
-      // Alternativa si no soporta navigator.share
-      navigator.clipboard.writeText(url);
+      navigator.clipboard
+        .writeText(url);
 
       alert(
         'El enlace de la ubicación fue copiado al portapapeles.'
       );
-
     }
-
   }
 
   // ==============================
@@ -266,97 +380,134 @@ export class Peticion implements OnInit {
   // ==============================
 
   enviarReporte(): void {
+    // ==============================
+    // VALIDAR FORMULARIO
+    // ==============================
 
     if (this.reporteForm.invalid) {
-
       alert(
         'Por favor completa los campos requeridos.'
       );
 
-      this.reporteForm.markAllAsTouched();
+      this.reporteForm
+        .markAllAsTouched();
 
       return;
-
     }
 
-    if (!this.ubicacionObtenida) {
+    // ==============================
+    // VALIDAR UBICACIÓN
+    // ==============================
 
+    if (!this.ubicacionObtenida) {
       alert(
         'Primero debes obtener tu ubicación.'
       );
 
       return;
-
     }
 
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
-    // Tipo de petición
+    // ==============================
+    // TIPO
+    // ==============================
+
     formData.append(
       'tipo_peticion',
-      this.reporteForm.get('tipoPeticion')?.value || ''
+      this.reporteForm
+        .get('tipoPeticion')
+        ?.value || ''
     );
 
-    // Especificación de otro
+    // ==============================
+    // OTRO
+    // ==============================
+
     formData.append(
       'otro_especificacion',
-      this.reporteForm.get('otroEspecificacion')?.value || ''
+      this.reporteForm
+        .get('otroEspecificacion')
+        ?.value || ''
     );
 
-    // Descripción
+    // ==============================
+    // DESCRIPCIÓN
+    // ==============================
+
     formData.append(
       'descripcion',
-      this.reporteForm.get('descripcion')?.value || ''
+      this.reporteForm
+        .get('descripcion')
+        ?.value || ''
     );
 
-    // Ubicación
+    // ==============================
+    // DIRECCIÓN
+    // ==============================
+
     formData.append(
       'ubicacion',
-      this.reporteForm.get('ubicacion')?.value || ''
+      this.reporteForm
+        .get('ubicacion')
+        ?.value || ''
     );
 
-    // Latitud
-    if (this.latitud !== null) {
+    // ==============================
+    // LATITUD
+    // ==============================
 
+    if (this.latitud !== null) {
       formData.append(
         'latitud',
         this.latitud.toString()
       );
-
     }
 
-    // Longitud
-    if (this.longitud !== null) {
+    // ==============================
+    // LONGITUD
+    // ==============================
 
+    if (this.longitud !== null) {
       formData.append(
         'longitud',
         this.longitud.toString()
       );
-
     }
 
-    // Evidencia
-    if (this.archivoSeleccionado) {
+    // ==============================
+    // EVIDENCIA
+    // ==============================
 
+    if (this.archivoSeleccionado) {
       formData.append(
         'evidencia',
         this.archivoSeleccionado,
         this.archivoSeleccionado.name
       );
-
     }
 
     // ==============================
-    // POST A DJANGO
+    // OBTENER TOKEN DE AUTENTICACIÓN
+    // ==============================
+    const token = localStorage.getItem('token'); 
+    console.log('Token recuperado del localStorage:', token);
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // ==============================
+    // ENVIAR A DJANGO CON HEADERS
     // ==============================
 
     this.http.post(
       this.apiUrl,
-      formData
+      formData,
+      { headers }
     ).subscribe({
-
       next: (response) => {
-
         console.log(
           'Petición guardada correctamente:',
           response
@@ -366,21 +517,49 @@ export class Peticion implements OnInit {
           '¡Petición enviada y registrada correctamente!'
         );
 
-        // Limpiar formulario
+        // ==============================
+        // LIMPIAR FORMULARIO
+        // ==============================
+
         this.reporteForm.reset({
-          tipoPeticion: 'maltrato',
-          otroEspecificacion: '',
-          descripcion: '',
-          ubicacion: ''
+          tipoPeticion:
+            'maltrato',
+          otroEspecificacion:
+            '',
+          descripcion:
+            '',
+          ubicacion:
+            ''
         });
 
-        // Limpiar archivo
-        this.archivoSeleccionado = null;
+        // ==============================
+        // LIMPIAR ARCHIVO
+        // ==============================
 
+        this.archivoSeleccionado =
+          null;
+
+        // ==============================
+        // LIMPIAR UBICACIÓN
+        // ==============================
+
+        this.latitud =
+          null;
+
+        this.longitud =
+          null;
+
+        this.ubicacionObtenida =
+          false;
+
+        this.mapaUrl =
+          null;
+
+        this.mensajeUbicacion =
+          '';
       },
 
       error: (error) => {
-
         console.error(
           'Error al conectar con la API:',
           error
@@ -394,10 +573,7 @@ export class Peticion implements OnInit {
         alert(
           'Hubo un error al enviar la petición. Revisa la consola.'
         );
-
       }
-
     });
-
   }
 }
