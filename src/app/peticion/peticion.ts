@@ -11,6 +11,7 @@ import {
   DomSanitizer,
   SafeResourceUrl
 } from '@angular/platform-browser';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-peticion',
@@ -63,7 +64,7 @@ export class Peticion implements OnInit {
     });
   }
 
-  buscarUbicacion(): void {
+  async buscarUbicacion(): Promise<void> {
     const ubicacion =
       this.reporteForm
         .get('ubicacion')
@@ -80,6 +81,24 @@ export class Peticion implements OnInit {
       'Buscando ubicación:',
       ubicacion
     );
+
+    // Intentar geocodificar con Nominatim para extraer latitud y longitud reales
+    try {
+      const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        ubicacion + ', Popayán'
+      )}&limit=1`;
+      const res = await fetch(geoUrl);
+      if (res.ok) {
+        const datos = await res.json();
+        if (datos && datos.length > 0) {
+          this.latitud = parseFloat(datos[0].lat);
+          this.longitud = parseFloat(datos[0].lon);
+          console.log('Coordenadas geocodificadas:', this.latitud, this.longitud);
+        }
+      }
+    } catch (e) {
+      console.log('Geocodificación opcional no completada:', e);
+    }
 
     // Crear mapa usando el texto escrito
     const url =
@@ -379,19 +398,19 @@ export class Peticion implements OnInit {
   // ENVIAR REPORTE
   // ==============================
 
-  enviarReporte(): void {
+  async enviarReporte(): Promise<void> {
     // ==============================
     // VALIDAR FORMULARIO
     // ==============================
 
     if (this.reporteForm.invalid) {
-      alert(
-        'Por favor completa los campos requeridos.'
-      );
-
-      this.reporteForm
-        .markAllAsTouched();
-
+      Swal.fire({
+        title: 'Formulario incompleto',
+        text: 'Por favor completa todos los campos requeridos.',
+        icon: 'warning',
+        confirmButtonColor: '#4141a5'
+      });
+      this.reporteForm.markAllAsTouched();
       return;
     }
 
@@ -400,179 +419,164 @@ export class Peticion implements OnInit {
     // ==============================
 
     if (!this.ubicacionObtenida) {
-      alert(
-        'Primero debes obtener tu ubicación.'
-      );
-
+      Swal.fire({
+        title: 'Ubicación requerida',
+        text: 'Primero debes buscar o seleccionar tu ubicación.',
+        icon: 'warning',
+        confirmButtonColor: '#4141a5'
+      });
       return;
-    }
-
-    const formData =
-      new FormData();
-
-    // ==============================
-    // TIPO
-    // ==============================
-
-    formData.append(
-      'tipo_peticion',
-      this.reporteForm
-        .get('tipoPeticion')
-        ?.value || ''
-    );
-
-    // ==============================
-    // OTRO
-    // ==============================
-
-    formData.append(
-      'otro_especificacion',
-      this.reporteForm
-        .get('otroEspecificacion')
-        ?.value || ''
-    );
-
-    // ==============================
-    // DESCRIPCIÓN
-    // ==============================
-
-    formData.append(
-      'descripcion',
-      this.reporteForm
-        .get('descripcion')
-        ?.value || ''
-    );
-
-    // ==============================
-    // DIRECCIÓN
-    // ==============================
-
-    formData.append(
-      'ubicacion',
-      this.reporteForm
-        .get('ubicacion')
-        ?.value || ''
-    );
-
-    // ==============================
-    // LATITUD
-    // ==============================
-
-    if (this.latitud !== null) {
-      formData.append(
-        'latitud',
-        this.latitud.toString()
-      );
-    }
-
-    // ==============================
-    // LONGITUD
-    // ==============================
-
-    if (this.longitud !== null) {
-      formData.append(
-        'longitud',
-        this.longitud.toString()
-      );
-    }
-
-    // ==============================
-    // EVIDENCIA
-    // ==============================
-
-    if (this.archivoSeleccionado) {
-      formData.append(
-        'evidencia',
-        this.archivoSeleccionado,
-        this.archivoSeleccionado.name
-      );
     }
 
     // ==============================
     // OBTENER TOKEN DE AUTENTICACIÓN
     // ==============================
-    const token = localStorage.getItem('token'); 
-    console.log('Token recuperado del localStorage:', token);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      Swal.fire({
+        title: 'Sesión no iniciada',
+        text: 'No se encontró una sesión activa. Por favor inicia sesión nuevamente.',
+        icon: 'error',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
 
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
+    // ==============================
+    // DETERMINAR ID_TIPO NUMÉRICO
+    // 1: Animal Herido, 2: Maltrato animal, 3: Animal en condicion de calle, 4: Otro
+    // ==============================
+    const tipoValor = this.reporteForm.get('tipoPeticion')?.value;
+    let idTipo = 2; // Por defecto Maltrato animal
+    if (tipoValor === 'herido') {
+      idTipo = 1;
+    } else if (tipoValor === 'maltrato') {
+      idTipo = 2;
+    } else if (tipoValor === 'calle') {
+      idTipo = 3;
+    } else if (tipoValor === 'otro') {
+      idTipo = 4;
+    }
+
+    // ==============================
+    // DESCRIPCIÓN
+    // ==============================
+    let descripcion = (this.reporteForm.get('descripcion')?.value || '').trim();
+    if (tipoValor === 'otro') {
+      const espec = (this.reporteForm.get('otroEspecificacion')?.value || '').trim();
+      if (espec) {
+        descripcion = `[Especificación: ${espec}] - ${descripcion}`;
+      }
+    }
+
+    const direccion = this.reporteForm.get('ubicacion')?.value || '';
+
+    // ==============================
+    // MOSTRAR CARGANDO
+    // ==============================
+    Swal.fire({
+      title: 'Enviando petición...',
+      text: 'Por favor espera un momento mientras registramos el caso.',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
     });
 
     // ==============================
-    // ENVIAR A DJANGO CON HEADERS
+    // SUBIDA DE ARCHIVO A CLOUDINARY (SI EXISTE)
     // ==============================
+    let urlFoto: string | null = null;
+    if (this.archivoSeleccionado) {
+      try {
+        const cloudData = new FormData();
+        cloudData.append('file', this.archivoSeleccionado);
+        cloudData.append('upload_preset', 'preset_android');
 
-    this.http.post(
-      this.apiUrl,
-      formData,
-      { headers }
-    ).subscribe({
-      next: (response) => {
-        console.log(
-          'Petición guardada correctamente:',
-          response
-        );
-
-        alert(
-          '¡Petición enviada y registrada correctamente!'
-        );
-
-        // ==============================
-        // LIMPIAR FORMULARIO
-        // ==============================
-
-        this.reporteForm.reset({
-          tipoPeticion:
-            'maltrato',
-          otroEspecificacion:
-            '',
-          descripcion:
-            '',
-          ubicacion:
-            ''
+        const uploadRes = await fetch('https://api.cloudinary.com/v1_1/aefeig5y/auto/upload', {
+          method: 'POST',
+          body: cloudData
         });
 
-        // ==============================
-        // LIMPIAR ARCHIVO
-        // ==============================
+        if (uploadRes.ok) {
+          const uploadJson = await uploadRes.json();
+          urlFoto = uploadJson.secure_url || null;
+        } else {
+          console.warn('No se pudo subir la foto a Cloudinary, se continuará sin la imagen.');
+        }
+      } catch (uploadErr) {
+        console.warn('Error subiendo foto:', uploadErr);
+      }
+    }
 
-        this.archivoSeleccionado =
-          null;
+    // ==============================
+    // PAYLOAD PARA DJANGO API
+    // ==============================
+    const payload: any = {
+      id_tipo: idTipo,
+      descripcion: descripcion,
+      direccion: direccion
+    };
 
-        // ==============================
-        // LIMPIAR UBICACIÓN
-        // ==============================
+    if (this.latitud !== null) {
+      payload.latitud = Number(this.latitud.toFixed(7));
+    }
+    if (this.longitud !== null) {
+      payload.longitud = Number(this.longitud.toFixed(7));
+    }
+    if (urlFoto) {
+      payload.foto = urlFoto;
+    }
 
-        this.latitud =
-          null;
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
 
-        this.longitud =
-          null;
+    // ==============================
+    // ENVIAR A DJANGO
+    // ==============================
+    this.http.post(this.apiUrl, payload, { headers }).subscribe({
+      next: (response: any) => {
+        console.log('Petición guardada correctamente:', response);
 
-        this.ubicacionObtenida =
-          false;
+        Swal.fire({
+          title: '¡Petición enviada!',
+          text: `El caso #${response.id_peticion || ''} ha sido registrado con éxito.`,
+          icon: 'success',
+          confirmButtonColor: '#4141a5'
+        });
 
-        this.mapaUrl =
-          null;
+        // Limpiar formulario y estados
+        this.reporteForm.reset({
+          tipoPeticion: 'maltrato',
+          otroEspecificacion: '',
+          descripcion: '',
+          ubicacion: ''
+        });
 
-        this.mensajeUbicacion =
-          '';
+        this.archivoSeleccionado = null;
+        this.latitud = null;
+        this.longitud = null;
+        this.ubicacionObtenida = false;
+        this.mapaUrl = null;
+        this.mensajeUbicacion = '';
       },
-
       error: (error) => {
-        console.error(
-          'Error al conectar con la API:',
-          error
-        );
+        console.error('Error al conectar con la API:', error);
+        console.error('Respuesta del servidor:', error.error);
 
-        console.error(
-          'Respuesta del servidor:',
-          error.error
-        );
+        const detalleError =
+          error.error?.detail ||
+          error.error?.mensaje ||
+          (error.error ? JSON.stringify(error.error) : 'Error inesperado al registrar la petición.');
 
-        alert(
-          'Hubo un error al enviar la petición. Revisa la consola.'
-        );
+        Swal.fire({
+          title: 'Error al enviar',
+          text: `No se pudo registrar la petición: ${detalleError}`,
+          icon: 'error',
+          confirmButtonColor: '#4141a5'
+        });
       }
     });
   }
