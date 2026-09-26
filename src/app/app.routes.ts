@@ -17,6 +17,7 @@ import { Graficas } from './graficas/graficas';
 import { Peticion } from './peticion/peticion';
 import { Voluntarios } from './voluntarios/voluntarios';
 import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado';
+import { Adopciones } from './adopciones/adopciones';
 
 
 export const routes: Routes = [
@@ -43,6 +44,7 @@ export const routes: Routes = [
       {path:'voluntarios',component:Voluntarios},
       {path:'peticion', component:Peticion},
       { path: 'eventos-voluntariado', component: EventosVoluntariado },
+      {path:'adopciones', component:Adopciones},
     ]
   }
 ];
