@@ -62,8 +62,14 @@ export class InicioDeSesionAdministradorComponent {
       next: (res: any) => {
         console.log(res.tokens.refresh);
         
+        // Almacenar token en localStorage para usarlo en peticiones posteriores
+        if (res.tokens?.access) {
+          localStorage.setItem('token', res.tokens.access);
+        }
+        if (res.tokens?.refresh) {
+          localStorage.setItem('refresh_token', res.tokens.refresh);
+        }
         
-        // NOTA: Guardar token pospuesto hasta que el usuario lo indique
         this.router.navigate(['/inicio-admin']);
       },
       error: (err: any) => {
