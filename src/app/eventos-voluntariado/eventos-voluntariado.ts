@@ -3,7 +3,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 1. Impo
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { AuthService, EventoVoluntariado } from '../services/auth';
+import { AuthService, EventoVoluntariado, PostulacionVoluntariado } from '../services/auth';
 
 export interface VoluntarioPostulado {
   id?: number;
@@ -300,30 +300,49 @@ export class EventosVoluntariado implements OnInit {
 
     if (!evento.id) {
       this.cargandoPostulados = false;
+      this.cdr.detectChanges();
       return;
     }
 
-    // ESPACIO PARA CONSUMIR EL ENDPOINT DEL BACKEND (Descomentar al recibirlo):
-    /*
-    this.authService.obtenerPostuladosPorJornada(evento.id).subscribe({
-      next: (data: VoluntarioPostulado[]) => {
-        this.postulados = data;
+    this.authService.listarPostulacionesVoluntariado(evento.id).subscribe({
+      next: (data: PostulacionVoluntariado[]) => {
+        // Filtrado por el ID del evento de forma segura
+        const postulacionesEvento = data.filter(p => {
+          if (typeof p.evento === 'object' && p.evento !== null) {
+            return (p.evento as any).id === evento.id;
+          }
+          return p.evento === evento.id;
+        });
+
+        const listaFinal = postulacionesEvento.length > 0 ? postulacionesEvento : data;
+
+        // Mapeo a las variables que usa el modal HTML
+        this.postulados = listaFinal.map((p: PostulacionVoluntariado) => ({
+          id: p.id,
+          nombre: p.nombre_completo || 'Sin nombre',
+          apellido: '',
+          email: p.correo || 'Sin correo',
+          telefono: p.telefono || 'Sin teléfono',
+          fechaPostulacion: p.fecha_postulacion
+        }));
+
         this.cargandoPostulados = false;
+        this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al obtener postulados:', err);
         this.cargandoPostulados = false;
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo obtener la lista de voluntarios postulados.',
+          icon: 'error',
+          confirmButtonColor: '#1B1947'
+        });
       }
     });
-    */
-
-    // Mock temporal
-    setTimeout(() => {
-      this.postulados = [];
-      this.cargandoPostulados = false;
-    }, 800);
   }
-
   cerrarModalPostulados(): void {
     this.modalPostuladosAbierto = false;
     this.jornadaSeleccionada = null;
