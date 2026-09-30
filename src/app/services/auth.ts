@@ -284,9 +284,14 @@ export class AuthService {
     );
   }
 
-  listarPostulacionesVoluntariado() {
+  // AnaC
+  listarPostulacionesVoluntariado(idEvento?: number): Observable<PostulacionVoluntariado[]> {
+    if (idEvento) {
+      return this.http.get<PostulacionVoluntariado[]>(`${this.baseUrlVoluntariado}/postulaciones/?evento=${idEvento}`);
+    }
     return this.http.get<PostulacionVoluntariado[]>(`${this.baseUrlVoluntariado}/postulaciones/`);
   }
+  // AnaC
 
   crearPostulacionVoluntariado(postulacion: PostulacionVoluntariado) {
     return this.http.post(`${this.baseUrlVoluntariado}/postulaciones/`, postulacion);
