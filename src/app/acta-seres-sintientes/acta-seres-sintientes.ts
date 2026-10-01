@@ -7,6 +7,11 @@ import { Component } from '@angular/core';
   styleUrl: './acta-seres-sintientes.css',
 })
 export class ActaSeresSintientes {
+  popalog = {
+
+    logopop: 'images/Escudo_Popayan.svg'
+  };
+   
   onLimpiar() {
     // Lógica para limpiar el formulario
     console.log('Formulario limpiado');
