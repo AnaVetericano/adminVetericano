@@ -1,0 +1,232 @@
+<div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden my-6 border border-gray-200 text-sm">
+  
+  <!-- Encabezado institucional -->
+ <header class="bg-indigo-950 text-white p-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-yellow-500">
+      <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+        <!-- Ícono / Logo placeholder -->
+        <div class="w-12 h-12  rounded-full flex items-center justify-center text-indigo-950 font-bold shadow">       
+        <img [src]="popalog.logopop" alt="Escudo Popayan"
+         class="w-full h-full object-cover object-center"
+        />
+        
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">ALCALDÍA DE POPAYÁN</h1>
+          <p class="text-xs text-gray-300">HISTORIA CLINICA VETERINARIA</p>
+        </div>
+      </div>
+      <div class="text-right text-xs bg-indigo-900/60 p-2 rounded border border-indigo-800">
+        <p><span class="font-semibold">Código:</span> F-GS-F-03-08</p>
+        <p><span class="font-semibold">Versión:</span> 01</p>
+        <p><span class="font-semibold">Página:</span> 2 de 2</p>
+      </div>
+    </header>
+
+  <form (ngSubmit)="guardarHistoria()" class="p-6 space-y-6">
+    
+    <!-- Fecha y Número de Historia -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border border-gray-200">
+      <div>
+        <label class="block font-semibold text-gray-700 mb-1">Fecha:</label>
+        <input type="date" [(ngModel)]="formData.fecha" name="fecha" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+      </div>
+      <div>
+        <label class="block font-semibold text-gray-700 mb-1">Número de historia clínica:</label>
+        <input type="text" [(ngModel)]="formData.numeroHistoria" name="numeroHistoria" placeholder="Ej. HC-2026-001" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+      </div>
+    </div>
+
+    <!-- 1. DATOS DEL PACIENTE -->
+    <div class="border border-indigo-900 rounded-md overflow-hidden">
+      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
+        1. DATOS DEL PACIENTE
+      </div>
+      <div class="p-4 space-y-4 bg-white">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Nombre:</label>
+            <input type="text" [(ngModel)]="formData.nombre" name="nombre" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Raza:</label>
+            <input type="text" [(ngModel)]="formData.raza" name="raza" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Especie:</label>
+            <input type="text" [(ngModel)]="formData.especie" name="especie" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Sexo:</label>
+            <div class="flex items-center space-x-6 mt-1">
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.sexo" name="sexo" value="M" class="text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-xs">M (Macho)</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.sexo" name="sexo" value="H" class="text-indigo-600 focus:ring-indigo-500">
+                <span class="ml-2 text-xs">H (Hembra)</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Última desparasitación (Fecha/Producto):</label>
+            <input type="text" [(ngModel)]="formData.ultimaDesparasitacion" name="ultimaDesparasitacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Vacunas (Fecha/Marca/Lote):</label>
+          <input type="text" [(ngModel)]="formData.vacunas" name="vacunas" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Enfermedades anteriores:</label>
+          <input type="text" [(ngModel)]="formData.enfermedadesAnteriores" name="enfermedadesAnteriores" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Tratamiento:</label>
+          <input type="text" [(ngModel)]="formData.tratamiento" name="tratamiento" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Evolución:</label>
+          <input type="text" [(ngModel)]="formData.evolucion" name="evolucion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Alimentación:</label>
+          <input type="text" [(ngModel)]="formData.alimentacion" name="alimentacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Historia reproductiva (Entero/Esterilizado, ÚLtimo celo, Fecha último parto):</label>
+          <input type="text" [(ngModel)]="formData.historiaReproductiva" name="historiaReproductiva" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. MOTIVO DE CONSULTA -->
+    <div class="border border-indigo-900 rounded-md overflow-hidden">
+      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
+        2. MOTIVO DE CONSULTA
+      </div>
+      <div class="p-4 bg-white">
+        <textarea rows="3" [(ngModel)]="formData.motivoConsulta" name="motivoConsulta" placeholder="Describa el motivo de la consulta..." class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+    </div>
+
+    <!-- 3. EXAMEN CLÍNICO -->
+    <div class="border border-indigo-900 rounded-md overflow-hidden">
+      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
+        3. EXAMEN CLÍNICO
+      </div>
+      <div class="p-4 space-y-4 bg-white">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">F. Respiratoria:</label>
+            <input type="text" [(ngModel)]="formData.fRespiratoria" name="fRespiratoria" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">F. Cardiaca:</label>
+            <input type="text" [(ngModel)]="formData.fCardiaca" name="fCardiaca" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Temperatura:</label>
+            <input type="text" [(ngModel)]="formData.temperatura" name="temperatura" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Pulso:</label>
+            <input type="text" [(ngModel)]="formData.pulso" name="pulso" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tiempo llenado capilar:</label>
+            <input type="text" [(ngModel)]="formData.tiempoLlenadoCapilar" name="tiempoLlenadoCapilar" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Mucosas:</label>
+            <input type="text" [(ngModel)]="formData.mucosas" name="mucosas" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Actitud/Temperamento:</label>
+            <input type="text" [(ngModel)]="formData.actitudTemperamento" name="actitudTemperamento" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. ÓRGANOS Y SISTEMAS -->
+    <div class="border border-indigo-900 rounded-md overflow-hidden">
+      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
+        4. ÓRGANOS Y SISTEMAS
+      </div>
+      <div class="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Columna 1 -->
+        <div class="space-y-3 text-xs">
+          <div class="flex justify-between items-center border-b pb-2" *ngFor="let item of [
+            {key: 'estadoGeneral', label: '1. Estado general...'},
+            {key: 'hidratacion', label: '2. Estado de hidratación...'},
+            {key: 'tegumentario', label: '3. Sistema tegumentario'},
+            {key: 'ojos', label: '4. Ojos'},
+            {key: 'oidos', label: '5. Oídos'}
+          ]">
+            <span class="font-medium text-gray-700 w-1/2">{{item.label}}</span>
+            <div class="flex space-x-4 w-1/2 justify-end">
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Normal" class="text-indigo-600">
+                <span class="ml-1">Normal</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Anormal" class="text-indigo-600">
+                <span class="ml-1">Anormal</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna 2 -->
+        <div class="space-y-3 text-xs">
+          <div class="flex justify-between items-center border-b pb-2" *ngFor="let item of [
+            {key: 'digestivo', label: '6. Sistema digestivo'},
+            {key: 'respiratorio', label: '7. Sistema respiratorio'},
+            {key: 'nervioso', label: '8. Sistema nervioso'},
+            {key: 'musculoEsqueletico', label: '9. Músculo esquelético'},
+            {key: 'cardiovascular', label: '10. Sistema cardiovascular'},
+            {key: 'genitourinario', label: '11. Genitourinario'}
+          ]">
+            <span class="font-medium text-gray-700 w-1/2">{{item.label}}</span>
+            <div class="flex space-x-4 w-1/2 justify-end">
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Normal" class="text-indigo-600">
+                <span class="ml-1">Normal</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Anormal" class="text-indigo-600">
+                <span class="ml-1">Anormal</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+      <button type="button" (click)="limpiarFormulario()" class="px-5 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100 font-medium transition">
+        Limpiar
+      </button>
+      <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium transition shadow">
+        Guardar
+      </button>
+    </div>
+
+  </form>
+</div>

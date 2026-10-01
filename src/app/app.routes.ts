@@ -19,6 +19,7 @@ import { Voluntarios } from './voluntarios/voluntarios';
 import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado';
 import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
+import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
 
 
 export const routes: Routes = [
@@ -46,6 +47,8 @@ export const routes: Routes = [
       {path:'peticion', component:Peticion},
       { path: 'eventos-voluntariado', component: EventosVoluntariado },
       {path:'adopciones', component:Adopciones},
+      {path:'acta-seres-sintientes', component:ActaSeresSintientes},
+      {path:'historia-clinica2', component:HistoriaClinica2Component},
       {path:'acta-seres-sintientes', component:ActaSeresSintientes}
     ]
   }
