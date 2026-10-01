@@ -1,0 +1,407 @@
+<div class="min-h-screen bg-[#F5F5F5] p-6 md:p-8">
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="max-w-7xl mx-auto">
+
+    <!-- ENCABEZADO -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+
+      <div>
+        <h1 class="text-3xl font-extrabold text-[#170B3D]">
+          Adopciones
+        </h1>
+
+        <p class="text-gray-500 mt-1">
+          Gestiona las mascotas disponibles para adopción
+        </p>
+      </div>
+
+      <!-- BOTÓN AGREGAR -->
+      <button
+        (click)="openModal()"
+        class="bg-[#4141A5] hover:bg-[#34348d] text-white px-5 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all duration-200 hover:scale-[1.02]"
+      >
+        <span class="text-xl">+</span>
+        Agregar mascota
+      </button>
+
+    </div>
+
+
+    <!-- BUSCADOR -->
+    <div class="bg-white rounded-2xl shadow-sm p-4 mb-8">
+
+      <div class="relative">
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Buscar por nombre, raza, descripción o estado..."
+          class="w-full border border-gray-200 rounded-xl px-5 py-3 pl-12 outline-none focus:ring-2 focus:ring-[#4141A5] focus:border-transparent transition"
+        >
+
+        <!-- ICONO BUSCAR -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"
+          />
+        </svg>
+
+      </div>
+
+    </div>
+
+
+    <!-- GRID DE MASCOTAS -->
+    <div
+      *ngIf="filteredPets.length > 0"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    >
+
+      <!-- TARJETA MASCOTA -->
+      <div
+        *ngFor="let pet of filteredPets; let i = index"
+        class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300"
+      >
+
+        <!-- ================================================= -->
+        <!-- IMAGEN RESPONSIVE - NO SE RECORTA -->
+        <!-- ================================================= -->
+        <div
+          class="w-full h-52 sm:h-56 md:h-60 rounded-xl overflow-hidden mb-3 bg-gray-100 flex items-center justify-center"
+        >
+
+          <img
+            [src]="pet.imagen"
+            [alt]="pet.nombre"
+            class="w-full h-full object-contain"
+          >
+
+        </div>
+
+
+        <!-- INFORMACIÓN -->
+        <div class="p-5">
+
+          <!-- NOMBRE -->
+          <div class="flex items-start justify-between gap-3 mb-2">
+
+            <h2 class="text-xl font-extrabold text-[#170B3D]">
+              {{ pet.nombre }}
+            </h2>
+
+            <!-- ESTADO -->
+            <span
+              class="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              [ngClass]="{
+                'bg-green-100 text-green-700': pet.estado === 'Disponible',
+                'bg-yellow-100 text-yellow-700': pet.estado !== 'Disponible'
+              }"
+            >
+              {{ pet.estado }}
+            </span>
+
+          </div>
+
+
+          <!-- RAZA -->
+          <p class="text-sm text-gray-500 mb-3">
+            <span class="font-bold text-gray-700">
+              Raza:
+            </span>
+
+            {{ pet.raza }}
+          </p>
+
+
+          <!-- DESCRIPCIÓN -->
+          <p class="text-sm text-gray-600 line-clamp-3 mb-4">
+            {{ pet.descripcion }}
+          </p>
+
+
+          <!-- FECHA -->
+          <div class="flex items-center gap-2 text-xs text-gray-400 mb-5">
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z"
+              />
+            </svg>
+
+            {{ pet.fecha }}
+
+          </div>
+
+
+          <!-- BOTONES -->
+          <div class="flex gap-2">
+
+            <!-- EDITAR -->
+            <button
+              (click)="openModal(i)"
+              class="flex-1 bg-[#4141A5] hover:bg-[#34348d] text-white py-2.5 rounded-lg font-bold text-sm transition"
+            >
+              Editar
+            </button>
+
+
+            <!-- ELIMINAR -->
+            <button
+              (click)="deletePet(i)"
+              class="px-4 bg-red-50 hover:bg-red-100 text-red-600 py-2.5 rounded-lg font-bold text-sm transition"
+            >
+              Eliminar
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- SIN RESULTADOS -->
+    <div
+      *ngIf="filteredPets.length === 0"
+      class="bg-white rounded-2xl shadow-sm p-12 text-center"
+    >
+
+      <div class="flex justify-center mb-4">
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-16 h-16 text-gray-300"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 18.5c-1.8 0-3.5-1.2-3.5-3
+               0-1.5 1.2-2.5 2.5-3
+               .5-.4 1-.6 1-.6s.5.2 1 .6
+               c1.3.5 2.5 1.5 2.5 3
+               0 1.8-1.7 3-3.5 3z"
+          />
+          <ellipse cx="7" cy="10" rx="1.5" ry="2" />
+          <ellipse cx="17" cy="10" rx="1.5" ry="2" />
+          <ellipse cx="9.5" cy="6" rx="1.5" ry="2" />
+          <ellipse cx="14.5" cy="6" rx="1.5" ry="2" />
+        </svg>
+
+      </div>
+
+      <h3 class="text-xl font-bold text-[#170B3D]">
+        No se encontraron mascotas
+      </h3>
+
+      <p class="text-gray-500 mt-2">
+        Intenta realizar otra búsqueda o agrega una nueva mascota.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- MODAL -->
+  <!-- ===================================================== -->
+  <div
+    *ngIf="isModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+  >
+
+    <div
+      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+    >
+
+      <!-- CABECERA MODAL -->
+      <div class="bg-[#170B3D] text-white px-6 py-5 flex items-center justify-between">
+
+        <div>
+
+          <h2 class="text-xl font-extrabold">
+            {{ isEditMode ? 'Editar mascota' : 'Agregar mascota' }}
+          </h2>
+
+          <p class="text-white/70 text-sm mt-1">
+            Completa la información de la mascota
+          </p>
+
+        </div>
+
+        <button
+          (click)="closeModal()"
+          class="text-white/70 hover:text-white text-2xl"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- FORMULARIO -->
+      <div class="p-6 space-y-5">
+
+        <!-- NOMBRE -->
+        <div>
+
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            Nombre
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="currentPet.nombre"
+            placeholder="Ej: Max"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+          >
+
+        </div>
+
+
+        <!-- RAZA -->
+        <div>
+
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            Raza
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="currentPet.raza"
+            placeholder="Ej: Labrador"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+          >
+
+        </div>
+
+
+        <!-- IMAGEN -->
+        <div>
+
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            URL de la imagen
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="currentPet.imagen"
+            placeholder="https://..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+          >
+
+        </div>
+
+
+        <!-- VISTA PREVIA DE IMAGEN -->
+        <div
+          *ngIf="currentPet.imagen"
+          class="w-full h-52 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200"
+        >
+
+          <img
+            [src]="currentPet.imagen"
+            [alt]="currentPet.nombre"
+            class="w-full h-full object-contain"
+          >
+
+        </div>
+
+
+        <!-- DESCRIPCIÓN -->
+        <div>
+
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            Descripción
+          </label>
+
+          <textarea
+            [(ngModel)]="currentPet.descripcion"
+            rows="4"
+            placeholder="Describe a la mascota..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5] resize-none"
+          ></textarea>
+
+        </div>
+
+
+        <!-- ESTADO -->
+        <div>
+
+          <label class="block text-sm font-bold text-gray-700 mb-2">
+            Estado
+          </label>
+
+          <select
+            [(ngModel)]="currentPet.estado"
+            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+          >
+
+            <option value="Disponible">
+              Disponible
+            </option>
+
+            <option value="En proceso">
+              En proceso
+            </option>
+
+            <option value="Adoptado">
+              Adoptado
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- BOTONES DEL MODAL -->
+        <div class="flex gap-3 pt-3">
+
+          <button
+            (click)="closeModal()"
+            class="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-50 py-3 rounded-xl font-bold transition"
+          >
+            Cancelar
+          </button>
+
+          <button
+            (click)="savePet()"
+            class="flex-1 bg-[#4141A5] hover:bg-[#34348d] text-white py-3 rounded-xl font-bold transition"
+          >
+            {{ isEditMode ? 'Actualizar' : 'Guardar mascota' }}
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

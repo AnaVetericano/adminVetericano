@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Patologia } from '../services/auth';
@@ -19,15 +19,18 @@ export class Patologias implements OnInit {
   menuFiltroAbierto: boolean = false;
   cargando: boolean = true;
   
-  editandoId: number | null = null; // Controla si estamos editando o creando
-
+  editandoId: number | null = null; 
   patologia = {
     nombre: '',
     descripcion: '',
     activo: true
   };
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(
+    private router: Router, 
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef // 2. Inyecta ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.obtenerPatologias();
@@ -40,10 +43,12 @@ export class Patologias implements OnInit {
         this.patologias = data;
         this.patologiasOriginales = data; 
         this.cargando = false;
+        this.cdr.detectChanges(); // 3. Forzar actualización de la vista al primer clic
       },
       error: (err: any) => {
         console.error('Error al listar:', err);
         this.cargando = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -104,6 +109,7 @@ export class Patologias implements OnInit {
         },
         error: (err: any) => {
           console.error('Error al actualizar:', err);
+          this.cdr.detectChanges();
         }
       });
     } else {
@@ -116,6 +122,7 @@ export class Patologias implements OnInit {
         },
         error: (err: any) => {
           console.error('Error al guardar:', err);
+          this.cdr.detectChanges();
         }
       });
     }

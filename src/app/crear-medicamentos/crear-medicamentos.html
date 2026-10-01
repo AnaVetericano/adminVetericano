@@ -1,156 +1,202 @@
-<div class="p-6 max-w-7xl mx-auto">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">GESTIÓN DE MEDICAMENTOS</h1>
-    <button 
-      (click)="abrirModalCrear()" 
-      class="bg-[#4141A5] hover:bg-[#323282] text-white px-4 py-2 rounded-lg font-medium transition duration-200">
-      + Nuevo Medicamento
-    </button>
-  </div>
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
 
-  <!-- BÚSQUEDA Y FILTROS -->
-  <div class="flex gap-4 mb-6">
-    <div class="relative flex-1">
-      <input 
-        type="text" 
-        [(ngModel)]="filtroBusqueda" 
-        (input)="filtrarMedicamentos()" 
-        placeholder="Buscar medicamento..." 
-        class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
-      />
-    </div>
-
-    <div class="relative">
-      <button 
-        (click)="toggleMenuFiltro()" 
-        class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-        <span>Filtrar</span>
-      </button>
-
-      <div *ngIf="menuFiltroAbierto" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-        <button (click)="filtrarPorEstado(null)" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">Todos</button>
-        <button (click)="filtrarPorEstado(true)" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-green-600">Activos</button>
-        <button (click)="filtrarPorEstado(false)" class="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600">Inactivos</button>
+  <!-- ENCABEZADO CON ICONO Y SUBTÍTULO -->
+  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+    <div class="flex items-center gap-3.5 max-w-7xl mx-auto">
+      <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+          Gestión de Medicamentos
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-500 font-medium">
+          Crea y administra los medicamentos registrados en el sistema
+        </p>
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- TABLA DE MEDICAMENTOS -->
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr class="bg-gray-100 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase">
-          <th class="p-4">Nombre</th>
-          <th class="p-4">Tipo</th>
-          <th class="p-4">Cantidad (ml)</th>
-          <th class="p-4">Descripción</th>
-          <th class="p-4">Estado</th>
-          <th class="p-4 text-center">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let m of medicamentos" class="border-b border-gray-200 hover:bg-gray-50">
-          <td class="p-4 font-medium text-gray-800">{{ m.nombre }}</td>
-          <td class="p-4 text-gray-600">{{ m.tipo || '-' }}</td>
-          <td class="p-4 text-gray-600">{{ m.cantidad_ml ?? '-' }}</td>
-          <td class="p-4 text-gray-600">{{ m.descripcion || 'Sin descripción' }}</td>
-          <td class="p-4">
-            <span [ngClass]="m.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'" class="px-2 py-1 rounded-full text-xs font-semibold">
-              {{ m.activo ? 'Activo' : 'Inactivo' }}
-            </span>
-          </td>
-          <td class="p-4 text-center">
-            <div class="flex justify-center items-center gap-2">
-              <button (click)="abrirModalEditar(m)" class="p-1 hover:text-[#4141A5]" title="Editar">
-                ✏️
-              </button>
-              <button (click)="cambiarEstado(m)" class="p-1 hover:text-red-600" title="Cambiar Estado">
-                🔄
-              </button>
-            </div>
-          </td>
-        </tr>
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
 
-        <tr *ngIf="medicamentos.length === 0">
-          <td colspan="6" class="p-4 text-center text-gray-500">
-            No se encontraron medicamentos.
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <!-- BARRA DE ACCIÓN Y BÚSQUEDA CON BOTÓN LIMPIAR -->
+    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
 
-  <!-- MODAL CREAR / EDITAR -->
-  <div *ngIf="modalAbierto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl">
-      <h2 class="text-xl font-bold mb-4 text-gray-800">
-        {{ editandoId !== null ? 'Editar medicamento' : 'Nuevo medicamento' }}
+      <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full sm:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300 px-4 gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input 
+          type="text" 
+          [(ngModel)]="filtroBusqueda" 
+          (input)="filtrarMedicamentos()" 
+          placeholder="Buscar medicamento por nombre o descripción..." 
+          class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+
+        <!-- BOTÓN LIMPIAR -->
+        <button 
+          *ngIf="filtroBusqueda"
+          type="button" 
+          (click)="filtroBusqueda = ''; filtrarMedicamentos()" 
+          class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0">
+          Limpiar
+        </button>
+      </div>
+
+      <!-- BOTÓN CREAR -->
+      <button 
+        type="button"
+        (click)="abrirModalCrear()" 
+        class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-5 py-3 rounded-2xl shadow-md transition-all text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nuevo Medicamento
+      </button>
+
+    </div>
+
+    <!-- TABLA DE RESULTADOS -->
+    <div class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
+      <div class="overflow-x-auto overflow-y-auto flex-1">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+          <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
+            <tr>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Nombre</th>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Descripción</th>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Tipo</th>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Cantidad (ml)</th>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Estado</th>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Opciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-sm">
+            <tr *ngIf="cargando">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">Cargando medicamentos...</td>
+            </tr>
+            <tr *ngIf="!cargando && medicamentos.length === 0">
+              <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">No se encontraron medicamentos registrados.</td>
+            </tr>
+            <tr *ngFor="let m of medicamentos" class="hover:bg-[#4141a5]/5 transition-colors group">
+              <td class="px-6 py-3.5 font-bold text-[#170B3D]">{{ m.nombre }}</td>
+              <td class="px-6 py-3.5 text-gray-600 max-w-xs sm:max-w-md truncate">{{ m.descripcion || 'Sin descripción' }}</td>
+              <td class="px-6 py-3.5 text-center text-gray-600">{{ m.tipo || '-' }}</td>
+              <td class="px-6 py-3.5 text-center text-gray-600">{{ m.cantidad_ml ?? '-' }} ml</td>
+              
+              <!-- ESTADO (Píldora dinámica estilo examenes-clinicos) -->
+              <td class="px-6 py-3.5 text-center">
+                <span class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border"
+                  [ngClass]="m.activo ? 'bg-[#4141a5]/10 text-[#4141a5] border-[#4141a5]/30' : 'bg-slate-100 text-slate-500 border-slate-200'">
+                  <span class="w-2 h-2 rounded-full" [ngClass]="m.activo ? 'bg-[#4141a5]' : 'bg-slate-400'"></span>
+                  {{ m.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+
+              <!-- OPCIONES (Botón editar + Toggle switch interactivo) -->
+              <td class="px-6 py-3.5">
+                <div class="flex items-center justify-center gap-3">
+                  <button (click)="abrirModalEditar(m)" type="button" class="bg-gray-100 hover:bg-[#170B3D] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95" title="Editar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                    </svg>
+                  </button>
+                  
+                  <!-- Switch interactivo -->
+                  <button (click)="cambiarEstado(m)" type="button" 
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                    [ngClass]="m.activo ? 'bg-[#4141a5]' : 'bg-slate-300'"
+                    [title]="m.activo ? 'Inactivar medicamento' : 'Activar medicamento'">
+                    <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                      [ngClass]="m.activo ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL DE CREACIÓN / EDICIÓN -->
+  <div *ngIf="modalAbierto" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-5 sm:p-8 border border-gray-100 relative flex flex-col max-h-[95vh]">
+      
+      <button (click)="cerrarModal()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10">✕</button>
+
+      <h2 class="text-xl sm:text-2xl font-extrabold text-[#170B3D] mb-4 uppercase tracking-wider pr-8 shrink-0">
+        {{ editandoId !== null ? 'Editar Medicamento' : 'Nuevo Medicamento' }}
       </h2>
 
-      <div class="space-y-4">
+      <div class="space-y-3 sm:space-y-4 overflow-y-auto flex-1 pr-1 py-1">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Nombre *</label>
           <input 
             type="text" 
             [(ngModel)]="medicamento.nombre" 
             placeholder="Ej. Amoxicilina"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50" 
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Tipo *</label>
           <input 
             type="text" 
             [(ngModel)]="medicamento.tipo" 
-            placeholder="Ej. Antibiótico, Analgésico, Vacuna..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+            placeholder="Ej. Antibiótico, Analgésico..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50" 
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad (ml) *</label>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Cantidad (ml) *</label>
           <input 
             type="number" 
             [(ngModel)]="medicamento.cantidad_ml" 
             placeholder="Ej. 100"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]" 
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50" 
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Descripción</label>
           <textarea 
             [(ngModel)]="medicamento.descripcion" 
             rows="3" 
             placeholder="Descripción opcional..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4141A5]">
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 resize-none leading-relaxed">
           </textarea>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 pt-2">
           <input 
             type="checkbox" 
             id="activo" 
             [(ngModel)]="medicamento.activo" 
-            class="h-4 w-4 text-[#4141A5] rounded border-gray-300" 
+            class="h-4 w-4 text-[#4141a5] rounded border-gray-300 focus:ring-[#4141a5] accent-[#4141a5] cursor-pointer" 
           />
-          <label for="activo" class="text-sm text-gray-700">Activo</label>
+          <label for="activo" class="text-sm font-bold text-gray-600 uppercase cursor-pointer">Activo</label>
         </div>
       </div>
 
-      <div class="flex justify-end gap-3 mt-6">
+      <div class="flex items-center justify-end gap-3 mt-4 pt-3 sm:pt-4 border-t border-gray-100 shrink-0">
         <button 
           (click)="cerrarModal()" 
-          class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
+          class="px-4 sm:px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider">
           Cancelar
         </button>
         <button 
           (click)="guardarMedicamento()" 
-          class="px-4 py-2 bg-[#4141A5] text-white rounded-lg hover:bg-[#323282]">
+          class="px-5 sm:px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95">
           {{ editandoId !== null ? 'Actualizar' : 'Guardar' }}
         </button>
       </div>
+
     </div>
   </div>
+
 </div>

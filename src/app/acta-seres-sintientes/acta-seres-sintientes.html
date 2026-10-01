@@ -1,0 +1,302 @@
+<div class="min-h-screen bg-gray-100 py-6 px-4 sm:px-6 lg:px-8 flex justify-center">
+  <div class="w-full max-w-4xl bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+    
+    <!-- ENCABEZADO -->
+    <header class="bg-indigo-950 text-white p-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-yellow-500">
+      <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+        <!-- Ícono / Logo placeholder -->
+        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-indigo-950 font-bold shadow">
+          
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">ALCALDÍA DE POPAYÁN</h1>
+          <p class="text-xs text-gray-300">ACTA DE ATENCIÓN Y VERIFICACIÓN EN CAMPO DE SERES SINTIENTES</p>
+        </div>
+      </div>
+      <div class="text-right text-xs bg-indigo-900/60 p-2 rounded border border-indigo-800">
+        <p><span class="font-semibold">Código:</span> F-GS-F-03-08</p>
+        <p><span class="font-semibold">Versión:</span> 01</p>
+        <p><span class="font-semibold">Página:</span> 1 de 1</p>
+      </div>
+    </header>
+
+    <!-- FORMULARIO -->
+    <form class="p-4 space-y-4 text-xs text-gray-700">
+
+      <!-- 1. DATOS DEL PROPIETARIO -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>1.</span> DATOS DEL PROPIETARIO, TUTOR O RESPONSABLE
+        </div>
+        <div class="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50">
+          <div>
+            <label class="block font-medium mb-1">FECHA:</label>
+            <input type="text" placeholder="DD / MM / AAAA" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">NRO. RADICADO O ATENCIÓN:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">CÉDULA:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-medium mb-1">NOMBRE:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">DIRECCIÓN:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">TELÉFONO:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-medium mb-1">EMAIL:</label>
+            <input type="email" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. LUGAR DE ATENCIÓN -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>2.</span> LUGAR DE ATENCIÓN
+        </div>
+        <div class="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50">
+          <div class="sm:col-span-3">
+            <label class="block font-medium mb-1">Dirección:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Barrio:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Municipio:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Departamento:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. DATOS DEL PACIENTE -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>3.</span> DATOS DEL PACIENTE O PACIENTES
+        </div>
+        <div class="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50">
+          <div>
+            <label class="block font-medium mb-1">Nombre(s):</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Especie(s):</label>
+            <select class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+              <option>Selecciona...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Raza:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Sexo:</label>
+            <div class="flex items-center space-x-4 mt-1">
+              <label class="flex items-center gap-1"><input type="radio" name="sexo" class="text-indigo-900"> Macho</label>
+              <label class="flex items-center gap-1"><input type="radio" name="sexo" class="text-indigo-900"> Hembra</label>
+            </div>
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Color:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Esterilizado:</label>
+            <div class="flex items-center space-x-4 mt-1">
+              <label class="flex items-center gap-1"><input type="radio" name="esterilizado" class="text-indigo-900"> Sí</label>
+              <label class="flex items-center gap-1"><input type="radio" name="esterilizado" class="text-indigo-900"> No</label>
+            </div>
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block font-medium mb-1">Edad:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block font-medium mb-1">Descripción adicional:</label>
+            <textarea rows="2" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ANIMALES ATENDIDOS -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>4.</span> ANIMALES ATENDIDOS
+        </div>
+        <div class="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50">
+          <div>
+            <label class="block font-medium mb-1">Total de animales atendidos:</label>
+            <div class="flex gap-2">
+              <button type="button" class="w-8 h-8 border border-gray-300 bg-white rounded font-medium hover:bg-gray-100">1</button>
+              <button type="button" class="w-8 h-8 border border-gray-300 bg-white rounded font-medium hover:bg-gray-100">2</button>
+              <button type="button" class="w-8 h-8 border border-gray-300 bg-white rounded font-medium hover:bg-gray-100">3</button>
+              <button type="button" class="w-8 h-8 border border-gray-300 bg-white rounded font-medium hover:bg-gray-100">4</button>
+              <button type="button" class="w-8 h-8 border border-gray-300 bg-white rounded font-medium hover:bg-gray-100">5</button>
+            </div>
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Anamnesis y/o descripción de la queja:</label>
+            <input type="text" placeholder="Ingrese la información aquí..." class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. ATENCIÓN Y/O TRATAMIENTO REALIZADO -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>5.</span> ATENCIÓN Y/O TRATAMIENTO(S) REALIZADO(S)
+        </div>
+        <div class="p-3 bg-gray-50">
+          <textarea rows="2" placeholder="Describa el tratamiento o atención realizada..." class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900"></textarea>
+        </div>
+      </section>
+
+      <!-- 6. PRUEBAS COMPLEMENTARIAS -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>6.</span> PRUEBAS COMPLEMENTARIAS
+        </div>
+        <div class="p-3 space-y-2 bg-gray-50">
+          <div class="flex flex-wrap gap-4">
+            <label class="flex items-center gap-1"><input type="checkbox"> Hemograma</label>
+            <label class="flex items-center gap-1"><input type="checkbox"> Parvovirus</label>
+            <label class="flex items-center gap-1"><input type="checkbox"> Sida (FIV)</label>
+            <label class="flex items-center gap-1"><input type="checkbox"> Leucemia Felina (FeLV)</label>
+            <label class="flex items-center gap-1"><input type="checkbox"> Otro:</label>
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Resultado:</label>
+            <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. COMPROMISOS -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>7.</span> COMPROMISOS
+        </div>
+        <div class="p-3 bg-gray-50">
+          <input type="text" placeholder="Indique los compromisos o recomendaciones..." class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+        </div>
+      </section>
+
+      <!-- 8. OBLIGACIÓN AL TENOR DE LO DISPUESTO EN -->
+      <section class="border border-indigo-900 rounded-md overflow-hidden">
+        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+          <span>8.</span> OBLIGACIÓN AL TENOR DE LO DISPUESTO EN:
+        </div>
+        <div class="p-3 bg-gray-50 space-y-1">
+          <p class="text-gray-600">Lo ordenado en la presente acta, constituye una obligación al tenor de lo dispuesto en:</p>
+          <input type="text" placeholder="Detalle aquí la normativa o disposición correspondiente..." class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
+        </div>
+      </section>
+
+      <!-- 9 y 10. FUNCIONARIOS Y NOTIFICADO -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- 9. FUNCIONARIOS -->
+        <section class="border border-indigo-900 rounded-md overflow-hidden">
+          <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+            <span>9.</span> FUNCIONARIOS QUE PRACTICAN LA VISITA:
+          </div>
+          <div class="p-3 space-y-2 bg-gray-50">
+            <div>
+              <label class="block font-medium mb-1">Nombres y apellidos:</label>
+              <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Cargo:</label>
+              <input type="text" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">Fecha de notificación:</label>
+              <input type="text" placeholder="DD / MM / AAAA" class="w-full border border-gray-300 rounded p-1.5 bg-white">
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. NOTIFICADO -->
+        <section class="border border-indigo-900 rounded-md overflow-hidden">
+          <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
+            <span>10.</span> NOTIFICADO PERSONALMENTE AL SEÑOR(A):
+          </div>
+          <div class="p-3 space-y-2 bg-gray-50 text-[11px]">
+            <p class="text-gray-500 leading-tight">De la presente acta, quien enterado(a) de su contenido firma para constancia.</p>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium mb-1">Nombres y apellidos del notificador</label>
+                <input type="text" class="w-full border border-gray-300 rounded p-1 bg-white">
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Nombres y apellidos del notificado</label>
+                <input type="text" class="w-full border border-gray-300 rounded p-1 bg-white">
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Nombre:</label>
+                <input type="text" class="w-full border border-gray-300 rounded p-1 bg-white">
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Nombre:</label>
+                <input type="text" class="w-full border border-gray-300 rounded p-1 bg-white">
+              </div>
+              <div>
+                <label class="block font-medium mb-1">Identificación:</label>
+                <input type="text" class="w-full border border-gray-300 rounded p-1 bg-white">
+              </div>
+              <div>
+                <label class="block font-medium mb-1">No identificación:</label>
+                <input type="text" class="w-full border border-gray-300 rounded p-1 bg-white">
+              </div>
+            </div>
+            <div class="pt-2 flex justify-between gap-2">
+              <div class="w-1/2 border-t border-gray-400 pt-1 text-center">Firma</div>
+              <div class="w-1/2 border-t border-gray-400 pt-1 text-center">Firma</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+    </form>
+
+    <!-- BARRA INFERIOR CON BOTONES AL LADO DEL TEXTO -->
+    <footer class="bg-indigo-950 text-white px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center space-x-2 text-xs">
+        <span>🐾</span>
+        <span class="tracking-wide">Bienestar animal, compromiso de todos</span>
+      </div>
+      
+      <!-- Botones Limpiar y Guardar -->
+      <div class="flex items-center space-x-3">
+        <button 
+          type="button" 
+          (click)="onLimpiar()"
+          class="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded shadow transition">
+          🗑️ Limpiar
+        </button>
+        <button 
+          type="button" 
+          (click)="onGuardar()"
+          class="flex items-center gap-1 bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-3 py-1.5 rounded shadow transition">
+          💾 Guardar
+        </button>
+      </div>
+    </footer>
+
+  </div>
+</div>

@@ -60,7 +60,16 @@ export class InicioDeSesionAdministradorComponent {
     // Petición a la API usando AuthService
     this.authService.login(this.usuario).subscribe({
       next: (res: any) => {
-        // NOTA: Guardar token pospuesto hasta que el usuario lo indique
+        console.log(res.tokens.refresh);
+        
+        // Almacenar token en localStorage para usarlo en peticiones posteriores
+        if (res.tokens?.access) {
+          localStorage.setItem('token', res.tokens.access);
+        }
+        if (res.tokens?.refresh) {
+          localStorage.setItem('refresh_token', res.tokens.refresh);
+        }
+        
         this.router.navigate(['/inicio-admin']);
       },
       error: (err: any) => {
