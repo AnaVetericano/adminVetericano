@@ -49,6 +49,7 @@ export const routes: Routes = [
       {path:'adopciones', component:Adopciones},
       {path:'acta-seres-sintientes', component:ActaSeresSintientes},
       {path:'historia-clinica2', component:HistoriaClinica2Component},
+      {path:'acta-seres-sintientes', component:ActaSeresSintientes}
     ]
   }
 ];
