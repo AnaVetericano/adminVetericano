@@ -39,29 +39,36 @@ export class InicioDeSesionAdministradorComponent {
   login() {
     // Validación corregida a 'email'
     if (this.usuario.email === '' || this.usuario.password === '') {
-    Swal.fire({
-      title: 'Ingrese su correo y contraseña por favor ',
-      text: 'Por favor ingrese su correo y su contraseña validos.',
-      icon: 'info',
-      confirmButtonText: 'Continuar',
-      confirmButtonColor: '#1B1947',
-      background: '#ffffff',
-      color: '#1B1947',
-      customClass: {
-        popup: 'rounded-3xl',
-        title: 'font-bold',
-        confirmButton: 'rounded-xl px-6 py-3 font-semibold'
-      }
-    })      
+      Swal.fire({
+        title: 'Ingrese su correo y contraseña por favor ',
+        text: 'Por favor ingrese su correo y su contraseña validos.',
+        icon: 'info',
+        confirmButtonText: 'Continuar',
+        confirmButtonColor: '#1B1947',
+        background: '#ffffff',
+        color: '#1B1947',
+        customClass: {
+          popup: 'rounded-3xl',
+          title: 'font-bold',
+          confirmButton: 'rounded-xl px-6 py-3 font-semibold'
+        }
+      });
+      return;
     }
+
+    // Limpiar cualquier token viejo/expirado ANTES de intentar loguearse.
+    // Si queda un 'token' expirado en localStorage, el interceptor lo adjuntaba
+    // al POST de login y el backend respondía 401 "Given token not valid
+    // for any token type" sin siquiera validar las credenciales.
+    // (El interceptor ya excluye las rutas públicas, esto es doble seguridad.)
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
 
     console.log('Credenciales enviadas:', this.usuario);
 
     // Petición a la API usando AuthService
     this.authService.login(this.usuario).subscribe({
       next: (res: any) => {
-        console.log(res.tokens.refresh);
-        
         // Almacenar token en localStorage para usarlo en peticiones posteriores
         if (res.tokens?.access) {
           localStorage.setItem('token', res.tokens.access);
@@ -73,7 +80,13 @@ export class InicioDeSesionAdministradorComponent {
         this.router.navigate(['/inicio-admin']);
       },
       error: (err: any) => {
-        const mensaje = err.error?.detail || err.error?.mensaje || err.error?.error || 'Credenciales incorrectas, intenta de nuevo.';
+        // Si el backend rechazó un token viejo, asegurarse de no dejarlo guardado
+        const mensajeRaw = err.error?.detail || err.error?.mensaje || err.error?.error || err.error?.non_field_errors?.[0] || '';
+        if (typeof mensajeRaw === 'string' && mensajeRaw.toLowerCase().includes('token')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+        }
+        const mensaje = mensajeRaw || 'Credenciales incorrectas, intenta de nuevo.';
          Swal.fire({
       title: 'Su usuario o contraseña no son validos',
       text: mensaje,
