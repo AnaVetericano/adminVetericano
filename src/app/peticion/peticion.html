@@ -1,4 +1,4 @@
-<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+<div class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white relative">
 
   <!-- ENCABEZADO CON ICONO Y SUBTÍTULO -->
   <header class="bg-white shrink-0 py-4 px-4  sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
@@ -19,10 +19,65 @@
     </div>
   </header>
 
-  <!-- CONTENEDOR PRINCIPAL CON SCROLL -->
-  <main class="flex-1 max-w-7xl w-full  p-3 sm:p-6 flex flex-col overflow-y-auto lg:pl-20 transition-all duration-300">
+  <!-- CONTENEDOR PRINCIPAL (usa el scroll del layout, sin scroll anidado) -->
+  <main class="flex-1 max-w-7xl w-full p-3 sm:p-6 flex flex-col lg:pl-20 transition-all duration-300">
 
-    <div class="w-full max-w-7xl w-full bg-white rounded-3xl shadow-xs overflow-hidden border border-gray-100 p-5 sm:p-8 mb-6">
+    <!-- BOTÓN RESTAURADO: ver / ocultar lista de peticiones para asignar -->
+    <div class="w-full max-w-7xl flex justify-end mb-4">
+      <button type="button" (click)="toggleVistaPeticiones()"
+        class="px-5 py-2.5 bg-white border border-[#4141a5]/30 text-[#4141a5] font-bold rounded-2xl text-xs uppercase tracking-wider shadow-xs hover:bg-[#4141a5] hover:text-white transition-all active:scale-95 cursor-pointer">
+        {{ mostrarLista ? 'Ocultar peticiones' : 'Ver peticiones y asignar' }}
+      </button>
+    </div>
+
+    <!-- LISTA RESTAURADA: peticiones hechas + botón asignar a veterinario -->
+    <div *ngIf="mostrarLista" class="w-full max-w-7xl bg-white rounded-3xl shadow-xs overflow-hidden border border-gray-100 p-5 sm:p-8 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-sm">
+          Peticiones registradas ({{ peticionesLista.length }})
+        </h3>
+        <button type="button" (click)="recargarPeticiones()" [disabled]="cargandoPeticiones"
+          class="px-4 py-2 bg-gray-100 hover:bg-[#4141a5]/10 text-[#170B3D] font-bold rounded-xl text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer disabled:opacity-50">
+          {{ cargandoPeticiones ? 'Cargando...' : 'Recargar' }}
+        </button>
+      </div>
+
+      <div *ngIf="cargandoPeticiones" class="text-center text-xs text-gray-500 font-semibold py-6">
+        Cargando peticiones...
+      </div>
+
+      <div *ngIf="!cargandoPeticiones && peticionesLista.length === 0" class="text-center text-xs text-gray-500 font-semibold py-6">
+        No hay peticiones registradas.
+      </div>
+
+      <div *ngIf="!cargandoPeticiones && peticionesLista.length > 0" class="space-y-3">
+        <div *ngFor="let p of peticionesLista"
+          class="border border-gray-100 rounded-2xl p-4 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div class="min-w-0">
+            <p class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider">
+              {{ p.numero_radicado || ('Caso #' + p.id_peticion) }}
+              <span class="ml-2 px-2 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] font-bold">{{ p.estado || 'Sin estado' }}</span>
+            </p>
+            <p class="text-xs text-gray-600 font-medium mt-1 break-words whitespace-normal">{{ p.descripcion }}</p>
+            <p class="text-[11px] text-gray-400 font-medium mt-1">
+              {{ p.tipo || '' }} · {{ p.ubicacion_direccion || p.direccion || 'Sin dirección' }}
+            </p>
+            <!-- Asignación: muestra el veterinario o "Sin asignar" -->
+            <p *ngIf="nombreAsignado(p)" class="text-[11px] font-bold text-[#4141a5] mt-1">
+              Asignado a: {{ nombreAsignado(p) }}
+            </p>
+            <p *ngIf="!nombreAsignado(p)" class="text-[11px] font-bold text-gray-400 mt-1">Sin asignar</p>
+          </div>
+          <button type="button" (click)="abrirModalAsignar(p)"
+            class="shrink-0 px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer">
+            Asignar veterinario
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULARIO CREAR PETICIÓN: se oculta cuando se muestra la lista -->
+    <div *ngIf="!mostrarLista" class="w-full max-w-7xl w-full bg-white rounded-3xl shadow-xs overflow-hidden border border-gray-100 p-5 sm:p-8 mb-6">
 
       <!-- Formulario -->
       <form
@@ -216,14 +271,17 @@
 
       <div>
         <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Seleccionar Funcionario / Veterinario</label>
-        <select 
-          [(ngModel)]="veterinarioSeleccionado" 
+        <select
+          [(ngModel)]="veterinarioSeleccionado"
           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-gray-50 text-[#170B3D]">
-          <option [ngValue]="null" disabled>-- Elige un usuario --</option>
-          <option *ngFor="let f of funcionarios" [value]="f.id || f.id_usuario">
-            {{ f.nombre || f.first_name || f.username }} {{ f.apellido || f.last_name || '' }}
+          <option [ngValue]="null" disabled>-- Elige un veterinario --</option>
+          <option *ngFor="let f of veterinariosDisponibles" [ngValue]="f.id_usuario">
+            {{ f.nombre || f.first_name || f.username }} {{ f.apellido || f.last_name || '' }} ({{ f.rol || f.nombre_rol || 'Veterinario' }})
           </option>
         </select>
+        <p *ngIf="!cargandoFuncionarios && veterinariosDisponibles.length === 0" class="text-[11px] text-amber-600 font-semibold mt-2">
+          No hay veterinarios disponibles. Verifica que existan usuarios activos con rol Veterinario.
+        </p>
       </div>
 
       <div class="flex justify-end gap-3 pt-3">

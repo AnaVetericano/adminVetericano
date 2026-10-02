@@ -32,6 +32,27 @@ export class Peticion implements OnInit {
   mostrarLista = false;
 
   funcionarios: any[] = [];
+
+  // Solo veterinarios (id_rol === 3) para el combo de asignación.
+  // Se calcula desde `funcionarios` que ya viene filtrado del backend/GET.
+  get veterinariosDisponibles(): any[] {
+    return this.funcionarios;
+  }
+
+  // Nombre del veterinario asignado tolerante a distintos nombres de campo
+  // que puede devolver el backend (sin tocar backend).
+  nombreAsignado(p: any): string {
+    if (!p) return '';
+    const nombre = (p.asignado_a_nombre || p.asignado_nombre || p.veterinario_nombre || '').toString().trim();
+    const apellido = (p.asignado_a_apellido || p.asignado_apellido || p.veterinario_apellido || '').toString().trim();
+    const completo = `${nombre} ${apellido}`.trim();
+    if (completo) return completo;
+    const directo = (p.asignado_a || p.veterinario || p.asignado || '').toString().trim();
+    // Si solo viene el id numérico, no inventar nombre: se muestra "Sin asignar"
+    if (/^\d+$/.test(directo)) return '';
+    return directo;
+  }
+
   cargandoFuncionarios = false;
 
   peticionSeleccionada: any = null;
@@ -97,7 +118,15 @@ export class Peticion implements OnInit {
     this.cargandoFuncionarios = true;
     this.http.get<any[]>(this.apiFuncionariosUrl, { headers: this.getAuthHeaders() }).subscribe({
       next: (data) => {
-        this.funcionarios = Array.isArray(data) ? data : [];
+        const lista = Array.isArray(data) ? data : [];
+        // El endpoint trae roles 1,2,3 (admin/jurídico/veterinario), pero para
+        // asignar casos solo sirven veterinarios. Se filtra en frontend
+        // (sin tocar backend): id_rol === 3 o rol === 'Veterinario'.
+        this.funcionarios = lista.filter((f: any) => {
+          const idRol = Number(f.id_rol ?? f.idRol ?? f.rol_id ?? 0);
+          const nombreRol = String(f.rol ?? f.nombre_rol ?? f.nombreRol ?? '').toLowerCase();
+          return idRol === 3 || nombreRol.includes('veterinario');
+        });
         this.cargandoFuncionarios = false;
         this.cdr.detectChanges();
       },
@@ -129,8 +158,21 @@ export class Peticion implements OnInit {
     this.asignando = true;
     const url = `https://backendvetericano-production.up.railway.app/api/peticiones/${this.peticionSeleccionada.id_peticion}/asignar/`;
 
-    this.http.post(url, { id_funcionario: this.veterinarioSeleccionado }, { headers: this.getAuthHeaders() }).subscribe({
+    // El backend (AsignarPeticionView) solo acepta PATCH con la llave "asignado_a".
+    // Antes se mandaba POST con "id_funcionario" y por eso fallaba con 400/405.
+    this.http.patch(url, { asignado_a: Number(this.veterinarioSeleccionado) }, { headers: this.getAuthHeaders() }).subscribe({
       next: () => {
+        // Reflejar el asignado de inmediato en la fila (el PATCH no devuelve nombres).
+        const vet = this.funcionarios.find((f: any) => Number(f.id_usuario ?? f.id) === Number(this.veterinarioSeleccionado));
+        if (vet && this.peticionSeleccionada) {
+          this.peticionSeleccionada.asignado_a_nombre = vet.nombre || vet.first_name || vet.username || '';
+          this.peticionSeleccionada.asignado_a_apellido = vet.apellido || vet.last_name || '';
+          const idx = this.peticionesLista.findIndex((x: any) => x.id_peticion === this.peticionSeleccionada.id_peticion);
+          if (idx >= 0) {
+            this.peticionesLista[idx].asignado_a_nombre = this.peticionSeleccionada.asignado_a_nombre;
+            this.peticionesLista[idx].asignado_a_apellido = this.peticionSeleccionada.asignado_a_apellido;
+          }
+        }
         this.asignando = false;
         this.cerrarModalAsignar();
         this.mostrarAlerta('¡Asignado!', 'La petición fue asignada correctamente.', 'success');
@@ -138,7 +180,7 @@ export class Peticion implements OnInit {
       },
       error: (err) => {
         this.asignando = false;
-        const detalle = err.error?.detail || err.error?.mensaje || 'Error al asignar la petición.';
+        const detalle = err.error?.error || err.error?.detail || err.error?.mensaje || 'Error al asignar la petición.';
         this.mostrarAlerta('Error al asignar', detalle, 'error');
       }
     });
