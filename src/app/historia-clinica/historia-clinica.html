@@ -1,4 +1,4 @@
-<div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden my-6 border border-gray-200 text-sm">
+<div class="max-w-7xl w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden my-6 border border-gray-200 text-sm">
   
   <!-- Encabezado institucional -->
  <header class="bg-indigo-950 text-white p-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-yellow-500">
@@ -20,94 +20,15 @@
         <p><span class="font-semibold">Versión:</span> 01</p>
         <p><span class="font-semibold">Página:</span> 2 de 2</p>
       </div>
-    </header>
+  </header>
 
   <form (ngSubmit)="guardarHistoria()" class="p-6 space-y-6">
     
     <!-- Fecha y Número de Historia -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border border-gray-200">
-      <div>
-        <label class="block font-semibold text-gray-700 mb-1">Fecha:</label>
-        <input type="date" [(ngModel)]="formData.fecha" name="fecha" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-      </div>
-      <div>
-        <label class="block font-semibold text-gray-700 mb-1">Número de historia clínica:</label>
-        <input type="text" [(ngModel)]="formData.numeroHistoria" name="numeroHistoria" placeholder="Ej. HC-2026-001" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-      </div>
-    </div>
+  
 
     <!-- 1. DATOS DEL PACIENTE -->
-    <div class="border border-indigo-900 rounded-md overflow-hidden">
-      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
-        1. DATOS DEL PACIENTE
-      </div>
-      <div class="p-4 space-y-4 bg-white">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Nombre:</label>
-            <input type="text" [(ngModel)]="formData.nombre" name="nombre" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Raza:</label>
-            <input type="text" [(ngModel)]="formData.raza" name="raza" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Especie:</label>
-            <input type="text" [(ngModel)]="formData.especie" name="especie" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Sexo:</label>
-            <div class="flex items-center space-x-6 mt-1">
-              <label class="inline-flex items-center">
-                <input type="radio" [(ngModel)]="formData.sexo" name="sexo" value="M" class="text-indigo-600 focus:ring-indigo-500">
-                <span class="ml-2 text-xs">M (Macho)</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="radio" [(ngModel)]="formData.sexo" name="sexo" value="H" class="text-indigo-600 focus:ring-indigo-500">
-                <span class="ml-2 text-xs">H (Hembra)</span>
-              </label>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Última desparasitación (Fecha/Producto):</label>
-            <input type="text" [(ngModel)]="formData.ultimaDesparasitacion" name="ultimaDesparasitacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Vacunas (Fecha/Marca/Lote):</label>
-          <input type="text" [(ngModel)]="formData.vacunas" name="vacunas" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Enfermedades anteriores:</label>
-          <input type="text" [(ngModel)]="formData.enfermedadesAnteriores" name="enfermedadesAnteriores" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Tratamiento:</label>
-          <input type="text" [(ngModel)]="formData.tratamiento" name="tratamiento" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Evolución:</label>
-          <input type="text" [(ngModel)]="formData.evolucion" name="evolucion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Alimentación:</label>
-          <input type="text" [(ngModel)]="formData.alimentacion" name="alimentacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Historia reproductiva (Entero/Esterilizado, ÚLtimo celo, Fecha último parto):</label>
-          <input type="text" [(ngModel)]="formData.historiaReproductiva" name="historiaReproductiva" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-      </div>
-    </div>
+  
 
     <!-- 2. MOTIVO DE CONSULTA -->
     <div class="border border-indigo-900 rounded-md overflow-hidden">
@@ -120,47 +41,7 @@
     </div>
 
     <!-- 3. EXAMEN CLÍNICO -->
-    <div class="border border-indigo-900 rounded-md overflow-hidden">
-      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
-        3. EXAMEN CLÍNICO
-      </div>
-      <div class="p-4 space-y-4 bg-white">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">F. Respiratoria:</label>
-            <input type="text" [(ngModel)]="formData.fRespiratoria" name="fRespiratoria" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">F. Cardiaca:</label>
-            <input type="text" [(ngModel)]="formData.fCardiaca" name="fCardiaca" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Temperatura:</label>
-            <input type="text" [(ngModel)]="formData.temperatura" name="temperatura" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Pulso:</label>
-            <input type="text" [(ngModel)]="formData.pulso" name="pulso" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Tiempo llenado capilar:</label>
-            <input type="text" [(ngModel)]="formData.tiempoLlenadoCapilar" name="tiempoLlenadoCapilar" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Mucosas:</label>
-            <input type="text" [(ngModel)]="formData.mucosas" name="mucosas" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Actitud/Temperamento:</label>
-            <input type="text" [(ngModel)]="formData.actitudTemperamento" name="actitudTemperamento" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-      </div>
-    </div>
-
+    
     <!-- 4. ÓRGANOS Y SISTEMAS -->
     <div class="border border-indigo-900 rounded-md overflow-hidden">
       <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
