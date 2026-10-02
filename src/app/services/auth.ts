@@ -322,4 +322,12 @@ export class AuthService {
     const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
     return this.http.patch<any>(`${this.apiUrlMedicamentos}${idReal}/`, { activo });
   }
+
+  // AnaC 
+  private apiUrlPeticiones = 'https://backendvetericano-production.up.railway.app/api/peticiones/listar/';
+
+  obtenerPeticiones(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrlPeticiones);
+  }
+  // AnaC
 }
