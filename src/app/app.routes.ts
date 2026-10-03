@@ -19,17 +19,21 @@ import { Voluntarios } from './voluntarios/voluntarios';
 import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado';
 import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
+import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
+import { authGuard, loginGuard } from './services/auth.guard';
 
 
 export const routes: Routes = [
 
   { path: '', component: Landepage },
-  { path: 'register', component: Register },
-  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent },
+  { path: 'register', component: Register, canActivate: [loginGuard] },
+  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent, canActivate: [loginGuard] },
 
   {
     path: 'inicio-admin',
     component: InicioAdministradorComponent,
+    canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       { path: '', component: Graficas },
       { path: 'patologias', component: Patologias },
@@ -46,6 +50,8 @@ export const routes: Routes = [
       {path:'peticion', component:Peticion},
       { path: 'eventos-voluntariado', component: EventosVoluntariado },
       {path:'adopciones', component:Adopciones},
+      {path:'acta-seres-sintientes', component:ActaSeresSintientes},
+      {path:'historia-clinica2', component:HistoriaClinica2Component},
       {path:'acta-seres-sintientes', component:ActaSeresSintientes}
     ]
   }

@@ -1,0 +1,113 @@
+<div class="max-w-7xl w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden my-6 border border-gray-200 text-sm">
+  
+  <!-- Encabezado institucional -->
+ <header class="bg-indigo-950 text-white p-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-yellow-500">
+      <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+        <!-- Ícono / Logo placeholder -->
+        <div class="w-12 h-12  rounded-full flex items-center justify-center text-indigo-950 font-bold shadow">       
+        <img [src]="popalog.logopop" alt="Escudo Popayan"
+         class="w-full h-full object-cover object-center"
+        />
+        
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">ALCALDÍA DE POPAYÁN</h1>
+          <p class="text-xs text-gray-300">HISTORIA CLINICA VETERINARIA</p>
+        </div>
+      </div>
+      <div class="text-right text-xs bg-indigo-900/60 p-2 rounded border border-indigo-800">
+        <p><span class="font-semibold">Código:</span> F-GS-F-03-08</p>
+        <p><span class="font-semibold">Versión:</span> 01</p>
+        <p><span class="font-semibold">Página:</span> 2 de 2</p>
+      </div>
+  </header>
+
+  <form (ngSubmit)="guardarHistoria()" class="p-6 space-y-6">
+    
+    <!-- Fecha y Número de Historia -->
+  
+
+    <!-- 1. DATOS DEL PACIENTE -->
+  
+
+    <!-- 2. MOTIVO DE CONSULTA -->
+    <div class="border border-indigo-900 rounded-md overflow-hidden">
+      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
+        2. MOTIVO DE CONSULTA
+      </div>
+      <div class="p-4 bg-white">
+        <textarea rows="3" [(ngModel)]="formData.motivoConsulta" name="motivoConsulta" placeholder="Describa el motivo de la consulta..." class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+    </div>
+
+    <!-- 3. EXAMEN CLÍNICO -->
+    
+    <!-- 4. ÓRGANOS Y SISTEMAS -->
+    <div class="border border-indigo-900 rounded-md overflow-hidden">
+      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
+        4. ÓRGANOS Y SISTEMAS
+      </div>
+      <div class="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Columna 1 -->
+        <div class="space-y-3 text-xs">
+          <div class="flex justify-between items-center border-b pb-2" *ngFor="let item of [
+            {key: 'estadoGeneral', label: '1. Estado general...'},
+            {key: 'hidratacion', label: '2. Estado de hidratación...'},
+            {key: 'tegumentario', label: '3. Sistema tegumentario'},
+            {key: 'ojos', label: '4. Ojos'},
+            {key: 'oidos', label: '5. Oídos'}
+          ]">
+            <span class="font-medium text-gray-700 w-1/2">{{item.label}}</span>
+            <div class="flex space-x-4 w-1/2 justify-end">
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Normal" class="text-indigo-600">
+                <span class="ml-1">Normal</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Anormal" class="text-indigo-600">
+                <span class="ml-1">Anormal</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna 2 -->
+        <div class="space-y-3 text-xs">
+          <div class="flex justify-between items-center border-b pb-2" *ngFor="let item of [
+            {key: 'digestivo', label: '6. Sistema digestivo'},
+            {key: 'respiratorio', label: '7. Sistema respiratorio'},
+            {key: 'nervioso', label: '8. Sistema nervioso'},
+            {key: 'musculoEsqueletico', label: '9. Músculo esquelético'},
+            {key: 'cardiovascular', label: '10. Sistema cardiovascular'},
+            {key: 'genitourinario', label: '11. Genitourinario'}
+          ]">
+            <span class="font-medium text-gray-700 w-1/2">{{item.label}}</span>
+            <div class="flex space-x-4 w-1/2 justify-end">
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Normal" class="text-indigo-600">
+                <span class="ml-1">Normal</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Anormal" class="text-indigo-600">
+                <span class="ml-1">Anormal</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+      <button type="button" (click)="limpiarFormulario()" class="px-5 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100 font-medium transition">
+        Limpiar
+      </button>
+      <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium transition shadow">
+        Guardar
+      </button>
+    </div>
+
+  </form>
+</div>
