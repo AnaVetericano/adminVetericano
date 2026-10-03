@@ -50,28 +50,94 @@
         No hay peticiones registradas.
       </div>
 
-      <div *ngIf="!cargandoPeticiones && peticionesLista.length > 0" class="space-y-3">
+      <div *ngIf="!cargandoPeticiones && peticionesLista.length > 0" class="space-y-4">
         <div *ngFor="let p of peticionesLista"
-          class="border border-gray-100 rounded-2xl p-4 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-          <div class="min-w-0">
+          class="border border-gray-100 rounded-3xl p-4 sm:p-5 bg-white shadow-xs flex flex-col gap-4">
+          <!-- ENCABEZADO: radicado + estado + prioridad -->
+          <div class="flex flex-wrap items-center gap-2 justify-between">
             <p class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider">
               {{ p.numero_radicado || ('Caso #' + p.id_peticion) }}
-              <span class="ml-2 px-2 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] font-bold">{{ p.estado || 'Sin estado' }}</span>
             </p>
-            <p class="text-xs text-gray-600 font-medium mt-1 break-words whitespace-normal">{{ p.descripcion }}</p>
-            <p class="text-[11px] text-gray-400 font-medium mt-1">
-              {{ p.tipo || '' }} · {{ p.ubicacion_direccion || p.direccion || 'Sin dirección' }}
-            </p>
-            <!-- Asignación: muestra el veterinario o "Sin asignar" -->
-            <p *ngIf="nombreAsignado(p)" class="text-[11px] font-bold text-[#4141a5] mt-1">
-              Asignado a: {{ nombreAsignado(p) }}
-            </p>
-            <p *ngIf="!nombreAsignado(p)" class="text-[11px] font-bold text-gray-400 mt-1">Sin asignar</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-1 rounded-full bg-[#4141a5]/10 text-[#4141a5] font-bold text-[11px] uppercase tracking-wider">{{ p.estado || 'Sin estado' }}</span>
+              <span *ngIf="p.prioridad" class="px-2.5 py-1 rounded-full font-bold text-[11px] uppercase tracking-wider"
+                [ngClass]="prioridadClase(p.prioridad)">
+                {{ p.prioridad }}
+              </span>
+            </div>
           </div>
-          <button type="button" (click)="abrirModalAsignar(p)"
-            class="shrink-0 px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer">
-            Asignar veterinario
-          </button>
+
+          <!-- TARJETA DETALLE estilo app móvil "Confirmar Reporte" -->
+          <div class="border border-gray-100 rounded-2xl divide-y divide-gray-100 bg-gray-50/40 overflow-hidden">
+            <!-- Tipo de reporte -->
+            <div class="flex items-start gap-3 p-3.5">
+              <span class="text-xl leading-none mt-0.5">🐾</span>
+              <div class="min-w-0">
+                <p class="text-sm font-extrabold text-[#170B3D]">Tipo de reporte</p>
+                <p class="text-xs text-gray-500 font-medium break-words">{{ tipoLabel(p) }}</p>
+              </div>
+            </div>
+            <!-- Ubicación -->
+            <div class="flex items-start gap-3 p-3.5">
+              <span class="text-xl leading-none mt-0.5">📍</span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-extrabold text-[#170B3D]">Ubicación</p>
+                <p class="text-xs text-gray-500 font-medium break-words whitespace-normal">{{ p.ubicacion_direccion || p.direccion || 'Sin dirección' }}</p>
+                <a *ngIf="mapaLink(p)" [href]="mapaLink(p)" target="_blank" rel="noopener"
+                  class="inline-block mt-1 text-[11px] font-bold text-[#4141a5] hover:underline cursor-pointer">
+                  Ver en mapa ↗
+                </a>
+              </div>
+            </div>
+            <!-- Descripción -->
+            <div class="flex items-start gap-3 p-3.5">
+              <span class="text-xl leading-none mt-0.5">📄</span>
+              <div class="min-w-0">
+                <p class="text-sm font-extrabold text-[#170B3D]">Descripción</p>
+                <p class="text-xs text-gray-500 font-medium break-words whitespace-normal">{{ p.descripcion || 'Sin descripción' }}</p>
+              </div>
+            </div>
+            <!-- Archivos adjuntos / foto o video (click = ver en grande) -->
+            <div class="flex items-start gap-3 p-3.5">
+              <span class="text-xl leading-none mt-0.5">📎</span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-extrabold text-[#170B3D]">Archivos adjuntos</p>
+                <p class="text-xs text-gray-500 font-medium">{{ contarFotos(p) }} · Toca para ampliar 🔍</p>
+                <!-- Miniatura imagen: click abre visor grande -->
+                <button *ngIf="fotoDe(p) && !esVideo(fotoDe(p))" type="button" (click)="abrirEvidencia(fotoDe(p))"
+                  title="Ver imagen en grande"
+                  class="mt-2 group relative block rounded-xl overflow-hidden border border-gray-200 shadow-xs w-28 h-28 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                  <img [src]="fotoDe(p)" alt="Evidencia del caso"
+                    class="w-28 h-28 object-cover group-hover:scale-105 transition-transform" loading="lazy"
+                    (error)="onImgError($event)" />
+                  <span class="absolute inset-0 bg-[#170B3D]/0 group-hover:bg-[#170B3D]/30 transition flex items-center justify-center text-white text-lg opacity-0 group-hover:opacity-100">🔍</span>
+                </button>
+                <!-- Miniatura video: click abre visor grande -->
+                <button *ngIf="fotoDe(p) && esVideo(fotoDe(p))" type="button" (click)="abrirEvidencia(fotoDe(p))"
+                  title="Ver video en grande"
+                  class="mt-2 group relative block rounded-xl overflow-hidden border border-gray-200 shadow-xs w-40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                  <video [src]="fotoDe(p)" class="w-40 h-28 object-cover pointer-events-none" preload="metadata" muted playsinline></video>
+                  <span class="absolute inset-0 bg-[#170B3D]/30 flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform">▶️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- META ADMIN: fechas + asignado -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between bg-gray-50/60 border border-gray-100 rounded-2xl px-4 py-3">
+            <div class="text-[11px] text-gray-500 font-medium space-y-1">
+              <p>🗓️ <span class="font-bold text-gray-600">Reportado:</span> {{ formatearFecha(p.fecha) }}</p>
+              <p *ngIf="p.fecha_asignacion">✅ <span class="font-bold text-gray-600">Asignado el:</span> {{ formatearFecha(p.fecha_asignacion) }}</p>
+              <p *ngIf="nombreAsignado(p)" class="font-bold text-[#4141a5]">
+                👨‍⚕️ Asignado a: {{ nombreAsignado(p) }}
+              </p>
+              <p *ngIf="!nombreAsignado(p)" class="font-bold text-gray-400">Sin asignar</p>
+            </div>
+            <button type="button" (click)="abrirModalAsignar(p)"
+              class="shrink-0 px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer">
+              Asignar veterinario
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -293,6 +359,38 @@
           [disabled]="asignando || !veterinarioSeleccionado"
           class="px-5 py-2 bg-[#4141a5] text-white rounded-xl text-xs font-bold uppercase hover:bg-[#33338b] disabled:opacity-50">
           {{ asignando ? 'Asignando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISOR GRANDE DE EVIDENCIA: imagen o video de la petición (solo lista) -->
+  <div *ngIf="evidenciaSeleccionada" (click)="cerrarEvidencia()"
+    class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center z-[60] p-4 cursor-zoom-out">
+    <div (click)="$event.stopPropagation()"
+      class="relative bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl w-full p-4 sm:p-5 cursor-default">
+      <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+        <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-sm">
+          {{ evidenciaEsVideo ? 'Video del caso 🎬' : 'Foto del caso 📷' }}
+        </h4>
+        <button type="button" (click)="cerrarEvidencia()"
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#4141a5] hover:text-white text-gray-500 font-bold transition active:scale-95 cursor-pointer"
+          title="Cerrar">✕</button>
+      </div>
+      <div class="pt-4 flex items-center justify-center bg-gray-50 rounded-2xl mt-4 overflow-hidden min-h-[200px]">
+        <img *ngIf="!evidenciaEsVideo" [src]="evidenciaSeleccionada" alt="Evidencia en grande"
+          class="max-h-[70vh] w-auto max-w-full object-contain rounded-xl" (error)="cerrarEvidencia()" />
+        <video *ngIf="evidenciaEsVideo" [src]="evidenciaSeleccionada" controls autoplay playsinline preload="auto"
+          class="max-h-[70vh] w-full max-w-full object-contain rounded-xl bg-black"></video>
+      </div>
+      <div class="flex justify-between items-center gap-3 pt-4">
+        <a [href]="evidenciaSeleccionada" target="_blank" rel="noopener"
+          class="px-4 py-2 bg-gray-100 hover:bg-[#4141a5]/10 text-[#170B3D] font-bold rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
+          Abrir original ↗
+        </a>
+        <button type="button" (click)="cerrarEvidencia()"
+          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer">
+          Cerrar
         </button>
       </div>
     </div>
