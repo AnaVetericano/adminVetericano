@@ -20,17 +20,20 @@ import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado
 import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
+import { authGuard, loginGuard } from './services/auth.guard';
 
 
 export const routes: Routes = [
 
   { path: '', component: Landepage },
-  { path: 'register', component: Register },
-  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent },
+  { path: 'register', component: Register, canActivate: [loginGuard] },
+  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent, canActivate: [loginGuard] },
 
   {
     path: 'inicio-admin',
     component: InicioAdministradorComponent,
+    canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       { path: '', component: Graficas },
       { path: 'patologias', component: Patologias },

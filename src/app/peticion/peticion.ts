@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -32,7 +32,133 @@ export class Peticion implements OnInit {
   mostrarLista = false;
 
   funcionarios: any[] = [];
+
+  // Solo veterinarios (id_rol === 3) para el combo de asignación.
+  // Se calcula desde `funcionarios` que ya viene filtrado del backend/GET.
+  get veterinariosDisponibles(): any[] {
+    return this.funcionarios;
+  }
+
+  // Nombre del veterinario asignado tolerante a distintos nombres de campo
+  // que puede devolver el backend (sin tocar backend).
+  nombreAsignado(p: any): string {
+    if (!p) return '';
+    const nombre = (p.asignado_a_nombre || p.asignado_nombre || p.veterinario_nombre || '').toString().trim();
+    const apellido = (p.asignado_a_apellido || p.asignado_apellido || p.veterinario_apellido || '').toString().trim();
+    const completo = `${nombre} ${apellido}`.trim();
+    if (completo) return completo;
+    const directo = (p.asignado_a || p.veterinario || p.asignado || '').toString().trim();
+    // Si solo viene el id numérico, no inventar nombre: se muestra "Sin asignar"
+    if (/^\d+$/.test(directo)) return '';
+    return directo;
+  }
+
   cargandoFuncionarios = false;
+
+  // ===== Helpers SOLO para la vista "Ver peticiones" (no tocan crear/asignar/mapa) =====
+
+  // Etiqueta legible del tipo (swagger: `tipo` string). Tolera id_tipo numérico.
+  tipoLabel(p: any): string {
+    const t = p?.tipo ?? p?.tipo_reporte ?? p?.nombre_tipo ?? p?.id_tipo;
+    if (t === null || t === undefined || t === '') return 'Sin tipo';
+    const mapaNum: Record<string, string> = {
+      '1': 'Animal herido',
+      '2': 'Maltrato animal',
+      '3': 'Animal en condición de calle',
+      '4': 'Otro'
+    };
+    if (typeof t === 'number' || /^\d+$/.test(String(t).trim())) {
+      return mapaNum[String(t).trim()] || `Tipo ${t}`;
+    }
+    return String(t);
+  }
+
+  // Color del badge de prioridad (swagger: `prioridad` string nullable).
+  prioridadClase(prioridad: any): string {
+    const v = String(prioridad || '').toLowerCase();
+    if (v.includes('alta') || v.includes('urgente') || v.includes('crít') || v.includes('crit')) {
+      return 'bg-red-100 text-red-700';
+    }
+    if (v.includes('media')) {
+      return 'bg-amber-100 text-amber-700';
+    }
+    if (v.includes('baja')) {
+      return 'bg-emerald-100 text-emerald-700';
+    }
+    return 'bg-gray-100 text-gray-600';
+  }
+
+  // URL de la foto (swagger: `foto` string nullable). Tolera array u otros nombres.
+  fotoDe(p: any): string {
+    if (!p) return '';
+    const f: any = p.foto ?? p.foto_url ?? p.imagen ?? p.evidencia;
+    if (!f) return '';
+    if (Array.isArray(f)) return f.length > 0 ? String(f[0]) : '';
+    return String(f);
+  }
+
+  contarFotos(p: any): string {
+    const f: any = p?.foto ?? p?.foto_url ?? p?.imagen ?? p?.evidencia;
+    if (Array.isArray(f)) return `${f.length} foto${f.length === 1 ? '' : 's'}`;
+    if (!f) return '0 fotos';
+    return this.esVideo(f) ? '1 video' : '1 foto';
+  }
+
+  // Link a Google Maps con lat/lng (swagger: ubicacion_latitud/longitud string decimal readonly).
+  mapaLink(p: any): string {
+    const lat = p?.ubicacion_latitud ?? p?.latitud;
+    const lng = p?.ubicacion_longitud ?? p?.longitud;
+    if (lat === null || lat === undefined || lat === '' || lng === null || lng === undefined || lng === '') {
+      return '';
+    }
+    return `https://www.google.com/maps?q=${lat},${lng}`;
+  }
+
+  formatearFecha(valor: any): string {
+    if (!valor) return 'Sin fecha';
+    try {
+      const d = new Date(valor);
+      if (isNaN(d.getTime())) return String(valor);
+      return d.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch {
+      return String(valor);
+    }
+  }
+
+  // ===== Visor grande de evidencia (solo lista "Ver peticiones") =====
+  evidenciaSeleccionada: string | null = null;
+  evidenciaEsVideo = false;
+
+  // Detecta video por extensión o por firma de Cloudinary (/video/upload).
+  esVideo(url: any): boolean {
+    const u = String(url || '').toLowerCase().split('?')[0];
+    if (!u) return false;
+    if (u.includes('/video/upload')) return true;
+    return /\.(mp4|webm|mov|avi|mkv|m4v|ogv)(\.|$)/.test(u);
+  }
+
+  abrirEvidencia(url: string): void {
+    if (!url) return;
+    this.evidenciaSeleccionada = url;
+    this.evidenciaEsVideo = this.esVideo(url);
+    document.body.style.overflow = 'hidden';
+  }
+
+  cerrarEvidencia(): void {
+    this.evidenciaSeleccionada = null;
+    this.evidenciaEsVideo = false;
+    document.body.style.overflow = '';
+  }
+
+  // Cierra el visor grande con la tecla Escape.
+  @HostListener('document:keydown.escape')
+  cerrarEvidenciaConEscape(): void {
+    if (this.evidenciaSeleccionada) this.cerrarEvidencia();
+  }
+
+  onImgError(event: Event): void {
+    (event.target as HTMLImageElement).style.display = 'none';
+  }
 
   peticionSeleccionada: any = null;
   mostrarModalAsignar = false;
@@ -97,7 +223,15 @@ export class Peticion implements OnInit {
     this.cargandoFuncionarios = true;
     this.http.get<any[]>(this.apiFuncionariosUrl, { headers: this.getAuthHeaders() }).subscribe({
       next: (data) => {
-        this.funcionarios = Array.isArray(data) ? data : [];
+        const lista = Array.isArray(data) ? data : [];
+        // El endpoint trae roles 1,2,3 (admin/jurídico/veterinario), pero para
+        // asignar casos solo sirven veterinarios. Se filtra en frontend
+        // (sin tocar backend): id_rol === 3 o rol === 'Veterinario'.
+        this.funcionarios = lista.filter((f: any) => {
+          const idRol = Number(f.id_rol ?? f.idRol ?? f.rol_id ?? 0);
+          const nombreRol = String(f.rol ?? f.nombre_rol ?? f.nombreRol ?? '').toLowerCase();
+          return idRol === 3 || nombreRol.includes('veterinario');
+        });
         this.cargandoFuncionarios = false;
         this.cdr.detectChanges();
       },
@@ -129,8 +263,21 @@ export class Peticion implements OnInit {
     this.asignando = true;
     const url = `https://backendvetericano-production.up.railway.app/api/peticiones/${this.peticionSeleccionada.id_peticion}/asignar/`;
 
-    this.http.post(url, { id_funcionario: this.veterinarioSeleccionado }, { headers: this.getAuthHeaders() }).subscribe({
+    // El backend (AsignarPeticionView) solo acepta PATCH con la llave "asignado_a".
+    // Antes se mandaba POST con "id_funcionario" y por eso fallaba con 400/405.
+    this.http.patch(url, { asignado_a: Number(this.veterinarioSeleccionado) }, { headers: this.getAuthHeaders() }).subscribe({
       next: () => {
+        // Reflejar el asignado de inmediato en la fila (el PATCH no devuelve nombres).
+        const vet = this.funcionarios.find((f: any) => Number(f.id_usuario ?? f.id) === Number(this.veterinarioSeleccionado));
+        if (vet && this.peticionSeleccionada) {
+          this.peticionSeleccionada.asignado_a_nombre = vet.nombre || vet.first_name || vet.username || '';
+          this.peticionSeleccionada.asignado_a_apellido = vet.apellido || vet.last_name || '';
+          const idx = this.peticionesLista.findIndex((x: any) => x.id_peticion === this.peticionSeleccionada.id_peticion);
+          if (idx >= 0) {
+            this.peticionesLista[idx].asignado_a_nombre = this.peticionSeleccionada.asignado_a_nombre;
+            this.peticionesLista[idx].asignado_a_apellido = this.peticionSeleccionada.asignado_a_apellido;
+          }
+        }
         this.asignando = false;
         this.cerrarModalAsignar();
         this.mostrarAlerta('¡Asignado!', 'La petición fue asignada correctamente.', 'success');
@@ -138,7 +285,7 @@ export class Peticion implements OnInit {
       },
       error: (err) => {
         this.asignando = false;
-        const detalle = err.error?.detail || err.error?.mensaje || 'Error al asignar la petición.';
+        const detalle = err.error?.error || err.error?.detail || err.error?.mensaje || 'Error al asignar la petición.';
         this.mostrarAlerta('Error al asignar', detalle, 'error');
       }
     });
