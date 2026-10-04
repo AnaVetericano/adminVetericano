@@ -23,19 +23,20 @@
     <form class="max-w-7xl w-full mx-auto p-4 space-y-4 text-xs text-gray-700">
 
       <!-- SELECTOR DE PACIENTES DE LA BASE DE DATOS (API) -->
-      <div class="bg-indigo-50 p-3 rounded-md border border-indigo-200 mb-4 shadow-sm">
-        <label class="block font-bold text-indigo-950 mb-1"> Seleccionar animal registrado:</label>
-        <select 
-          [(ngModel)]="selectedPacienteId" 
-          (change)="onSeleccionarPaciente($event)" 
-          name="selectPacienteApi" 
-          class="w-full border border-indigo-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-          <option value="" disabled selected>-- Seleccione un animal (Ej: Firulais, Luna...) --</option>
-          <option *ngFor="let p of listaPacientes" [value]="p.id || p.nombre">
-            {{ p.nombre }} - Especie: {{ p.especie || 'No especificada' }}
-          </option>
-        </select>
-      </div>
+     <!-- SELECTOR DE PACIENTES -->
+<div class="bg-indigo-50 p-3 rounded-md border border-indigo-200 mb-4 shadow-sm">
+  <label class="block font-bold text-indigo-950 mb-1">🐾 Seleccionar animal registrado:</label>
+  <select 
+    [(ngModel)]="selectedId" 
+    (change)="onSeleccionarPorId($event)" 
+    name="selectIdApi" 
+    class="w-full border border-indigo-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+    <option value="" disabled selected>-- Seleccione un animal --</option>
+    <option *ngFor="let p of pacientesDisponibles" [value]="p.id">
+      {{ p.nombre }} (ID: {{ p.id }})
+    </option>
+  </select>
+</div>
 
       <!-- 1. DATOS DEL PACIENTE -->
       <section class="border border-indigo-900 rounded-md overflow-hidden">
@@ -85,7 +86,7 @@
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Última desparasitación (Fecha/Producto):</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1"> Desparasitad@ (F)echa/Producto:</label>
               <input type="text" [(ngModel)]="formData.ultimaDesparasitacion" name="ultimaDesparasitacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
           </div>
