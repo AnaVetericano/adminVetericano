@@ -1,0 +1,25 @@
+/* Estilos de impresión para la factura de compra */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .fixed.inset-0.z-50,
+  .fixed.inset-0.z-50 * {
+    visibility: visible;
+  }
+
+  .fixed.inset-0.z-50 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  button {
+    display: none !important;
+  }
+}

@@ -330,4 +330,33 @@ export class AuthService {
     return this.http.get<any[]>(this.apiUrlPeticiones);
   }
   // AnaC
+
+  // Inventario y Compras
+  listarCompras(): Observable<any> {
+    return this.http.get<any>(`${this.getCleanUrl()}/inventario/compras/`);
+  }
+
+  crearCompra(payload: { id_proveedor: number }): Observable<any> {
+    return this.http.post<any>(`${this.getCleanUrl()}/inventario/compras/`, payload);
+  }
+
+  eliminarCompra(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.getCleanUrl()}/inventario/compras/${id}/`);
+  }
+
+  listarDetallesCompra(): Observable<any> {
+    return this.http.get<any>(`${this.getCleanUrl()}/inventario/detalles-compra/`);
+  }
+
+  crearDetalleCompra(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.getCleanUrl()}/inventario/detalles-compra/`, payload);
+  }
+
+  eliminarDetalleCompra(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.getCleanUrl()}/inventario/detalles-compra/${id}/`);
+  }
+
+  listarProveedoresInventario(): Observable<any> {
+    return this.http.get<any>(`${this.getCleanUrl()}/inventario/proveedores/`);
+  }
 }
