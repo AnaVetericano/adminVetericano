@@ -20,6 +20,7 @@ import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado
 import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
+import { Proveedores } from './proveedores/proveedores';
 import { authGuard, loginGuard } from './services/auth.guard';
 
 
@@ -46,13 +47,13 @@ export const routes: Routes = [
       { path: 'listarmedicamentos', component: Medicamentos },
       { path: 'crear-medicamentos', component: Medicamentos },
       { path: 'graficas', component: Graficas },
-      {path:'voluntarios',component:Voluntarios},
-      {path:'peticion', component:Peticion},
+      { path: 'voluntarios', component: Voluntarios },
+      { path: 'peticion', component: Peticion },
       { path: 'eventos-voluntariado', component: EventosVoluntariado },
-      {path:'adopciones', component:Adopciones},
-      {path:'acta-seres-sintientes', component:ActaSeresSintientes},
-      {path:'historia-clinica2', component:HistoriaClinica2Component},
-      {path:'acta-seres-sintientes', component:ActaSeresSintientes}
+      { path: 'adopciones', component: Adopciones },
+      { path: 'acta-seres-sintientes', component: ActaSeresSintientes },
+      { path: 'historia-clinica2', component: HistoriaClinica2Component },
+      { path: 'proveedores', component: Proveedores }
     ]
   }
 ];
