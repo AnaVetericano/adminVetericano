@@ -349,6 +349,12 @@ export class ComprasService {
                     compra: { ...compraCreada, id_compra: idCompra },
                     detalles: detallesCreados
                   })),
+                  switchMap((resultado: ResultadoRegistroCompra) =>
+                    this.sincronizarInventariosParaDetalles(resultado.detalles).pipe(
+                      map(() => resultado),
+                      catchError(() => of(resultado))
+                    )
+                  ),
                   catchError(errDetalle => {
                     return this.eliminarCompra(idCompra).pipe(
                       catchError(() => of(null)),
@@ -438,7 +444,13 @@ export class ComprasService {
                       map(detallesSincronizados => ({
                         compra: compraActualizada,
                         detalles: detallesSincronizados
-                      }))
+                      })),
+                      switchMap((resultado: any) =>
+                        this.sincronizarInventariosParaDetalles(resultado.detalles).pipe(
+                          map(() => resultado),
+                          catchError(() => of(resultado))
+                        )
+                      )
                     );
                   })
                 );
@@ -448,6 +460,74 @@ export class ComprasService {
         );
       })
     );
+  }
+
+  crearInventario(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrlInventario}inventarios/`, payload).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  actualizarInventario(idInventario: number, payload: any): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrlInventario}inventarios/${idInventario}/`, payload).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  eliminarInventario(idInventario: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrlInventario}inventarios/${idInventario}/`).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  private payloadEntrada(detalle: any): any {
+    // Campos reales tabla inventarios: id_detalle_compra, cantidad_actual, fecha_vencimiento, estado
+    const cantidad = Number(detalle?.cantidad) || 0;
+    return {
+      id_detalle_compra: Number(detalle?.id_detalle_compra ?? detalle?.id),
+      cantidad_actual: cantidad,
+      estado: 'Disponible'
+    };
+  }
+
+  private crearEntradaConFallback(detalle: any): Observable<any> {
+    const base = this.payloadEntrada(detalle);
+    if (!base.id_detalle_compra) return of(null);
+    return this.crearInventario(base).pipe(
+      switchMap((creado) => {
+        if (creado) return of(creado);
+        return this.crearInventario({ id_detalle_compra: base.id_detalle_compra, cantidad_actual: base.cantidad_actual });
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  asegurarInventarioParaDetalle(detalle: any): Observable<any> {
+    const idDet = Number(detalle?.id_detalle_compra ?? detalle?.id);
+    if (!idDet) return of(null);
+    return this.listarInventarios().pipe(
+      switchMap((invs: any[]) => {
+        const existente = (invs || []).find((inv: any) =>
+          Number(inv.id_detalle_compra) === idDet
+        );
+        if (existente) {
+          const idInv = Number(existente.id_inventario ?? existente.id);
+          const cantidad = Number(detalle?.cantidad) || 0;
+          return this.actualizarInventario(idInv, { cantidad_actual: cantidad });
+        }
+        return this.crearEntradaConFallback(detalle);
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  sincronizarInventariosParaDetalles(detalles: any[]): Observable<any> {
+    if (!detalles || detalles.length === 0) return of([]);
+    const peticiones = detalles
+      .filter((d: any) => d && (d.id_detalle_compra ?? d.id))
+      .map((d: any) => this.asegurarInventarioParaDetalle(d));
+    if (peticiones.length === 0) return of([]);
+    return forkJoin(peticiones).pipe(catchError(() => of([])));
   }
 
   // --- Eliminación Segura: Desvincula inventarios y elimina compra y detalles ---
