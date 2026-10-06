@@ -402,17 +402,6 @@ export class Compra implements OnInit {
         });
         return;
       }
-
-      const precio = Number(fila.precio_unitario);
-      if (fila.precio_unitario === null || fila.precio_unitario === undefined || isNaN(precio) || precio <= 0) {
-        Swal.fire({
-          title: 'Precio inválido',
-          text: `En la fila #${numFila} el precio unitario debe ser mayor a 0.`,
-          icon: 'warning',
-          confirmButtonColor: '#4141A5'
-        });
-        return;
-      }
     }
 
     this.guardando = true;
@@ -460,7 +449,7 @@ export class Compra implements OnInit {
     const payloadDetalles = this.filasDetalle.map((f) => ({
       id_medicamento: Number(f.id_medicamento),
       cantidad: Number(f.cantidad),
-      precio_unitario: Number(f.precio_unitario)
+      precio_unitario: Number(f.precio_unitario) || 0
     }));
 
     this.comprasService
@@ -593,5 +582,11 @@ export class Compra implements OnInit {
 
   getIdMedicamento(m: any): number {
     return Number(m?.id ?? m?.id_medicamento ?? 0);
+  }
+
+  getDescripcionMedicamento(idMed: number | null | undefined): string {
+    if (!idMed) return 'Selecciona un medicamento';
+    const med = this.medicamentos.find((m) => Number(m.id ?? m.id_medicamento) === Number(idMed));
+    return med?.descripcion?.trim() || 'Sin descripción registrada';
   }
 }

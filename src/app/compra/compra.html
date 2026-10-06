@@ -37,17 +37,17 @@
         </div>
       </div>
 
-      <!-- Inversión Total -->
+      <!-- Medicamentos en Catálogo -->
       <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        <div class="w-11 h-11 rounded-xl bg-purple-50 text-[#4141a5] flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Inversión Total</p>
-          <p class="text-lg sm:text-xl font-extrabold text-emerald-600">
-            $ {{ totalInversion | number:'1.0-0' }}
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Medicamentos en Sistema</p>
+          <p class="text-lg sm:text-xl font-extrabold text-[#4141a5]">
+            {{ medicamentos.length }}
           </p>
         </div>
       </div>
@@ -126,13 +126,12 @@
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Fecha</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Proveedor</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Ítems / Unidades</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-right">Total Factura</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Opciones</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 text-sm">
             <tr *ngIf="cargando">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">
+              <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">
                 <div class="flex items-center justify-center gap-2">
                   <svg class="animate-spin h-5 w-5 text-[#4141a5]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -143,7 +142,7 @@
               </td>
             </tr>
             <tr *ngIf="!cargando && compras.length === 0">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">
+              <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">
                 <div class="flex flex-col items-center justify-center gap-2 py-4">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -183,11 +182,6 @@
                   <span>•</span>
                   <span>{{ c.totalUnidades }} uds</span>
                 </span>
-              </td>
-
-              <!-- Total Factura -->
-              <td class="px-6 py-3.5 text-right font-extrabold text-[#170B3D] whitespace-nowrap">
-                $ {{ (c.total || 0) | number:'1.0-0' }}
               </td>
 
               <!-- Opciones -->
@@ -339,9 +333,8 @@
                 <tr>
                   <th class="w-10 px-3 py-2.5 text-center">#</th>
                   <th class="px-3 py-2.5 w-5/12">Medicamento *</th>
+                  <th class="px-3 py-2.5 w-4/12">Descripción</th>
                   <th class="px-3 py-2.5 w-2/12 text-center">Cantidad *</th>
-                  <th class="px-3 py-2.5 w-3/12 text-center">Precio Unit. ($) *</th>
-                  <th class="px-3 py-2.5 w-2/12 text-right">Subtotal ($)</th>
                   <th class="w-12 px-3 py-2.5 text-center">Quitar</th>
                 </tr>
               </thead>
@@ -366,6 +359,13 @@
                     </select>
                   </td>
 
+                  <!-- Descripción del Medicamento -->
+                  <td class="px-3 py-2">
+                    <div class="text-xs text-gray-600 line-clamp-2" [title]="getDescripcionMedicamento(fila.id_medicamento)">
+                      {{ getDescripcionMedicamento(fila.id_medicamento) }}
+                    </div>
+                  </td>
+
                   <!-- Cantidad -->
                   <td class="px-3 py-2 text-center">
                     <input 
@@ -373,31 +373,9 @@
                       min="1" 
                       step="1"
                       [(ngModel)]="fila.cantidad" 
-                      (input)="actualizarSubtotalFila(fila)" 
                       placeholder="1"
                       class="w-20 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white" 
                     />
-                  </td>
-
-                  <!-- Precio Unitario -->
-                  <td class="px-3 py-2 text-center">
-                    <div class="relative inline-block w-28">
-                      <span class="absolute left-2.5 top-2 text-gray-400 text-xs">$</span>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        step="100"
-                        [(ngModel)]="fila.precio_unitario" 
-                        (input)="actualizarSubtotalFila(fila)" 
-                        placeholder="0"
-                        class="w-full text-right pl-6 pr-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white" 
-                      />
-                    </div>
-                  </td>
-
-                  <!-- Subtotal Calculado -->
-                  <td class="px-3 py-2 text-right font-extrabold text-[#170B3D] text-xs sm:text-sm whitespace-nowrap">
-                    $ {{ (fila.subtotal || 0) | number:'1.0-0' }}
                   </td>
 
                   <!-- Botón Quitar Fila -->
@@ -432,10 +410,10 @@
         <!-- RESUMEN DE TOTALES -->
         <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
           <div class="text-xs text-gray-500 font-bold uppercase">
-            Total Uds: <span class="text-[#170B3D]">{{ calcularTotalUnidadesFactura() }}</span>
+            Ítems: <span class="text-[#170B3D]">{{ filasDetalle.length }} prod.</span>
           </div>
-          <div class="text-sm sm:text-base font-extrabold text-[#170B3D] px-3.5 py-1.5 rounded-xl bg-[#4141a5]/10 border border-[#4141a5]/20">
-            Total Factura: <span class="text-[#4141a5]">$ {{ calcularTotalFactura() | number:'1.0-0' }}</span>
+          <div class="text-sm font-extrabold text-[#170B3D] px-3.5 py-1.5 rounded-xl bg-[#4141a5]/10 border border-[#4141a5]/20">
+            Total Unidades: <span class="text-[#4141a5]">{{ calcularTotalUnidadesFactura() }} uds</span>
           </div>
         </div>
 
@@ -526,10 +504,9 @@
         <table class="w-full text-left border-collapse text-xs sm:text-sm">
           <thead class="bg-gray-50 border-b border-gray-100 sticky top-0 z-10 text-xs font-bold text-gray-500 uppercase">
             <tr>
-              <th class="px-4 py-3">Medicamento / Producto</th>
+              <th class="px-4 py-3">Medicamento</th>
+              <th class="px-4 py-3">Descripción</th>
               <th class="px-4 py-3 text-center">Cantidad</th>
-              <th class="px-4 py-3 text-right">Precio Unitario</th>
-              <th class="px-4 py-3 text-right">Subtotal</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -542,19 +519,18 @@
                   {{ det.medicamento?.tipo }} {{ det.medicamento?.cantidad_ml ? '• ' + det.medicamento?.cantidad_ml + 'ml' : '' }}
                 </div>
               </td>
-              <td class="px-4 py-3 text-center font-bold text-gray-600">
-                {{ det.cantidad }}
+              <td class="px-4 py-3 text-xs text-gray-600">
+                <div class="max-w-md line-clamp-2" [title]="det.medicamento?.descripcion || getDescripcionMedicamento(det.id_medicamento)">
+                  {{ det.medicamento?.descripcion || getDescripcionMedicamento(det.id_medicamento) }}
+                </div>
               </td>
-              <td class="px-4 py-3 text-right text-gray-600">
-                $ {{ (det.precio_unitario || 0) | number:'1.0-0' }}
-              </td>
-              <td class="px-4 py-3 text-right font-extrabold text-[#170B3D]">
-                $ {{ (det.subtotal || 0) | number:'1.0-0' }}
+              <td class="px-4 py-3 text-center font-bold text-gray-700">
+                {{ det.cantidad }} uds
               </td>
             </tr>
             <tr *ngIf="!compraSeleccionada.detalles || compraSeleccionada.detalles.length === 0">
-              <td colspan="4" class="px-4 py-6 text-center text-gray-400">
-                No hay detalles registrados para esta compra.
+              <td colspan="3" class="px-4 py-6 text-center text-gray-400">
+                No hay medicamentos registrados para esta compra.
               </td>
             </tr>
           </tbody>
@@ -564,9 +540,9 @@
       <!-- PIE DEL MODAL DE DETALLE -->
       <div class="border-t border-gray-100 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400 font-bold uppercase">Monto Total Liquidado:</span>
+          <span class="text-xs text-gray-400 font-bold uppercase">Total Unidades Abastecidas:</span>
           <span class="text-lg font-black text-[#4141a5]">
-            $ {{ (compraSeleccionada.total || 0) | number:'1.0-0' }} COP
+            {{ compraSeleccionada.totalUnidades || 0 }} unidades
           </span>
         </div>
 
