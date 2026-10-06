@@ -83,7 +83,20 @@ export class ComprasService {
   }
 
   /**
-   * Catálogo de medicamentos vinculado directamente a DetalleCompra (tabla medicamentos, PK id_medicamento)
+   * Endpoint de la tabla medicamentos_medicamento (/api/medicamentos/)
+   */
+  private get baseUrlMedicamentos(): string {
+    const envMedicamentos = environment.apiUrlMedicamentos;
+    if (envMedicamentos) {
+      return envMedicamentos.endsWith('/') ? envMedicamentos : `${envMedicamentos}/`;
+    }
+    const urlBase = environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl;
+    const clean = urlBase.replace(/\/usuarios$/, '');
+    return `${clean}/medicamentos/`;
+  }
+
+  /**
+   * Catálogo de inventario para compatibilidad de FK (/api/medicamentos-catalogo/)
    */
   private get baseUrlMedicamentosCatalogo(): string {
     const envCatalogo = (environment as any).apiUrlMedicamentosCatalogo;
@@ -93,16 +106,6 @@ export class ComprasService {
     const urlBase = environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl;
     const clean = urlBase.replace(/\/usuarios$/, '');
     return `${clean}/medicamentos-catalogo/`;
-  }
-
-  private get baseUrlMedicamentos(): string {
-    const envMedicamentos = environment.apiUrlMedicamentos;
-    if (envMedicamentos) {
-      return envMedicamentos.endsWith('/') ? envMedicamentos : `${envMedicamentos}/`;
-    }
-    const urlBase = environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl;
-    const clean = urlBase.replace(/\/usuarios$/, '');
-    return `${clean}/medicamentos/`;
   }
 
   // --- Endpoints de Compras ---
@@ -162,7 +165,7 @@ export class ComprasService {
     return this.http.delete<any>(`${this.baseUrlInventario}detalles-compra/${id}/`);
   }
 
-  // --- Endpoints de Inventarios (para desvinculación segura de FK) ---
+  // --- Endpoints de Inventarios (desvinculación segura de FK) ---
 
   listarInventarios(): Observable<any[]> {
     return this.http.get<any>(`${this.baseUrlInventario}inventarios/`).pipe(
@@ -179,10 +182,6 @@ export class ComprasService {
     );
   }
 
-  /**
-   * Revisa si alguno de los detalles está enlazado a la tabla inventarios.
-   * Si lo está, desvincula la FK (id_detalle_compra = null) y luego elimina el detalle.
-   */
   desvincularYLimpiarDetalles(detallesIds: number[]): Observable<any> {
     if (!detallesIds || detallesIds.length === 0) {
       return of([]);
@@ -190,7 +189,6 @@ export class ComprasService {
 
     return this.listarInventarios().pipe(
       switchMap((inventarios: any[]) => {
-        // Encontrar los inventarios que referencian estos detalles
         const inventariosAfectados = inventarios.filter(inv =>
           inv.id_detalle_compra && detallesIds.includes(Number(inv.id_detalle_compra))
         );
@@ -222,57 +220,143 @@ export class ComprasService {
   }
 
   /**
-   * Carga el catálogo oficial de medicamentos para compras (desde /api/medicamentos-catalogo/)
+   * Carga los medicamentos directamente desde la tabla medicamentos_medicamento (/api/medicamentos/)
    */
   listarMedicamentos(): Observable<MedicamentoItem[]> {
-    return this.http.get<any>(this.baseUrlMedicamentosCatalogo).pipe(
-      map(res => Array.isArray(res) ? res : (res.results || [])),
-      catchError(err => {
-        console.warn('Fallo al consultar medicamentos-catalogo, intentando endpoint fallback:', err);
-        return this.http.get<any>(this.baseUrlMedicamentos).pipe(
-          map(res => Array.isArray(res) ? res : (res.results || [])),
-          catchError(() => of([]))
-        );
+    return this.http.get<any>(this.baseUrlMedicamentos).pipe(
+      map(res => {
+        const raw = Array.isArray(res) ? res : (res.results || []);
+        return raw.map((item: any) => ({
+          ...item,
+          id: item.id ?? item.id_medicamento,
+          id_medicamento: item.id ?? item.id_medicamento,
+          activo: item.activo !== undefined ? item.activo : (item.estado !== undefined ? item.estado : true)
+        }));
       })
     );
+  }
+
+  listarMedicamentosCatalogo(): Observable<any[]> {
+    return this.http.get<any>(this.baseUrlMedicamentosCatalogo).pipe(
+      map(res => Array.isArray(res) ? res : (res.results || [])),
+      catchError(() => of([]))
+    );
+  }
+
+  crearMedicamentoCatalogo(payload: any): Observable<any> {
+    return this.http.post<any>(this.baseUrlMedicamentosCatalogo, payload);
+  }
+
+  /**
+   * Asegura que el medicamento seleccionado de medicamentos_medicamento tenga
+   * un ID válido para la llave foránea de DetalleCompra (tabla medicamentos).
+   */
+  asegurarIdMedicamentoParaDetalle(
+    idMedSeleccionado: number,
+    listaMedicamentos: MedicamentoItem[],
+    catalogoExistente: any[]
+  ): Observable<number> {
+    // 1. Buscar primero en la lista de medicamentos_medicamento por su ID
+    const medSeleccionado = listaMedicamentos.find(m =>
+      Number(m.id ?? m.id_medicamento) === Number(idMedSeleccionado)
+    );
+
+    if (medSeleccionado && medSeleccionado.nombre) {
+      // 2. Buscar si ya existe por nombre en el catálogo de medicamentos (tabla medicamentos)
+      const porNombre = catalogoExistente.find(c =>
+        c.nombre &&
+        c.nombre.toLowerCase().trim() === medSeleccionado.nombre.toLowerCase().trim()
+      );
+      if (porNombre) {
+        return of(Number(porNombre.id_medicamento ?? porNombre.id));
+      }
+
+      // 3. Si no existe por nombre en el catálogo, registrarlo para satisfacer la FK de DetalleCompra
+      const nuevoCatalogoPayload = {
+        nombre: medSeleccionado.nombre.trim(),
+        tipo: medSeleccionado.tipo || 'General',
+        cantidad_ml: medSeleccionado.cantidad_ml ? String(medSeleccionado.cantidad_ml) : 'N/A',
+        activo: true
+      };
+
+      return this.crearMedicamentoCatalogo(nuevoCatalogoPayload).pipe(
+        map(creado => Number(creado.id_medicamento ?? creado.id)),
+        catchError(() => of(idMedSeleccionado))
+      );
+    }
+
+    // 4. Si no se encontró en listaMedicamentos (o ya era un ID del catálogo), verificar si coincide directamente en catálogo
+    const porId = catalogoExistente.find(c => Number(c.id_medicamento ?? c.id) === Number(idMedSeleccionado));
+    if (porId) {
+      return of(Number(porId.id_medicamento ?? porId.id));
+    }
+
+    return of(idMedSeleccionado);
   }
 
   // --- Transacción compuesta: Registrar Compra y sus Detalles ---
 
   registrarCompraCompleta(
     id_proveedor: number,
-    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario: number }>
+    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario: number }>,
+    listaMedicamentos: MedicamentoItem[] = []
   ): Observable<ResultadoRegistroCompra> {
-    return this.crearCompra({ id_proveedor: Number(id_proveedor) }).pipe(
-      switchMap((compraCreada: Compra) => {
-        const idCompra = Number((compraCreada as any).id_compra ?? (compraCreada as any).id);
-        if (!idCompra || isNaN(idCompra)) {
-          return throwError(() => new Error('No se recibió un ID válido para la compra creada.'));
-        }
+    const obsMedicamentos = (listaMedicamentos && listaMedicamentos.length > 0)
+      ? of(listaMedicamentos)
+      : this.listarMedicamentos().pipe(catchError(() => of([])));
 
-        if (!detalles || detalles.length === 0) {
-          return of({ compra: { ...compraCreada, id_compra: idCompra }, detalles: [] });
-        }
-
-        const peticiones = detalles.map(d =>
-          this.crearDetalleCompra({
-            id_compra: idCompra,
-            id_medicamento: Number(d.id_medicamento),
-            cantidad: Number(d.cantidad),
-            precio_unitario: Number(d.precio_unitario)
-          })
+    return forkJoin({
+      catalogo: this.listarMedicamentosCatalogo(),
+      medicamentos: obsMedicamentos
+    }).pipe(
+      switchMap(({ catalogo, medicamentos }) => {
+        // Asegurar IDs para DetalleCompra
+        const resoluciones = detalles.map(d =>
+          this.asegurarIdMedicamentoParaDetalle(d.id_medicamento, medicamentos, catalogo).pipe(
+            map(idValido => ({
+              ...d,
+              id_medicamento: idValido
+            }))
+          )
         );
 
-        return forkJoin(peticiones).pipe(
-          map(detallesCreados => ({
-            compra: { ...compraCreada, id_compra: idCompra },
-            detalles: detallesCreados
-          })),
-          catchError(errDetalle => {
-            // Rollback defensivo: si falla el guardado de los detalles, eliminar la compra huérfana
-            return this.eliminarCompra(idCompra).pipe(
-              catchError(() => of(null)),
-              switchMap(() => throwError(() => errDetalle))
+        const obsDetallesValidos = resoluciones.length > 0 ? forkJoin(resoluciones) : of([]);
+
+        return obsDetallesValidos.pipe(
+          switchMap(detallesAsegurados => {
+            return this.crearCompra({ id_proveedor: Number(id_proveedor) }).pipe(
+              switchMap((compraCreada: Compra) => {
+                const idCompra = Number((compraCreada as any).id_compra ?? (compraCreada as any).id);
+                if (!idCompra || isNaN(idCompra)) {
+                  return throwError(() => new Error('No se recibió un ID válido para la compra creada.'));
+                }
+
+                if (!detallesAsegurados || detallesAsegurados.length === 0) {
+                  return of({ compra: { ...compraCreada, id_compra: idCompra }, detalles: [] });
+                }
+
+                const peticiones = detallesAsegurados.map(d =>
+                  this.crearDetalleCompra({
+                    id_compra: idCompra,
+                    id_medicamento: Number(d.id_medicamento),
+                    cantidad: Number(d.cantidad),
+                    precio_unitario: Number(d.precio_unitario)
+                  })
+                );
+
+                return forkJoin(peticiones).pipe(
+                  map(detallesCreados => ({
+                    compra: { ...compraCreada, id_compra: idCompra },
+                    detalles: detallesCreados
+                  })),
+                  catchError(errDetalle => {
+                    return this.eliminarCompra(idCompra).pipe(
+                      catchError(() => of(null)),
+                      switchMap(() => throwError(() => errDetalle))
+                    );
+                  })
+                );
+              })
             );
           })
         );
@@ -286,57 +370,79 @@ export class ComprasService {
     idCompra: number,
     idProveedor: number,
     detallesNuevos: DetalleRegistroFila[],
-    detallesOriginalesIds: number[]
+    detallesOriginalesIds: number[],
+    listaMedicamentos: MedicamentoItem[] = []
   ): Observable<any> {
-    // 1. Actualizar cabecera de la compra
-    return this.actualizarCompra(idCompra, { id_proveedor: Number(idProveedor) }).pipe(
-      switchMap((compraActualizada: Compra) => {
-        // 2. Identificar eliminaciones, actualizaciones y creaciones
-        const idsAEliminar = detallesOriginalesIds.filter(
-          idOriginal => !detallesNuevos.some(f => f.id_detalle_compra === idOriginal)
+    const obsMedicamentos = (listaMedicamentos && listaMedicamentos.length > 0)
+      ? of(listaMedicamentos)
+      : this.listarMedicamentos().pipe(catchError(() => of([])));
+
+    return forkJoin({
+      catalogo: this.listarMedicamentosCatalogo(),
+      medicamentos: obsMedicamentos
+    }).pipe(
+      switchMap(({ catalogo, medicamentos }) => {
+        const resoluciones = detallesNuevos.map(f =>
+          this.asegurarIdMedicamentoParaDetalle(Number(f.id_medicamento), medicamentos, catalogo).pipe(
+            map(idValido => ({
+              ...f,
+              id_medicamento: idValido
+            }))
+          )
         );
 
-        const filasAActualizar = detallesNuevos.filter(f => f.id_detalle_compra);
-        const filasACrear = detallesNuevos.filter(f => !f.id_detalle_compra);
+        const obsFilasAseguradas = resoluciones.length > 0 ? forkJoin(resoluciones) : of([]);
 
-        // Paso A: Desvincular de inventario y eliminar los detalles que el usuario borró
-        const obsEliminar = idsAEliminar.length > 0
-          ? this.desvincularYLimpiarDetalles(idsAEliminar)
-          : of([]);
+        return obsFilasAseguradas.pipe(
+          switchMap(filasAseguradas => {
+            return this.actualizarCompra(idCompra, { id_proveedor: Number(idProveedor) }).pipe(
+              switchMap((compraActualizada: Compra) => {
+                const idsAEliminar = detallesOriginalesIds.filter(
+                  idOriginal => !filasAseguradas.some(f => f.id_detalle_compra === idOriginal)
+                );
 
-        return obsEliminar.pipe(
-          switchMap(() => {
-            // Paso B: Actualizar detalles existentes
-            const obsActualizar = filasAActualizar.map(f =>
-              this.actualizarDetalleCompra(Number(f.id_detalle_compra), {
-                id_compra: idCompra,
-                id_medicamento: Number(f.id_medicamento),
-                cantidad: Number(f.cantidad),
-                precio_unitario: Number(f.precio_unitario)
+                const filasAActualizar = filasAseguradas.filter(f => f.id_detalle_compra);
+                const filasACrear = filasAseguradas.filter(f => !f.id_detalle_compra);
+
+                const obsEliminar = idsAEliminar.length > 0
+                  ? this.desvincularYLimpiarDetalles(idsAEliminar)
+                  : of([]);
+
+                return obsEliminar.pipe(
+                  switchMap(() => {
+                    const obsActualizar = filasAActualizar.map(f =>
+                      this.actualizarDetalleCompra(Number(f.id_detalle_compra), {
+                        id_compra: idCompra,
+                        id_medicamento: Number(f.id_medicamento),
+                        cantidad: Number(f.cantidad),
+                        precio_unitario: Number(f.precio_unitario)
+                      })
+                    );
+
+                    const obsCrear = filasACrear.map(f =>
+                      this.crearDetalleCompra({
+                        id_compra: idCompra,
+                        id_medicamento: Number(f.id_medicamento),
+                        cantidad: Number(f.cantidad),
+                        precio_unitario: Number(f.precio_unitario)
+                      })
+                    );
+
+                    const todasLasPeticiones = [...obsActualizar, ...obsCrear];
+
+                    if (todasLasPeticiones.length === 0) {
+                      return of({ compra: compraActualizada, detalles: [] });
+                    }
+
+                    return forkJoin(todasLasPeticiones).pipe(
+                      map(detallesSincronizados => ({
+                        compra: compraActualizada,
+                        detalles: detallesSincronizados
+                      }))
+                    );
+                  })
+                );
               })
-            );
-
-            // Paso C: Crear nuevos detalles agregados en la edición
-            const obsCrear = filasACrear.map(f =>
-              this.crearDetalleCompra({
-                id_compra: idCompra,
-                id_medicamento: Number(f.id_medicamento),
-                cantidad: Number(f.cantidad),
-                precio_unitario: Number(f.precio_unitario)
-              })
-            );
-
-            const todasLasPeticiones = [...obsActualizar, ...obsCrear];
-
-            if (todasLasPeticiones.length === 0) {
-              return of({ compra: compraActualizada, detalles: [] });
-            }
-
-            return forkJoin(todasLasPeticiones).pipe(
-              map(detallesSincronizados => ({
-                compra: compraActualizada,
-                detalles: detallesSincronizados
-              }))
             );
           })
         );

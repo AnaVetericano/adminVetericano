@@ -55,7 +55,7 @@ export class Compra implements OnInit {
   }
 
   /**
-   * Carga en paralelo compras, detalles, catálogo de medicamentos y proveedores
+   * Carga en paralelo compras, detalles, medicamentos_medicamento y proveedores
    */
   obtenerDatos(): void {
     this.cargando = true;
@@ -63,13 +63,14 @@ export class Compra implements OnInit {
     forkJoin({
       proveedores: this.comprasService.listarProveedores().pipe(catchError(() => of([]))),
       medicamentos: this.comprasService.listarMedicamentos().pipe(catchError(() => of([]))),
+      catalogo: this.comprasService.listarMedicamentosCatalogo().pipe(catchError(() => of([]))),
       detalles: this.comprasService.listarDetallesCompra().pipe(catchError(() => of([]))),
       compras: this.comprasService.listarCompras().pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ proveedores, medicamentos, detalles, compras }) => {
+      next: ({ proveedores, medicamentos, catalogo, detalles, compras }) => {
         this.proveedores = proveedores;
         this.medicamentos = medicamentos;
-        this.procesarCompras(compras, detalles);
+        this.procesarCompras(compras, detalles, catalogo);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -88,9 +89,9 @@ export class Compra implements OnInit {
   }
 
   /**
-   * Vincula las compras con sus respectivos proveedores y detalles de medicamentos del catálogo
+   * Vincula las compras con sus respectivos proveedores y detalles de medicamentos_medicamento
    */
-  private procesarCompras(comprasRaw: any[], detallesRaw: any[]): void {
+  private procesarCompras(comprasRaw: any[], detallesRaw: any[], catalogoRaw: any[] = []): void {
     const provMap = new Map<number, Proveedor>();
     this.proveedores.forEach((p) => {
       const id = p.id_proveedor ?? (p as any).id;
@@ -99,8 +100,14 @@ export class Compra implements OnInit {
 
     const medMap = new Map<number, MedicamentoItem>();
     this.medicamentos.forEach((m) => {
-      const id = m.id_medicamento ?? m.id;
+      const id = m.id ?? m.id_medicamento;
       if (id !== undefined) medMap.set(Number(id), m);
+    });
+
+    const catalogoMap = new Map<number, any>();
+    catalogoRaw.forEach((c) => {
+      const idCat = c.id_medicamento ?? c.id;
+      if (idCat !== undefined) catalogoMap.set(Number(idCat), c);
     });
 
     const detallesPorCompra = new Map<number, DetalleCompraConMedicamento[]>();
@@ -110,7 +117,30 @@ export class Compra implements OnInit {
         detallesPorCompra.set(idCompra, []);
       }
       const idMed = Number(d.id_medicamento);
-      const med = medMap.get(idMed);
+
+      // 1. Buscar primero en la lista de medicamentos_medicamento
+      let med = medMap.get(idMed);
+
+      // 2. Si no coincide por ID directo (por ejemplo, si el detalle apunta a un ID del catálogo antiguo),
+      // buscar por nombre en el catálogo y cruzar con medicamentos_medicamento
+      if (!med) {
+        const catItem = catalogoMap.get(idMed);
+        if (catItem?.nombre) {
+          const nombreCat = catItem.nombre.toLowerCase().trim();
+          med = this.medicamentos.find(m => m.nombre && m.nombre.toLowerCase().trim() === nombreCat);
+          if (!med) {
+            med = {
+              id: idMed,
+              id_medicamento: idMed,
+              nombre: catItem.nombre,
+              tipo: catItem.tipo || 'General',
+              cantidad_ml: catItem.cantidad_ml || '',
+              activo: catItem.activo !== false
+            };
+          }
+        }
+      }
+
       const subtotal = (Number(d.cantidad) || 0) * (Number(d.precio_unitario) || 0);
 
       detallesPorCompra.get(idCompra)!.push({
@@ -246,13 +276,19 @@ export class Compra implements OnInit {
 
     // Mapear los detalles existentes en las filas dinámicas
     if (compra.detalles && compra.detalles.length > 0) {
-      this.filasDetalle = compra.detalles.map(d => ({
-        id_detalle_compra: d.id_detalle_compra,
-        id_medicamento: d.id_medicamento,
-        cantidad: d.cantidad,
-        precio_unitario: Number(d.precio_unitario),
-        subtotal: (Number(d.cantidad) || 0) * (Number(d.precio_unitario) || 0)
-      }));
+      this.filasDetalle = compra.detalles.map(d => {
+        const idMedMedicamento = d.medicamento
+          ? Number(d.medicamento.id ?? d.medicamento.id_medicamento ?? d.id_medicamento)
+          : Number(d.id_medicamento);
+
+        return {
+          id_detalle_compra: d.id_detalle_compra,
+          id_medicamento: idMedMedicamento,
+          cantidad: d.cantidad,
+          precio_unitario: Number(d.precio_unitario),
+          subtotal: (Number(d.cantidad) || 0) * (Number(d.precio_unitario) || 0)
+        };
+      });
     } else {
       this.filasDetalle = [
         { id_detalle_compra: null, id_medicamento: null, cantidad: 1, precio_unitario: null, subtotal: 0 }
@@ -387,7 +423,8 @@ export class Compra implements OnInit {
         this.editandoId,
         Number(this.idProveedorSeleccionado),
         this.filasDetalle,
-        this.detallesOriginalesIds
+        this.detallesOriginalesIds,
+        this.medicamentos
       ).subscribe({
         next: () => {
           this.guardando = false;
@@ -427,7 +464,7 @@ export class Compra implements OnInit {
     }));
 
     this.comprasService
-      .registrarCompraCompleta(Number(this.idProveedorSeleccionado), payloadDetalles)
+      .registrarCompraCompleta(Number(this.idProveedorSeleccionado), payloadDetalles, this.medicamentos)
       .subscribe({
         next: (resultado) => {
           this.guardando = false;
@@ -535,12 +572,12 @@ export class Compra implements OnInit {
   // --- Helpers de Formato e Identificación ---
 
   getNombreMedicamento(idMed: number): string {
-    const med = this.medicamentos.find((m) => (m.id_medicamento ?? m.id) === idMed);
+    const med = this.medicamentos.find((m) => Number(m.id ?? m.id_medicamento) === Number(idMed));
     if (!med) return `Medicamento #${idMed}`;
     const detalles: string[] = [];
     if (med.tipo) detalles.push(med.tipo);
-    if (med.presentacion) detalles.push(med.presentacion);
-    else if (med.cantidad_ml && med.cantidad_ml !== 'N/A') detalles.push(`${med.cantidad_ml} ml`);
+    if (med.cantidad_ml && med.cantidad_ml !== 'N/A') detalles.push(`${med.cantidad_ml}`);
+    else if (med.presentacion) detalles.push(med.presentacion);
     const extras = detalles.join(' • ');
     return extras ? `${med.nombre} (${extras})` : med.nombre;
   }
@@ -555,6 +592,6 @@ export class Compra implements OnInit {
   }
 
   getIdMedicamento(m: any): number {
-    return m?.id_medicamento ?? m?.id ?? 0;
+    return Number(m?.id ?? m?.id_medicamento ?? 0);
   }
 }

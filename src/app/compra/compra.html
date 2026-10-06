@@ -358,10 +358,10 @@
                       [(ngModel)]="fila.id_medicamento" 
                       class="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white">
                       <option [ngValue]="null" disabled selected>
-                        {{ medicamentos.length === 0 ? 'Cargando catálogo de medicamentos...' : '-- Elegir medicamento --' }}
+                        {{ medicamentos.length === 0 ? 'Cargando medicamentos...' : '-- Elegir medicamento --' }}
                       </option>
                       <option *ngFor="let m of medicamentos" [ngValue]="getIdMedicamento(m)">
-                        {{ m.nombre }} {{ m.presentacion ? '• ' + m.presentacion : (m.tipo ? '• ' + m.tipo : '') }}
+                        {{ m.nombre }} {{ m.tipo ? '• ' + m.tipo : '' }} {{ m.cantidad_ml ? '(' + m.cantidad_ml + ')' : '' }}
                       </option>
                     </select>
                   </td>
