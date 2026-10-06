@@ -22,6 +22,7 @@ import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintient
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
 import { Proveedores } from './proveedores/proveedores';
 import { authGuard, loginGuard } from './services/auth.guard';
+import { Compra } from './compra/compra';
 
 
 export const routes: Routes = [
@@ -53,7 +54,8 @@ export const routes: Routes = [
       { path: 'adopciones', component: Adopciones },
       { path: 'acta-seres-sintientes', component: ActaSeresSintientes },
       { path: 'historia-clinica2', component: HistoriaClinica2Component },
-      { path: 'proveedores', component: Proveedores }
+      { path: 'proveedores', component: Proveedores },
+      {path:'compras', component:Compra}
     ]
   }
 ];
