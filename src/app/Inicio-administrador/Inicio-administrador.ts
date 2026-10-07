@@ -47,6 +47,11 @@ onLogout(): void {
     if (result.isConfirmed) {
       console.log('Cerrando sesión de usuario');
 
+      // Limpiar tokens para que un access viejo/expirado no quede en
+      // localStorage y rompa el próximo login ("Given token not valid...").
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+
       this.router.navigate(['/']);
     }
 

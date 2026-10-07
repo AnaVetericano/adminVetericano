@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 
 import { Medicamentos } from './crear-medicamentos/crear-medicamentos';
-import { FormularioEspecies } from './formulario-especies/formulario-especies';
 import { Especies } from './especies/especies';
 import { Landepage } from './landepage/landepage';
 import { Register } from './register/register';
@@ -10,8 +9,6 @@ import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-admi
 import { InicioDeSesionAdministradorComponent } from './inicio-de-sesion-administrador/inicio-de-sesion-administrador';
 import { Patologias } from './patologias/patologias';
 import { ExamenesClinicos } from './examenes-clinicos/examenes-clinicos';
-import { ExamenClinicoComponent } from './examen-clinico/examen-clinico';
-import { EditarExamen } from './editar-examen/editar-examen';
 import { UsuariosRoles } from './usuarios-roles/usuarios-roles';
 import { Graficas } from './graficas/graficas';
 import { Peticion } from './peticion/peticion';
@@ -20,35 +17,41 @@ import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado
 import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
+import { Proveedores } from './proveedores/proveedores';
+import { authGuard, loginGuard } from './services/auth.guard';
+import { Compra } from './compra/compra';
+import { Inventario } from './inventario/inventario';
 
 
 export const routes: Routes = [
 
   { path: '', component: Landepage },
-  { path: 'register', component: Register },
-  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent },
+  { path: 'register', component: Register, canActivate: [loginGuard] },
+  { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent, canActivate: [loginGuard] },
 
   {
     path: 'inicio-admin',
     component: InicioAdministradorComponent,
+    canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       { path: '', component: Graficas },
       { path: 'patologias', component: Patologias },
       { path: 'examenes-clinicos', component: ExamenesClinicos },
-      { path: 'examen-clinico', component: ExamenClinicoComponent },
-      { path: 'editar-examen', component: EditarExamen },
       { path: 'usuarios-roles', component: UsuariosRoles },
       { path: 'especies', component: Especies },
-      { path: 'formularioespecies', component: FormularioEspecies },
       { path: 'listarmedicamentos', component: Medicamentos },
       { path: 'crear-medicamentos', component: Medicamentos },
       { path: 'graficas', component: Graficas },
-      {path:'voluntarios',component:Voluntarios},
-      {path:'peticion', component:Peticion},
+      { path: 'voluntarios', component: Voluntarios },
+      { path: 'peticion', component: Peticion },
       { path: 'eventos-voluntariado', component: EventosVoluntariado },
-      {path:'adopciones', component:Adopciones},
-      {path:'acta-seres-sintientes', component:ActaSeresSintientes},
-      {path:'historia-clinica2', component:HistoriaClinica2Component},
+      { path: 'adopciones', component: Adopciones },
+      { path: 'acta-seres-sintientes', component: ActaSeresSintientes },
+      { path: 'historia-clinica2', component: HistoriaClinica2Component },
+      { path: 'proveedores', component: Proveedores },
+      { path: 'compras', component: Compra },
+      { path: 'inventario', component: Inventario }
     ]
   }
 ];
