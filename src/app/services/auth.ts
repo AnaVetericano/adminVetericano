@@ -300,6 +300,19 @@ export class AuthService {
   actualizarPostulacionVoluntariado(id: number, postulacion: PostulacionVoluntariado) {
     return this.http.put(`${this.baseUrlVoluntariado}/postulaciones/${id}/`, postulacion);
   }
+  listarSeguimientos(): Observable<any> {
+
+  const token = localStorage.getItem('token');
+
+  const headers = {
+    Authorization: `Bearer ${token}`
+  };
+
+  return this.http.get<any>(
+    'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/listar/',
+    { headers }
+  );
+}
 
   eliminarPostulacionVoluntariado(id: number) {
     return this.http.delete(`${this.baseUrlVoluntariado}/postulaciones/${id}/`);

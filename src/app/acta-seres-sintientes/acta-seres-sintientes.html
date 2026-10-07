@@ -1,223 +1,918 @@
-<div class="min-h-screen bg-gray-100 py-6 px-4 sm:px-6 lg:px-8 flex justify-center">
-  <div class="w-full max-w-7xl mx-auto bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
-    
-    <!-- ENCABEZADO -->
-    <header class="bg-indigo-950 text-white p-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-yellow-500">
-      <div class="flex items-center space-x-3 mb-2 sm:mb-0">
-        <div class="w-12 h-12 rounded-full flex items-center justify-center text-indigo-950 font-bold shadow">      
-          <img [src]="popalog.logopop" alt="Escudo Popayan" class="w-full h-full object-cover object-center"/>
+<div class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- HEADER / NAVBAR INSTITUCIONAL -->
+    <header class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-blue-100 rounded-xl ñ">
+               <img [src]="popalog.logopop" alt="Escudo Popayan"
+         class="w-10 h-12 object-cover object-center"
+        />
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-slate-900 text-lg">Alcaldía de Popayán</h1>
+                    <span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-blue-200">HISTORIA CLÍNICA VETERINARIA OFICIAL</span>
+                </div>
+                <p class="text-xs text-slate-500">Formato Integrado  · Secretaría de Salud</p>
+            </div>
         </div>
-        <div>
-          <h1 class="text-xl font-bold tracking-wide">ALCALDÍA DE POPAYÁN</h1>
-          <p class="text-xs text-gray-300">HISTORIA CLINICA VETERINARIA</p>
+        <div class="flex items-center gap-3">
+            <button class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50"> Imprimir Formato</button>
+            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700"> Exportar Paquete</button>
         </div>
-      </div>
-      <div class="text-right text-xs bg-indigo-900/60 p-2 rounded border border-indigo-800">
-        <p><span class="font-semibold">Código:</span> F-GS-F-03-08</p>
-        <p><span class="font-semibold">Versión:</span> 01</p>
-        <p><span class="font-semibold">Página:</span> 1 de 2</p>
-      </div>
     </header>
 
-    <!-- FORMULARIO -->
-    <form class="max-w-7xl w-full mx-auto p-4 space-y-4 text-xs text-gray-700">
-
-      <!-- SELECTOR DE PACIENTES DE LA BASE DE DATOS (API) -->
-      <div class="bg-indigo-50 p-3 rounded-md border border-indigo-200 mb-4 shadow-sm">
-        <label class="block font-bold text-indigo-950 mb-1"> Seleccionar animal registrado:</label>
-        <select 
-          [(ngModel)]="selectedPacienteId" 
-          (change)="onSeleccionarPaciente($event)" 
-          name="selectPacienteApi" 
-          class="w-full border border-indigo-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-          <option value="" disabled selected>-- Seleccione un animal (Ej: Firulais, Luna...) --</option>
-          <option *ngFor="let p of listaPacientes" [value]="p.id || p.nombre">
-            {{ p.nombre }} - Especie: {{ p.especie || 'No especificada' }}
-          </option>
-        </select>
-      </div>
-
-      <!-- 1. DATOS DEL PACIENTE -->
-      <section class="border border-indigo-900 rounded-md overflow-hidden">
-        <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
-          1. DATOS DEL PACIENTE
-        </div>
-        <div class="p-4 space-y-4 bg-white">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- BARRA DE PESTAÑAS (AGRUPANDO LAS 4 HOJAS PRINCIPALES) -->
+    <nav class="bg-slate-900 p-2.5 rounded-2xl flex flex-wrap items-center gap-2 shadow-md">
+        <button (click)="cambiarPestana('consulta')" [ngClass]="pestanaActiva === 'consulta' ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'" class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition">
+            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">1️</div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Nombre:</label>
-              <input type="text" [(ngModel)]="formData.nombre" name="nombre" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="text-sm font-semibold flex items-center justify-between">Consulta <span class="text-[10px] bg-blue-400/30 px-1.5 rounded text-blue-100"></span></div>
+                <div class="text-[11px] opacity-90">Espera y Datos del Paciente</div>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Raza:</label>
-              <input type="text" [(ngModel)]="formData.raza" name="raza" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Especie:</label>
-              <select [(ngModel)]="formData.especie" name="especie" class="w-full border border-gray-300 rounded px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="" disabled selected>Seleccione...</option>
-                <option value="Canino">Canino</option>
-                <option value="Felino">Felino</option>
-                <option value="Equino">Equino</option>
-                <option value="Bovino">Bovino</option>
-                <option value="Porcino">Porcino</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Peso:</label>
-              <input type="text" [(ngModel)]="formData.peso" name="peso" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Sexo:</label>
-              <div class="flex items-center space-x-6 mt-1">
-                <label class="inline-flex items-center">
-                  <input type="radio" [(ngModel)]="formData.sexo" name="sexo" value="M" class="text-indigo-600 focus:ring-indigo-500">
-                  <span class="ml-2 text-xs">M (Macho)</span>
-                </label>
-                <label class="inline-flex items-center">
-                  <input type="radio" [(ngModel)]="formData.sexo" name="sexo" value="H" class="text-indigo-600 focus:ring-indigo-500">
-                  <span class="ml-2 text-xs">H (Hembra)</span>
-                </label>
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Última desparasitación (Fecha/Producto):</label>
-              <input type="text" [(ngModel)]="formData.ultimaDesparasitacion" name="ultimaDesparasitacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Vacunas (Fecha/Marca/Lote):</label>
-            <input type="text" [(ngModel)]="formData.vacunas" name="vacunas" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Observaciones:</label>
-            <input type="text" [(ngModel)]="formData.observaciones" name="observaciones" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Enfermedades anteriores:</label>
-            <input type="text" [(ngModel)]="formData.enfermedadesAnteriores" name="enfermedadesAnteriores" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Tratamiento:</label>
-            <input type="text" [(ngModel)]="formData.tratamiento" name="tratamiento" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Evolución:</label>
-            <input type="text" [(ngModel)]="formData.evolucion" name="evolucion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Alimentación:</label>
-            <input type="text" [(ngModel)]="formData.alimentacion" name="alimentacion" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Historia reproductiva (Entero/Esterilizado, Último celo, Fecha último parto):</label>
-            <input type="text" [(ngModel)]="formData.historiaReproductiva" name="historiaReproductiva" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-      </section>
-
-      <!-- 2. LUGAR DE ATENCIÓN -->
-      <section class="border border-indigo-900 rounded-md overflow-hidden">
-        <div class="bg-indigo-950 text-white px-3 py-1.5 font-semibold flex items-center gap-2">
-          <span>2.</span> LUGAR DE ATENCIÓN
-        </div>
-        <div class="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50">
-          <div class="sm:col-span-3">
-            <label class="block font-medium mb-1">Dirección:</label>
-            <input type="text" name="direccion" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
-          </div>
-          <div>
-            <label class="block font-medium mb-1">Barrio:</label>
-            <input type="text" name="barrio" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
-          </div>
-          <div>
-            <label class="block font-medium mb-1">Municipio:</label>
-            <input type="text" name="municipio" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
-          </div>
-          <div>
-            <label class="block font-medium mb-1">Departamento:</label>
-            <input type="text" name="departamento" class="w-full border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-900">
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. EXAMEN CLINICO -->
-      <div class="border border-indigo-900 rounded-md overflow-hidden">
-        <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
-          3. EXAMEN CLINICO
-        </div>
-        <div class="p-4 space-y-4 bg-white">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">F. Respiratoria:</label>
-              <input type="text" [(ngModel)]="formData.fRespiratoria" name="fRespiratoria" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">F. Cardiaca:</label>
-              <input type="text" [(ngModel)]="formData.fCardiaca" name="fCardiaca" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Temperatura:</label>
-              <input type="text" [(ngModel)]="formData.temperatura" name="temperatura" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Pulso:</label>
-              <input type="text" [(ngModel)]="formData.pulso" name="pulso" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Tiempo llenado capilar:</label>
-              <input type="text" [(ngModel)]="formData.tiempoLlenadoCapilar" name="tiempoLlenadoCapilar" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Mucosas:</label>
-              <input type="text" [(ngModel)]="formData.mucosas" name="mucosas" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Actitud/Temperamento:</label>
-              <input type="text" [(ngModel)]="formData.actitudTemperamento" name="actitudTemperamento" class="w-full border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </form>
-
-    <!-- BARRA INFERIOR CON BOTONES -->
-    <footer class="bg-indigo-950 text-white px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center space-x-2 text-xs">
-        <span>🐾</span>
-        <span class="tracking-wide">Bienestar animal, compromiso de todos</span>
-      </div>
-      
-      <div class="flex items-center space-x-3">
-        <button 
-          type="button" 
-          (click)="onLimpiar()"
-          class="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1.5 rounded shadow transition">
-           Limpiar
         </button>
-        <button 
-          type="button" 
-          (click)="onGuardar()"
-          class="flex items-center gap-1 bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-3 py-1.5 rounded shadow transition">
-           Guardar
+        <button (click)="cambiarPestana('examenes')" [ngClass]="pestanaActiva === 'examenes' ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'" class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition">
+            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">2️</div>
+            <div>
+                <div class="text-sm font-semibold flex items-center justify-between">Exámenes <span class="text-[10px] bg-blue-400/30 px-1.5 rounded text-blue-100"></span></div>
+                <div class="text-[11px] opacity-90">Pruebas y Sistemas Orgánicos</div>
+            </div>
         </button>
-      </div>
-    </footer>
+        <button (click)="cambiarPestana('diagnostico')" [ngClass]="pestanaActiva === 'diagnostico' ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'" class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition">
+            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">3️</div>
+            <div>
+                <div class="text-sm font-semibold flex items-center justify-between">Diagnóstico <span class="text-[10px] bg-blue-400/30 px-1.5 rounded text-blue-100"></span></div>
+                <div class="text-[11px] opacity-90">Patología y Plan de Acción</div>
+            </div>
+        </button>
+        <button (click)="cambiarPestana('tratamientos')" [ngClass]="pestanaActiva === 'tratamientos' ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'" class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition">
+            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">4️</div>
+            <div>
+                <div class="text-sm font-semibold flex items-center justify-between">Tratamientos <span class="text-[10px] bg-blue-400/30 px-1.5 rounded text-blue-100"></span></div>
+                <div class="text-[11px] opacity-90">Fármacos, Insumos y Firmas</div>
+            </div>
+        </button>
+    </nav>
 
-  </div>
+
+    <!-- ================================================================= -->
+    <!-- PESTAÑA 1: CONSULTA (Agrupa Hoja 1: Espera y Hoja 2: Ficha/Motivo)  -->
+    <!-- ================================================================= -->
+    <div *ngIf="pestanaActiva === 'consulta'" class="space-y-6">
+        <!-- HOJA 1: Turnos y Listado de Animales en Espera -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="text-xs text-blue-600 font-semibold"> ·TURNOS POR ATENDER</span>
+                    <h2 class="text-xl font-black text-slate-900 mt-1">Animales Listos para Iniciar Historia Clínica</h2>
+                    <p class="text-xs text-slate-500">Seleccione el animal en espera para sincronizar sus datos con la consulta médica oficial.</p>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2">
+                    <span>+</span> Nuevo Animal en Espera
+                </button>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <input type="text" placeholder="Filtrar por nombre, especie, raza o microchip..." class="w-full lg:w-96 border border-slate-200 rounded-xl px-4 py-2.5 text-xs bg-slate-50/50">
+                <div class="flex-1 ">  <button class="px-4 py-2 bg-blue-600 text-white rounded-xl">BUSCAR</button></div>
+                <div class="flex gap-2 text-xs font-semibold">
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-xl">Todos</button>
+                    <button class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200">Canino</button>
+                    <button class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200">Felino</button>
+                    <button class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200">Equino</button>
+                </div>
+            </div>
+
+           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+    <!-- MENSAJE CARGANDO -->
+    <div
+        *ngIf="cargando"
+        class="col-span-full text-center py-10 text-slate-500 text-sm"
+    >
+        Cargando animales...
+    </div>
+
+
+    <!-- ERROR -->
+    <div
+        *ngIf="!cargando && error"
+        class="col-span-full text-center py-10 text-red-500 text-sm"
+    >
+        {{ error }}
+    </div>
+
+
+    <!-- SIN DATOS -->
+    <div
+        *ngIf="!cargando && !error && seguimientos.length === 0"
+        class="col-span-full text-center py-10 text-slate-500 text-sm"
+    >
+        No hay animales en espera.
+    </div>
+
+
+    <!-- TARJETAS -->
+   <div
+    *ngFor="let seguimiento of seguimientos"
+    (click)="seleccionarSeguimiento(seguimiento)"
+    [ngClass]="seguimientoSeleccionado?.id_seguimiento === seguimiento.id_seguimiento
+        ? 'border-2 border-blue-600 bg-blue-50'
+        : 'border-2 border-slate-200 bg-white'"
+    class="rounded-2xl p-4 flex items-center gap-4 relative cursor-pointer hover:shadow-md transition"
+>
+
+        <img
+            [src]="seguimiento.foto || 'images/perro-default.png'"
+            class="w-16 h-16 rounded-xl object-cover"
+        >
+
+        <div class="flex-1">
+
+            <div class="flex justify-between items-center">
+
+               <h4 class="font-bold text-slate-900">
+      {{ seguimiento.nombre_paciente || seguimiento.nombre_animal || seguimiento.nombre || 'Sin nombre' }}
+</h4>
+
+                <span class="text-blue-600 font-bold">
+                    ✓ Activo
+                </span>
+
+            </div>
+
+            <p class="text-[11px] text-slate-500">
+                Reg:
+                {{ seguimiento.fecha || seguimiento.fecha_registro || 'Sin fecha' }}
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+        </div>
+
+        <!-- HOJA 2: Ficha del Paciente Activo y Motivo de Consulta -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                   <h2 class="text-xl font-black text-slate-900 mt-1">Ficha del Paciente Seleccionado:{{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
+</h2>
+                    <p class="text-xs text-slate-500">Detalle de identificación biométrica, características físicas y motivo de consulta inicial.</p>
+                </div>
+                <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">HC - 2026-0842</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">NOMBRE DEL PACIENTE *</label>
+                      <input
+                          type="text"
+                          [(ngModel)]="seguimientoSeleccionado.nombre_paciente"
+                          [disabled]="!seguimientoSeleccionado"
+                          class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+                      >
+                    </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">NO. HISTORIA CLÍNICA *</label>
+                    <input type="text" value="HC - 2026-0842" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">ESPECIE / RAZA *</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input
+                                type="text"
+                                [value]="seguimientoSeleccionado?.paciente_especie || ''"
+                                readonly
+                                class="border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+                            >
+
+                            <input
+                                type="text"
+                                [value]="seguimientoSeleccionado?.paciente_raza || ''"
+                                readonly
+                                class="border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+                            >
+                    </div>
+                </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">SEXO </label>
+                    <div class="grid grid-cols-2 gap-2 font-semibold">
+
+                      <button
+                          type="button"
+                          [ngClass]="seguimientoSeleccionado?.paciente_sexo === 'Macho'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-100 text-slate-500'"
+                          class="text-center p-2.5 rounded-xl"
+                      >
+                          Macho
+                      </button>
+
+                      <button
+                          type="button"
+                          [ngClass]="seguimientoSeleccionado?.paciente_sexo === 'Hembra'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-100 text-slate-500'"
+                          class="text-center p-2.5 rounded-xl"
+                      >
+                          Hembra
+                      </button>
+
+                  </div>
+                </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">EDAD APROX. / PESO (KG)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input
+                            type="text"
+                            [value]="seguimientoSeleccionado?.paciente_edad || ''"
+                            readonly
+                            placeholder="Edad"
+                            class="border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+                        >
+
+                        <input
+                            type="text"
+                            [value]="seguimientoSeleccionado?.peso_paciente || ''"
+                            readonly
+                            placeholder="Peso"
+                            class="border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+                        >
+                    </div>
+                </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">COLOR / PELAJE</label>
+                      <input
+                          type="text"
+                          [value]="seguimientoSeleccionado?.paciente_color || ''"
+                          readonly
+                          placeholder="Color / pelaje"
+                          class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+                      ></div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">MICROCHIP</label>
+                    <input type="text" value="981098102934812" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono">
+                </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">SEÑAS PARTICULARES</label>
+                    <input type="text" value="Cicatriz leve en oreja derecha, mancha blanca en cola." class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="font-bold text-slate-700 block mb-1">MOTIVO DE CONSULTA INICIAL *[cite: 10]</label>
+                    <textarea rows="2" class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700">Paciente canino macho traído por rescate/tutor por presentar inapetencia de 48 horas de evolución, decaimiento marcado y herida superficial en almohadilla del miembro anterior izquierdo.</textarea>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+
+   <!-- ================================================================= -->
+<!-- PESTAÑA 2: EXÁMENES (Agrupa Hoja 3: Pruebas y Hoja 4: 12 Sistemas)  -->
+<!-- ================================================================= -->
+<div *ngIf="pestanaActiva === 'examenes'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    
+    <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL (HOJAS 3 Y 4) -->
+    <div class="lg:col-span-2 space-y-6">
+        
+        <!-- HOJA 3: Catálogo y Exámenes Solicitados -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <span class="text-xs text-blue-600 font-semibold uppercase tracking-wider">Hoja 3 de 8 · Exámenes Clínicos y Paraclínicos</span>
+                    <h2 class="text-xl font-black text-slate-900 mt-1">Pruebas Diagnósticas y Relación Clínica</h2>
+                </div>
+                <span class="bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-2xs">4 Exámenes Seleccionados</span>
+            </div>
+
+            <!-- Botón desplegable del Catálogo -->
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Catálogo de Tipos de Exámenes</h3>
+                    <p class="text-xs text-slate-500">Haga clic en el botón para desplegar la lista de 15 exámenes disponibles.</p>
+                </div>
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-xs">Desplegar Tipos de Examen ▼</button>
+            </div>
+
+            <!-- Grilla de Exámenes Solicitados -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">EXÁMENES SOLICITADOS Y SU RELACIÓN CON EL ANIMAL (4)</h3>
+                    <span class="text-[10px] text-slate-400">Haga clic en la x para desmarcar</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <!-- Examen 1 -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2 relative">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md text-[10px] border border-indigo-100">HEMATOLOGÍA</span>
+                            <button class="text-slate-400 hover:text-red-500 font-bold">✕</button>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-sm">Cuadro Hemático (Hemograma)</h4>
+                        <p class="text-slate-600 leading-relaxed"><b class="text-slate-700">Relación clínica:</b> Evalúa anemia, leucocitosis, recuento de plaquetas e infección sistémica.</p>
+                    </div>
+
+
+                </div>
+            </div>
+
+            <!-- Descripción de Hallazgos -->
+            <div class="space-y-1">
+                <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">DESCRIPCIÓN DE HALLAZGOS EN PRUEBAS DIAGNÓSTICAS</label>
+                <div class="relative">
+                    <textarea rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white transition">Cuadro hemático evidencia leve leucocitosis (17.500/uL) con neutrofilia relativa. Frotis cutáneo negativo a ácaros, presencia de bacterias cocoides extracelulares. Plaquetas en rango normal.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOJA 4: Evaluación Física de Órganos y Sistemas con Botones Interactivos -->
+<div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div>
+            <h2 class="text-lg font-black text-slate-900 mt-0.5">Evaluación Física de Órganos y Sistemas</h2>
+            <p class="text-[11px] text-slate-500">Examen físico sistemático del paciente en consulta.</p>
+        </div>
+        <div class="text-[11px] font-semibold flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-600 rounded-full"></span> N: Normal</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-red-600 rounded-full"></span> AN: Anormal</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-slate-400 rounded-full"></span> NE: No examinado</span>
+        </div>
+    </div>
+
+    <!-- Grilla Interactiva de los 12 Sistemas -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs font-medium">
+        
+        <!-- 01. Estado general -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">01. Estado general y con...</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['general'] = 'N'" [ngClass]="sistemas['general'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['general'] = 'AN'" [ngClass]="sistemas['general'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['general'] = 'NE'" [ngClass]="sistemas['general'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 02. Hidratación -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">02. Estado de hidratación</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['hidratacion'] = 'N'" [ngClass]="sistemas['hidratacion'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['hidratacion'] = 'AN'" [ngClass]="sistemas['hidratacion'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['hidratacion'] = 'NE'" [ngClass]="sistemas['hidratacion'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 03. Tegumentario -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">03. Sistema Tegumentari...</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['tegumentario'] = 'N'" [ngClass]="sistemas['tegumentario'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['tegumentario'] = 'AN'" [ngClass]="sistemas['tegumentario'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['tegumentario'] = 'NE'" [ngClass]="sistemas['tegumentario'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 04. Ojos -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">04. Ojos y anejos oculares</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['ojos'] = 'N'" [ngClass]="sistemas['ojos'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['ojos'] = 'AN'" [ngClass]="sistemas['ojos'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['ojos'] = 'NE'" [ngClass]="sistemas['ojos'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 05. Oídos -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">05. Oídos y conducta a...</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['oidos'] = 'N'" [ngClass]="sistemas['oidos'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['oidos'] = 'AN'" [ngClass]="sistemas['oidos'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['oidos'] = 'NE'" [ngClass]="sistemas['oidos'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 06. Nariz -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">06. Nariz y vías aéreas su...</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['nariz'] = 'N'" [ngClass]="sistemas['nariz'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['nariz'] = 'AN'" [ngClass]="sistemas['nariz'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['nariz'] = 'NE'" [ngClass]="sistemas['nariz'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 07. Digestivo -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">07. Sistema digestivo</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['digestivo'] = 'N'" [ngClass]="sistemas['digestivo'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['digestivo'] = 'AN'" [ngClass]="sistemas['digestivo'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['digestivo'] = 'NE'" [ngClass]="sistemas['digestivo'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 08. Respiratorio -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">08. Sistema respiratorio</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['respiratorio'] = 'N'" [ngClass]="sistemas['respiratorio'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['respiratorio'] = 'AN'" [ngClass]="sistemas['respiratorio'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['respiratorio'] = 'NE'" [ngClass]="sistemas['respiratorio'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 09. Nervioso -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">09. Sistema nervioso y re...</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['nervioso'] = 'N'" [ngClass]="sistemas['nervioso'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['nervioso'] = 'AN'" [ngClass]="sistemas['nervioso'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['nervioso'] = 'NE'" [ngClass]="sistemas['nervioso'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 10. Musculoesquelético -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">10. S. Musculoesquelétic...</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['musculoesqueletico'] = 'N'" [ngClass]="sistemas['musculoesqueletico'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['musculoesqueletico'] = 'AN'" [ngClass]="sistemas['musculoesqueletico'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['musculoesqueletico'] = 'NE'" [ngClass]="sistemas['musculoesqueletico'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 11. Cardiovascular -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">11. Sistema cardiovascular</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['cardiovascular'] = 'N'" [ngClass]="sistemas['cardiovascular'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['cardiovascular'] = 'AN'" [ngClass]="sistemas['cardiovascular'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['cardiovascular'] = 'NE'" [ngClass]="sistemas['cardiovascular'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+
+        <!-- 12. Genitourinario -->
+        <div class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+            <span class="text-slate-700 truncate pr-2">12. Sistema genitourinario</span>
+            <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                <button (click)="sistemas['genitourinario'] = 'N'" [ngClass]="sistemas['genitourinario'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-2 py-1 rounded-md text-[10px] transition">N</button>
+                <button (click)="sistemas['genitourinario'] = 'AN'" [ngClass]="sistemas['genitourinario'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">AN</button>
+                <button (click)="sistemas['genitourinario'] = 'NE'" [ngClass]="sistemas['genitourinario'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'" class="px-1.5 py-1 rounded-md text-[10px] transition">NE</button>
+            </div>
+        </div>
+    </div>
+    
+    </div>
+    
+
+    <!-- OBSERVACIONES DE LA EXPLORACIÓN DE SISTEMAS -->
+    <div class="space-y-1.5 pt-2">
+        <label class="text-[10px] font-bold text-slate-700 uppercase tracking-wider block">OBSERVACIONES DE LA EXPLORACIÓN DE SISTEMAS</label>
+        <textarea rows="2" class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white transition">Tegumentario: Laceración cutánea de 1.5 cm en pulpejo carpal izquierdo, sin compromiso óseo. Musculoesquelético: Apoyo antiálgico leve.</textarea>
+    </div>
+    
+</div>
+<!-- HOJA 2: Ficha del Paciente Activo y Motivo de Consulta -->
+
+<div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+
+    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+
+        <div>
+
+            <h2 class="text-xl font-black text-slate-900 mt-1">
+
+                Ficha del Paciente Seleccionado:
+
+                {{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
+
+            </h2>
+
+            <p class="text-xs text-slate-500">
+                Detalle de identificación biométrica, características físicas y motivo de consulta inicial.
+            </p>
+
+        </div>
+
+        <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">
+            HC -
+            {{ seguimientoSeleccionado?.id_seguimiento || '----' }}
+        </span>
+
+    </div>
+
+
+    <!-- SI NO HAY ANIMAL SELECCIONADO -->
+
+    <div
+        *ngIf="!seguimientoSeleccionado"
+        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700"
+    >
+         Seleccione un animal de la lista de arriba para cargar su información.
+    </div>
+
+
+    <!-- INFORMACIÓN DEL ANIMAL -->
+
+    <div
+        *ngIf="seguimientoSeleccionado"
+        class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"
+    >
+
+        <!-- NOMBRE -->
+
+        <div>
+
+            <label class="font-bold text-slate-700 block mb-1">
+                NOMBRE DEL PACIENTE *
+            </label>
+
+            <input
+                type="text"
+                [value]="seguimientoSeleccionado.nombre_paciente || ''"
+                readonly
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+            >
+
+        </div>
+
+
+        <!-- NO HISTORIA -->
+
+        <div>
+
+            <label class="font-bold text-slate-700 block mb-1">
+                NO. HISTORIA CLÍNICA *
+            </label>
+
+            <input
+                type="text"
+                [value]="'HC - ' + seguimientoSeleccionado.id_seguimiento"
+                readonly
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+            >
+
+        </div>
+
+
+        <div class="md:col-span-2">
+
+            <label class="font-bold text-slate-700 block mb-1">
+                MOTIVO DE CONSULTA INICIAL *
+            </label>
+
+            <textarea
+                rows="2"
+                readonly
+                [value]="seguimientoSeleccionado.anamnesis_descripcion_queja || ''"
+                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700"
+            ></textarea>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+    <!-- ================================================================= -->
+    <!-- PESTAÑA 3: DIAGNÓSTICO (Agrupa Hoja 5: Patología y Hoja 6: Plan)   -->
+    <!-- ================================================================= -->
+    <div *ngIf="pestanaActiva === 'diagnostico'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-2 space-y-6">
+            <!-- HOJA 5: Lo que tiene el paciente (Patología y Diagnósticos) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-blue-600 font-semibold">HOJA 5 DE 8 · DICTAMEN PATOLÓGICO</span>
+                        <h2 class="text-xl font-black text-slate-900 mt-1">01. Lo que Tiene el Paciente (Diagnóstico Final)</h2>
+                    </div>
+                    <div class="border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold px-4 py-2 rounded-xl text-center">
+                        Pronóstico: <br><span class="font-bold text-emerald-600">Favorable</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-700 uppercase">DIAGNÓSTICO FINAL O CONFIRMATORIO DEL MÉDICO </label>
+                    <textarea rows="2" class="w-full border border-red-200 bg-red-50/20 rounded-xl p-3 text-xs font-bold text-slate-800">Dermatitis traumática infectada de almohadilla anterior izquierda + Parasitismo externo.</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div class="space-y-2">
+                        <h4 class="text-[11px] font-bold text-slate-700">LISTA DE PROBLEMAS CLÍNICOS (1 AL 7)</h4>
+                        <div class="space-y-2 text-xs">
+                            <input type="text" value="1. Laceración cutánea en almohadilla carpal izq." class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                            <input type="text" value="2. Claudicación grado II en MII" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                            <input type="text" value="3. Hiporexia de 48 horas" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                            <input type="text" value="4. Presencia moderada de ectoparásitos" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="text-[11px] font-bold text-slate-700">DIAGNÓSTICOS DIFERENCIALES (1 AL 7)</h4>
+                        <div class="space-y-2 text-xs">
+                            <input type="text" value="1. Herida traumática profunda por corte" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                            <input type="text" value="2. Infección bacteriana secundaria localizada" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                            <input type="text" value="3. Erliquiosis canina subclínica" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                            <input type="text" value="4. Deshidratación leve por inapetencia" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOJA 6: Lo que se le va a hacer (Plan de Intervención) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div>
+                    <span class="text-xs text-blue-600 font-semibold">HOJA 6 DE 8 · PLAN TERAPÉUTICO</span>
+                    <h2 class="text-xl font-black text-slate-900 mt-1">02. Lo que se le va a Hacer (Procedimientos e Intervención)</h2>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-bold text-slate-700 uppercase">PROCEDIMIENTOS CLÍNICOS A REALIZAR </label>
+                    <textarea rows="4" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800">1. Lavado antiséptico quirúrgico y debridación suave del tejido necrótico de la almohadilla.
+2. Vendaje compresivo estéril con cambio cada 48 horas.
+3. Administración de antibioticoterapia oral y analgesia preventiva por 7 días.
+4. Aplicación de antiparasitario externo para erradicación de garrapatas.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ficha Lateral Paciente -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+
+    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+
+        <div>
+
+            <h2 class="text-xl font-black text-slate-900 mt-1">
+
+                Ficha del Paciente Seleccionado:
+
+                {{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
+
+            </h2>
+
+            <p class="text-xs text-slate-500">
+                Detalle de identificación biométrica, características físicas y motivo de consulta inicial.
+            </p>
+
+        </div>
+
+        <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">
+            HC -
+            {{ seguimientoSeleccionado?.id_seguimiento || '----' }}
+        </span>
+
+    </div>
+
+
+    <!-- SI NO HAY ANIMAL SELECCIONADO -->
+
+    <div
+        *ngIf="!seguimientoSeleccionado"
+        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700"
+    >
+         Seleccione un animal de la lista de arriba para cargar su información.
+    </div>
+
+
+    <!-- INFORMACIÓN DEL ANIMAL -->
+
+    <div
+        *ngIf="seguimientoSeleccionado"
+        class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"
+    >
+
+        <!-- NOMBRE -->
+
+        <div>
+
+            <label class="font-bold text-slate-700 block mb-1">
+                NOMBRE DEL PACIENTE *
+            </label>
+
+            <input
+                type="text"
+                [value]="seguimientoSeleccionado.nombre_paciente || ''"
+                readonly
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+            >
+
+        </div>
+
+
+        <!-- NO HISTORIA -->
+
+        <div>
+
+            <label class="font-bold text-slate-700 block mb-1">
+                NO. HISTORIA CLÍNICA *
+            </label>
+
+            <input
+                type="text"
+                [value]="'HC - ' + seguimientoSeleccionado.id_seguimiento"
+                readonly
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+            >
+
+        </div>
+
+
+        <div class="md:col-span-2">
+
+            <label class="font-bold text-slate-700 block mb-1">
+                MOTIVO DE CONSULTA INICIAL *
+            </label>
+
+            <textarea
+                rows="2"
+                readonly
+                [value]="seguimientoSeleccionado.anamnesis_descripcion_queja || ''"
+                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700"
+            ></textarea>
+
+        </div>
+
+    </div>
+
+</div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- PESTAÑA 4: TRATAMIENTOS (Agrupa Hoja 7: Fármacos/Insumos y Hoja 8: Firmas) -->
+    <!-- ================================================================= -->
+    <div *ngIf="pestanaActiva === 'tratamientos'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-2 space-y-6">
+            <!-- HOJA 7: Medicamentos Recetados e Insumos -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-blue-600 font-semibold">HOJA 7 DE 8 · PRESCRIPCIÓN Y MATERIALES</span>
+                        <h2 class="text-xl font-black text-slate-900 mt-1">01. Medicamentos Recetados e Insumos Utilizados</h2>
+                    </div>
+                    <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-2 rounded-xl">＋ Fármaco</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <!-- Med 1 -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
+                        <div class="flex justify-between"><span class="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px]">Fármaco #1</span></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">PRODUCTO BASE</label><input type="text" value="Amoxicilina + Ácido Clavulánico" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-bold"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[9px] text-slate-400 font-bold block">DOSIS</label><input type="text" value="15 mg/kg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                            <div><label class="text-[9px] text-slate-400 font-bold block">PRESENTACIÓN</label><input type="text" value="Tabletas 250mg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[9px] text-slate-400 font-bold block">VÍA</label><input type="text" value="Oral" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                            <div><label class="text-[9px] text-slate-400 font-bold block">FRECUENCIA</label><input type="text" value="Cada 12h x 7 días" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                        </div>
+                    </div>
+                    <!-- Med 2 -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
+                        <div class="flex justify-between"><span class="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px]">Fármaco #2[cite: 16]</span></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">PRODUCTO BASE</label><input type="text" value="Meloxicam" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-bold"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[9px] text-slate-400 font-bold block">DOSIS</label><input type="text" value="0.1 mg/kg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                            <div><label class="text-[9px] text-slate-400 font-bold block">PRESENTACIÓN</label><input type="text" value="Suspensión 1.5mg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[9px] text-slate-400 font-bold block">VÍA</label><input type="text" value="Oral" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                            <div><label class="text-[9px] text-slate-400 font-bold block">FRECUENCIA</label><input type="text" value="Cada 24h x 4 días" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1 pt-2">
+                    <label class="text-[11px] font-bold text-slate-700 uppercase">02. INSUMOS Y MATERIALES UTILIZADOS</label>
+                    <textarea rows="2" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800">Guantes de nitrilo x 2 pares, gasas estériles x 4 paquetes, jeringas 3ml x 2, solución salina 0.9% 100ml, venda cohesiva.</textarea>
+                </div>
+            </div>
+
+            <!-- HOJA 8: Validación Oficial y Firmas -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div>
+                    <span class="text-xs text-blue-600 font-semibold">· VALIDACIÓN LEGAL Y FIRMAS INSTITUCIONALES</span>
+                    <h2 class="text-xl font-black text-slate-900 mt-1">03. Aval Profesional y del Acudiente</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                        <h4 class="font-bold text-blue-900 uppercase">MÉDICO VETERINARIO TRATANTE</h4>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label><input type="text" value="Dra. María Fernanda Ordoñez Paz" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="MPU-84920-COMVEZCOL" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                    </div>
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+                        <h4 class="font-bold text-slate-800 uppercase">TUTOR / RECEPTOR RESPONSABLE</h4>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input type="text" value="Carlos Alberto Muñoz Gómez" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input type="text" value="10.617.842.109" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ficha Lateral Paciente -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+
+    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+
+        <div>
+
+            <h2 class="text-xl font-black text-slate-900 mt-1">
+
+                Ficha del Paciente Seleccionado:
+
+                {{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
+
+            </h2>
+
+            <p class="text-xs text-slate-500">
+                Detalle de identificación biométrica, características físicas y motivo de consulta inicial.
+            </p>
+
+        </div>
+
+        <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">
+            HC -
+            {{ seguimientoSeleccionado?.id_seguimiento || '----' }}
+        </span>
+
+    </div>
+
+
+    <!-- SI NO HAY ANIMAL SELECCIONADO -->
+
+    <div
+        *ngIf="!seguimientoSeleccionado"
+        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700"
+    >
+         Seleccione un animal de la lista de arriba para cargar su información.
+    </div>
+
+
+    <!-- INFORMACIÓN DEL ANIMAL -->
+
+    <div
+        *ngIf="seguimientoSeleccionado"
+        class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"
+    >
+
+        <!-- NOMBRE -->
+
+        <div>
+
+            <label class="font-bold text-slate-700 block mb-1">
+                NOMBRE DEL PACIENTE *
+            </label>
+
+            <input
+                type="text"
+                [value]="seguimientoSeleccionado.nombre_paciente || ''"
+                readonly
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+            >
+
+        </div>
+
+
+        <!-- NO HISTORIA -->
+
+        <div>
+
+            <label class="font-bold text-slate-700 block mb-1">
+                NO. HISTORIA CLÍNICA *
+            </label>
+
+            <input
+                type="text"
+                [value]="'HC - ' + seguimientoSeleccionado.id_seguimiento"
+                readonly
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
+            >
+
+        </div>
+
+
+        <div class="md:col-span-2">
+
+            <label class="font-bold text-slate-700 block mb-1">
+                MOTIVO DE CONSULTA INICIAL *
+            </label>
+
+            <textarea
+                rows="2"
+                readonly
+                [value]="seguimientoSeleccionado.anamnesis_descripcion_queja || ''"
+                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700"
+            ></textarea>
+
+        </div>
+
+    </div>
+
+</div>
+    </div>
+
 </div>

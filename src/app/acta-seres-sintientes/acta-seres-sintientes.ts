@@ -1,113 +1,127 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-acta-seres-sintientes',
-  imports: [FormsModule, CommonModule],
+  standalone: true,
+  imports: [
+    FormsModule,
+    CommonModule
+  ],
   templateUrl: './acta-seres-sintientes.html',
   styleUrl: './acta-seres-sintientes.css',
 })
 export class ActaSeresSintientes implements OnInit {
+
   popalog = {
     logopop: 'images/Escudo_Popayan.svg'
   };
 
-  // Lista de animales que vienen de la API
-  listaPacientes: any[] = [];
-  selectedPacienteId: any = '';
+  pestanaActiva: string = 'consulta';
 
-  formData = {
-    fecha: new Date().toISOString().split('T')[0],
-    nombre: '',
-    raza: '',
-    especie: '',
-    sexo: '',
-    peso: '',
-    ultimaDesparasitacion: '',
-    vacunas: '',
-    observaciones: '',
-    enfermedadesAnteriores: '',
-    tratamiento: '',
-    evolucion: '',
-    alimentacion: '',
-    historiaReproductiva: '',
-    mucosas: '',
-    actitudTemperamento: '',
-    fRespiratoria: '',
-    fCardiaca: '',
-    temperatura: '',
-    pulso: '',
-    tiempoLlenadoCapilar: ''
+  // Datos que vienen del backend
+  seguimientos: any[] = [];
+
+  // Animal seleccionado
+  seguimientoSeleccionado: any = null;
+
+  cargando: boolean = false;
+  error: string = '';
+
+  constructor(
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarSeguimientos();
+  }
+
+  cambiarPestana(pestana: string) {
+    this.pestanaActiva = pestana;
+  }
+
+  cargarSeguimientos(): void {
+
+    this.cargando = true;
+    this.error = '';
+
+    this.authService.listarSeguimientos().subscribe({
+
+      next: (respuesta) => {
+
+        console.log('Respuesta seguimiento:', respuesta);
+
+        if (Array.isArray(respuesta)) {
+          this.seguimientos = respuesta;
+        }
+        else if (respuesta?.results) {
+          this.seguimientos = respuesta.results;
+        }
+        else {
+          this.seguimientos = [];
+        }
+
+        console.log('Seguimientos cargados:', this.seguimientos);
+
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+
+      error: (error) => {
+
+        console.error('Error cargando seguimientos:', error);
+
+        this.error = 'No se pudieron cargar los animales en espera.';
+
+        this.cargando = false;
+        this.cdr.detectChanges();
+      }
+
+    });
+  }
+
+  // ==========================================
+  // SELECCIONAR ANIMAL
+  // ==========================================
+
+  seleccionarSeguimiento(seguimiento: any): void {
+
+    console.log('Animal seleccionado:', seguimiento);
+
+    this.seguimientoSeleccionado = seguimiento;
+
+    console.log('Nombre:', seguimiento?.nombre_paciente);
+    console.log('Especie:', seguimiento?.paciente_especie);
+    console.log('Raza:', seguimiento?.paciente_raza);
+    console.log('Sexo:', seguimiento?.paciente_sexo);
+    console.log('Color:', seguimiento?.paciente_color);
+    console.log('Edad:', seguimiento?.paciente_edad);
+    console.log('Peso:', seguimiento?.peso_paciente);
+
+    // Datos que pueden venir dentro de animales
+    console.log('Animales:', seguimiento?.animales);
+
+    this.cdr.detectChanges();
+  }
+
+  sistemas: { [key: string]: string } = {
+
+    general: 'N',
+    hidratacion: 'N',
+    tegumentario: 'AN',
+    ojos: 'N',
+    oidos: 'N',
+    nariz: 'N',
+    digestivo: 'N',
+    respiratorio: 'N',
+    nervioso: 'N',
+    musculoesqueletico: 'AN',
+    cardiovascular: 'N',
+    genitourinario: 'N'
+
   };
 
-  ngOnInit() {
-    this.cargarPacientesDesdeApi();
-  }
-
-  // Método para hacer el GET a la API y traer los animales
-  cargarPacientesDesdeApi() {
-    fetch('https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/')
-      .then(response => response.json())
-      .then(data => {
-        // Asignamos los datos asegurando que sea un arreglo
-        this.listaPacientes = Array.isArray(data) ? data : (data.results || []);
-        console.log('Pacientes cargados de la BD:', this.listaPacientes);
-      })
-      .catch(error => {
-        console.error('Error al conectar con la API:', error);
-      });
-  }
-
-  // Método que se ejecuta al cambiar de animal en el selector
-  onSeleccionarPaciente(event: any) {
-    const valorSeleccionado = event.target.value;
-    
-    // Buscamos el paciente por ID o por Nombre en el arreglo
-    const pacienteEncontrado = this.listaPacientes.find(
-      p => (p.id == valorSeleccionado || p.nombre === valorSeleccionado)
-    );
-
-    if (pacienteEncontrado) {
-      // Fusionamos los datos del paciente con el formulario
-      this.formData = {
-        ...this.formData,
-        ...pacienteEncontrado,
-        fecha: pacienteEncontrado.fecha || this.formData.fecha
-      };
-      console.log('Mostrando información de:', pacienteEncontrado.nombre);
-    }
-  }
-   
-  onLimpiar() {
-    this.formData = {
-      fecha: new Date().toISOString().split('T')[0],
-      nombre: '',
-      raza: '',
-      especie: '',
-      sexo: '',
-      peso: '',
-      ultimaDesparasitacion: '',
-      vacunas: '',
-      observaciones: '',
-      enfermedadesAnteriores: '',
-      tratamiento: '',
-      evolucion: '',
-      alimentacion: '',
-      historiaReproductiva: '',
-      mucosas: '',
-      actitudTemperamento: '',
-      fRespiratoria: '',
-      fCardiaca: '',
-      temperatura: '',
-      pulso: '',
-      tiempoLlenadoCapilar: ''
-    };
-    this.selectedPacienteId = '';
-    console.log('Formulario limpiado');
-  }
-
-  onGuardar() {
-    console.log('Formulario guardado', this.formData);
-  }
 }
