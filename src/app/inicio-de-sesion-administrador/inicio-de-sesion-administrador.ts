@@ -56,36 +56,24 @@ export class InicioDeSesionAdministradorComponent {
       return;
     }
 
-    // Limpiar cualquier token viejo/expirado ANTES de intentar loguearse.
-    // Si queda un 'token' expirado en localStorage, el interceptor lo adjuntaba
-    // al POST de login y el backend respondía 401 "Given token not valid
-    // for any token type" sin siquiera validar las credenciales.
-    // (El interceptor ya excluye las rutas públicas, esto es doble seguridad.)
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
+    // Limpiar tokens y sesión anterior antes de intentar loguearse
+    this.authService.logout();
 
     console.log('Credenciales enviadas:', this.usuario);
 
     // Petición a la API usando AuthService
     this.authService.login(this.usuario).subscribe({
       next: (res: any) => {
-        // Almacenar token en localStorage para usarlo en peticiones posteriores
-        if (res.tokens?.access) {
-          localStorage.setItem('token', res.tokens.access);
+        // Redirección inteligente según el rol del usuario autenticado
+        if (this.authService.isVeterinario()) {
+          this.router.navigate(['/inicio-admin/acta-seres-sintientes']);
+        } else {
+          this.router.navigate(['/inicio-admin']);
         }
-        if (res.tokens?.refresh) {
-          localStorage.setItem('refresh_token', res.tokens.refresh);
-        }
-        
-        this.router.navigate(['/inicio-admin']);
       },
       error: (err: any) => {
-        // Si el backend rechazó un token viejo, asegurarse de no dejarlo guardado
+        this.authService.logout();
         const mensajeRaw = err.error?.detail || err.error?.mensaje || err.error?.error || err.error?.non_field_errors?.[0] || '';
-        if (typeof mensajeRaw === 'string' && mensajeRaw.toLowerCase().includes('token')) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('refresh_token');
-        }
         const mensaje = mensajeRaw || 'Credenciales incorrectas, intenta de nuevo.';
          Swal.fire({
       title: 'Su usuario o contraseña no son validos',
