@@ -20,6 +20,30 @@ export class ActaSeresSintientes implements OnInit {
   this.mostrarNuevosCasos = !this.mostrarNuevosCasos;
 }
 
+obtenerFotoPaciente(paciente: any): string {
+  if (!paciente) {
+    return 'images/perro-default.png';
+  }
+
+  return (
+    paciente.foto ||
+    paciente.imagen ||
+    paciente.foto_paciente ||
+    paciente.imagen_paciente ||
+    paciente.animales?.[0]?.foto ||
+    paciente.animales?.[0]?.imagen ||
+    'images/perro-default.png'
+  );
+}
+
+imagenNoDisponible(event: Event): void {
+  const imagen = event.target as HTMLImageElement;
+
+  // Evita que se repita el error si tampoco existe la imagen de respaldo.
+  imagen.onerror = null;
+  imagen.src = 'images/perro-default.png';
+}
+
   popalog = {
     logopop: 'images/Escudo_Popayan.svg'
   };

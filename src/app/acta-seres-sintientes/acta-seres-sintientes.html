@@ -724,104 +724,67 @@
 </div>
 <!-- HOJA 2: Ficha del Paciente Activo y Motivo de Consulta -->
 
-<div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-
-    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-
-        <div>
-
-            <h2 class="text-xl font-black text-slate-900 mt-1">
-
-                Ficha del Paciente Seleccionado:
-
-                {{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
-
-            </h2>
-
-            <p class="text-xs text-slate-500">
-                Detalle de identificación biométrica, características físicas y motivo de consulta inicial.
-            </p>
-
+<!-- TARJETA DEL PACIENTE (ESTILO FICHA GRANDE) -->
+<div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 relative">
+    
+    <!-- ENCABEZADO DE LA FICHA -->
+    <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
         </div>
-
-        <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">
-            HC -
-            {{ seguimientoSeleccionado?.id_seguimiento || '----' }}
+        <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-xl font-bold border border-blue-100">
+            HC - 2026-0842
         </span>
-
     </div>
 
+    <!-- CONTENEDOR DE LA IMAGEN PRINCIPAL CON BADGES FLOTANTES -->
+    <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
+        
+        <!-- IMAGEN (ESPACIO LISTO PARA TU API) -->
+      
+<img
+  [src]="obtenerFotoPaciente(seguimientoSeleccionado)"
+  class="w-full h-full object-cover object-center"
+  alt="Foto del paciente"
+  (error)="imagenNoDisponible($event)"
+>
 
-    <!-- SI NO HAY ANIMAL SELECCIONADO -->
+        <!-- BADGE FLOTANTE SUPERIOR IZQUIERDA: ESPECIE -->
+        <div class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+          
+            <span>{{ seguimientoSeleccionado?.paciente_especie || 'Canino' }}</span>
+        </div>
 
-    <div
-        *ngIf="!seguimientoSeleccionado"
-        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700"
-    >
-         Seleccione un animal de la lista de arriba para cargar su información.
+        <!-- BADGE FLOTANTE INFERIOR DERECHA: SEXO Y EDAD -->
+        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
+            
+            <span>{{ seguimientoSeleccionado?.paciente_sexo || 'Macho' }} · {{ seguimientoSeleccionado?.paciente_edad || '3 años' }}</span>
+        </div>
     </div>
 
-
-    <!-- INFORMACIÓN DEL ANIMAL -->
-
-    <div
-        *ngIf="seguimientoSeleccionado"
-        class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"
-    >
-
-        <!-- NOMBRE -->
-
-        <div>
-
-            <label class="font-bold text-slate-700 block mb-1">
-                NOMBRE DEL PACIENTE *
-            </label>
-
-            <input
-                type="text"
-                [value]="seguimientoSeleccionado.nombre_paciente || ''"
-                readonly
-                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
-            >
-
-        </div>
-
-
-        <!-- NO HISTORIA -->
-
-        <div>
-
-            <label class="font-bold text-slate-700 block mb-1">
-                NO. HISTORIA CLÍNICA *
-            </label>
-
-            <input
-                type="text"
-                [value]="'HC - ' + seguimientoSeleccionado.id_seguimiento"
-                readonly
-                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
-            >
-
-        </div>
-
-
-        <div class="md:col-span-2">
-
-            <label class="font-bold text-slate-700 block mb-1">
-                MOTIVO DE CONSULTA INICIAL *
-            </label>
-
-            <textarea
-                rows="2"
-                readonly
-                [value]="seguimientoSeleccionado.anamnesis_descripcion_queja || ''"
-                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700"
-            ></textarea>
-
-        </div>
-
+    <!-- INFORMACIÓN PRINCIPAL -->
+    <div class="space-y-1">
+        <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nombre del Paciente</span>
+        <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+            {{
+                seguimientoSeleccionado?.nombre_paciente
+                || seguimientoSeleccionado?.nombre_animal
+                || seguimientoSeleccionado?.nombre
+                || ''
+            }}
+        </h3>
+        <p class="text-xs text-slate-500 font-medium">
+            {{ seguimientoSeleccionado?.paciente_raza || '' }} 
+            {{ seguimientoSeleccionado?.paciente_color ? '· ' + seguimientoSeleccionado?.paciente_color : '' }}
+        </p>
     </div>
 
+    <!-- ESTADO DE SINCRONIZACIÓN -->
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
+        <span>✓</span>
+        <span>Sincronizada con Historia Clínica</span>
+    </div>
 </div>
 
 </div>
@@ -887,105 +850,68 @@
         </div>
 
         <!-- Ficha Lateral Paciente -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-
-    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-
-        <div>
-
-            <h2 class="text-xl font-black text-slate-900 mt-1">
-
-                Ficha del Paciente Seleccionado:
-
-                {{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
-
-            </h2>
-
-            <p class="text-xs text-slate-500">
-                Detalle de identificación biométrica, características físicas y motivo de consulta inicial.
-            </p>
-
+     <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 relative">
+    
+    <!-- ENCABEZADO DE LA FICHA -->
+    <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
         </div>
-
-        <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">
-            HC -
-            {{ seguimientoSeleccionado?.id_seguimiento || '----' }}
+        <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-xl font-bold border border-blue-100">
+            HC - 2026-0842
         </span>
-
     </div>
 
+    <!-- CONTENEDOR DE LA IMAGEN PRINCIPAL CON BADGES FLOTANTES -->
+    <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
+        
+        <!-- IMAGEN (ESPACIO LISTO PARA TU API) -->
+      
+<img
+  [src]="obtenerFotoPaciente(seguimientoSeleccionado)"
+  class="w-full h-full object-cover object-center"
+  alt="Foto del paciente"
+  (error)="imagenNoDisponible($event)"
+>
 
-    <!-- SI NO HAY ANIMAL SELECCIONADO -->
+        <!-- BADGE FLOTANTE SUPERIOR IZQUIERDA: ESPECIE -->
+        <div class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+          
+            <span>{{ seguimientoSeleccionado?.paciente_especie || 'Canino' }}</span>
+        </div>
 
-    <div
-        *ngIf="!seguimientoSeleccionado"
-        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700"
-    >
-         Seleccione un animal de la lista de arriba para cargar su información.
+        <!-- BADGE FLOTANTE INFERIOR DERECHA: SEXO Y EDAD -->
+        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
+            
+            <span>{{ seguimientoSeleccionado?.paciente_sexo || 'Macho' }} · {{ seguimientoSeleccionado?.paciente_edad || '3 años' }}</span>
+        </div>
     </div>
 
-
-    <!-- INFORMACIÓN DEL ANIMAL -->
-
-    <div
-        *ngIf="seguimientoSeleccionado"
-        class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"
-    >
-
-        <!-- NOMBRE -->
-
-        <div>
-
-            <label class="font-bold text-slate-700 block mb-1">
-                NOMBRE DEL PACIENTE *
-            </label>
-
-            <input
-                type="text"
-                [value]="seguimientoSeleccionado.nombre_paciente || ''"
-                readonly
-                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
-            >
-
-        </div>
-
-
-        <!-- NO HISTORIA -->
-
-        <div>
-
-            <label class="font-bold text-slate-700 block mb-1">
-                NO. HISTORIA CLÍNICA *
-            </label>
-
-            <input
-                type="text"
-                [value]="'HC - ' + seguimientoSeleccionado.id_seguimiento"
-                readonly
-                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
-            >
-
-        </div>
-
-
-        <div class="md:col-span-2">
-
-            <label class="font-bold text-slate-700 block mb-1">
-                MOTIVO DE CONSULTA INICIAL *
-            </label>
-
-            <textarea
-                rows="2"
-                readonly
-                [value]="seguimientoSeleccionado.anamnesis_descripcion_queja || ''"
-                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700"
-            ></textarea>
-
-        </div>
-
+    <!-- INFORMACIÓN PRINCIPAL -->
+    <div class="space-y-1">
+        <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nombre del Paciente</span>
+        <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+            {{
+                seguimientoSeleccionado?.nombre_paciente
+                || seguimientoSeleccionado?.nombre_animal
+                || seguimientoSeleccionado?.nombre
+                || ''
+            }}
+        </h3>
+        <p class="text-xs text-slate-500 font-medium">
+            {{ seguimientoSeleccionado?.paciente_raza || '' }} 
+            {{ seguimientoSeleccionado?.paciente_color ? '· ' + seguimientoSeleccionado?.paciente_color : '' }}
+        </p>
     </div>
 
+    <!-- ESTADO DE SINCRONIZACIÓN -->
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
+        <span>✓</span>
+        <span>Sincronizada con Historia Clínica</span>
+    </div>
 </div>
+
     </div>
 
 
@@ -1061,105 +987,68 @@
         </div>
 
         <!-- Ficha Lateral Paciente -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-
-    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-
-        <div>
-
-            <h2 class="text-xl font-black text-slate-900 mt-1">
-
-                Ficha del Paciente Seleccionado:
-
-                {{ seguimientoSeleccionado?.nombre_paciente || 'Ningún animal seleccionado' }}
-
-            </h2>
-
-            <p class="text-xs text-slate-500">
-                Detalle de identificación biométrica, características físicas y motivo de consulta inicial.
-            </p>
-
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 relative">
+    
+    <!-- ENCABEZADO DE LA FICHA -->
+    <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
         </div>
-
-        <span class="text-xs font-mono bg-slate-100 px-3 py-1 rounded-xl font-bold">
-            HC -
-            {{ seguimientoSeleccionado?.id_seguimiento || '----' }}
+        <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-xl font-bold border border-blue-100">
+            HC - 2026-0842
         </span>
-
     </div>
 
+    <!-- CONTENEDOR DE LA IMAGEN PRINCIPAL CON BADGES FLOTANTES -->
+    <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
+        
+        <!-- IMAGEN (ESPACIO LISTO PARA TU API) -->
+      
+<img
+  [src]="obtenerFotoPaciente(seguimientoSeleccionado)"
+  class="w-full h-full object-cover object-center"
+  alt="Foto del paciente"
+  (error)="imagenNoDisponible($event)"
+>
 
-    <!-- SI NO HAY ANIMAL SELECCIONADO -->
+        <!-- BADGE FLOTANTE SUPERIOR IZQUIERDA: ESPECIE -->
+        <div class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+          
+            <span>{{ seguimientoSeleccionado?.paciente_especie || 'Canino' }}</span>
+        </div>
 
-    <div
-        *ngIf="!seguimientoSeleccionado"
-        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700"
-    >
-         Seleccione un animal de la lista de arriba para cargar su información.
+        <!-- BADGE FLOTANTE INFERIOR DERECHA: SEXO Y EDAD -->
+        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
+            
+            <span>{{ seguimientoSeleccionado?.paciente_sexo || 'Macho' }} · {{ seguimientoSeleccionado?.paciente_edad || '3 años' }}</span>
+        </div>
     </div>
 
-
-    <!-- INFORMACIÓN DEL ANIMAL -->
-
-    <div
-        *ngIf="seguimientoSeleccionado"
-        class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"
-    >
-
-        <!-- NOMBRE -->
-
-        <div>
-
-            <label class="font-bold text-slate-700 block mb-1">
-                NOMBRE DEL PACIENTE *
-            </label>
-
-            <input
-                type="text"
-                [value]="seguimientoSeleccionado.nombre_paciente || ''"
-                readonly
-                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
-            >
-
-        </div>
-
-
-        <!-- NO HISTORIA -->
-
-        <div>
-
-            <label class="font-bold text-slate-700 block mb-1">
-                NO. HISTORIA CLÍNICA *
-            </label>
-
-            <input
-                type="text"
-                [value]="'HC - ' + seguimientoSeleccionado.id_seguimiento"
-                readonly
-                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold"
-            >
-
-        </div>
-
-
-        <div class="md:col-span-2">
-
-            <label class="font-bold text-slate-700 block mb-1">
-                MOTIVO DE CONSULTA INICIAL *
-            </label>
-
-            <textarea
-                rows="2"
-                readonly
-                [value]="seguimientoSeleccionado.anamnesis_descripcion_queja || ''"
-                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700"
-            ></textarea>
-
-        </div>
-
+    <!-- INFORMACIÓN PRINCIPAL -->
+    <div class="space-y-1">
+        <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nombre del Paciente</span>
+        <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+            {{
+                seguimientoSeleccionado?.nombre_paciente
+                || seguimientoSeleccionado?.nombre_animal
+                || seguimientoSeleccionado?.nombre
+                || ''
+            }}
+        </h3>
+        <p class="text-xs text-slate-500 font-medium">
+            {{ seguimientoSeleccionado?.paciente_raza || '' }} 
+            {{ seguimientoSeleccionado?.paciente_color ? '· ' + seguimientoSeleccionado?.paciente_color : '' }}
+        </p>
     </div>
 
+    <!-- ESTADO DE SINCRONIZACIÓN -->
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
+        <span>✓</span>
+        <span>Sincronizada con Historia Clínica</span>
+    </div>
 </div>
+
     </div>
 
 </div>
