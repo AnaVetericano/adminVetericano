@@ -510,6 +510,18 @@ export class AuthService {
   );
 }
 
+  obtenerSeguimientoPorId(idSeguimiento: number): Observable<any> {
+    const token = localStorage.getItem('token');
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
+
+    return this.http.get<any>(
+      `https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/${idSeguimiento}/`,
+      { headers }
+    );
+  }
+
   eliminarPostulacionVoluntariado(id: number) {
     return this.http.delete(`${this.baseUrlVoluntariado}/postulaciones/${id}/`);
   }

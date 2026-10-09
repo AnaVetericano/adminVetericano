@@ -241,42 +241,27 @@ this.seguimientosFiltrados = [...this.seguimientos];
 }
 
   seleccionarSeguimiento(seguimiento: any): void {
-
     console.log('Animal seleccionado:', seguimiento);
-
     this.seguimientoSeleccionado = seguimiento;
-    console.log('Datos del animal:', seguimiento.animales);
-console.log('Descripción del paciente:', seguimiento.descripcion_paciente);
-console.log(
-  'Descripción dentro de animales:',
-  seguimiento.animales?.[0]?.descripcion_paciente
-  
 
-);
-const animal = this.seguimientoSeleccionado?.animales?.[0];
-
-console.log('Descripción del paciente:', animal?.descripcion_paciente);
-console.log('Datos del animal:', animal);
-console.log('Seguimiento seleccionado:', this.seguimientoSeleccionado);
-console.log('Animales:', this.seguimientoSeleccionado?.animales);
-
-console.log('Objeto completo del animal:', this.seguimientoSeleccionado?.animales?.[0]);
-
-console.log(
-  'Propiedades del animal:',
-  Object.keys(this.seguimientoSeleccionado?.animales?.[0] || {})
-);
-
-    console.log('Nombre:', seguimiento?.nombre_paciente);
-    console.log('Especie:', seguimiento?.paciente_especie);
-    console.log('Raza:', seguimiento?.paciente_raza);
-    console.log('Sexo:', seguimiento?.paciente_sexo);
-    console.log('Color:', seguimiento?.paciente_color);
-    console.log('Edad:', seguimiento?.paciente_edad);
-    console.log('Peso:', seguimiento?.peso_paciente);
-
-    // Datos que pueden venir dentro de animales
-    console.log('Animales:', seguimiento?.animales);
+    const id = seguimiento?.id_seguimiento;
+    if (id) {
+      this.authService.obtenerSeguimientoPorId(id).subscribe({
+        next: (detalle) => {
+          console.log('Detalle completo del seguimiento:', detalle);
+          if (detalle) {
+            this.seguimientoSeleccionado = {
+              ...this.seguimientoSeleccionado,
+              ...detalle
+            };
+            this.cdr.detectChanges();
+          }
+        },
+        error: (err) => {
+          console.warn('No se pudo cargar el detalle extendido del seguimiento:', err);
+        }
+      });
+    }
 
     this.cdr.detectChanges();
   }
