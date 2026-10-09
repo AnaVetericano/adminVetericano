@@ -71,7 +71,6 @@
           <div class="border border-gray-100 rounded-2xl divide-y divide-gray-100 bg-gray-50/40 overflow-hidden">
             <!-- Tipo de reporte -->
             <div class="flex items-start gap-3 p-3.5">
-              <span class="text-xl leading-none mt-0.5">🐾</span>
               <div class="min-w-0">
                 <p class="text-sm font-extrabold text-[#170B3D]">Tipo de reporte</p>
                 <p class="text-xs text-gray-500 font-medium break-words">{{ tipoLabel(p) }}</p>
@@ -79,7 +78,6 @@
             </div>
             <!-- Ubicación -->
             <div class="flex items-start gap-3 p-3.5">
-              <span class="text-xl leading-none mt-0.5">📍</span>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-extrabold text-[#170B3D]">Ubicación</p>
                 <p class="text-xs text-gray-500 font-medium break-words whitespace-normal">{{ p.ubicacion_direccion || p.direccion || 'Sin dirección' }}</p>
@@ -91,7 +89,7 @@
             </div>
             <!-- Descripción -->
             <div class="flex items-start gap-3 p-3.5">
-              <span class="text-xl leading-none mt-0.5">📄</span>
+              <span class="text-xl leading-none mt-0.5"></span>
               <div class="min-w-0">
                 <p class="text-sm font-extrabold text-[#170B3D]">Descripción</p>
                 <p class="text-xs text-gray-500 font-medium break-words whitespace-normal">{{ p.descripcion || 'Sin descripción' }}</p>
@@ -99,10 +97,10 @@
             </div>
             <!-- Archivos adjuntos / foto o video (click = ver en grande) -->
             <div class="flex items-start gap-3 p-3.5">
-              <span class="text-xl leading-none mt-0.5">📎</span>
+              <span class="text-xl leading-none mt-0.5"></span>
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-extrabold text-[#170B3D]">Archivos adjuntos</p>
-                <p class="text-xs text-gray-500 font-medium">{{ contarFotos(p) }} · Toca para ampliar 🔍</p>
+                <p class="text-xs text-gray-500 font-medium">{{ contarFotos(p) }} · Toca para ampliar </p>
                 <!-- Miniatura imagen: click abre visor grande -->
                 <button *ngIf="fotoDe(p) && !esVideo(fotoDe(p))" type="button" (click)="abrirEvidencia(fotoDe(p))"
                   title="Ver imagen en grande"
@@ -117,7 +115,7 @@
                   title="Ver video en grande"
                   class="mt-2 group relative block rounded-xl overflow-hidden border border-gray-200 shadow-xs w-40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
                   <video [src]="fotoDe(p)" class="w-40 h-28 object-cover pointer-events-none" preload="metadata" muted playsinline></video>
-                  <span class="absolute inset-0 bg-[#170B3D]/30 flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform">▶️</span>
+                  <span class="absolute inset-0 bg-[#170B3D]/30 flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform">▶</span>
                 </button>
               </div>
             </div>
@@ -126,8 +124,8 @@
           <!-- META ADMIN: fechas + asignado -->
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between bg-gray-50/60 border border-gray-100 rounded-2xl px-4 py-3">
             <div class="text-[11px] text-gray-500 font-medium space-y-1">
-              <p>🗓️ <span class="font-bold text-gray-600">Reportado:</span> {{ formatearFecha(p.fecha) }}</p>
-              <p *ngIf="p.fecha_asignacion">✅ <span class="font-bold text-gray-600">Asignado el:</span> {{ formatearFecha(p.fecha_asignacion) }}</p>
+              <p> <span class="font-bold text-gray-600">Reportado:</span> {{ formatearFecha(p.fecha) }}</p>
+              <p *ngIf="p.fecha_asignacion"><span class="font-bold text-gray-600">Asignado el:</span> {{ formatearFecha(p.fecha_asignacion) }}</p>
               <p *ngIf="nombreAsignado(p)" class="font-bold text-[#4141a5]">
                 👨‍⚕️ Asignado a: {{ nombreAsignado(p) }}
               </p>
@@ -201,13 +199,12 @@
           <div>
             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">4. Agregar fotos o videos</label>
             <label class="border-2 border-dashed border-gray-300 hover:border-[#4141a5] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-[#4141a5]/5 transition-all group">
-              <span class="text-2xl mb-1 group-hover:scale-110 transition-transform">📷</span>
+              <span class="text-2xl mb-1 group-hover:scale-110 transition-transform"></span>
               <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Subir archivo</span>
               <span class="text-[11px] text-gray-400 mt-0.5">Formatos de imagen o video</span>
               <input type="file" (change)="onFileSelected($event)" accept="image/*,video/*" class="hidden">
             </label>
             <p *ngIf="archivoSeleccionado" class="text-xs text-[#170B3D] font-bold mt-2 flex items-center gap-1.5">
-              <span>📎</span> {{ archivoSeleccionado.name }}
             </p>
           </div>
         </div>
@@ -221,7 +218,7 @@
                 (keyup.enter)="buscarUbicacion()"
                 class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-white text-[#170B3D]">
               <button type="button" (click)="buscarUbicacion()" class="bg-[#4141a5] text-white px-4 py-2.5 rounded-xl hover:bg-[#170B3D] transition font-semibold text-sm">
-                🔍 Buscar
+                 Buscar
               </button>
             </div>
 
@@ -235,58 +232,9 @@
 
             <!-- Campo ubicación -->
             <!-- Campo ubicación -->
-<div class="flex gap-2">
 
-  <input
-    type="text"
-    formControlName="ubicacion"
-    placeholder="Ej: El Centro, La Esmeralda, Popayán..."
-    (keyup.enter)="buscarUbicacion()"
-    class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-           focus:outline-none focus:ring-2 focus:ring-[#4141A5]
-           bg-white text-[#170B3D]">
-
-  <button
-    type="button"
-    (click)="buscarUbicacion()"
-    class="bg-[#4141A5] text-white px-4 py-2.5 rounded-xl
-           hover:bg-[#170B3D] transition font-semibold text-sm">
-
-     Buscar
-  </button>
-
-</div>
 <!-- MAPA -->
-<div class="w-full h-64 bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 shadow-inner">
 
-  <!-- Google Maps -->
-  <iframe
-    *ngIf="mapaUrl"
-    [src]="mapaUrl"
-    width="100%"
-    height="100%"
-    style="border:0;"
-    loading="lazy"
-    allowfullscreen
-    referrerpolicy="no-referrer-when-downgrade">
-  </iframe>
-
-  <!-- Mensaje cuando todavía no hay ubicación -->
-  <div
-    *ngIf="!mapaUrl"
-    class="w-full h-full flex flex-col items-center justify-center text-gray-500 text-xs font-medium gap-1">
-
-    <span class="font-bold text-[#170B3D]">
-      Presiona "Usar mi ubicación"
-    </span>
-
-    <span class="text-gray-400">
-      para mostrar el mapa
-    </span>
-
-  </div>
-
-</div>
 
             <!-- ESTADO UBICACIÓN -->
             <div
@@ -371,7 +319,7 @@
       class="relative bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl w-full p-4 sm:p-5 cursor-default">
       <div class="flex justify-between items-center pb-3 border-b border-gray-100">
         <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-sm">
-          {{ evidenciaEsVideo ? 'Video del caso 🎬' : 'Foto del caso 📷' }}
+          {{ evidenciaEsVideo ? 'Video del caso ' : 'Foto del caso ' }}
         </h4>
         <button type="button" (click)="cerrarEvidencia()"
           class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#4141a5] hover:text-white text-gray-500 font-bold transition active:scale-95 cursor-pointer"
