@@ -1,7 +1,19 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+
+export type UserRole = 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
+
+export interface UserSession {
+  email: string;
+  nombre?: string;
+  apellido?: string;
+  identificacion?: string;
+  id_rol?: number;
+  rol: UserRole;
+  [key: string]: any;
+}
 
 export interface RegistroUsuario {
   email: string;
@@ -32,7 +44,13 @@ export interface RespuestaLogin {
     refresh: string;
   };
   email?: string;
+  identificacion?: string;
+  nombre?: string;
+  apellido?: string;
   id_rol?: number;
+  rol?: string;
+  nombre_rol?: string;
+  usuario?: any;
   [key: string]: any;
 }
 
@@ -154,14 +172,192 @@ export class AuthService {
   private apiUrlespecies = environment.apiUrlespecies;
   private apiUrlMedicamentos = environment.apiUrlMedicamentos;
 
+  // Estado reactivo con Angular Signals
+  private currentUserSignal = signal<UserSession | null>(this.obtenerSesionInicial());
+
+  // Señales públicas de solo lectura
+  public currentUser = this.currentUserSignal.asReadonly();
+  public isAuthenticated = computed(() => !!this.currentUserSignal() || !!localStorage.getItem('token'));
+  public userRole = computed(() => this.currentUserSignal()?.rol ?? this.obtenerRolDesdeToken());
+  public isAdmin = computed(() => {
+    const rol = (this.userRole() || '').toLowerCase();
+    return !rol || rol.includes('admin');
+  });
+  public isVeterinario = computed(() => {
+    const rol = (this.userRole() || '').toLowerCase();
+    return rol.includes('vet');
+  });
+
   constructor(private http: HttpClient) {}
+
+  /**
+   * Extrae el payload en base64 de un token JWT
+   */
+  private extraerPayloadToken(token: string | null): any {
+    if (!token) return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Obtiene el rol directamente decodificando el token JWT si no está en la señal
+   */
+  private obtenerRolDesdeToken(): UserRole {
+    const token = localStorage.getItem('token');
+    if (!token) return 'Administrador';
+    const payload = this.extraerPayloadToken(token);
+    if (!payload) return 'Administrador';
+    const rolRaw = payload.rol ?? payload.nombre_rol ?? payload.role ?? payload.id_rol ?? (payload.is_superuser ? 1 : 2);
+    return this.normalizarRol(rolRaw);
+  }
+
+  /**
+   * Normaliza cualquier formato de rol (números, strings en mayúscula/minúscula)
+   */
+  public normalizarRol(rolRaw: any): UserRole {
+    if (rolRaw === undefined || rolRaw === null || rolRaw === '') {
+      return 'Administrador';
+    }
+
+    const str = String(rolRaw).toLowerCase().trim();
+    if (str.includes('vet')) return 'Veterinario';
+    if (str.includes('jur')) return 'Jurídico';
+    if (str.includes('petic')) return 'Peticionario';
+    if (str.includes('admin')) return 'Administrador';
+
+    const idNum = Number(rolRaw);
+    if (!isNaN(idNum)) {
+      if (idNum === 1) return 'Administrador';
+      if (idNum === 2 || idNum === 3) return 'Veterinario';
+      if (idNum === 4) return 'Peticionario';
+    }
+
+    return 'Administrador';
+  }
+
+  /**
+   * Obtiene la sesión guardada previamente en localStorage o la reconstruye desde el JWT
+   */
+  private obtenerSesionInicial(): UserSession | null {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+
+    const sesionStr = localStorage.getItem('user_session');
+    if (sesionStr) {
+      try {
+        const sesion = JSON.parse(sesionStr) as UserSession;
+        if (sesion && sesion.rol) {
+          sesion.rol = this.normalizarRol(sesion.rol);
+          return sesion;
+        }
+      } catch {}
+    }
+
+    // Si hay token pero no user_session, recuperar desde el token
+    const payload = this.extraerPayloadToken(token);
+    const rolFinal = this.obtenerRolDesdeToken();
+    const sesion: UserSession = {
+      email: payload?.email || payload?.username || 'usuario@vetericano.com',
+      nombre: payload?.nombre || payload?.first_name || '',
+      apellido: payload?.apellido || payload?.last_name || '',
+      identificacion: payload?.identificacion || '',
+      id_rol: payload?.id_rol ? Number(payload.id_rol) : (rolFinal === 'Veterinario' ? 2 : 1),
+      rol: rolFinal
+    };
+    try {
+      localStorage.setItem('user_session', JSON.stringify(sesion));
+    } catch {}
+    return sesion;
+  }
+
+  /**
+   * Verifica si el usuario actual tiene alguno de los roles permitidos (insensible a mayúsculas)
+   */
+  hasRole(allowedRoles: UserRole[]): boolean {
+    const rolActual = (this.userRole() || '').toLowerCase().trim();
+    if (!rolActual) return true; // Si no está especificado, permitir por defecto
+    return allowedRoles.some((r) => {
+      const rLower = String(r).toLowerCase().trim();
+      return rLower === rolActual || rolActual.includes(rLower) || rLower.includes(rolActual);
+    });
+  }
+
+  /**
+   * Limpia toda la sesión activa
+   */
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_session');
+    this.currentUserSignal.set(null);
+  }
 
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
     return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
-    return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales);
+    return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales).pipe(
+      tap((res) => {
+        const token = res.tokens?.access || res['access'] || res['token'];
+        const refreshToken = res.tokens?.refresh || res['refresh'] || res['refresh_token'];
+
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken);
+        }
+
+        const decoded = this.extraerPayloadToken(token);
+
+        const idRolRaw =
+          res.id_rol ??
+          res['idRol'] ??
+          res.usuario?.id_rol ??
+          res['user']?.id_rol ??
+          decoded?.id_rol;
+
+        const rolTextoRaw =
+          res.rol ??
+          res.nombre_rol ??
+          res['nombreRol'] ??
+          res.usuario?.nombre_rol ??
+          res.usuario?.rol ??
+          res['user']?.rol ??
+          decoded?.rol ??
+          decoded?.nombre_rol ??
+          decoded?.role ??
+          (decoded?.is_superuser ? 'Administrador' : undefined);
+
+        const rolFinal = this.normalizarRol(rolTextoRaw ?? idRolRaw);
+
+        const sessionData: UserSession = {
+          email: res.email || res.usuario?.email || res['user']?.email || decoded?.email || credenciales.email,
+          nombre: res.nombre || res.usuario?.nombre || res['user']?.nombre || decoded?.nombre || '',
+          apellido: res.apellido || res.usuario?.apellido || res['user']?.apellido || decoded?.apellido || '',
+          identificacion: res.identificacion || res.usuario?.identificacion || decoded?.identificacion || '',
+          id_rol: idRolRaw ? Number(idRolRaw) : (rolFinal === 'Veterinario' ? 2 : 1),
+          rol: rolFinal
+        };
+
+        localStorage.setItem('user_session', JSON.stringify(sessionData));
+        this.currentUserSignal.set(sessionData);
+      })
+    );
   }
 
   solicitarRecuperacion(email: string): Observable<any> {

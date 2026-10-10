@@ -18,13 +18,11 @@ import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
 import { Proveedores } from './proveedores/proveedores';
-import { authGuard, loginGuard } from './services/auth.guard';
+import { authGuard, loginGuard, roleGuard } from './services/auth.guard';
 import { Compra } from './compra/compra';
 import { Inventario } from './inventario/inventario';
 
-
 export const routes: Routes = [
-
   { path: '', component: Landepage },
   { path: 'register', component: Register, canActivate: [loginGuard] },
   { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent, canActivate: [loginGuard] },
@@ -35,23 +33,29 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canActivateChild: [authGuard],
     children: [
-      { path: '', component: Graficas },
-      { path: 'patologias', component: Patologias },
-      { path: 'examenes-clinicos', component: ExamenesClinicos },
-      { path: 'usuarios-roles', component: UsuariosRoles },
-      { path: 'especies', component: Especies },
-      { path: 'listarmedicamentos', component: Medicamentos },
-      { path: 'crear-medicamentos', component: Medicamentos },
-      { path: 'graficas', component: Graficas },
-      { path: 'voluntarios', component: Voluntarios },
-      { path: 'peticion', component: Peticion },
-      { path: 'eventos-voluntariado', component: EventosVoluntariado },
-      { path: 'adopciones', component: Adopciones },
-      { path: 'acta-seres-sintientes', component: ActaSeresSintientes },
-      { path: 'historia-clinica2', component: HistoriaClinica2Component },
-      { path: 'proveedores', component: Proveedores },
-      { path: 'compras', component: Compra },
-      { path: 'inventario', component: Inventario }
+      // Módulo Administrador / Entrada general
+      { path: '', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'graficas', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'usuarios-roles', component: UsuariosRoles, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'voluntarios', component: Voluntarios, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'eventos-voluntariado', component: EventosVoluntariado, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'adopciones', component: Adopciones, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'proveedores', component: Proveedores, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'compras', component: Compra, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'inventario', component: Inventario, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+
+      // Módulo Veterinario (y Administrador con acceso de supervisión)
+      { path: 'acta-seres-sintientes', component: ActaSeresSintientes, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+      { path: 'historia-clinica2', component: HistoriaClinica2Component, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+
+      // Módulos compartidos / Catálogos clínicos
+      { path: 'patologias', component: Patologias, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'examenes-clinicos', component: ExamenesClinicos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'especies', component: Especies, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'listarmedicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'crear-medicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } }
     ]
   }
 ];
+
