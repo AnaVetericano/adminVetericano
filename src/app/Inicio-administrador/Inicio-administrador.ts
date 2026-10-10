@@ -2,60 +2,49 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
-import { Header } from '../header/header';
-
-
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule, Header],
+  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })
 export class InicioAdministradorComponent {
   private router = inject(Router);
+  public authService = inject(AuthService);
 
   // Control para abrir y cerrar el menú en móviles
   menuAbierto: boolean = true;
 
   // Datos para mostrar en el perfil del sidebar
   adminUser = {
-
     avatarUrl: 'images/logoVet.svg'
   };
-    logoVetWhite = {
-
+  logoVetWhite = {
     avatarUrl: 'images/logoVetWhite.svg'
   };
 
-onLogout(): void {
-  Swal.fire({
-    title: '¿Cerrar sesión?',
-    text: '¿Estás seguro de que deseas cerrar sesión?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sí, cerrar sesión',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#4141A5',
-    cancelButtonColor: '#ffffff',
-    customClass: {
-      cancelButton: '!text-black !border !border-gray-400'
-    }
-  }).then((result) => {
-
-    if (result.isConfirmed) {
-      console.log('Cerrando sesión de usuario');
-
-      // Limpiar tokens para que un access viejo/expirado no quede en
-      // localStorage y rompa el próximo login ("Given token not valid...").
-      localStorage.removeItem('token');
-      localStorage.removeItem('refresh_token');
-
-      this.router.navigate(['/']);
-    }
-
-  });
+  onLogout(): void {
+    Swal.fire({
+      title: '¿Cerrar sesión?',
+      text: '¿Estás seguro de que deseas cerrar sesión?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cerrar sesión',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4141A5',
+      cancelButtonColor: '#ffffff',
+      customClass: {
+        cancelButton: '!text-black !border !border-gray-400'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.authService.logout();
+        this.router.navigate(['/']);
+      }
+    });
+  }
 }
 
-}
