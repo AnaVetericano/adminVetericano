@@ -341,7 +341,7 @@
                           class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
                       ></div>
               <div>
-  <label class="font-bold text-slate-700 block mb-1">MICROCHIP</label>
+  <label class="font-bold text-slate-700 block mb-1">NUMERO DE RADICADO</label>
   <input
     type="text"
     [value]="seguimientoSeleccionado?.microchip || seguimientoSeleccionado?.animales?.[0]?.microchip || ''"
@@ -744,10 +744,9 @@
         <!-- IMAGEN (ESPACIO LISTO PARA TU API) -->
       
 <img
-  [src]="obtenerFotoPaciente(seguimientoSeleccionado)"
+  [src]="seguimientoSeleccionado?.foto || 'images/perro-default.png'"
   class="w-full h-full object-cover object-center"
   alt="Foto del paciente"
-  (error)="imagenNoDisponible($event)"
 >
 
         <!-- BADGE FLOTANTE SUPERIOR IZQUIERDA: ESPECIE -->

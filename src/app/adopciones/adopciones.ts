@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 
 interface Pet {
@@ -17,7 +17,7 @@ interface Pet {
 @Component({
   selector: 'app-adopciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './adopciones.html',
   styleUrl: './adopciones.css',
 })

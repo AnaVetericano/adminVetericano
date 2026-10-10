@@ -48,10 +48,9 @@ imagenNoDisponible(event: Event): void {
     logopop: 'images/Escudo_Popayan.svg'
   };
 
-  pestanaActiva: string = 'consulta';
-
-  // Datos que vienen del backend
+pestanaActiva: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos' = 'consulta';  // Datos que vienen del backend
   seguimientos: any[] = [];
+  
 
   seguimientosFiltrados: any[] = [];
 
@@ -145,9 +144,9 @@ mensajeExamenes: string = '';
   this.cargarSistemasGuardados();
 }
 
-  cambiarPestana(pestana: string) {
-    this.pestanaActiva = pestana;
-  }
+ cambiarPestana(pestana: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos'): void {
+  this.pestanaActiva = pestana;
+}
 
   cargarSeguimientos(): void {
 
