@@ -191,6 +191,7 @@ this.seguimientosFiltrados = [...this.seguimientos];
     });
   }
   
+  
 
   // ==========================================
   // SELECCIONAR ANIMAL
@@ -239,7 +240,147 @@ this.seguimientosFiltrados = [...this.seguimientos];
   console.log('Resultados encontrados:', this.seguimientosFiltrados);
 }
 
+  // ==========================================
+  // CATÁLOGO DE MEDICAMENTOS
+  // ==========================================
+
+  mostrarCatalogoMedicamentos: boolean = false;
+  cargandoMedicamentos: boolean = false;
+  mensajeMedicamentos: string = '';
+
+  medicamentosCatalogo: any[] = [];
+
+  // Medicamentos agregados a la historia clínica
+  medicamentosSeleccionados: any[] = [];
+
+  // Abrir o cerrar el catálogo
+  desplegarMedicamentos(): void {
+    this.mostrarCatalogoMedicamentos =
+      !this.mostrarCatalogoMedicamentos;
+
+    if (
+      this.mostrarCatalogoMedicamentos &&
+      this.medicamentosCatalogo.length === 0
+    ) {
+      this.cargarMedicamentos();
+    }
+  }
+
+  // Consultar el catálogo en el backend
+  cargarMedicamentos(): void {
+    this.cargandoMedicamentos = true;
+    this.mensajeMedicamentos = '';
+
+    this.authService.getMedicamentosCatalogo().subscribe({
+      next: (respuesta: any) => {
+        if (Array.isArray(respuesta)) {
+          this.medicamentosCatalogo = respuesta;
+        } else if (Array.isArray(respuesta?.results)) {
+          this.medicamentosCatalogo = respuesta.results;
+        } else if (Array.isArray(respuesta?.data)) {
+          this.medicamentosCatalogo = respuesta.data;
+        } else {
+          this.medicamentosCatalogo = [];
+        }
+
+        this.cargandoMedicamentos = false;
+        this.cdr.detectChanges();
+      },
+
+      error: (error: any) => {
+        console.error(
+          'Error al cargar el catálogo de medicamentos:',
+          error
+        );
+
+        this.mensajeMedicamentos =
+          'No se pudieron cargar los medicamentos.';
+
+        this.cargandoMedicamentos = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Agregar un medicamento a la historia clínica
+  agregarMedicamento(medicamento: any): void {
+    const nombre =
+      medicamento.nombre ||
+      medicamento.nombre_medicamento ||
+      medicamento.medicamento ||
+      medicamento.nombre_producto ||
+      '';
+
+    const id =
+      medicamento.id_medicamento ??
+      medicamento.id ??
+      medicamento.id_medicamento_catalogo ??
+      null;
+
+    const yaExiste = this.medicamentosSeleccionados.some(
+      (item: any) =>
+        (id !== null && item.id === id) ||
+        (id === null && item.nombre === nombre)
+    );
+
+    if (yaExiste) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Medicamento ya agregado',
+        text: 'Este medicamento ya está en la historia clínica.',
+        confirmButtonColor: '#4141A5'
+      });
+
+      return;
+    }
+
+    this.medicamentosSeleccionados.push({
+      id: id,
+      nombre: nombre || 'Medicamento sin nombre',
+
+      // Datos que pueden venir del catálogo
+      principio_activo:
+        medicamento.principio_activo || '',
+      concentracion:
+        medicamento.concentracion || '',
+      presentacion:
+        medicamento.presentacion || '',
+
+      // Datos de la prescripción
+      dosis: '',
+      via: '',
+      frecuencia: ''
+    });
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Medicamento agregado',
+      text: `${nombre || 'El medicamento'} se agregó correctamente.`,
+      timer: 1400,
+      showConfirmButton: false
+    });
+  }
+
+  // Quitar un medicamento de la historia clínica
+  eliminarMedicamento(indice: number): void {
+    this.medicamentosSeleccionados.splice(indice, 1);
+  }
+
+
   seleccionarSeguimiento(seguimiento: any): void {
+    
+
+  this.seguimientoSeleccionado = seguimiento;
+
+  this.numeroRadicadoActual =
+    seguimiento.numero_radicado ||
+    seguimiento.radicado ||
+    seguimiento.codigo_radicado ||
+    '';
+
+  this.cdr.detectChanges();
+
+
 
     console.log('Animal seleccionado:', seguimiento);
 
@@ -265,6 +406,7 @@ console.log(
   'Propiedades del animal:',
   Object.keys(this.seguimientoSeleccionado?.animales?.[0] || {})
 );
+
 
     console.log('Nombre:', seguimiento?.nombre_paciente);
     console.log('Especie:', seguimiento?.paciente_especie);
@@ -334,6 +476,10 @@ cargarSistemasGuardados(): void {
     console.error('Error al recuperar la evaluación:', error);
   }
 }
+
+
+numeroRadicadoActual: string = '';
+
   
 // ==========================================
 // EXÁMENES CLÍNICOS
