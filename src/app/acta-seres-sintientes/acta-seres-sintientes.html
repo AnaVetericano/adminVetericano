@@ -264,8 +264,8 @@
 >
                     </div>
                 <div>
-                    <label class="font-bold text-slate-700 block mb-1">NO. HISTORIA CLÍNICA *</label>
-                    <input type="text" value="HC - 2026-0842" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold">
+                    <label class="font-bold text-slate-700 block mb-1"> </label>
+                    <input type="text" value="" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold">
                 </div>
                 <div>
                     <label class="font-bold text-slate-700 block mb-1">ESPECIE              /                 RAZA *</label>
@@ -843,7 +843,6 @@
   class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
 >                        </div>
                     </div>
-                  
                 </div>
             </div>
 
@@ -988,18 +987,25 @@
              p-3 hover:bg-emerald-50 hover:border-emerald-300
              transition"
     >
-      <span class="font-semibold text-sm text-slate-800">
-        {{
-          medicamento.nombre ||
-          medicamento.nombre_medicamento ||
-          medicamento.medicamento ||
-          medicamento.nombre_producto ||
-          'Medicamento sin nombre'
-        }}
-      </span>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-semibold text-sm text-slate-800">
+          {{
+            medicamento.nombre ||
+            medicamento.nombre_medicamento ||
+            medicamento.medicamento ||
+            medicamento.nombre_producto ||
+            'Medicamento sin nombre'
+          }}
+        </span>
+        <span *ngIf="medicamento.stockDisponible !== undefined"
+              [ngClass]="medicamento.stockDisponible > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'"
+              class="text-[10px] font-bold px-2 py-0.5 rounded-full border">
+          {{ medicamento.stockDisponible > 0 ? (medicamento.stockDisponible + ' uds en stock') : 'Sin existencias' }}
+        </span>
+      </div>
 
-      <span class="text-xs text-emerald-700 font-semibold">
-        + Agregar
+      <span class="text-xs text-emerald-700 font-semibold shrink-0">
+        + Prescribir
       </span>
     </button>
   </div>
@@ -1014,8 +1020,6 @@
 </div>
 
 <!-- CATÁLOGO DE MEDICAMENTOS -->
-
-
 
                 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -1039,12 +1043,18 @@
            bg-slate-50/50 space-y-2"
   >
     <div class="flex justify-between items-center gap-2">
-      <span
-        class="font-bold text-blue-700 bg-blue-50 px-2 py-1
-               rounded text-[10px]"
-      >
-        Fármaco #{{ i + 1 }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span
+          class="font-bold text-blue-700 bg-blue-50 px-2 py-1
+                 rounded text-[10px]"
+        >
+          Fármaco #{{ i + 1 }}
+        </span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+              [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'">
+          Stock: {{ medicamento.stockDisponible ?? 0 }} uds
+        </span>
+      </div>
 
       <button
         type="button"
@@ -1143,6 +1153,58 @@
         >
       </div>
     </div>
+
+    <!-- SECCIÓN DE ADMINISTRACIÓN REAL Y DESCUENTO DE INVENTARIO -->
+    <div class="mt-3 pt-3 border-t border-slate-200 space-y-2">
+      <div class="flex items-center justify-between">
+        <label class="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+          Administración Real
+        </label>
+        <span class="text-[10px] font-bold" [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'text-emerald-700' : 'text-rose-600'">
+          Disponible: {{ medicamento.stockDisponible ?? 0 }} uds
+        </span>
+      </div>
+
+      <!-- Si YA fue administrado -->
+      <div *ngIf="medicamento.administrado" class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+        <div class="flex items-center gap-1.5 font-bold">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+          <span>Administrado: {{ medicamento.cantidadEfectivaAdministrada }} uds</span>
+        </div>
+        <span class="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded-md border border-emerald-300">
+          ✓ Descontado de inventario
+        </span>
+      </div>
+
+      <!-- Si NO ha sido administrado aún -->
+      <div *ngIf="!medicamento.administrado" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+        <div class="flex items-center gap-2 flex-1">
+          <span class="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">Cant. aplicada:</span>
+          <input
+            type="number"
+            min="1"
+            [max]="medicamento.stockDisponible || 9999"
+            [(ngModel)]="medicamento.cantidadAAdministrar"
+            placeholder="1"
+            class="w-16 bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs font-bold text-center text-slate-800 focus:bg-white focus:border-[#4141A5]"
+          >
+          <span class="text-[11px] text-slate-500 font-semibold">uds</span>
+        </div>
+
+        <button
+          type="button"
+          [disabled]="medicamento.administrando || (medicamento.stockDisponible || 0) <= 0"
+          (click)="registrarAdministracion(medicamento, i)"
+          class="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-xs transition flex items-center justify-center gap-1.5 shrink-0"
+          [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-95' : 'bg-slate-300 cursor-not-allowed text-slate-500'"
+        >
+          <svg *ngIf="medicamento.administrando" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <svg *ngIf="!medicamento.administrando" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{{ medicamento.administrando ? 'Descontando...' : 'Confirmar Administración' }}</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1163,31 +1225,89 @@
                     <span class="text-xs text-blue-600 font-semibold">· VALIDACIÓN LEGAL Y FIRMAS INSTITUCIONALES</span>
                     <h2 class="text-xl font-black text-slate-900 mt-1">03. Aval Profesional y del Acudiente</h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
-                        <h4 class="font-bold text-blue-900 uppercase">MÉDICO VETERINARIO TRATANTE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label>              <input
-  type="text"
-  name="nombreVeterinario"class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
-  [(ngModel)]="nombreVeterinario"
-  readonly
-  placeholder="Nombre del veterinario"
-/></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                    </div>
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
-                        <h4 class="font-bold text-slate-800 uppercase">TUTOR / RECEPTOR RESPONSABLE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input
-  type="text"
-  [(ngModel)]="nombreAcudiente"
-  readonly
-class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input
-  type="text"
- [(ngModel)]="cedulaAcudiente"
-  readonly class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                    </div>
-                </div>
+             
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+  <!-- FIRMA DEL VETERINARIO -->
+  <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+
+    <h4 class="font-bold text-blue-900 uppercase">
+      MÉDICO VETERINARIO TRATANTE
+    </h4>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Nombre Completo
+      </label>
+
+      <input
+        type="text"
+        name="nombreVeterinario"
+        [(ngModel)]="nombreVeterinario"
+        readonly
+        placeholder="Nombre del veterinario"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Tarjeta Profesional (COMVEZCOL)
+      </label>
+
+      <input
+        type="text"
+        name="tarjetaProfesional"
+        [(ngModel)]="tarjetaProfesional"
+        readonly
+        placeholder="Tarjeta profesional"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+  </div>
+
+  <!-- FIRMA DEL TUTOR -->
+  <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+
+    <h4 class="font-bold text-slate-800 uppercase">
+      TUTOR / RECEPTOR RESPONSABLE
+    </h4>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Nombre del Acudiente
+      </label>
+
+      <input
+        type="text"
+        name="nombreAcudiente"
+        [(ngModel)]="nombreAcudiente"
+        readonly
+        placeholder="Nombre del acudiente"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Cédula de Ciudadanía (C.C.)
+      </label>
+
+      <input
+        type="text"
+        name="cedulaAcudiente"
+        [(ngModel)]="cedulaAcudiente"
+        readonly
+        placeholder="Cédula del acudiente"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+  </div>
+
+</div>
+
                 <div class="flex justify-end gap-5 mt-6 pt-4 border-t border-slate-200">
   <button
     type="button"

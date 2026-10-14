@@ -120,7 +120,10 @@ export class ComprasService {
     return this.http.get<Compra>(`${this.baseUrlInventario}compras/${id}/`);
   }
 
-  crearCompra(payload: { id_proveedor: number }): Observable<Compra> {
+  crearCompra(payload: {
+    id_proveedor: number;
+    detalles?: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number }>;
+  }): Observable<Compra> {
     return this.http.post<Compra>(`${this.baseUrlInventario}compras/`, payload);
   }
 
@@ -298,7 +301,7 @@ export class ComprasService {
 
   registrarCompraCompleta(
     id_proveedor: number,
-    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario: number }>,
+    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number }>,
     listaMedicamentos: MedicamentoItem[] = []
   ): Observable<ResultadoRegistroCompra> {
     const obsMedicamentos = (listaMedicamentos && listaMedicamentos.length > 0)
@@ -310,12 +313,12 @@ export class ComprasService {
       medicamentos: obsMedicamentos
     }).pipe(
       switchMap(({ catalogo, medicamentos }) => {
-        // Asegurar IDs para DetalleCompra
+        // Asegurar que cada id_medicamento exista en la tabla medicamentos (catálogo) para la FK
         const resoluciones = detalles.map(d =>
           this.asegurarIdMedicamentoParaDetalle(d.id_medicamento, medicamentos, catalogo).pipe(
             map(idValido => ({
-              ...d,
-              id_medicamento: idValido
+              id_medicamento: idValido,
+              cantidad: Number(d.cantidad)
             }))
           )
         );
@@ -324,44 +327,33 @@ export class ComprasService {
 
         return obsDetallesValidos.pipe(
           switchMap(detallesAsegurados => {
-            return this.crearCompra({ id_proveedor: Number(id_proveedor) }).pipe(
-              switchMap((compraCreada: Compra) => {
-                const idCompra = Number((compraCreada as any).id_compra ?? (compraCreada as any).id);
-                if (!idCompra || isNaN(idCompra)) {
-                  return throwError(() => new Error('No se recibió un ID válido para la compra creada.'));
-                }
+            const payloadBackend = {
+              id_proveedor: Number(id_proveedor),
+              detalles: detallesAsegurados.map(d => ({
+                id_medicamento: Number(d.id_medicamento),
+                cantidad: Number(d.cantidad)
+              }))
+            };
 
-                if (!detallesAsegurados || detallesAsegurados.length === 0) {
-                  return of({ compra: { ...compraCreada, id_compra: idCompra }, detalles: [] });
-                }
+            // Enviamos la compra con sus detalles directamente al endpoint nativo del backend (/api/inventario/compras/)
+            // El backend crea la Compra, DetalleCompra e Inventarios (lote con cantidad_actual) de forma atómica
+            return this.crearCompra(payloadBackend).pipe(
+              map((compraCreada: any) => {
+                const idCompra = Number(compraCreada.id_compra ?? compraCreada.id);
+                const detallesRetornados = (compraCreada.detalles && compraCreada.detalles.length > 0)
+                  ? compraCreada.detalles
+                  : detallesAsegurados.map((d, idx) => ({
+                      id_detalle_compra: idx + 1,
+                      id_compra: idCompra,
+                      id_medicamento: d.id_medicamento,
+                      cantidad: d.cantidad,
+                      precio_unitario: 0
+                    }));
 
-                const peticiones = detallesAsegurados.map(d =>
-                  this.crearDetalleCompra({
-                    id_compra: idCompra,
-                    id_medicamento: Number(d.id_medicamento),
-                    cantidad: Number(d.cantidad),
-                    precio_unitario: Number(d.precio_unitario)
-                  })
-                );
-
-                return forkJoin(peticiones).pipe(
-                  map(detallesCreados => ({
-                    compra: { ...compraCreada, id_compra: idCompra },
-                    detalles: detallesCreados
-                  })),
-                  switchMap((resultado: ResultadoRegistroCompra) =>
-                    this.sincronizarInventariosParaDetalles(resultado.detalles).pipe(
-                      map(() => resultado),
-                      catchError(() => of(resultado))
-                    )
-                  ),
-                  catchError(errDetalle => {
-                    return this.eliminarCompra(idCompra).pipe(
-                      catchError(() => of(null)),
-                      switchMap(() => throwError(() => errDetalle))
-                    );
-                  })
-                );
+                return {
+                  compra: { ...compraCreada, id_compra: idCompra },
+                  detalles: detallesRetornados
+                };
               })
             );
           })
@@ -537,4 +529,223 @@ export class ComprasService {
       switchMap(() => this.eliminarCompra(idCompra))
     );
   }
+
+  // --- Consulta y Descuento Real de Stock para Administración de Medicamentos ---
+
+  /**
+   * Obtiene un mapa con el stock actual real de cada medicamento identificado por su ID.
+   * Utiliza las existencias reales de la tabla Inventarios (cantidad_actual).
+   */
+  obtenerMapaStockMedicamentos(): Observable<{ porId: Map<number, number>; porNombre: Map<string, number> }> {
+    return forkJoin({
+      invs: this.listarInventarios(),
+      dets: this.listarDetallesCompra(),
+      meds: this.listarMedicamentos().pipe(catchError(() => of([]))),
+      cata: this.listarMedicamentosCatalogo().pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ invs, dets, meds, cata }) => {
+        const mapaId = new Map<number, number>();
+        const mapaNombre = new Map<string, number>();
+
+        // Indexar medicamentos por ID y nombre
+        const nombresPorId = new Map<number, string>();
+        (cata || []).forEach((c: any) => {
+          const id = Number(c.id_medicamento ?? c.id);
+          if (!isNaN(id) && c.nombre) {
+            nombresPorId.set(id, c.nombre.trim().toLowerCase());
+          }
+        });
+        (meds || []).forEach((m: any) => {
+          const id = Number(m.id ?? m.id_medicamento);
+          if (!isNaN(id) && m.nombre && !nombresPorId.has(id)) {
+            nombresPorId.set(id, m.nombre.trim().toLowerCase());
+          }
+        });
+
+        // Indexar detalles de compra por su id_detalle_compra
+        const medIdPorDetalle = new Map<number, number>();
+        (dets || []).forEach((d: any) => {
+          const idDet = Number(d.id_detalle_compra ?? d.id);
+          const idMed = Number(d.id_medicamento);
+          if (!isNaN(idDet) && !isNaN(idMed)) {
+            medIdPorDetalle.set(idDet, idMed);
+          }
+        });
+
+        // Sumar existencias de los lotes de inventario (evitando duplicar lotes)
+        const lotesVistos = new Set<number>();
+        (invs || []).forEach((inv: any) => {
+          const idInv = Number(inv.id_inventario ?? inv.id);
+          if (isNaN(idInv) || lotesVistos.has(idInv)) return;
+          lotesVistos.add(idInv);
+
+          const cantActual = Number(inv.cantidad_actual);
+          if (isNaN(cantActual) || cantActual < 0) return;
+
+          const idDet = Number(inv.id_detalle_compra);
+          const idMed = medIdPorDetalle.get(idDet) ?? (inv.id_medicamento ? Number(inv.id_medicamento) : null);
+
+          if (idMed !== null && !isNaN(idMed)) {
+            mapaId.set(idMed, (mapaId.get(idMed) || 0) + cantActual);
+            const nombre = nombresPorId.get(idMed);
+            if (nombre) {
+              mapaNombre.set(nombre, (mapaNombre.get(nombre) || 0) + cantActual);
+            }
+          }
+        });
+
+        return { porId: mapaId, porNombre: mapaNombre };
+      }),
+      catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+    );
+  }
+
+  /**
+   * Obtiene los lotes de inventario reales con stock disponible para un medicamento específico.
+   */
+  obtenerLotesDisponiblesParaMedicamento(idMedicamento: number, nombreMedicamento?: string): Observable<any[]> {
+    return forkJoin({
+      invs: this.listarInventarios(),
+      dets: this.listarDetallesCompra(),
+      cata: this.listarMedicamentosCatalogo().pipe(catchError(() => of([]))),
+      meds: this.listarMedicamentos().pipe(catchError(() => of([])))
+    }).pipe(
+      map(({ invs, dets, cata, meds }) => {
+        const idTarget = Number(idMedicamento);
+        const nombreTarget = (nombreMedicamento || '').trim().toLowerCase();
+
+        // Encontrar IDs de detalles de compra asociados a este medicamento
+        const idsDetallesValidos = new Set<number>();
+
+        (dets || []).forEach((d: any) => {
+          const idDet = Number(d.id_detalle_compra ?? d.id);
+          const idMedDet = Number(d.id_medicamento);
+
+          let coincide = (!isNaN(idTarget) && idMedDet === idTarget);
+
+          // Si hay nombre, verificar si coincide en catálogo
+          if (!coincide && nombreTarget) {
+            const medEnCata = (cata || []).find((c: any) => Number(c.id_medicamento ?? c.id) === idMedDet);
+            if (medEnCata && (medEnCata.nombre || '').trim().toLowerCase() === nombreTarget) {
+              coincide = true;
+            }
+            const medEnMeds = (meds || []).find((m: any) => Number(m.id ?? m.id_medicamento) === idMedDet);
+            if (medEnMeds && (medEnMeds.nombre || '').trim().toLowerCase() === nombreTarget) {
+              coincide = true;
+            }
+          }
+
+          if (coincide && !isNaN(idDet)) {
+            idsDetallesValidos.add(idDet);
+          }
+        });
+
+        // Filtrar lotes de inventario con stock disponible
+        const lotesValidos: any[] = [];
+        const lotesVistos = new Set<number>();
+
+        (invs || []).forEach((inv: any) => {
+          const idInv = Number(inv.id_inventario ?? inv.id);
+          if (isNaN(idInv) || lotesVistos.has(idInv)) return;
+
+          const idDet = Number(inv.id_detalle_compra);
+          const cantActual = Number(inv.cantidad_actual);
+
+          const esDeEsteMed = idsDetallesValidos.has(idDet) ||
+            (!isNaN(idTarget) && Number(inv.id_medicamento) === idTarget);
+
+          if (esDeEsteMed && !isNaN(cantActual) && cantActual > 0) {
+            lotesVistos.add(idInv);
+            lotesValidos.push({
+              ...inv,
+              id_inventario: idInv,
+              cantidad_actual: cantActual
+            });
+          }
+        });
+
+        // Ordenar por fecha de vencimiento más próxima (FIFO) si existe, o por id_inventario
+        lotesValidos.sort((a, b) => {
+          if (a.fecha_vencimiento && b.fecha_vencimiento) {
+            return a.fecha_vencimiento.localeCompare(b.fecha_vencimiento);
+          }
+          if (a.fecha_vencimiento) return -1;
+          if (b.fecha_vencimiento) return 1;
+          return a.id_inventario - b.id_inventario;
+        });
+
+        return lotesValidos;
+      })
+    );
+  }
+
+  /**
+   * Descuenta stock físico de los lotes de inventario de un medicamento.
+   * Utiliza exclusivamente la operación real PATCH en /api/inventario/inventarios/{id}/.
+   * Valida stock suficiente y no permite sobregiros.
+   */
+  descontarStockMedicamento(
+    idMedicamento: number,
+    cantidadADescontar: number,
+    nombreMedicamento?: string
+  ): Observable<{ exito: boolean; descontado: number; restante: number }> {
+    const cantNum = Number(cantidadADescontar);
+    if (isNaN(cantNum) || cantNum <= 0) {
+      return throwError(() => new Error('La cantidad a administrar debe ser un número mayor a cero.'));
+    }
+
+    return this.obtenerLotesDisponiblesParaMedicamento(idMedicamento, nombreMedicamento).pipe(
+      switchMap((lotesDisponibles: any[]) => {
+        const totalDisponible = lotesDisponibles.reduce((sum, l) => sum + (Number(l.cantidad_actual) || 0), 0);
+
+        if (totalDisponible <= 0) {
+          return throwError(() => new Error(`No hay existencias disponibles en inventario para este medicamento.`));
+        }
+
+        if (cantNum > totalDisponible) {
+          return throwError(() => new Error(
+            `Stock insuficiente. Intentas administrar ${cantNum} uds, pero solo quedan ${totalDisponible} uds disponibles en inventario.`
+          ));
+        }
+
+        // Distribuir el descuento entre los lotes (consumir por orden de vencimiento/lote)
+        let pendientePorDescontar = cantNum;
+        const operacionesActualizacion: Observable<any>[] = [];
+
+        for (const lote of lotesDisponibles) {
+          if (pendientePorDescontar <= 0) break;
+
+          const disponibleEnLote = Number(lote.cantidad_actual) || 0;
+          const aDescontarDeEsteLote = Math.min(disponibleEnLote, pendientePorDescontar);
+          const nuevaCantidadLote = disponibleEnLote - aDescontarDeEsteLote;
+          const nuevoEstado = nuevaCantidadLote <= 0 ? 'Agotado' : (lote.estado || 'Disponible');
+
+          operacionesActualizacion.push(
+            this.actualizarInventario(lote.id_inventario, {
+              cantidad_actual: nuevaCantidadLote,
+              estado: nuevoEstado
+            }).pipe(
+              switchMap(res => {
+                if (res === null) {
+                  return throwError(() => new Error(`Error del servidor al actualizar lote #${lote.id_inventario}`));
+                }
+                return of(res);
+              })
+            )
+          );
+
+          pendientePorDescontar -= aDescontarDeEsteLote;
+        }
+
+        return forkJoin(operacionesActualizacion).pipe(
+          map(() => ({
+            exito: true,
+            descontado: cantNum,
+            restante: totalDisponible - cantNum
+          }))
+        );
+      })
+    );
+  }
 }
+
