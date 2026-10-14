@@ -91,20 +91,28 @@ export class Inventario implements OnInit {
       }
     });
 
-    // Agrupar los lotes de la tabla inventarios por id_detalle_compra
+    // Agrupar los lotes de la tabla inventarios por id_detalle_compra y por id_medicamento
     // En inventarios es donde reside la cantidad_actual (stock físico real de la clínica)
     const invPorDetalle = new Map<number, any[]>();
+    const invPorMedicamento = new Map<number, any[]>();
     (invs || []).forEach((inv: any) => {
       const idDet = Number(inv.id_detalle_compra);
       if (!isNaN(idDet) && idDet > 0) {
         if (!invPorDetalle.has(idDet)) invPorDetalle.set(idDet, []);
         invPorDetalle.get(idDet)!.push(inv);
       }
+      const idMed = Number(inv.id_medicamento);
+      if (!isNaN(idMed) && idMed > 0) {
+        if (!invPorMedicamento.has(idMed)) invPorMedicamento.set(idMed, []);
+        invPorMedicamento.get(idMed)!.push(inv);
+      }
     });
 
+    // Conjunto global para asegurar que NINGÚN lote se cuente dos veces
+    const lotesGlobalesContados = new Set<number>();
     const mapa = new Map<string, any>();
 
-    // 1. Procesar todos los detalles de compras
+    // 1. Procesar todos los detalles de compras agrupando por medicamento (ID real preferido)
     detMap.forEach((d: any) => {
       const idMed = this.num(d.id_medicamento);
       const med = idMed !== null ? medMap.get(idMed) : null;
@@ -151,42 +159,68 @@ export class Inventario implements OnInit {
 
       if (com?.fecha && (!g.ultima || com.fecha > g.ultima)) g.ultima = com.fecha;
 
-      // Buscar stock real en la tabla inventarios vinculada al detalle
+      // Relacionar cada detalle de compra con su registro de inventario correspondiente
       const lotes = invPorDetalle.get(idDet) || [];
       if (lotes.length > 0) {
-        g.tieneLoteInventario = true;
         lotes.forEach((invItem: any) => {
           const idInv = Number(invItem.id_inventario ?? invItem.id);
-          if (!isNaN(idInv) && !g.idInvs.includes(idInv)) {
-            g.idInvs.push(idInv);
+          if (!isNaN(idInv) && !lotesGlobalesContados.has(idInv)) {
+            lotesGlobalesContados.add(idInv);
+            g.tieneLoteInventario = true;
+            if (!g.idInvs.includes(idInv)) g.idInvs.push(idInv);
+
+            // Regla: Para mostrar existencias, utilizar Inventarios.cantidad_actual
+            const cantActual = Number(invItem.cantidad_actual);
+            if (!isNaN(cantActual) && cantActual >= 0) {
+              g.stockActual += cantActual;
+            }
+            if (!g.vencimiento && invItem.fecha_vencimiento) {
+              g.vencimiento = invItem.fecha_vencimiento;
+            }
+            if (!g.refInv) g.refInv = invItem;
           }
-          const cantActual = Number(invItem.cantidad_actual);
-          if (!isNaN(cantActual)) {
-            g.stockActual += cantActual;
-          }
-          if (!g.vencimiento && invItem.fecha_vencimiento) {
-            g.vencimiento = invItem.fecha_vencimiento;
-          }
-          if (!g.refInv) g.refInv = invItem;
         });
-      } else {
-        // Si aún no se ha creado registro en inventarios, la cantidad inicial es la comprada
-        g.stockActual += cantComprada;
+      }
+      // REGLA OBLIGATORIA: Si NO existe registro de inventario, NO usar cantComprada como stock actual
+      // ni inventar una cantidad. Se deja tieneLoteInventario en false si no hay lotes válidos.
+    });
+
+    // 2. Revisar si hay lotes vinculados directamente por id_medicamento que falten por sumar
+    invPorMedicamento.forEach((lotes, idMed) => {
+      const clave = String(idMed);
+      if (mapa.has(clave)) {
+        const g = mapa.get(clave);
+        lotes.forEach((invItem: any) => {
+          const idInv = Number(invItem.id_inventario ?? invItem.id);
+          if (!isNaN(idInv) && !lotesGlobalesContados.has(idInv)) {
+            lotesGlobalesContados.add(idInv);
+            g.tieneLoteInventario = true;
+            if (!g.idInvs.includes(idInv)) g.idInvs.push(idInv);
+            const cantActual = Number(invItem.cantidad_actual);
+            if (!isNaN(cantActual) && cantActual >= 0) {
+              g.stockActual += cantActual;
+            }
+            if (!g.vencimiento && invItem.fecha_vencimiento) {
+              g.vencimiento = invItem.fecha_vencimiento;
+            }
+            if (!g.refInv) g.refInv = invItem;
+          }
+        });
       }
     });
 
-    // 2. Procesar lotes de inventarios huérfanos o no vinculados a detalles conocidos
+    // 3. Procesar lotes de inventarios huérfanos o no vinculados a detalles conocidos
     (invs || []).forEach((inv: any) => {
-      const idDet = Number(inv.id_detalle_compra);
       const idInv = Number(inv.id_inventario ?? inv.id);
-      if (!isNaN(idInv) && (!idDet || !detMap.has(idDet))) {
+      if (!isNaN(idInv) && !lotesGlobalesContados.has(idInv)) {
+        lotesGlobalesContados.add(idInv);
         const cantActual = Number(inv.cantidad_actual) || 0;
         const clave = `inv_${idInv}`;
         if (!mapa.has(clave)) {
           mapa.set(clave, {
-            idMed: null,
+            idMed: inv.id_medicamento ? Number(inv.id_medicamento) : null,
             nombre: `Lote #${idInv}`,
-            descripcion: inv.estado || 'Lote de inventario',
+            descripcion: inv.estado || 'Lote de inventario sin compra vinculada',
             tipo: 'General',
             totalComprado: cantActual,
             stockActual: cantActual,
@@ -205,11 +239,27 @@ export class Inventario implements OnInit {
     });
 
     const lista = Array.from(mapa.values()).map((g: any) => {
-      const stock = Math.max(0, g.stockActual);
+      const sinLote = !g.tieneLoteInventario;
+      const stock = sinLote ? 0 : Math.max(0, g.stockActual);
       const totalComprado = g.totalComprado;
-      const consumidas = Math.max(0, totalComprado - stock);
-      const estado = stock <= 0 ? 'agotado' : (stock <= this.umbralBajo ? 'bajo' : 'disponible');
-      const estadoDb = stock <= 0 ? 'Agotado' : (g.refInv?.estado || 'Disponible');
+      const consumidas = sinLote ? 0 : Math.max(0, totalComprado - stock);
+
+      let estado = 'disponible';
+      let estadoDb = 'Disponible';
+
+      if (sinLote) {
+        estado = 'sin_lote';
+        estadoDb = 'Sin lote asignado';
+      } else if (stock <= 0) {
+        estado = 'agotado';
+        estadoDb = 'Agotado';
+      } else if (stock <= this.umbralBajo) {
+        estado = 'bajo';
+        estadoDb = g.refInv?.estado || 'Stock bajo';
+      } else {
+        estado = 'disponible';
+        estadoDb = g.refInv?.estado || 'Disponible';
+      }
 
       const idInvTexto = g.idInvs.length > 0 ? g.idInvs.join(', ') : '—';
       const idDetTexto = g.idDetalles.length > 0 ? g.idDetalles.join(', ') : '—';
@@ -226,6 +276,7 @@ export class Inventario implements OnInit {
         descripcion: g.descripcion,
         tipo: g.tipo,
         stock,
+        sinLote,
         cantidadEntrada: totalComprado,
         consumidas,
         entradas: g.entradas,
@@ -264,8 +315,9 @@ export class Inventario implements OnInit {
 
   limpiar(): void { this.filtro = ''; this.filtroEstado = 'todos'; this.filas = [...this.filasBase]; }
   get totalRef(): number { return this.filasBase.length; }
-  get totalUnd(): number { return this.filasBase.reduce((s: number, f: any) => s + (Number(f.stock) || 0), 0); }
+  get totalUnd(): number { return this.filasBase.filter(f => !f.sinLote).reduce((s: number, f: any) => s + (Number(f.stock) || 0), 0); }
   get totalDisp(): number { return this.filasBase.filter((f: any) => f.estado === 'disponible').length; }
   get totalBajo(): number { return this.filasBase.filter((f: any) => f.estado === 'bajo').length; }
   get totalAgot(): number { return this.filasBase.filter((f: any) => f.estado === 'agotado').length; }
+  get totalSinLote(): number { return this.filasBase.filter((f: any) => f.sinLote).length; }
 }

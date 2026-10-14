@@ -2,8 +2,10 @@ import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth';
+import { ComprasService } from '../services/compras.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 
@@ -262,6 +264,8 @@ guardarExpedienteCompleto(): void {
   mensajeMedicamentos = '';
   medicamentosCatalogo: any[] = [];
   medicamentosSeleccionados: any[] = [];
+  mapaStockPorId: Map<number, number> = new Map();
+  mapaStockPorNombre: Map<string, number> = new Map();
 
   // Catálogo y selección de exámenes
   mostrarExamenes = false;
@@ -288,8 +292,9 @@ guardarExpedienteCompleto(): void {
 
   constructor(
     private authService: AuthService,
+    private comprasService: ComprasService,
     private cdr: ChangeDetectorRef,
-     private http: HttpClient
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -477,17 +482,37 @@ seleccionarSeguimiento(seguimiento: any): void {
     this.cargandoMedicamentos = true;
     this.mensajeMedicamentos = '';
 
-    this.authService.getMedicamentosCatalogo().subscribe({
-      next: (respuesta: any) => {
-        if (Array.isArray(respuesta)) {
-          this.medicamentosCatalogo = respuesta;
-        } else if (Array.isArray(respuesta?.results)) {
-          this.medicamentosCatalogo = respuesta.results;
-        } else if (Array.isArray(respuesta?.data)) {
-          this.medicamentosCatalogo = respuesta.data;
-        } else {
-          this.medicamentosCatalogo = [];
-        }
+    forkJoin({
+      catalogo: this.authService.getMedicamentosCatalogo().pipe(
+        map((respuesta: any) => {
+          if (Array.isArray(respuesta)) return respuesta;
+          if (Array.isArray(respuesta?.results)) return respuesta.results;
+          if (Array.isArray(respuesta?.data)) return respuesta.data;
+          return [];
+        }),
+        catchError(() => of([]))
+      ),
+      stock: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+        catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      )
+    }).subscribe({
+      next: ({ catalogo, stock }) => {
+        this.mapaStockPorId = stock.porId;
+        this.mapaStockPorNombre = stock.porNombre;
+
+        this.medicamentosCatalogo = catalogo.map((med: any) => {
+          const id = Number(med?.id_medicamento ?? med?.id);
+          const nombreKey = String(med?.nombre || '').trim().toLowerCase();
+          const stockDisponible = (!isNaN(id) && stock.porId.has(id))
+            ? (stock.porId.get(id) ?? 0)
+            : (stock.porNombre.get(nombreKey) ?? 0);
+
+          return {
+            ...med,
+            id_medicamento: id,
+            stockDisponible
+          };
+        });
 
         if (this.medicamentosCatalogo.length === 0) {
           this.mensajeMedicamentos = 'El catálogo no contiene medicamentos.';
@@ -497,14 +522,46 @@ seleccionarSeguimiento(seguimiento: any): void {
         this.cdr.detectChanges();
       },
       error: (error: any) => {
-        console.error('Error al cargar el catálogo de medicamentos:', error);
+        console.error('Error al cargar el catálogo de medicamentos y stock:', error);
         this.mensajeMedicamentos = 'No se pudieron cargar los medicamentos.';
         this.cargandoMedicamentos = false;
         this.cdr.detectChanges();
       }
     });
   }
+
+  recargarStockMedicamentos(): void {
+    this.comprasService.obtenerMapaStockMedicamentos().subscribe({
+      next: (stock) => {
+        this.mapaStockPorId = stock.porId;
+        this.mapaStockPorNombre = stock.porNombre;
+
+        this.medicamentosCatalogo.forEach((med: any) => {
+          const id = Number(med?.id_medicamento ?? med?.id);
+          const nombreKey = String(med?.nombre || '').trim().toLowerCase();
+          med.stockDisponible = (!isNaN(id) && stock.porId.has(id))
+            ? (stock.porId.get(id) ?? 0)
+            : (stock.porNombre.get(nombreKey) ?? 0);
+        });
+
+        // Actualizar también los no administrados en la lista seleccionada
+        this.medicamentosSeleccionados.forEach((item: any) => {
+          if (!item.administrado) {
+            const id = Number(item.id);
+            const nombreKey = String(item.nombre || '').trim().toLowerCase();
+            item.stockDisponible = (!isNaN(id) && stock.porId.has(id))
+              ? (stock.porId.get(id) ?? 0)
+              : (stock.porNombre.get(nombreKey) ?? 0);
+          }
+        });
+
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
 tarjetaProfesional: string = '';
+
   agregarMedicamento(medicamento: any): void {
     const nombre = String(
       medicamento?.nombre ||
@@ -534,6 +591,15 @@ tarjetaProfesional: string = '';
       return;
     }
 
+    const nombreKey = String(nombre).trim().toLowerCase();
+    const stock = medicamento?.stockDisponible !== undefined
+      ? medicamento.stockDisponible
+      : ((id !== null && this.mapaStockPorId.has(Number(id)))
+          ? (this.mapaStockPorId.get(Number(id)) ?? 0)
+          : (this.mapaStockPorNombre.get(nombreKey) ?? 0));
+
+    // REGLA OBLIGATORIA: Agregar a tratamientos NO descuenta stock.
+    // Solo vincula el medicamento y deja listo el formulario de administración.
     this.medicamentosSeleccionados.push({
       id,
       nombre: nombre || 'Medicamento sin nombre',
@@ -542,19 +608,135 @@ tarjetaProfesional: string = '';
       presentacion: medicamento?.presentacion || '',
       dosis: '',
       via: '',
-      frecuencia: ''
+      frecuencia: '',
+      stockDisponible: stock,
+      cantidadAAdministrar: 1,
+      administrado: false,
+      cantidadEfectivaAdministrada: 0,
+      administrando: false
     });
 
     Swal.fire({
       icon: 'success',
-      title: 'Medicamento agregado',
-      text: `${nombre || 'El medicamento'} se agregó correctamente.`,
-      timer: 1400,
+      title: 'Medicamento agregado a prescripción',
+      text: `${nombre || 'El medicamento'} se agregó a la lista. Para descontarlo de inventario, confirma su administración real en la tarjeta.`,
+      timer: 1800,
       showConfirmButton: false
     });
   }
 
+  registrarAdministracion(med: any, indice: number): void {
+    if (med.administrado) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Ya administrado',
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado de inventario.`,
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    const cantidad = Number(med.cantidadAAdministrar);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cantidad inválida',
+        text: 'Ingresa una cantidad numérica mayor a 0 para registrar la administración.',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    const stockActual = Number(med.stockDisponible) || 0;
+    if (stockActual <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Sin existencias en inventario',
+        text: `No hay unidades disponibles en inventario para el medicamento "${med.nombre}".`,
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    if (cantidad > stockActual) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Stock insuficiente',
+        text: `Intentas administrar ${cantidad} uds, pero solo quedan ${stockActual} uds disponibles en el inventario.`,
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    const nombreMed = med.nombre || 'el medicamento';
+
+    Swal.fire({
+      title: '¿Confirmar administración y descuento?',
+      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades directamente de los lotes activos en el inventario de la clínica.</span>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, confirmar y descontar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#64748b'
+    }).then((resultado) => {
+      if (!resultado.isConfirmed) return;
+
+      med.administrando = true;
+      this.cdr.detectChanges();
+
+      this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).subscribe({
+        next: (resp) => {
+          med.administrando = false;
+          med.administrado = true;
+          med.cantidadEfectivaAdministrada = cantidad;
+          med.stockDisponible = resp.restante;
+          this.recargarStockMedicamentos();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: '¡Administración registrada con éxito!',
+            html: `Se descontaron <b>${cantidad} uds</b> de inventario.<br>Stock restante en CBA: <b>${resp.restante} uds</b>.`,
+            confirmButtonColor: '#4141A5'
+          });
+        },
+        error: (err) => {
+          med.administrando = false;
+          this.cdr.detectChanges();
+          console.error('Error al descontar stock:', err);
+          const msg = err?.message || 'No fue posible registrar la administración en inventario.';
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al descontar inventario',
+            text: msg,
+            confirmButtonColor: '#4141A5'
+          });
+        }
+      });
+    });
+  }
+
   eliminarMedicamento(indice: number): void {
+    const med = this.medicamentosSeleccionados[indice];
+    if (med && med.administrado) {
+      Swal.fire({
+        icon: 'warning',
+        title: '¿Quitar de la lista?',
+        html: `Atención: Ya se registró la administración y se descontaron <b>${med.cantidadEfectivaAdministrada} uds</b> de <b>${med.nombre}</b> en el inventario físico.<br><br>¿Deseas quitar este tratamiento del formulario?`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, quitar',
+        cancelButtonText: 'Conservar',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#4141A5'
+      }).then((res) => {
+        if (res.isConfirmed) {
+          this.medicamentosSeleccionados.splice(indice, 1);
+          this.cdr.detectChanges();
+        }
+      });
+      return;
+    }
     this.medicamentosSeleccionados.splice(indice, 1);
   }
 
