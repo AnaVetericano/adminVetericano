@@ -736,7 +736,7 @@
             <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
         </div>
         <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-2.5 py-1 rounded-xl font-bold border border-blue-100">
-            HC - 2026-0842
+            
         </span>
     </div>
 
@@ -754,13 +754,13 @@
         <!-- BADGE FLOTANTE SUPERIOR IZQUIERDA: ESPECIE -->
         <div class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
           
-            <span>{{ seguimientoSeleccionado?.paciente_especie || 'Canino' }}</span>
+            <span>{{ seguimientoSeleccionado?.paciente_especie  }}</span>
         </div>
 
         <!-- BADGE FLOTANTE INFERIOR DERECHA: SEXO Y EDAD -->
         <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
             
-            <span>{{ seguimientoSeleccionado?.paciente_sexo || 'Macho' }} · {{ seguimientoSeleccionado?.paciente_edad || '3 años' }}</span>
+            <span>{{ seguimientoSeleccionado?.paciente_sexo  }} · {{ seguimientoSeleccionado?.paciente_edad  }}</span>
         </div>
     </div>
 
@@ -783,7 +783,6 @@
 
     <!-- ESTADO DE SINCRONIZACIÓN -->
     <div class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
-        <span>✓</span>
         <span>Sincronizada con Historia Clínica</span>
     </div>
 </div>
@@ -799,7 +798,6 @@
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="flex justify-between items-center">
                     <div>
-                        <span class="text-xs text-blue-600 font-semibold">HOJA 5 DE 8 · DICTAMEN PATOLÓGICO</span>
                         <h2 class="text-xl font-black text-slate-900 mt-1">01. Lo que Tiene el Paciente (Diagnóstico Final)</h2>
                     </div>
                     <div class="border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold px-4 py-2 rounded-xl text-center">
@@ -829,38 +827,29 @@
 <input
   type="text"
   [(ngModel)]="problemasClinicos[1]"
-  placeholder="Problema clínico 1"
+  placeholder="Problema clínico 2"
   class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
 >
 <input
   type="text"
   [(ngModel)]="problemasClinicos[2]"
-  placeholder="Problema clínico 1"
+  placeholder="Problema clínico 3"
   class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
 >
 <input
   type="text"
   [(ngModel)]="problemasClinicos[3]"
-  placeholder="Problema clínico 1"
+  placeholder="Problema clínico 4"
   class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
 >                        </div>
                     </div>
-                    <div class="space-y-2">
-                        <h4 class="text-[11px] font-bold text-slate-700">DIAGNÓSTICOS DIFERENCIALES (1 AL 7)</h4>
-                        <div class="space-y-2 text-xs">
-                            <input type="text" value="1. Herida traumática profunda por corte" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="2. Infección bacteriana secundaria localizada" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="3. Erliquiosis canina subclínica" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="4. Deshidratación leve por inapetencia" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                        </div>
-                    </div>
+                  
                 </div>
             </div>
 
             <!-- HOJA 6: Lo que se le va a hacer (Plan de Intervención) -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div>
-                    <span class="text-xs text-blue-600 font-semibold">HOJA 6 DE 8 · PLAN TERAPÉUTICO</span>
                     <h2 class="text-xl font-black text-slate-900 mt-1">02. Lo que se le va a Hacer (Procedimientos e Intervención)</h2>
                 </div>
                 <div class="space-y-1">
