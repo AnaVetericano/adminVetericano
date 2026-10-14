@@ -554,8 +554,12 @@
             <div class="space-y-1">
                 <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">DESCRIPCIÓN DE HALLAZGOS EN PRUEBAS DIAGNÓSTICAS</label>
                 <div class="relative">
-                    <textarea rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white transition"></textarea>
-                </div>
+<textarea
+  rows="3"
+  [(ngModel)]="descripcionHallazgos"
+  class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700"
+  placeholder="Describe los hallazgos de las pruebas"
+></textarea>                </div>
             </div>
         </div>
 
@@ -805,18 +809,41 @@
 
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-700 uppercase">DIAGNÓSTICO FINAL O CONFIRMATORIO DEL MÉDICO </label>
-                    <textarea rows="2" class="w-full border border-red-200 bg-red-50/20 rounded-xl p-3 text-xs font-bold text-slate-800">Dermatitis traumática infectada de almohadilla anterior izquierda + Parasitismo externo.</textarea>
-                </div>
+<textarea
+  rows="2"
+  [(ngModel)]="diagnosticoFinal"
+  class="w-full border border-red-200 bg-red-50/20 rounded-xl p-3 text-xs font-bold text-slate-800"
+  placeholder="Escribe el diagnóstico final"
+></textarea>                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div class="space-y-2">
                         <h4 class="text-[11px] font-bold text-slate-700">LISTA DE PROBLEMAS CLÍNICOS (1 AL 7)</h4>
                         <div class="space-y-2 text-xs">
-                            <input type="text" value="1. Laceración cutánea en almohadilla carpal izq." class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="2. Claudicación grado II en MII" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="3. Hiporexia de 48 horas" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="4. Presencia moderada de ectoparásitos" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                        </div>
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[0]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>    
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[1]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[2]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[3]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>                        </div>
                     </div>
                     <div class="space-y-2">
                         <h4 class="text-[11px] font-bold text-slate-700">DIAGNÓSTICOS DIFERENCIALES (1 AL 7)</h4>
@@ -838,10 +865,12 @@
                 </div>
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-700 uppercase">PROCEDIMIENTOS CLÍNICOS A REALIZAR </label>
-                    <textarea rows="4" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800">1. Lavado antiséptico quirúrgico y debridación suave del tejido necrótico de la almohadilla.
-2. Vendaje compresivo estéril con cambio cada 48 horas.
-3. Administración de antibioticoterapia oral y analgesia preventiva por 7 días.
-4. Aplicación de antiparasitario externo para erradicación de garrapatas.</textarea>
+              <textarea
+  rows="4"
+  [(ngModel)]="planProcedimientos"
+  class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800"
+  placeholder="Describe los procedimientos clínicos"
+></textarea>
                 </div>
             </div>
         </div>
@@ -1131,8 +1160,12 @@
 
                 <div class="space-y-1 pt-2">
                     <label class="text-[11px] font-bold text-slate-700 uppercase">02. INSUMOS Y MATERIALES UTILIZADOS</label>
-                    <textarea rows="2" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800"></textarea>
-                </div>
+<textarea
+  rows="2"
+  [(ngModel)]="materialesUtilizados"
+  class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800"
+  placeholder="Insumos y materiales utilizados"
+></textarea>                </div>
             </div>
 
             <!-- HOJA 8: Validación Oficial y Firmas -->
@@ -1144,17 +1177,50 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                     <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
                         <h4 class="font-bold text-blue-900 uppercase">MÉDICO VETERINARIO TRATANTE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label><input type="text" value="Dra. María Fernanda Ordoñez Paz" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="MPU-84920-COMVEZCOL" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label>              <input
+  type="text"
+  name="nombreVeterinario"class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+  [(ngModel)]="nombreVeterinario"
+  readonly
+  placeholder="Nombre del veterinario"
+/></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
                     </div>
                     <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
                         <h4 class="font-bold text-slate-800 uppercase">TUTOR / RECEPTOR RESPONSABLE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input type="text" value="Carlos Alberto Muñoz Gómez" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input type="text" value="10.617.842.109" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input
+  type="text"
+  [(ngModel)]="nombreAcudiente"
+  readonly
+class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input
+  type="text"
+ [(ngModel)]="cedulaAcudiente"
+  readonly class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
                     </div>
                 </div>
+                <div class="flex justify-end gap-5 mt-6 pt-4 border-t border-slate-200">
+  <button
+    type="button"
+    (click)="guardarSistemas()"
+    class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700
+           text-white font-semibold text-sm px-6 py-3 rounded-xl
+           shadow-sm transition"
+  >
+   cancelar
+  </button>
+   <button
+  type="button"
+  (click)="guardarExpedienteCompleto()"
+  class="px-6 py-3 rounded-lg bg-[#4141A5] text-white font-semibold hover:bg-[#170B3D] transition"
+>
+  Guardar expediente completo
+</button>
+</div>
+
             </div>
         </div>
+        
 
         <!-- Ficha Lateral Paciente -->
       <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 relative">
@@ -1169,6 +1235,7 @@
             HC - 2026-0842
         </span>
     </div>
+    
 
     <!-- CONTENEDOR DE LA IMAGEN PRINCIPAL CON BADGES FLOTANTES -->
     <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
