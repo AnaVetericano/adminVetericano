@@ -58,77 +58,191 @@ export class Inventario implements OnInit {
     });
     cata.forEach((c: any) => {
       const id = Number(c.id_medicamento ?? c.id);
-      if (!isNaN(id) && !medMap.has(id)) medMap.set(id, { id, nombre: c.nombre, descripcion: c.descripcion, tipo: c.tipo, cantidad_ml: c.cantidad_ml });
+      if (!isNaN(id) && !medMap.has(id)) {
+        medMap.set(id, {
+          id,
+          id_medicamento: id,
+          nombre: c.nombre,
+          descripcion: c.descripcion || c.presentacion,
+          tipo: c.tipo,
+          cantidad_ml: c.cantidad_ml
+        });
+      }
     });
-    // Schema real tabla inventarios: id_inventario, id_detalle_salida, id_detalle_compra, cantidad_actual, fecha_vencimiento, estado
-    // Schema real /inventario/compras/: { id_compra, fecha, id_proveedor }
-    const detMap = new Map<number, any>();
-    dets.forEach((d: any) => detMap.set(Number(d.id_detalle_compra ?? d.id), d));
+
+    // Schema real /inventario/compras/: { id_compra, fecha, id_proveedor, proveedor_nombre }
     const comMap = new Map<number, any>();
     compras.forEach((c: any) => comMap.set(Number(c.id_compra ?? c.id), c));
+
     const proMap = new Map<number, any>();
     provs.forEach((p: any) => proMap.set(Number(p.id_proveedor ?? p.id), p));
 
-    // Fuente de verdad: los detalles de Compras (facturas). El inventario
-    // muestra la suma de cantidad por medicamento; cantidad_actual de la
-    // tabla inventarios solo se usa como referencia de descuadre.
+    // Indexar detalles de compra (tanto los de la API como los embebidos en compras)
+    const detMap = new Map<number, any>();
+    dets.forEach((d: any) => detMap.set(Number(d.id_detalle_compra ?? d.id), d));
+    compras.forEach((c: any) => {
+      if (Array.isArray(c.detalles)) {
+        c.detalles.forEach((d: any) => {
+          const idDet = Number(d.id_detalle_compra ?? d.id);
+          if (!isNaN(idDet) && !detMap.has(idDet)) {
+            detMap.set(idDet, { ...d, id_compra: c.id_compra ?? c.id });
+          }
+        });
+      }
+    });
+
+    // Agrupar los lotes de la tabla inventarios por id_detalle_compra
+    // En inventarios es donde reside la cantidad_actual (stock físico real de la clínica)
+    const invPorDetalle = new Map<number, any[]>();
+    (invs || []).forEach((inv: any) => {
+      const idDet = Number(inv.id_detalle_compra);
+      if (!isNaN(idDet) && idDet > 0) {
+        if (!invPorDetalle.has(idDet)) invPorDetalle.set(idDet, []);
+        invPorDetalle.get(idDet)!.push(inv);
+      }
+    });
+
     const mapa = new Map<string, any>();
-    dets.forEach((d: any) => {
+
+    // 1. Procesar todos los detalles de compras
+    detMap.forEach((d: any) => {
       const idMed = this.num(d.id_medicamento);
       const med = idMed !== null ? medMap.get(idMed) : null;
       const com = comMap.get(Number(d.id_compra));
-      const prov = com ? proMap.get(Number(com.id_proveedor)) : null;
+      const prov = com ? (proMap.get(Number(com.id_proveedor)) || (com.proveedor_nombre ? { nombre: com.proveedor_nombre } : null)) : null;
       const nombre = med?.nombre || (idMed !== null ? `Medicamento #${idMed}` : 'Sin medicamento vinculado');
       const clave = String(idMed ?? nombre);
-      if (!mapa.has(clave)) mapa.set(clave, {
-        idMed, nombre,
-        descripcion: String(med?.descripcion || '').trim() || 'Sin descripción',
-        tipo: String(med?.tipo || 'General'),
-        stock: 0, entradas: 0, comprasSet: new Set<number>(),
-        provs: [] as string[], ultima: '', vencimiento: '',
-        idDetalles: [] as number[], refInv: null as any
-      });
+
+      if (!mapa.has(clave)) {
+        mapa.set(clave, {
+          idMed,
+          nombre,
+          descripcion: String(med?.descripcion || med?.presentacion || '').trim() || 'Sin descripción',
+          tipo: String(med?.tipo || 'General'),
+          totalComprado: 0,
+          stockActual: 0,
+          entradas: 0,
+          comprasSet: new Set<number>(),
+          provs: [] as string[],
+          ultima: '',
+          vencimiento: '',
+          idDetalles: [] as number[],
+          idInvs: [] as number[],
+          refInv: null as any,
+          tieneLoteInventario: false
+        });
+      }
+
       const g = mapa.get(clave);
-      g.stock += this.num(d.cantidad) ?? 0; g.entradas += 1;
-      g.idDetalles.push(Number(d.id_detalle_compra ?? d.id));
+      const cantComprada = this.num(d.cantidad) ?? 0;
+      g.totalComprado += cantComprada;
+      g.entradas += 1;
+
+      const idDet = Number(d.id_detalle_compra ?? d.id);
+      if (!isNaN(idDet) && idDet > 0 && !g.idDetalles.includes(idDet)) {
+        g.idDetalles.push(idDet);
+      }
+
       const idCom = this.num(d.id_compra);
       if (idCom !== null) g.comprasSet.add(idCom);
+
       const pn = prov?.nombre || (com ? `Proveedor #${com.id_proveedor}` : '');
       if (pn && !g.provs.includes(pn)) g.provs.push(pn);
+
       if (com?.fecha && (!g.ultima || com.fecha > g.ultima)) g.ultima = com.fecha;
+
+      // Buscar stock real en la tabla inventarios vinculada al detalle
+      const lotes = invPorDetalle.get(idDet) || [];
+      if (lotes.length > 0) {
+        g.tieneLoteInventario = true;
+        lotes.forEach((invItem: any) => {
+          const idInv = Number(invItem.id_inventario ?? invItem.id);
+          if (!isNaN(idInv) && !g.idInvs.includes(idInv)) {
+            g.idInvs.push(idInv);
+          }
+          const cantActual = Number(invItem.cantidad_actual);
+          if (!isNaN(cantActual)) {
+            g.stockActual += cantActual;
+          }
+          if (!g.vencimiento && invItem.fecha_vencimiento) {
+            g.vencimiento = invItem.fecha_vencimiento;
+          }
+          if (!g.refInv) g.refInv = invItem;
+        });
+      } else {
+        // Si aún no se ha creado registro en inventarios, la cantidad inicial es la comprada
+        g.stockActual += cantComprada;
+      }
     });
-    // Enriquecer con la tabla inventarios: vencimiento + cantidad_actual de referencia
-    const invPorDetalle = new Map<number, any>();
+
+    // 2. Procesar lotes de inventarios huérfanos o no vinculados a detalles conocidos
     (invs || []).forEach((inv: any) => {
       const idDet = Number(inv.id_detalle_compra);
-      if (!isNaN(idDet) && !invPorDetalle.has(idDet)) invPorDetalle.set(idDet, inv);
+      const idInv = Number(inv.id_inventario ?? inv.id);
+      if (!isNaN(idInv) && (!idDet || !detMap.has(idDet))) {
+        const cantActual = Number(inv.cantidad_actual) || 0;
+        const clave = `inv_${idInv}`;
+        if (!mapa.has(clave)) {
+          mapa.set(clave, {
+            idMed: null,
+            nombre: `Lote #${idInv}`,
+            descripcion: inv.estado || 'Lote de inventario',
+            tipo: 'General',
+            totalComprado: cantActual,
+            stockActual: cantActual,
+            entradas: 1,
+            comprasSet: new Set<number>(),
+            provs: [] as string[],
+            ultima: '',
+            vencimiento: inv.fecha_vencimiento || '',
+            idDetalles: [] as number[],
+            idInvs: [idInv],
+            refInv: inv,
+            tieneLoteInventario: true
+          });
+        }
+      }
     });
+
     const lista = Array.from(mapa.values()).map((g: any) => {
-      let vencimiento = '';
-      let refCantidad: number | null = null;
-      let idInvRef: number | null = null;
-      g.idDetalles.forEach((idDet: number) => {
-        const inv = invPorDetalle.get(idDet);
-        if (!inv) return;
-        if (!vencimiento && inv.fecha_vencimiento) vencimiento = inv.fecha_vencimiento;
-        if (idInvRef === null) { idInvRef = Number(inv.id_inventario ?? inv.id) || null; g.refInv = inv; }
-        const rc = Number(inv.cantidad_actual);
-        if (!isNaN(rc)) refCantidad = (refCantidad ?? 0) + rc;
-      });
-      const estado = g.stock <= 0 ? 'agotado' : g.stock <= this.umbralBajo ? 'bajo' : 'disponible';
+      const stock = Math.max(0, g.stockActual);
+      const totalComprado = g.totalComprado;
+      const consumidas = Math.max(0, totalComprado - stock);
+      const estado = stock <= 0 ? 'agotado' : (stock <= this.umbralBajo ? 'bajo' : 'disponible');
+      const estadoDb = stock <= 0 ? 'Agotado' : (g.refInv?.estado || 'Disponible');
+
+      const idInvTexto = g.idInvs.length > 0 ? g.idInvs.join(', ') : '—';
+      const idDetTexto = g.idDetalles.length > 0 ? g.idDetalles.join(', ') : '—';
+      const facturaTexto = g.comprasSet.size > 0
+        ? Array.from(g.comprasSet).map(id => `#${id}`).join(', ')
+        : '—';
+
       return {
-        idInv: idInvRef, idDetComp: g.idDetalles.length === 1 ? g.idDetalles[0] : null, idDetSal: null,
-        idMed: g.idMed, nombre: g.nombre, descripcion: g.descripcion, tipo: g.tipo,
-        stock: g.stock, entradas: g.entradas, numCompras: g.comprasSet.size,
-        vencimiento, estado, estadoDb: g.refInv?.estado || '—',
+        idInv: idInvTexto,
+        idDetComp: idDetTexto,
+        idDetSal: null,
+        idMed: g.idMed,
+        nombre: g.nombre,
+        descripcion: g.descripcion,
+        tipo: g.tipo,
+        stock,
+        cantidadEntrada: totalComprado,
+        consumidas,
+        entradas: g.entradas,
+        numCompras: g.comprasSet.size,
+        vencimiento: g.vencimiento,
+        estado,
+        estadoDb,
         proveedor: g.provs.length ? g.provs.join(', ') : '—',
-        fecha: g.ultima, idCompra: null,
-        cantidadEntrada: g.stock, refCantidad,
-        descuadre: refCantidad !== null && refCantidad !== g.stock
+        fecha: g.ultima,
+        idCompra: g.comprasSet.size === 1 ? Array.from(g.comprasSet)[0] : null,
+        facturaTexto
       };
     });
+
     lista.sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
-    this.filasBase = lista; this.filtrar();
+    this.filasBase = lista;
+    this.filtrar();
   }
 
   filtrar(): void {
@@ -136,7 +250,15 @@ export class Inventario implements OnInit {
     this.filas = this.filasBase.filter((f: any) => {
       if (this.filtroEstado !== 'todos' && f.estado !== this.filtroEstado) return false;
       if (!t) return true;
-      return String(f.nombre || '').toLowerCase().includes(t) || String(f.descripcion || '').toLowerCase().includes(t) || String(f.proveedor || '').toLowerCase().includes(t) || String(f.idInv ?? '').includes(t) || String(f.idDetComp ?? '').includes(t) || String(f.idMed ?? '').includes(t);
+      return (
+        String(f.nombre || '').toLowerCase().includes(t) ||
+        String(f.descripcion || '').toLowerCase().includes(t) ||
+        String(f.proveedor || '').toLowerCase().includes(t) ||
+        String(f.idInv || '').includes(t) ||
+        String(f.idDetComp || '').includes(t) ||
+        String(f.idMed || '').includes(t) ||
+        String(f.facturaTexto || '').toLowerCase().includes(t)
+      );
     });
   }
 

@@ -69,7 +69,42 @@ export class Compra implements OnInit {
     }).subscribe({
       next: ({ proveedores, medicamentos, catalogo, detalles, compras }) => {
         this.proveedores = proveedores;
-        this.medicamentos = medicamentos;
+
+        // Unificar medicamentos para que cualquier medicamento del catálogo esté disponible en el formulario
+        const nombresVistos = new Set<string>();
+        const medsUnificados: MedicamentoItem[] = [];
+
+        (medicamentos || []).forEach((m: any) => {
+          const nom = (m.nombre || '').toLowerCase().trim();
+          if (nom) nombresVistos.add(nom);
+          medsUnificados.push({
+            id: m.id ?? m.id_medicamento,
+            id_medicamento: m.id ?? m.id_medicamento,
+            nombre: m.nombre,
+            tipo: m.tipo || 'General',
+            cantidad_ml: m.cantidad_ml || '',
+            descripcion: m.descripcion || '',
+            activo: m.activo !== undefined ? m.activo : (m.estado !== undefined ? m.estado : true)
+          });
+        });
+
+        (catalogo || []).forEach((c: any) => {
+          const nom = (c.nombre || '').toLowerCase().trim();
+          if (nom && !nombresVistos.has(nom)) {
+            nombresVistos.add(nom);
+            medsUnificados.push({
+              id: c.id_medicamento ?? c.id,
+              id_medicamento: c.id_medicamento ?? c.id,
+              nombre: c.nombre,
+              tipo: c.tipo || 'General',
+              cantidad_ml: c.cantidad_ml || '',
+              descripcion: c.descripcion || c.presentacion || '',
+              activo: c.activo !== false
+            });
+          }
+        });
+
+        this.medicamentos = medsUnificados;
         this.procesarCompras(compras, detalles, catalogo);
         this.cargando = false;
         this.cdr.detectChanges();
@@ -89,7 +124,7 @@ export class Compra implements OnInit {
   }
 
   /**
-   * Vincula las compras con sus respectivos proveedores y detalles de medicamentos_medicamento
+   * Vincula las compras con sus respectivos proveedores y detalles de medicamentos
    */
   private procesarCompras(comprasRaw: any[], detallesRaw: any[], catalogoRaw: any[] = []): void {
     const provMap = new Map<number, Proveedor>();
@@ -111,18 +146,17 @@ export class Compra implements OnInit {
     });
 
     const detallesPorCompra = new Map<number, DetalleCompraConMedicamento[]>();
-    detallesRaw.forEach((d) => {
-      const idCompra = Number(d.id_compra);
-      if (!detallesPorCompra.has(idCompra)) {
-        detallesPorCompra.set(idCompra, []);
+
+    const registrarDetalle = (d: any, idCompraNum: number) => {
+      if (!detallesPorCompra.has(idCompraNum)) {
+        detallesPorCompra.set(idCompraNum, []);
       }
       const idMed = Number(d.id_medicamento);
 
-      // 1. Buscar primero en la lista de medicamentos_medicamento
+      // 1. Buscar en lista unificada de medicamentos
       let med = medMap.get(idMed);
 
-      // 2. Si no coincide por ID directo (por ejemplo, si el detalle apunta a un ID del catálogo antiguo),
-      // buscar por nombre en el catálogo y cruzar con medicamentos_medicamento
+      // 2. Si no coincide por ID directo, buscar por catálogo
       if (!med) {
         const catItem = catalogoMap.get(idMed);
         if (catItem?.nombre) {
@@ -141,22 +175,45 @@ export class Compra implements OnInit {
         }
       }
 
-      const subtotal = (Number(d.cantidad) || 0) * (Number(d.precio_unitario) || 0);
+      const lista = detallesPorCompra.get(idCompraNum)!;
+      const idDet = Number(d.id_detalle_compra ?? d.id);
+      if (!lista.some(item => Number(item.id_detalle_compra ?? (item as any).id) === idDet)) {
+        lista.push({
+          ...d,
+          id_detalle_compra: idDet,
+          id_compra: idCompraNum,
+          medicamento: med,
+          subtotal: Number(d.cantidad) || 0
+        });
+      }
+    };
 
-      detallesPorCompra.get(idCompra)!.push({
-        ...d,
-        medicamento: med,
-        subtotal
-      });
+    // Procesar detalles de comprasRaw que vienen del backend CompraSerializer
+    comprasRaw.forEach((c) => {
+      const idComp = Number(c.id_compra ?? c.id);
+      if (Array.isArray(c.detalles)) {
+        c.detalles.forEach((d: any) => registrarDetalle(d, idComp));
+      }
+    });
+
+    // Procesar también detallesRaw de la API detalles-compra
+    detallesRaw.forEach((d) => {
+      const idComp = Number(d.id_compra);
+      if (!isNaN(idComp) && idComp > 0) {
+        registrarDetalle(d, idComp);
+      }
     });
 
     const resultado: CompraModel[] = comprasRaw.map((c) => {
       const idComp = Number(c.id_compra ?? c.id);
-      const prov = provMap.get(Number(c.id_proveedor));
+      const prov = provMap.get(Number(c.id_proveedor)) || (c.proveedor_nombre ? {
+        id_proveedor: Number(c.id_proveedor),
+        nombre: c.proveedor_nombre,
+        telefono: c.proveedor_telefono
+      } : undefined);
       const dets = detallesPorCompra.get(idComp) || [];
-      const total = dets.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-      const totalUnidades = dets.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
-      const totalItems = dets.length;
+      const totalUnidades = c.total_unidades ?? dets.reduce((sum, item) => sum + (Number(item.cantidad) || 0), 0);
+      const totalItems = c.total_productos ?? dets.length;
 
       return {
         ...c,
@@ -164,7 +221,7 @@ export class Compra implements OnInit {
         id_proveedor: Number(c.id_proveedor),
         proveedor: prov,
         detalles: dets,
-        total,
+        total: totalUnidades,
         totalItems,
         totalUnidades
       };

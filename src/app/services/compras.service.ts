@@ -120,7 +120,10 @@ export class ComprasService {
     return this.http.get<Compra>(`${this.baseUrlInventario}compras/${id}/`);
   }
 
-  crearCompra(payload: { id_proveedor: number }): Observable<Compra> {
+  crearCompra(payload: {
+    id_proveedor: number;
+    detalles?: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number }>;
+  }): Observable<Compra> {
     return this.http.post<Compra>(`${this.baseUrlInventario}compras/`, payload);
   }
 
@@ -298,7 +301,7 @@ export class ComprasService {
 
   registrarCompraCompleta(
     id_proveedor: number,
-    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario: number }>,
+    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number }>,
     listaMedicamentos: MedicamentoItem[] = []
   ): Observable<ResultadoRegistroCompra> {
     const obsMedicamentos = (listaMedicamentos && listaMedicamentos.length > 0)
@@ -310,12 +313,12 @@ export class ComprasService {
       medicamentos: obsMedicamentos
     }).pipe(
       switchMap(({ catalogo, medicamentos }) => {
-        // Asegurar IDs para DetalleCompra
+        // Asegurar que cada id_medicamento exista en la tabla medicamentos (catálogo) para la FK
         const resoluciones = detalles.map(d =>
           this.asegurarIdMedicamentoParaDetalle(d.id_medicamento, medicamentos, catalogo).pipe(
             map(idValido => ({
-              ...d,
-              id_medicamento: idValido
+              id_medicamento: idValido,
+              cantidad: Number(d.cantidad)
             }))
           )
         );
@@ -324,44 +327,33 @@ export class ComprasService {
 
         return obsDetallesValidos.pipe(
           switchMap(detallesAsegurados => {
-            return this.crearCompra({ id_proveedor: Number(id_proveedor) }).pipe(
-              switchMap((compraCreada: Compra) => {
-                const idCompra = Number((compraCreada as any).id_compra ?? (compraCreada as any).id);
-                if (!idCompra || isNaN(idCompra)) {
-                  return throwError(() => new Error('No se recibió un ID válido para la compra creada.'));
-                }
+            const payloadBackend = {
+              id_proveedor: Number(id_proveedor),
+              detalles: detallesAsegurados.map(d => ({
+                id_medicamento: Number(d.id_medicamento),
+                cantidad: Number(d.cantidad)
+              }))
+            };
 
-                if (!detallesAsegurados || detallesAsegurados.length === 0) {
-                  return of({ compra: { ...compraCreada, id_compra: idCompra }, detalles: [] });
-                }
+            // Enviamos la compra con sus detalles directamente al endpoint nativo del backend (/api/inventario/compras/)
+            // El backend crea la Compra, DetalleCompra e Inventarios (lote con cantidad_actual) de forma atómica
+            return this.crearCompra(payloadBackend).pipe(
+              map((compraCreada: any) => {
+                const idCompra = Number(compraCreada.id_compra ?? compraCreada.id);
+                const detallesRetornados = (compraCreada.detalles && compraCreada.detalles.length > 0)
+                  ? compraCreada.detalles
+                  : detallesAsegurados.map((d, idx) => ({
+                      id_detalle_compra: idx + 1,
+                      id_compra: idCompra,
+                      id_medicamento: d.id_medicamento,
+                      cantidad: d.cantidad,
+                      precio_unitario: 0
+                    }));
 
-                const peticiones = detallesAsegurados.map(d =>
-                  this.crearDetalleCompra({
-                    id_compra: idCompra,
-                    id_medicamento: Number(d.id_medicamento),
-                    cantidad: Number(d.cantidad),
-                    precio_unitario: Number(d.precio_unitario)
-                  })
-                );
-
-                return forkJoin(peticiones).pipe(
-                  map(detallesCreados => ({
-                    compra: { ...compraCreada, id_compra: idCompra },
-                    detalles: detallesCreados
-                  })),
-                  switchMap((resultado: ResultadoRegistroCompra) =>
-                    this.sincronizarInventariosParaDetalles(resultado.detalles).pipe(
-                      map(() => resultado),
-                      catchError(() => of(resultado))
-                    )
-                  ),
-                  catchError(errDetalle => {
-                    return this.eliminarCompra(idCompra).pipe(
-                      catchError(() => of(null)),
-                      switchMap(() => throwError(() => errDetalle))
-                    );
-                  })
-                );
+                return {
+                  compra: { ...compraCreada, id_compra: idCompra },
+                  detalles: detallesRetornados
+                };
               })
             );
           })
