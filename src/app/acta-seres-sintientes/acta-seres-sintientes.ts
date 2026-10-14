@@ -2,448 +2,679 @@ import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { finalize } from 'rxjs';
 import Swal from 'sweetalert2';
+
 
 @Component({
   selector: 'app-acta-seres-sintientes',
   standalone: true,
-  imports: [
-    FormsModule,
-    CommonModule
-  ],
+  imports: [FormsModule, CommonModule],
   templateUrl: './acta-seres-sintientes.html',
   styleUrl: './acta-seres-sintientes.css',
 })
 export class ActaSeresSintientes implements OnInit {
-  mostrarNuevosCasos: boolean = true;
-  alternarNuevosCasos(): void {
-  this.mostrarNuevosCasos = !this.mostrarNuevosCasos;
-}
+  // Campos de diagnóstico y tratamiento
+descripcionHallazgos = '';
+diagnosticoFinal = '';
+materialesUtilizados = '';
+planProcedimientos = '';
+pronostico = 'Favorable';
 
-obtenerFotoPaciente(paciente: any): string {
-  if (!paciente) {
-    return 'images/perro-default.png';
+problemasClinicos: string[] = ['', '', '', '', '', '', ''];
+diagnosticosDiferenciales: string[] = ['', '', '', '', '', '', ''];
+
+// Datos de ingreso al CBA
+ingresaCBA = 'NO';
+motivoIngresoNoIngreso = '';
+canilAsignado = '';
+funcionarioRecibeCBA = '';
+  mostrarNuevosCasos = true;
+  
+
+guardarExpedienteCompleto(): void {
+  const animal = this.seguimientoSeleccionado;
+
+  if (!animal) {
+    Swal.fire(
+      'Selecciona un animal',
+      'Primero selecciona un animal de la lista de turnos.',
+      'warning'
+    );
+    return;
   }
 
-  return (
-    paciente.foto ||
-    paciente.imagen ||
-    paciente.foto_paciente ||
-    paciente.imagen_paciente ||
-    paciente.animales?.[0]?.foto ||
-    paciente.animales?.[0]?.imagen ||
-    'images/perro-default.png'
+  const nombreAnimal =
+    animal.nombre_paciente ||
+    animal.nombre_animal ||
+    animal.nombre ||
+    '';
+
+  if (!nombreAnimal.trim()) {
+    Swal.fire(
+      'Falta el nombre',
+      'El animal seleccionado no tiene nombre.',
+      'warning'
+    );
+    return;
+  }
+
+  // Adaptamos los datos del animal al formato de Django.
+  const datos = {
+    animal: {
+      nombre: nombreAnimal,
+      especie: animal.paciente_especie || 'Desconocida',
+      raza: animal.paciente_raza || 'Mestizo',
+      sexo: animal.paciente_sexo || '',
+      color: animal.paciente_color || '',
+      peso: animal.peso_paciente || null,
+      descripcionBreve: animal.descripcion_paciente || '',
+      caracteristicasEspeciales: '',
+      numeroHistoriaClinica: this.numeroRadicadoActual || '',
+      fotoUrl: animal.foto || ''
+    },
+
+    tenedor: {
+      nombres:
+        this.nombreAcudiente ||
+        animal.notificador_nombre ||
+        '',
+      documentoIdentidad:
+        this.cedulaAcudiente ||
+        animal.notificador_identificacion ||
+        '',
+      telefono: animal.notificador_telefono || '',
+      correoElectronico: animal.notificador_correo || '',
+      direccion: animal.notificador_direccion || ''
+    },
+
+    anamnesicos: {},
+
+    motivoConsulta:
+      animal.observaciones ||
+      animal.observacion ||
+      animal.anamnesis_descripcion_queja ||
+      '',
+
+    examenClinico: {
+      examenesSolicitados: this.examenesSolicitados.map(
+        (examen: any) => ({
+          nombre:
+            examen.nombre ||
+            examen.nombre_examen ||
+            examen.nombre_tipo ||
+            examen.tipo ||
+            'Examen clínico'
+        })
+      )
+    },
+
+    organosSistemas: { ...this.sistemas },
+
+    hoja2: {
+      descripcionHallazgos: this.descripcionHallazgos,
+      materialesUtilizados: this.materialesUtilizados,
+      planProcedimientos: this.planProcedimientos,
+      pronostico: this.pronostico,
+
+      examenes: this.examenesSolicitados.map(
+        (examen: any) => ({
+          nombre:
+            examen.nombre ||
+            examen.nombre_examen ||
+            examen.nombre_tipo ||
+            examen.tipo ||
+            'Examen clínico'
+        })
+      ),
+
+      listaProblemas: this.problemasClinicos.filter(
+        (problema: string) => problema.trim() !== ''
+      ),
+
+      diagnosticosDiferenciales:
+        this.diagnosticosDiferenciales.filter(
+          (diagnostico: string) => diagnostico.trim() !== ''
+        ),
+
+      diagnosticoFinal: this.diagnosticoFinal,
+
+      tratamientos: this.medicamentosSeleccionados.map(
+        (medicamento: any) => ({
+          productoBase:
+            medicamento.nombre ||
+            medicamento.nombre_medicamento ||
+            medicamento.medicamento ||
+            medicamento.nombre_producto ||
+            '',
+          dosisBasica: medicamento.dosis || '',
+          presentacion: medicamento.presentacion || '',
+          via: medicamento.via || '',
+          frecuenciaDuracion: medicamento.frecuencia || ''
+        })
+      )
+    },
+
+    hoja3: {
+      ingresaCBA: this.ingresaCBA,
+      motivoIngresoNoIngreso: this.motivoIngresoNoIngreso,
+      canilAsignado: this.canilAsignado,
+      funcionarioRecibeCBA: this.funcionarioRecibeCBA
+    },
+
+    rescate: {
+      numeroRadicado: this.numeroRadicadoActual || ''
+    }
+  };
+
+  console.log(
+    'Datos que se enviarán al expediente:',
+    datos
   );
+
+  Swal.fire({
+    title: '¿Guardar expediente?',
+    text: 'Se enviarán los datos del animal, los exámenes, la evaluación, el diagnóstico y los tratamientos.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, guardar',
+    cancelButtonText: 'Cancelar'
+  }).then((resultado) => {
+    if (!resultado.isConfirmed) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+
+    const headers = token
+      ? new HttpHeaders({
+          Authorization: `Bearer ${token}`
+        })
+      : new HttpHeaders();
+
+    const url =
+      'https://backendvetericano-production.up.railway.app/api/clinica/expediente-completo/';
+
+    this.http.post<any>(url, datos, { headers }).subscribe({
+      next: (respuesta) => {
+        console.log('Expediente guardado correctamente:', respuesta);
+
+        Swal.fire({
+          title: '¡Expediente guardado!',
+          text: `Historia clínica: ${
+            respuesta.historia_id ?? 'registrada'
+          }. Consulta: ${
+            respuesta.consulta_id ?? 'registrada'
+          }.`,
+          icon: 'success',
+          confirmButtonText: 'Aceptar'
+        });
+      },
+
+      error: (error) => {
+        console.error('Error al guardar:', error);
+        console.error('Detalle del backend:', error.error);
+
+        let mensaje = 'No fue posible guardar el expediente.';
+
+        if (error.status === 400) {
+          mensaje =
+            'El servidor rechazó algunos datos. Revisa el detalle del error en la consola.';
+        } else if (error.status === 401 || error.status === 403) {
+          mensaje =
+            'Tu sesión no tiene autorización para guardar el expediente.';
+        } else if (error.status === 0) {
+          mensaje =
+            'No se pudo conectar con el servidor. Revisa la conexión y CORS.';
+        }
+
+        Swal.fire('Error al guardar', mensaje, 'error');
+      }
+    });
+  });
 }
 
-imagenNoDisponible(event: Event): void {
-  const imagen = event.target as HTMLImageElement;
 
-  // Evita que se repita el error si tampoco existe la imagen de respaldo.
-  imagen.onerror = null;
-  imagen.src = 'images/perro-default.png';
-}
 
   popalog = {
     logopop: 'images/Escudo_Popayan.svg'
   };
 
-  pestanaActiva: string = 'consulta';
+  pestanaActiva: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos' = 'consulta';
 
-  // Datos que vienen del backend
+  // Seguimientos recibidos del backend
   seguimientos: any[] = [];
-
   seguimientosFiltrados: any[] = [];
-
-textoBusqueda: string = '';
-filtroEspecie: string = 'Todos';
-filtrarPorEspecie(especie: string): void {
-  this.filtroEspecie = especie;
-
-  // Si está seleccionado "Todos"
-  if (especie === 'Todos') {
-    this.seguimientosFiltrados = [...this.seguimientos];
-    this.buscarSeguimientos();
-    return;
-  }
-
-  // Filtrar por especie
-  this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {
-    const especieAnimal = String(
-      seguimiento.paciente_especie || ''
-    ).trim().toLowerCase();
-
-    return especieAnimal === especie.toLowerCase();
-  });
-
-  // Si también hay texto escrito en el buscador,
-  // aplicamos ambos filtros
-  this.aplicarFiltros();
-}
-aplicarFiltros(): void {
-  const texto = this.textoBusqueda.trim().toLowerCase();
-
-  this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {
-
-    // Filtro por especie
-    const especieAnimal = String(
-      seguimiento.paciente_especie || ''
-    ).trim().toLowerCase();
-
-    const coincideEspecie =
-      this.filtroEspecie === 'Todos' ||
-      especieAnimal === this.filtroEspecie.toLowerCase();
-
-    // Filtro por texto
-    const nombre = String(
-      seguimiento.nombre_paciente || ''
-    ).toLowerCase();
-
-    const especie = String(
-      seguimiento.paciente_especie || ''
-    ).toLowerCase();
-
-    const raza = String(
-      seguimiento.paciente_raza || ''
-    ).toLowerCase();
-
-    const microchip = String(
-      seguimiento.microchip || ''
-    ).toLowerCase();
-
-    const coincideTexto =
-      !texto ||
-      nombre.includes(texto) ||
-      especie.includes(texto) ||
-      raza.includes(texto) ||
-      microchip.includes(texto);
-
-    return coincideEspecie && coincideTexto;
-  });
-}
-
-  // Animal seleccionado
   seguimientoSeleccionado: any = null;
+  cargando = false;
+  error = '';
+  textoBusqueda = '';
+  filtroEspecie = 'Todos';
 
-  cargando: boolean = false;
-  error: string = '';
+  // Datos que se muestran en el aval profesional
+  numeroRadicadoActual = '';
+  nombreVeterinario = '';
+
+  // Catálogo de medicamentos
+  mostrarCatalogoMedicamentos = false;
+  cargandoMedicamentos = false;
+  mensajeMedicamentos = '';
+  medicamentosCatalogo: any[] = [];
+  medicamentosSeleccionados: any[] = [];
+
+  // Catálogo y selección de exámenes
+  mostrarExamenes = false;
+  examenesClinicos: any[] = [];
+  cargandoExamenes = false;
+  mensajeExamenes = '';
+  examenesSolicitados: any[] = [];
+
+  // Evaluación física
+  sistemas: { [key: string]: string } = {
+    general: 'NE',
+    hidratacion: 'NE',
+    tegumentario: 'NE',
+    ojos: 'NE',
+    oidos: 'NE',
+    nariz: 'NE',
+    digestivo: 'NE',
+    respiratorio: 'NE',
+    nervioso: 'NE',
+    musculoesqueletico: 'NE',
+    cardiovascular: 'NE',
+    genitourinario: 'NE'
+  };
 
   constructor(
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+     private http: HttpClient
   ) {}
-  // Catálogo de exámenes clínicos
-mostrarExamenes: boolean = false;
-examenesClinicos: any[] = [];
-cargandoExamenes: boolean = false;
-mensajeExamenes: string = '';
 
-// Exámenes que seleccionas para el acta
+  ngOnInit(): void {
+    this.cargarSeguimientos();
+    this.cargarSistemasGuardados();
+  }
 
- ngOnInit(): void {
-  this.cargarSeguimientos();
-  this.cargarSistemasGuardados();
-}
+  alternarNuevosCasos(): void {
+    this.mostrarNuevosCasos = !this.mostrarNuevosCasos;
+  }
 
-  cambiarPestana(pestana: string) {
+  cambiarPestana(pestana: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos'): void {
     this.pestanaActiva = pestana;
   }
 
-  cargarSeguimientos(): void {
+  obtenerFotoPaciente(paciente: any): string {
+    if (!paciente) {
+      return 'images/perro-default.png';
+    }
 
+    return (
+      paciente.foto ||
+      paciente.imagen ||
+      paciente.foto_paciente ||
+      paciente.imagen_paciente ||
+      paciente.animales?.[0]?.foto ||
+      paciente.animales?.[0]?.imagen ||
+      'images/perro-default.png'
+    );
+  }
+
+  imagenNoDisponible(event: Event): void {
+    const imagen = event.target as HTMLImageElement;
+    imagen.onerror = null;
+    imagen.src = 'images/perro-default.png';
+  }
+
+  cargarSeguimientos(): void {
     this.cargando = true;
     this.error = '';
 
     this.authService.listarSeguimientos().subscribe({
+      next: (respuesta: any) => {
+        if (Array.isArray(respuesta)) {
+          this.seguimientos = respuesta;
+        } else if (Array.isArray(respuesta?.results)) {
+          this.seguimientos = respuesta.results;
+        } else if (Array.isArray(respuesta?.data)) {
+          this.seguimientos = respuesta.data;
+        } else {
+          this.seguimientos = [];
+        }
 
-      next: (respuesta) => {
-
-        console.log('Respuesta seguimiento:', respuesta);
-
-       if (Array.isArray(respuesta)) {
-  this.seguimientos = respuesta;
-}
-else if (respuesta?.results) {
-  this.seguimientos = respuesta.results;
-}
-else {
-  this.seguimientos = [];
-}
-
-// Al principio mostramos todos
-this.seguimientosFiltrados = [...this.seguimientos];
-
-        console.log('Seguimientos cargados:', this.seguimientos);
-
+        this.aplicarFiltros();
         this.cargando = false;
         this.cdr.detectChanges();
+        console.log('Seguimientos cargados:', this.seguimientos);
       },
-
-      error: (error) => {
-
+      error: (error: any) => {
         console.error('Error cargando seguimientos:', error);
-
-        this.error = 'No se pudieron cargar los animales en espera.';
-
+        this.error = 'No se pudieron cargar los seguimientos.';
         this.cargando = false;
         this.cdr.detectChanges();
       }
-
     });
   }
-  
 
-  // ==========================================
-  // SELECCIONAR ANIMAL
-  // ==========================================
+  filtrarPorEspecie(especie: string): void {
+    this.filtroEspecie = especie;
+    this.aplicarFiltros();
+  }
+
   buscarSeguimientos(): void {
     this.aplicarFiltros();
-
-  console.log('Filtro especie:', this.filtroEspecie);
-  console.log('Texto buscado:', this.textoBusqueda);
-  console.log('Resultados:', this.seguimientosFiltrados);
-
-  const texto = this.textoBusqueda.trim().toLowerCase();
-
-  // Si el buscador está vacío, mostrar todos
-  if (!texto) {
-    this.seguimientosFiltrados = [...this.seguimientos];
-    return;
   }
 
-  this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {
+  aplicarFiltros(): void {
+    const texto = (this.textoBusqueda || '').trim().toLowerCase();
 
-    const nombre = String(
-      seguimiento.nombre_paciente || ''
-    ).toLowerCase();
+    this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {
+      const especie = String(seguimiento?.paciente_especie || '').trim().toLowerCase();
+      const coincideEspecie =
+        this.filtroEspecie === 'Todos' ||
+        especie === this.filtroEspecie.trim().toLowerCase();
 
-    const especie = String(
-      seguimiento.paciente_especie || ''
-    ).toLowerCase();
+      const campos = [
+        seguimiento?.nombre_paciente,
+        seguimiento?.paciente_especie,
+        seguimiento?.paciente_raza,
+        seguimiento?.microchip
+      ];
 
-    const raza = String(
-      seguimiento.paciente_raza || ''
-    ).toLowerCase();
+      const coincideTexto = !texto || campos.some((campo: any) =>
+        String(campo || '').toLowerCase().includes(texto)
+      );
 
-    const microchip = String(
-      seguimiento.microchip || ''
-    ).toLowerCase();
-
-    return (
-      nombre.includes(texto) ||
-      especie.includes(texto) ||
-      raza.includes(texto) ||
-      microchip.includes(texto)
-    );
-  });
-
-  console.log('Resultados encontrados:', this.seguimientosFiltrados);
-}
-
+      return coincideEspecie && coincideTexto;
+    });
+  }
+cedulaAcudiente: string = '';
   seleccionarSeguimiento(seguimiento: any): void {
-    console.log('Animal seleccionado:', seguimiento);
+    this.nombreAcudiente = seguimiento?.notificador_nombre ?? '';
+
+this.cedulaAcudiente = seguimiento?.notificador_identificacion != null
+  ? String(seguimiento.notificador_identificacion)
+  : '';
+   
     this.seguimientoSeleccionado = seguimiento;
+    
+    this.nombreAcudiente = seguimiento?.notificador_nombre || '';
+    
 
-    const id = seguimiento?.id_seguimiento;
-    if (id) {
-      this.authService.obtenerSeguimientoPorId(id).subscribe({
-        next: (detalle) => {
-          console.log('Detalle completo del seguimiento:', detalle);
-          if (detalle) {
-            this.seguimientoSeleccionado = {
-              ...this.seguimientoSeleccionado,
-              ...detalle
-            };
-            this.cdr.detectChanges();
-          }
-        },
-        error: (err) => {
-          console.warn('No se pudo cargar el detalle extendido del seguimiento:', err);
-        }
-      });
-    }
+    this.numeroRadicadoActual = String(
+      seguimiento?.numero_radicado ??
+      seguimiento?.radicado ??
+      seguimiento?.codigo_radicado ??
+      seguimiento?.numeroRadicado ??
+      seguimiento?.numero ??
+      seguimiento?.codigo ??
+      ''
+    );
 
+    const veterinario = seguimiento?.veterinario ?? seguimiento?.usuario_veterinario ?? seguimiento?.profesional;
+    const nombreAnidado = veterinario
+      ? [
+          veterinario.nombre_completo,
+          veterinario.nombre,
+          veterinario.nombres,
+          veterinario.apellido,
+          veterinario.apellidos
+        ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+      : '';
+
+    this.nombreVeterinario = String(
+      seguimiento?.nombre_veterinario ??
+      seguimiento?.nombre_completo_veterinario ??
+      seguimiento?.veterinario_nombre ??
+      seguimiento?.profesional_nombre ??
+      seguimiento?.nombre_profesional ??
+      seguimiento?.medico_veterinario ??
+      nombreAnidado ??
+      ''
+    );
+
+    console.log('Seguimiento seleccionado:', seguimiento);
+    console.log('Radicado:', this.numeroRadicadoActual);
+    console.log('Veterinario:', this.nombreVeterinario);
     this.cdr.detectChanges();
   }
-  
 
-sistemas: { [key: string]: string } = {
-  general: 'NE',
-  hidratacion: 'NE',
-  tegumentario: 'NE',
-  ojos: 'NE',
-  oidos: 'NE',
-  nariz: 'NE',
-  digestivo: 'NE',
-  respiratorio: 'NE',
-  nervioso: 'NE',
-  musculoesqueletico: 'NE',
-  cardiovascular: 'NE',
-  genitourinario: 'NE'
-};
+  // Catálogo de medicamentos
+  desplegarMedicamentos(): void {
+    this.mostrarCatalogoMedicamentos = !this.mostrarCatalogoMedicamentos;
 
-guardarSistemas(): void {
-  try {
-    localStorage.setItem(
-      'vetericano_sistemas',
-      JSON.stringify(this.sistemas)
+    if (this.mostrarCatalogoMedicamentos && this.medicamentosCatalogo.length === 0) {
+      this.cargarMedicamentos();
+    }
+  }
+
+  cargarMedicamentos(): void {
+    this.cargandoMedicamentos = true;
+    this.mensajeMedicamentos = '';
+
+    this.authService.getMedicamentosCatalogo().subscribe({
+      next: (respuesta: any) => {
+        if (Array.isArray(respuesta)) {
+          this.medicamentosCatalogo = respuesta;
+        } else if (Array.isArray(respuesta?.results)) {
+          this.medicamentosCatalogo = respuesta.results;
+        } else if (Array.isArray(respuesta?.data)) {
+          this.medicamentosCatalogo = respuesta.data;
+        } else {
+          this.medicamentosCatalogo = [];
+        }
+
+        if (this.medicamentosCatalogo.length === 0) {
+          this.mensajeMedicamentos = 'El catálogo no contiene medicamentos.';
+        }
+
+        this.cargandoMedicamentos = false;
+        this.cdr.detectChanges();
+      },
+      error: (error: any) => {
+        console.error('Error al cargar el catálogo de medicamentos:', error);
+        this.mensajeMedicamentos = 'No se pudieron cargar los medicamentos.';
+        this.cargandoMedicamentos = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  agregarMedicamento(medicamento: any): void {
+    const nombre = String(
+      medicamento?.nombre ||
+      medicamento?.nombre_medicamento ||
+      medicamento?.medicamento ||
+      medicamento?.nombre_producto ||
+      ''
     );
+
+    const id = medicamento?.id_medicamento ??
+      medicamento?.id ??
+      medicamento?.id_medicamento_catalogo ??
+      null;
+
+    const yaExiste = this.medicamentosSeleccionados.some((item: any) =>
+      (id !== null && item.id === id) ||
+      (id === null && item.nombre === nombre)
+    );
+
+    if (yaExiste) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Medicamento ya agregado',
+        text: 'Este medicamento ya está en la historia clínica.',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    this.medicamentosSeleccionados.push({
+      id,
+      nombre: nombre || 'Medicamento sin nombre',
+      principio_activo: medicamento?.principio_activo || '',
+      concentracion: medicamento?.concentracion || '',
+      presentacion: medicamento?.presentacion || '',
+      dosis: '',
+      via: '',
+      frecuencia: ''
+    });
 
     Swal.fire({
       icon: 'success',
-      title: '¡Cambios guardados!',
-      text: 'La evaluación física se guardó correctamente.',
-      confirmButtonColor: '#4141A5'
-    });
-  } catch (error) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error al guardar',
-      text: 'No fue posible guardar la evaluación.'
+      title: 'Medicamento agregado',
+      text: `${nombre || 'El medicamento'} se agregó correctamente.`,
+      timer: 1400,
+      showConfirmButton: false
     });
   }
-}
 
-cargarSistemasGuardados(): void {
-  try {
-    const datosGuardados = localStorage.getItem('vetericano_sistemas');
-
-    if (datosGuardados) {
-      const sistemasGuardados = JSON.parse(datosGuardados);
-
-      this.sistemas = {
-        ...this.sistemas,
-        ...sistemasGuardados
-      };
-    }
-  } catch (error) {
-    console.error('Error al recuperar la evaluación:', error);
-  }
-}
-  
-// ==========================================
-// EXÁMENES CLÍNICOS
-// ==========================================
-
-// Controla si la lista está visible
-
-
-// Guarda los exámenes que devuelve el backend
-
-examenesSolicitados: any[] = [];
-
-// Agregar un examen al acta
-agregarExamen(examen: any): void {
-  const nombreExamen =
-    examen.nombre ||
-    examen.nombre_examen ||
-    examen.nombre_tipo ||
-    examen.tipo ||
-    'Examen clínico';
-
-  const yaExiste = this.examenesSolicitados.some(
-    (item) =>
-      item.id_examen === examen.id_examen ||
-      item.id_examen === examen.id ||
-      item.nombre === nombreExamen
-  );
-
-  if (yaExiste) {
-    Swal.fire({
-      icon: 'info',
-      title: 'Examen ya agregado',
-      text: 'Este examen ya se encuentra en la lista de solicitados.',
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#4141A5'
-    });
-    return;
+  eliminarMedicamento(indice: number): void {
+    this.medicamentosSeleccionados.splice(indice, 1);
   }
 
-  this.examenesSolicitados.push({
-    ...examen,
-    id_examen: examen.id_examen ?? examen.id ?? null,
-    nombre: nombreExamen
-  });
-
-  Swal.fire({
-    icon: 'success',
-    title: 'Examen agregado',
-    text: `${nombreExamen} se agregó a los exámenes solicitados.`,
-    timer: 1400,
-    showConfirmButton: false
-  });
-}
-
-// Eliminar un examen con confirmación
-eliminarExamen(indice: number): void {
-  const examen = this.examenesSolicitados[indice];
-
-  Swal.fire({
-    icon: 'warning',
-    title: '¿Deseas eliminar este examen?',
-    text: `Se quitará "${examen.nombre}" de los exámenes solicitados.`,
-    showCancelButton: true,
-    confirmButtonText: 'Sí, eliminar',
-    cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#4141A5',
-    reverseButtons: true
-  }).then((resultado) => {
-    if (resultado.isConfirmed) {
-      this.examenesSolicitados.splice(indice, 1);
-
+  // Evaluación física: guardar y recuperar en este navegador
+  guardarSistemas(): void {
+    try {
+      localStorage.setItem('vetericano_sistemas', JSON.stringify(this.sistemas));
       Swal.fire({
         icon: 'success',
-        title: 'Examen eliminado',
-        text: 'El examen se quitó de la lista.',
-        timer: 1300,
-        showConfirmButton: false
+        title: '¡Cambios guardados!',
+        text: 'La evaluación física se guardó correctamente.',
+        confirmButtonColor: '#4141A5'
+      });
+    } catch (error) {
+      console.error('Error al guardar la evaluación:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al guardar',
+        text: 'No fue posible guardar la evaluación.'
       });
     }
-  });
-}
-desplegarExamenes(): void {
-  if (this.mostrarExamenes) {
-    this.mostrarExamenes = false;
-    return;
   }
 
-  this.mostrarExamenes = true;
-
-  if (this.examenesClinicos.length > 0) {
-    return;
-  }
-
-  this.cargandoExamenes = true;
-  this.mensajeExamenes = '';
-
-  this.authService.getCatalogo().subscribe({
-    next: (respuesta: any) => {
-      if (Array.isArray(respuesta)) {
-        this.examenesClinicos = respuesta;
-      } else if (Array.isArray(respuesta?.results)) {
-        this.examenesClinicos = respuesta.results;
-      } else if (Array.isArray(respuesta?.data)) {
-        this.examenesClinicos = respuesta.data;
-      } else {
-        this.examenesClinicos = [];
+  cargarSistemasGuardados(): void {
+    try {
+      const datosGuardados = localStorage.getItem('vetericano_sistemas');
+      if (datosGuardados) {
+        const sistemasGuardados = JSON.parse(datosGuardados);
+        this.sistemas = { ...this.sistemas, ...sistemasGuardados };
       }
-
-      this.cargandoExamenes = false;
-      this.cdr.detectChanges();
-    },
-    error: (error: any) => {
-      console.error('Error al cargar los exámenes:', error);
-
-      this.mensajeExamenes =
-        'No se pudieron cargar los exámenes clínicos.';
-
-      this.cargandoExamenes = false;
-      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error al recuperar la evaluación:', error);
     }
-  });
-}
+  }
 
+  // Catálogo de exámenes clínicos
+  desplegarExamenes(): void {
+    this.mostrarExamenes = !this.mostrarExamenes;
 
+    if (!this.mostrarExamenes || this.examenesClinicos.length > 0) {
+      return;
+    }
 
+    this.cargandoExamenes = true;
+    this.mensajeExamenes = '';
+
+    this.authService.getCatalogo().subscribe({
+      next: (respuesta: any) => {
+        if (Array.isArray(respuesta)) {
+          this.examenesClinicos = respuesta;
+        } else if (Array.isArray(respuesta?.results)) {
+          this.examenesClinicos = respuesta.results;
+        } else if (Array.isArray(respuesta?.data)) {
+          this.examenesClinicos = respuesta.data;
+        } else {
+          this.examenesClinicos = [];
+        }
+
+        if (this.examenesClinicos.length === 0) {
+          this.mensajeExamenes = 'El catálogo no contiene exámenes clínicos.';
+        }
+
+        this.cargandoExamenes = false;
+        this.cdr.detectChanges();
+      },
+      error: (error: any) => {
+        console.error('Error al cargar los exámenes:', error);
+        this.mensajeExamenes = 'No se pudieron cargar los exámenes clínicos.';
+        this.cargandoExamenes = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  agregarExamen(examen: any): void {
+    const nombreExamen = String(
+      examen?.nombre ||
+      examen?.nombre_examen ||
+      examen?.nombre_tipo ||
+      examen?.tipo ||
+      'Examen clínico'
+    );
+
+    const idExamen = examen?.id_examen ?? examen?.id ?? null;
+    const yaExiste = this.examenesSolicitados.some((item: any) =>
+      (idExamen !== null && item.id_examen === idExamen) ||
+      item.nombre === nombreExamen
+    );
+
+    if (yaExiste) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Examen ya agregado',
+        text: 'Este examen ya se encuentra en la lista de solicitados.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    this.examenesSolicitados.push({
+      ...examen,
+      id_examen: idExamen,
+      nombre: nombreExamen
+    });
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Examen agregado',
+      text: `${nombreExamen} se agregó a los exámenes solicitados.`,
+      timer: 1400,
+      showConfirmButton: false
+    });
+  }
+  nombreAcudiente: string = '';
+
+  eliminarExamen(indice: number): void {
+    const examen = this.examenesSolicitados[indice];
+    if (!examen) {
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: '¿Deseas eliminar este examen?',
+      text: `Se quitará "${examen.nombre}" de los exámenes solicitados.`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#4141A5',
+      reverseButtons: true
+    }).then((resultado) => {
+      if (resultado.isConfirmed) {
+        this.examenesSolicitados.splice(indice, 1);
+        Swal.fire({
+          icon: 'success',
+          title: 'Examen eliminado',
+          text: 'El examen se quitó de la lista.',
+          timer: 1300,
+          showConfirmButton: false
+        });
+      }
+    });
+  }
+  
 }

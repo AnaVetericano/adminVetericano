@@ -341,14 +341,12 @@
                           class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
                       ></div>
               <div>
-  <label class="font-bold text-slate-700 block mb-1">MICROCHIP</label>
-  <input
-    type="text"
-    [value]="seguimientoSeleccionado?.microchip || seguimientoSeleccionado?.animales?.[0]?.microchip || ''"
-    readonly
-    placeholder="Sin microchip registrado"
-    class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-mono"
-  >
+  <label class="font-bold text-slate-700 block mb-1">NUMERO DE RADICADO</label>
+
+<span>
+  {{ numeroRadicadoActual || 'Seleccione un seguimiento' }}
+</span>
+
 </div>
                
 <div>
@@ -556,8 +554,12 @@
             <div class="space-y-1">
                 <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">DESCRIPCIÓN DE HALLAZGOS EN PRUEBAS DIAGNÓSTICAS</label>
                 <div class="relative">
-                    <textarea rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white transition"></textarea>
-                </div>
+<textarea
+  rows="3"
+  [(ngModel)]="descripcionHallazgos"
+  class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700"
+  placeholder="Describe los hallazgos de las pruebas"
+></textarea>                </div>
             </div>
         </div>
 
@@ -744,10 +746,9 @@
         <!-- IMAGEN (ESPACIO LISTO PARA TU API) -->
       
 <img
-  [src]="obtenerFotoPaciente(seguimientoSeleccionado)"
+  [src]="seguimientoSeleccionado?.foto || 'images/perro-default.png'"
   class="w-full h-full object-cover object-center"
   alt="Foto del paciente"
-  (error)="imagenNoDisponible($event)"
 >
 
         <!-- BADGE FLOTANTE SUPERIOR IZQUIERDA: ESPECIE -->
@@ -808,18 +809,41 @@
 
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-700 uppercase">DIAGNÓSTICO FINAL O CONFIRMATORIO DEL MÉDICO </label>
-                    <textarea rows="2" class="w-full border border-red-200 bg-red-50/20 rounded-xl p-3 text-xs font-bold text-slate-800">Dermatitis traumática infectada de almohadilla anterior izquierda + Parasitismo externo.</textarea>
-                </div>
+<textarea
+  rows="2"
+  [(ngModel)]="diagnosticoFinal"
+  class="w-full border border-red-200 bg-red-50/20 rounded-xl p-3 text-xs font-bold text-slate-800"
+  placeholder="Escribe el diagnóstico final"
+></textarea>                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div class="space-y-2">
                         <h4 class="text-[11px] font-bold text-slate-700">LISTA DE PROBLEMAS CLÍNICOS (1 AL 7)</h4>
                         <div class="space-y-2 text-xs">
-                            <input type="text" value="1. Laceración cutánea en almohadilla carpal izq." class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="2. Claudicación grado II en MII" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="3. Hiporexia de 48 horas" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                            <input type="text" value="4. Presencia moderada de ectoparásitos" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50">
-                        </div>
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[0]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>    
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[1]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[2]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>
+<input
+  type="text"
+  [(ngModel)]="problemasClinicos[3]"
+  placeholder="Problema clínico 1"
+  class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
+>                        </div>
                     </div>
                     <div class="space-y-2">
                         <h4 class="text-[11px] font-bold text-slate-700">DIAGNÓSTICOS DIFERENCIALES (1 AL 7)</h4>
@@ -841,10 +865,12 @@
                 </div>
                 <div class="space-y-1">
                     <label class="text-[11px] font-bold text-slate-700 uppercase">PROCEDIMIENTOS CLÍNICOS A REALIZAR </label>
-                    <textarea rows="4" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800">1. Lavado antiséptico quirúrgico y debridación suave del tejido necrótico de la almohadilla.
-2. Vendaje compresivo estéril con cambio cada 48 horas.
-3. Administración de antibioticoterapia oral y analgesia preventiva por 7 días.
-4. Aplicación de antiparasitario externo para erradicación de garrapatas.</textarea>
+              <textarea
+  rows="4"
+  [(ngModel)]="planProcedimientos"
+  class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800"
+  placeholder="Describe los procedimientos clínicos"
+></textarea>
                 </div>
             </div>
         </div>
@@ -927,42 +953,219 @@
                         <span class="text-xs text-blue-600 font-semibold">HOJA 7 DE 8 · PRESCRIPCIÓN Y MATERIALES</span>
                         <h2 class="text-xl font-black text-slate-900 mt-1">01. Medicamentos Recetados e Insumos Utilizados</h2>
                     </div>
-                    <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-2 rounded-xl">＋ Fármaco</button>
-                </div>
+                    
+<button
+  type="button"
+  (click)="desplegarMedicamentos()"
+  class="bg-emerald-600 hover:bg-emerald-700 text-white
+         font-semibold text-xs px-3 py-2 rounded-xl"
+>
+  {{ mostrarCatalogoMedicamentos ? '− Ocultar catálogo' : '＋ Fármaco' }}
+</button>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <!-- Med 1 -->
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
-                        <div class="flex justify-between"><span class="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px]">Fármaco #1</span></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">PRODUCTO BASE</label><input type="text" value="Amoxicilina + Ácido Clavulánico" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-bold"></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[9px] text-slate-400 font-bold block">DOSIS</label><input type="text" value="15 mg/kg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                            <div><label class="text-[9px] text-slate-400 font-bold block">PRESENTACIÓN</label><input type="text" value="Tabletas 250mg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[9px] text-slate-400 font-bold block">VÍA</label><input type="text" value="Oral" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                            <div><label class="text-[9px] text-slate-400 font-bold block">FRECUENCIA</label><input type="text" value="Cada 12h x 7 días" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                        </div>
-                    </div>
-                    <!-- Med 2 -->
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
-                        <div class="flex justify-between"><span class="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[10px]">Fármaco #2[cite: 16]</span></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">PRODUCTO BASE</label><input type="text" value="Meloxicam" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-bold"></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[9px] text-slate-400 font-bold block">DOSIS</label><input type="text" value="0.1 mg/kg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                            <div><label class="text-[9px] text-slate-400 font-bold block">PRESENTACIÓN</label><input type="text" value="Suspensión 1.5mg" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[9px] text-slate-400 font-bold block">VÍA</label><input type="text" value="Oral" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                            <div><label class="text-[9px] text-slate-400 font-bold block">FRECUENCIA</label><input type="text" value="Cada 24h x 4 días" class="w-full bg-white border border-slate-200 rounded-lg p-2"></div>
-                        </div>
-                    </div>
                 </div>
+                
+<!-- CATÁLOGO DE MEDICAMENTOS -->
+<div
+  *ngIf="mostrarCatalogoMedicamentos"
+  class="border border-slate-200 rounded-xl p-4 bg-slate-50 space-y-3"
+>
+  <h3 class="font-bold text-slate-900 text-sm">
+    Catálogo de medicamentos
+  </h3>
+
+  <p *ngIf="cargandoMedicamentos"
+     class="text-sm text-slate-500">
+    Cargando medicamentos...
+  </p>
+
+  <p *ngIf="!cargandoMedicamentos && mensajeMedicamentos"
+     class="text-sm text-red-600">
+    {{ mensajeMedicamentos }}
+  </p>
+
+  <div
+    *ngIf="!cargandoMedicamentos && !mensajeMedicamentos
+           && medicamentosCatalogo.length > 0"
+    class="space-y-2"
+  >
+    <button
+      type="button"
+      *ngFor="let medicamento of medicamentosCatalogo"
+      (click)="agregarMedicamento(medicamento)"
+      class="w-full text-left flex flex-col sm:flex-row
+             sm:items-center sm:justify-between gap-2
+             bg-white border border-slate-200 rounded-xl
+             p-3 hover:bg-emerald-50 hover:border-emerald-300
+             transition"
+    >
+      <span class="font-semibold text-sm text-slate-800">
+        {{
+          medicamento.nombre ||
+          medicamento.nombre_medicamento ||
+          medicamento.medicamento ||
+          medicamento.nombre_producto ||
+          'Medicamento sin nombre'
+        }}
+      </span>
+
+      <span class="text-xs text-emerald-700 font-semibold">
+        + Agregar
+      </span>
+    </button>
+  </div>
+
+  <p
+    *ngIf="!cargandoMedicamentos && !mensajeMedicamentos
+           && medicamentosCatalogo.length === 0"
+    class="text-sm text-slate-500"
+  >
+    No hay medicamentos registrados en el catálogo.
+  </p>
+</div>
+
+<!-- CATÁLOGO DE MEDICAMENTOS -->
+
+
+
+                
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+  <!-- MENSAJE CUANDO NO HAY MEDICAMENTOS -->
+  <div
+    *ngIf="medicamentosSeleccionados.length === 0"
+    class="md:col-span-2 border border-dashed border-slate-300
+           rounded-xl p-6 text-center text-slate-500"
+  >
+    No hay medicamentos agregados.
+    <p class="text-xs mt-1">
+      Pulsa + Fármaco para seleccionar uno del catálogo.
+    </p>
+  </div>
+
+  <!-- TARJETAS DINÁMICAS -->
+  <div
+    *ngFor="let medicamento of medicamentosSeleccionados; let i = index"
+    class="border border-slate-200 rounded-xl p-4
+           bg-slate-50/50 space-y-2"
+  >
+    <div class="flex justify-between items-center gap-2">
+      <span
+        class="font-bold text-blue-700 bg-blue-50 px-2 py-1
+               rounded text-[10px]"
+      >
+        Fármaco #{{ i + 1 }}
+      </span>
+
+      <button
+        type="button"
+        (click)="eliminarMedicamento(i)"
+        class="text-red-600 hover:bg-red-50 border
+               border-red-200 rounded-lg px-2 py-1"
+      >
+        Eliminar
+      </button>
+    </div>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        PRODUCTO BASE
+      </label>
+
+      <input
+        type="text"
+        [value]="medicamento.nombre"
+        readonly
+        class="w-full bg-white border border-slate-200
+               rounded-lg p-2 font-bold"
+      >
+    </div>
+
+    <div *ngIf="medicamento.principio_activo">
+      <label class="text-[9px] text-slate-400 font-bold block">
+        PRINCIPIO ACTIVO
+      </label>
+
+      <input
+        type="text"
+        [value]="medicamento.principio_activo"
+        readonly
+        class="w-full bg-white border border-slate-200
+               rounded-lg p-2"
+      >
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="text-[9px] text-slate-400 font-bold block">
+          DOSIS
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="medicamento.dosis"
+          placeholder="Ej. según valoración"
+          class="w-full bg-white border border-slate-200
+                 rounded-lg p-2"
+        >
+      </div>
+
+      <div>
+        <label class="text-[9px] text-slate-400 font-bold block">
+          PRESENTACIÓN
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="medicamento.presentacion"
+          placeholder="Presentación"
+          class="w-full bg-white border border-slate-200
+                 rounded-lg p-2"
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="text-[9px] text-slate-400 font-bold block">
+          VÍA
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="medicamento.via"
+          placeholder="Vía de administración"
+          class="w-full bg-white border border-slate-200
+                 rounded-lg p-2"
+        >
+      </div>
+
+      <div>
+        <label class="text-[9px] text-slate-400 font-bold block">
+          FRECUENCIA
+        </label>
+
+        <input
+          type="text"
+          [(ngModel)]="medicamento.frecuencia"
+          placeholder="Frecuencia y duración"
+          class="w-full bg-white border border-slate-200
+                 rounded-lg p-2"
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
 
                 <div class="space-y-1 pt-2">
                     <label class="text-[11px] font-bold text-slate-700 uppercase">02. INSUMOS Y MATERIALES UTILIZADOS</label>
-                    <textarea rows="2" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800">Guantes de nitrilo x 2 pares, gasas estériles x 4 paquetes, jeringas 3ml x 2, solución salina 0.9% 100ml, venda cohesiva.</textarea>
-                </div>
+<textarea
+  rows="2"
+  [(ngModel)]="materialesUtilizados"
+  class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 text-slate-800"
+  placeholder="Insumos y materiales utilizados"
+></textarea>                </div>
             </div>
 
             <!-- HOJA 8: Validación Oficial y Firmas -->
@@ -974,17 +1177,50 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                     <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
                         <h4 class="font-bold text-blue-900 uppercase">MÉDICO VETERINARIO TRATANTE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label><input type="text" value="Dra. María Fernanda Ordoñez Paz" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="MPU-84920-COMVEZCOL" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label>              <input
+  type="text"
+  name="nombreVeterinario"class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+  [(ngModel)]="nombreVeterinario"
+  readonly
+  placeholder="Nombre del veterinario"
+/></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
                     </div>
                     <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
                         <h4 class="font-bold text-slate-800 uppercase">TUTOR / RECEPTOR RESPONSABLE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input type="text" value="Carlos Alberto Muñoz Gómez" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input type="text" value="10.617.842.109" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input
+  type="text"
+  [(ngModel)]="nombreAcudiente"
+  readonly
+class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
+                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input
+  type="text"
+ [(ngModel)]="cedulaAcudiente"
+  readonly class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
                     </div>
                 </div>
+                <div class="flex justify-end gap-5 mt-6 pt-4 border-t border-slate-200">
+  <button
+    type="button"
+    (click)="guardarSistemas()"
+    class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700
+           text-white font-semibold text-sm px-6 py-3 rounded-xl
+           shadow-sm transition"
+  >
+   cancelar
+  </button>
+   <button
+  type="button"
+  (click)="guardarExpedienteCompleto()"
+  class="px-6 py-3 rounded-lg bg-[#4141A5] text-white font-semibold hover:bg-[#170B3D] transition"
+>
+  Guardar expediente completo
+</button>
+</div>
+
             </div>
         </div>
+        
 
         <!-- Ficha Lateral Paciente -->
       <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 relative">
@@ -999,6 +1235,7 @@
             HC - 2026-0842
         </span>
     </div>
+    
 
     <!-- CONTENEDOR DE LA IMAGEN PRINCIPAL CON BADGES FLOTANTES -->
     <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
