@@ -264,8 +264,8 @@
 >
                     </div>
                 <div>
-                    <label class="font-bold text-slate-700 block mb-1">NO. HISTORIA CLÍNICA *</label>
-                    <input type="text" value="HC - 2026-0842" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold">
+                    <label class="font-bold text-slate-700 block mb-1"> </label>
+                    <input type="text" value="" class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 font-bold">
                 </div>
                 <div>
                     <label class="font-bold text-slate-700 block mb-1">ESPECIE              /                 RAZA *</label>
@@ -843,7 +843,6 @@
   class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50"
 >                        </div>
                     </div>
-                  
                 </div>
             </div>
 
@@ -1163,31 +1162,89 @@
                     <span class="text-xs text-blue-600 font-semibold">· VALIDACIÓN LEGAL Y FIRMAS INSTITUCIONALES</span>
                     <h2 class="text-xl font-black text-slate-900 mt-1">03. Aval Profesional y del Acudiente</h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
-                        <h4 class="font-bold text-blue-900 uppercase">MÉDICO VETERINARIO TRATANTE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre Completo</label>              <input
-  type="text"
-  name="nombreVeterinario"class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
-  [(ngModel)]="nombreVeterinario"
-  readonly
-  placeholder="Nombre del veterinario"
-/></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Tarjeta Profesional (COMVEZCOL)</label><input type="text" value="" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                    </div>
-                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
-                        <h4 class="font-bold text-slate-800 uppercase">TUTOR / RECEPTOR RESPONSABLE</h4>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Nombre del Acudiente</label><input
-  type="text"
-  [(ngModel)]="nombreAcudiente"
-  readonly
-class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                        <div><label class="text-[9px] text-slate-400 font-bold block">Cédula de Ciudadanía (C.C.)</label><input
-  type="text"
- [(ngModel)]="cedulaAcudiente"
-  readonly class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"></div>
-                    </div>
-                </div>
+             
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+  <!-- FIRMA DEL VETERINARIO -->
+  <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+
+    <h4 class="font-bold text-blue-900 uppercase">
+      MÉDICO VETERINARIO TRATANTE
+    </h4>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Nombre Completo
+      </label>
+
+      <input
+        type="text"
+        name="nombreVeterinario"
+        [(ngModel)]="nombreVeterinario"
+        readonly
+        placeholder="Nombre del veterinario"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Tarjeta Profesional (COMVEZCOL)
+      </label>
+
+      <input
+        type="text"
+        name="tarjetaProfesional"
+        [(ngModel)]="tarjetaProfesional"
+        readonly
+        placeholder="Tarjeta profesional"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+  </div>
+
+  <!-- FIRMA DEL TUTOR -->
+  <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+
+    <h4 class="font-bold text-slate-800 uppercase">
+      TUTOR / RECEPTOR RESPONSABLE
+    </h4>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Nombre del Acudiente
+      </label>
+
+      <input
+        type="text"
+        name="nombreAcudiente"
+        [(ngModel)]="nombreAcudiente"
+        readonly
+        placeholder="Nombre del acudiente"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+    <div>
+      <label class="text-[9px] text-slate-400 font-bold block">
+        Cédula de Ciudadanía (C.C.)
+      </label>
+
+      <input
+        type="text"
+        name="cedulaAcudiente"
+        [(ngModel)]="cedulaAcudiente"
+        readonly
+        placeholder="Cédula del acudiente"
+        class="w-full bg-white border border-slate-200 rounded-lg p-2 font-medium"
+      >
+    </div>
+
+  </div>
+
+</div>
+
                 <div class="flex justify-end gap-5 mt-6 pt-4 border-t border-slate-200">
   <button
     type="button"

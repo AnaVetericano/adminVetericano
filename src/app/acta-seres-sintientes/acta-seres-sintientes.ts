@@ -390,55 +390,79 @@ guardarExpedienteCompleto(): void {
     });
   }
 cedulaAcudiente: string = '';
-  seleccionarSeguimiento(seguimiento: any): void {
-    this.nombreAcudiente = seguimiento?.notificador_nombre ?? '';
+  
+seleccionarSeguimiento(seguimiento: any): void {
+  // Guardar el animal seleccionado
+  this.seguimientoSeleccionado = seguimiento;
 
-this.cedulaAcudiente = seguimiento?.notificador_identificacion != null
-  ? String(seguimiento.notificador_identificacion)
-  : '';
-   
-    this.seguimientoSeleccionado = seguimiento;
-    
-    this.nombreAcudiente = seguimiento?.notificador_nombre || '';
-    
+  // NOMBRE Y DOCUMENTO DEL TUTOR
+  this.nombreAcudiente = String(
+    seguimiento?.notificador_nombre ??
+    seguimiento?.nombre_acudiente ??
+    seguimiento?.nombre_tutor ??
+    seguimiento?.tenedor?.nombres ??
+    ''
+  );
 
-    this.numeroRadicadoActual = String(
-      seguimiento?.numero_radicado ??
-      seguimiento?.radicado ??
-      seguimiento?.codigo_radicado ??
-      seguimiento?.numeroRadicado ??
-      seguimiento?.numero ??
-      seguimiento?.codigo ??
-      ''
-    );
+  this.cedulaAcudiente = String(
+    seguimiento?.notificador_identificacion ??
+    seguimiento?.cedula_acudiente ??
+    seguimiento?.documento_identidad ??
+    seguimiento?.tenedor?.documentoIdentidad ??
+    ''
+  );
 
-    const veterinario = seguimiento?.veterinario ?? seguimiento?.usuario_veterinario ?? seguimiento?.profesional;
-    const nombreAnidado = veterinario
-      ? [
-          veterinario.nombre_completo,
-          veterinario.nombre,
-          veterinario.nombres,
-          veterinario.apellido,
-          veterinario.apellidos
-        ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
-      : '';
+  // NÚMERO DE RADICADO
+  this.numeroRadicadoActual = String(
+    seguimiento?.numero_radicado ??
+    seguimiento?.radicado ??
+    seguimiento?.codigo_radicado ??
+    seguimiento?.numeroRadicado ??
+    seguimiento?.numero ??
+    seguimiento?.codigo ??
+    ''
+  );
 
-    this.nombreVeterinario = String(
-      seguimiento?.nombre_veterinario ??
-      seguimiento?.nombre_completo_veterinario ??
-      seguimiento?.veterinario_nombre ??
-      seguimiento?.profesional_nombre ??
-      seguimiento?.nombre_profesional ??
-      seguimiento?.medico_veterinario ??
-      nombreAnidado ??
-      ''
-    );
+  // DATOS DEL VETERINARIO
+  const veterinario =
+    seguimiento?.veterinario ??
+    seguimiento?.usuario_veterinario ??
+    seguimiento?.profesional ??
+    seguimiento?.asignacion?.veterinario ??
+    seguimiento?.peticion?.veterinario ??
+    null;
 
-    console.log('Seguimiento seleccionado:', seguimiento);
-    console.log('Radicado:', this.numeroRadicadoActual);
-    console.log('Veterinario:', this.nombreVeterinario);
-    this.cdr.detectChanges();
-  }
+  const nombreAnidado = veterinario
+    ? [
+        veterinario.nombre_completo,
+        veterinario.nombre,
+        veterinario.nombres,
+        veterinario.first_name,
+        veterinario.apellido,
+        veterinario.apellidos,
+        veterinario.last_name
+      ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+    : '';
+
+  this.nombreVeterinario = String(
+    seguimiento?.nombre_veterinario ??
+    seguimiento?.nombre_completo_veterinario ??
+    seguimiento?.veterinario_nombre ??
+    seguimiento?.profesional_nombre ??
+    seguimiento?.nombre_profesional ??
+    seguimiento?.medico_veterinario ??
+    veterinario?.nombre_completo ??
+    nombreAnidado ??
+    ''
+  );
+
+  console.log('Seguimiento seleccionado:', seguimiento);
+  console.log('Nombre del tutor:', this.nombreAcudiente);
+  console.log('Cédula del tutor:', this.cedulaAcudiente);
+  console.log('Veterinario asignado:', this.nombreVeterinario);
+
+  this.cdr.detectChanges();
+}
 
   // Catálogo de medicamentos
   desplegarMedicamentos(): void {
@@ -480,7 +504,7 @@ this.cedulaAcudiente = seguimiento?.notificador_identificacion != null
       }
     });
   }
-
+tarjetaProfesional: string = '';
   agregarMedicamento(medicamento: any): void {
     const nombre = String(
       medicamento?.nombre ||
