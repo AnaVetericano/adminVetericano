@@ -18,6 +18,9 @@ export class InicioAdministradorComponent {
   // Control para abrir y cerrar el menú en móviles
   menuAbierto: boolean = true;
 
+  // Control para el menú desplegable del perfil en la esquina superior derecha
+  menuPerfilAbierto: boolean = false;
+
   // Datos para mostrar en el perfil del sidebar
   adminUser = {
     avatarUrl: 'images/logoVet.svg'
@@ -26,7 +29,16 @@ export class InicioAdministradorComponent {
     avatarUrl: 'images/logoVetWhite.svg'
   };
 
+  toggleMenuPerfil(): void {
+    this.menuPerfilAbierto = !this.menuPerfilAbierto;
+  }
+
+  cerrarMenuPerfil(): void {
+    this.menuPerfilAbierto = false;
+  }
+
   onLogout(): void {
+    this.cerrarMenuPerfil();
     Swal.fire({
       title: '¿Cerrar sesión?',
       text: '¿Estás seguro de que deseas cerrar sesión?',

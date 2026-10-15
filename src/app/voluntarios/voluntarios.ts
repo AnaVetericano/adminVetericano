@@ -22,9 +22,7 @@ import {
 })
 export class Voluntarios implements OnInit {
 
-  // =========================================================
   // VARIABLES DE LA VISTA
-  // =========================================================
 
   modalAbierto: boolean = false;
 
@@ -37,9 +35,7 @@ export class Voluntarios implements OnInit {
   editandoId: number | null = null;
 
 
-  // =========================================================
   // LISTAS
-  // =========================================================
 
   voluntarios: PostulacionVoluntariado[] = [];
 
@@ -48,9 +44,7 @@ export class Voluntarios implements OnInit {
   eventos: EventoVoluntariado[] = [];
 
 
-  // =========================================================
   // OBJETO PARA CREAR / EDITAR
-  // =========================================================
 
   voluntario: PostulacionVoluntariado = {
 
@@ -69,18 +63,17 @@ export class Voluntarios implements OnInit {
   };
 
 
-  // =========================================================
+
   // CONSTRUCTOR
-  // =========================================================
+
 
   constructor(
     private authService: AuthService
   ) {}
 
 
-  // =========================================================
   // INICIALIZAR
-  // =========================================================
+
 
   ngOnInit(): void {
 
@@ -91,9 +84,7 @@ export class Voluntarios implements OnInit {
   }
 
 
-  // =========================================================
   // LISTAR VOLUNTARIOS
-  // =========================================================
 
   obtenerVoluntarios(): void {
 
@@ -129,9 +120,7 @@ export class Voluntarios implements OnInit {
   }
 
 
-  // =========================================================
   // LISTAR EVENTOS
-  // =========================================================
 
   obtenerEventos(): void {
 
@@ -159,9 +148,7 @@ export class Voluntarios implements OnInit {
   }
 
 
-  // =========================================================
   // BUSCAR VOLUNTARIOS
-  // =========================================================
 
   filtrarVoluntarios(): void {
 
@@ -217,9 +204,7 @@ export class Voluntarios implements OnInit {
   }
 
 
-  // =========================================================
   // ABRIR / CERRAR MENÚ DE FILTROS
-  // =========================================================
 
   toggleMenuFiltro(): void {
 
@@ -229,9 +214,7 @@ export class Voluntarios implements OnInit {
   }
 
 
-  // =========================================================
   // FILTRAR POR EVENTO
-  // =========================================================
 
   filtrarPorEvento(
     idEvento: number | null
@@ -265,9 +248,7 @@ export class Voluntarios implements OnInit {
   }
 
 
-  // =========================================================
   // ABRIR MODAL CREAR
-  // =========================================================
 
   abrirModalCrear(): void {
 

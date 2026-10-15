@@ -22,6 +22,7 @@ import { authGuard, loginGuard, roleGuard } from './services/auth.guard';
 import { pendingChangesGuard } from './services/pending-changes.guard';
 import { Compra } from './compra/compra';
 import { Inventario } from './inventario/inventario';
+import { PerfilComponent } from './perfil/perfil';
 
 export const routes: Routes = [
   { path: '', component: Landepage },
@@ -57,7 +58,8 @@ export const routes: Routes = [
       { path: 'especies', component: Especies, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
       { path: 'listarmedicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
       { path: 'crear-medicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
-      { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } }
+      { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } }
     ]
   }
 ];

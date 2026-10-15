@@ -1,0 +1,340 @@
+<div class="min-h-full p-4 sm:p-6 lg:p-8 font-['Nunito',sans-serif]">
+
+  <!-- ENCABEZADO -->
+  <div class="max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="inline-block w-3 h-3 rounded-full bg-[#4141A5]"></span>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-[#170B3D] tracking-tight">
+          Perfil del Usuario
+        </h1>
+      </div>
+      <p class="text-sm text-slate-500 mt-1">
+        Gestiona tu información personal, credenciales profesionales y datos compartidos con la aplicación móvil.
+      </p>
+    </div>
+
+    <!-- BADGE DE ROL Y MÓVIL -->
+    <div class="flex items-center gap-2 self-start sm:self-auto bg-white px-4 py-2.5 rounded-2xl shadow-xs border border-slate-200/80">
+      <div class="w-2.5 h-2.5 rounded-full" [ngClass]="usuario.rol.toLowerCase().includes('admin') ? 'bg-indigo-500' : 'bg-emerald-500'"></div>
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Rol Activo</p>
+        <p class="text-xs font-extrabold text-[#170B3D] flex items-center gap-1.5">
+          {{ usuario.rol }}
+          <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            Web & Móvil
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- COLUMNA IZQUIERDA: TARJETA DE RESUMEN Y FOTO -->
+    <div class="lg:col-span-4 space-y-6">
+
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/70 text-center relative overflow-hidden">
+        <!-- Fondo decorativo superior -->
+        <div class="absolute top-0 left-0 right-0 h-24 bg-gradient-to-r from-[#170B3D] to-[#4141A5]"></div>
+
+        <!-- FOTO DE PERFIL -->
+        <div class="relative z-10 pt-6 flex flex-col items-center">
+          <div class="relative group">
+            <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">
+              <img
+                [src]="usuario.foto || avatarPredeterminado"
+                alt="Foto de perfil"
+                class="w-full h-full object-cover object-center"
+              />
+            </div>
+
+            <!-- BOTÓN PARA CAMBIAR FOTO -->
+            <label
+              for="inputFotoPerfil"
+              title="Cambiar foto de perfil"
+              class="absolute bottom-1 right-1 p-2.5 bg-[#4141A5] hover:bg-[#323285] text-white rounded-full shadow-md cursor-pointer transition-transform hover:scale-110 active:scale-95"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </label>
+            <input
+              id="inputFotoPerfil"
+              type="file"
+              accept="image/*"
+              (change)="onFotoSeleccionada($event)"
+              class="hidden"
+            />
+          </div>
+
+          <!-- BOTÓN QUITAR FOTO (si tiene) -->
+          @if (usuario.foto) {
+            <button
+              type="button"
+              (click)="eliminarFoto()"
+              class="mt-3 text-xs text-rose-500 hover:text-rose-700 font-semibold transition-colors"
+            >
+              Quitar foto personalizada
+            </button>
+          }
+
+          <h2 class="mt-4 text-xl font-extrabold text-[#170B3D]">
+            {{ (usuario.nombre || usuario.apellido) ? (usuario.nombre + ' ' + usuario.apellido) : 'Usuario' }}
+          </h2>
+
+          <p class="text-xs text-slate-500 font-medium mt-0.5">
+            {{ usuario.email || 'Sin correo registrado' }}
+          </p>
+
+          <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+               [ngClass]="usuario.rol.toLowerCase().includes('admin') ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
+            <span class="w-2 h-2 rounded-full" [ngClass]="usuario.rol.toLowerCase().includes('admin') ? 'bg-indigo-500' : 'bg-emerald-500'"></span>
+            {{ usuario.rol }}
+          </div>
+        </div>
+
+        <!-- RESUMEN RÁPIDO DE CREDENCIALES -->
+        <div class="mt-6 pt-5 border-t border-slate-100 text-left space-y-2.5 text-xs">
+          <div class="flex items-center justify-between text-slate-600">
+            <span class="text-slate-400 font-semibold">Cédula:</span>
+            <span class="font-bold text-[#170B3D]">{{ usuario.identificacion || 'No registrada' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-600">
+            <span class="text-slate-400 font-semibold">Tarjeta Prof.:</span>
+            <span class="font-bold text-[#4141A5]">{{ usuario.tarjeta_profesional || 'No registrada' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-600">
+            <span class="text-slate-400 font-semibold">Matrícula:</span>
+            <span class="font-bold text-slate-700">{{ usuario.matricula || 'No registrada' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTA DE SINCRONIZACIÓN MÓVIL -->
+      <div class="bg-gradient-to-br from-[#170B3D]/5 to-[#4141A5]/10 rounded-2xl p-4 border border-[#4141A5]/20 text-xs text-slate-600 leading-relaxed">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-[#4141A5] text-white rounded-xl shrink-0 mt-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <p class="font-bold text-[#170B3D]">Sincronización con App Móvil</p>
+            <p class="text-slate-500 mt-0.5 text-[11px]">
+              Los cambios en tu información personal y credenciales veterinarias se sincronizan con tu sesión de la aplicación móvil.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA: FORMULARIO DETALLADO -->
+    <div class="lg:col-span-8">
+      <form (ngSubmit)="guardarPerfil()" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/70 space-y-6">
+
+        <!-- SECCIÓN 1: DATOS PERSONALES -->
+        <div>
+          <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <h3 class="text-base font-extrabold text-[#170B3D]">Información Personal e Identificación</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- NOMBRE -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Nombres <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nombre"
+                [(ngModel)]="usuario.nombre"
+                required
+                placeholder="Ingresa tus nombres"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+            </div>
+
+            <!-- APELLIDO -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Apellidos
+              </label>
+              <input
+                type="text"
+                name="apellido"
+                [(ngModel)]="usuario.apellido"
+                placeholder="Ingresa tus apellidos"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+            </div>
+
+            <!-- CÉDULA / IDENTIFICACIÓN -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Cédula de Ciudadanía / Documento
+              </label>
+              <input
+                type="text"
+                name="identificacion"
+                [(ngModel)]="usuario.identificacion"
+                placeholder="Número de identificación"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+            </div>
+
+            <!-- ROL (INFORMATIVO) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Rol Asignado
+              </label>
+              <input
+                type="text"
+                [value]="usuario.rol"
+                readonly
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-500 bg-slate-100 cursor-not-allowed"
+              />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: DATOS DE CONTACTO -->
+        <div>
+          <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <h3 class="text-base font-extrabold text-[#170B3D]">Información de Contacto</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- CORREO ELECTRÓNICO -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Correo Electrónico <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="usuario.email"
+                required
+                placeholder="ejemplo@correo.com"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+            </div>
+
+            <!-- TELÉFONO -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Número de Teléfono / Celular
+              </label>
+              <input
+                type="tel"
+                name="telefono"
+                [(ngModel)]="usuario.telefono"
+                placeholder="Ej: 310 123 4567"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+            </div>
+
+            <!-- DIRECCIÓN -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Dirección de Residencia o Consultorio
+              </label>
+              <input
+                type="text"
+                name="direccion"
+                [(ngModel)]="usuario.direccion"
+                placeholder="Ej: Carrera 5 # 10-20"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: CREDENCIALES PROFESIONALES (VETERINARIO) -->
+        <div>
+          <div class="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <h3 class="text-base font-extrabold text-[#170B3D]">Credenciales Profesionales</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <!-- TARJETA PROFESIONAL -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Tarjeta Profesional (COMVEZCOL)
+              </label>
+              <input
+                type="text"
+                name="tarjeta_profesional"
+                [(ngModel)]="usuario.tarjeta_profesional"
+                placeholder="Ej: TP-123456"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+              <span class="text-[11px] text-slate-400 mt-1 block">
+                Utilizada para la firma y emisión de actas clínicas y recetas.
+              </span>
+            </div>
+
+            <!-- MATRÍCULA -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Matrícula Profesional
+              </label>
+              <input
+                type="text"
+                name="matricula"
+                [(ngModel)]="usuario.matricula"
+                placeholder="Ej: MAT-98765"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] transition-all bg-slate-50/50"
+              />
+              <span class="text-[11px] text-slate-400 mt-1 block">
+                Número de registro o matrícula profesional complementario.
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BOTÓN GUARDAR -->
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button
+            type="submit"
+            [disabled]="guardando"
+            class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#4141A5] hover:bg-[#323285] text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            @if (guardando) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              <span>Guardando cambios...</span>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Guardar Cambios</span>
+            }
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>

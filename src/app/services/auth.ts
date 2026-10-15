@@ -6,10 +6,16 @@ import { environment } from '../../environments/environment';
 export type UserRole = 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
 
 export interface UserSession {
+  id_usuario?: number;
   email: string;
   nombre?: string;
   apellido?: string;
   identificacion?: string;
+  telefono?: string;
+  direccion?: string;
+  tarjeta_profesional?: string;
+  matricula?: string;
+  foto?: string;
   id_rol?: number;
   rol: UserRole;
   [key: string]: any;
@@ -43,10 +49,18 @@ export interface RespuestaLogin {
     access: string;
     refresh: string;
   };
+  id_usuario?: number;
+  id?: number;
   email?: string;
   identificacion?: string;
   nombre?: string;
   apellido?: string;
+  telefono?: string;
+  direccion?: string;
+  tarjeta_profesional?: string;
+  matricula?: string;
+  foto?: string;
+  foto_perfil?: string;
   id_rol?: number;
   rol?: string;
   nombre_rol?: string;
@@ -270,10 +284,16 @@ export class AuthService {
     const payload = this.extraerPayloadToken(token);
     const rolFinal = this.obtenerRolDesdeToken();
     const sesion: UserSession = {
+      id_usuario: payload?.id_usuario || payload?.user_id || payload?.id,
       email: payload?.email || payload?.username || 'usuario@vetericano.com',
       nombre: payload?.nombre || payload?.first_name || '',
       apellido: payload?.apellido || payload?.last_name || '',
       identificacion: payload?.identificacion || '',
+      telefono: payload?.telefono || '',
+      direccion: payload?.direccion || '',
+      tarjeta_profesional: payload?.tarjeta_profesional || '',
+      matricula: payload?.matricula || '',
+      foto: payload?.foto || payload?.foto_perfil || '',
       id_rol: payload?.id_rol ? Number(payload.id_rol) : (rolFinal === 'Veterinario' ? 2 : 1),
       rol: rolFinal
     };
@@ -281,6 +301,39 @@ export class AuthService {
       localStorage.setItem('user_session', JSON.stringify(sesion));
     } catch {}
     return sesion;
+  }
+
+  /**
+   * Actualiza los datos de la sesión activa y los persiste en localStorage
+   */
+  actualizarSesion(usuarioActualizado: Partial<UserSession>): void {
+    const actual = this.currentUserSignal();
+    const nuevaSesion: UserSession = {
+      ...(actual || { email: '', rol: 'Veterinario' }),
+      ...usuarioActualizado
+    };
+    this.currentUserSignal.set(nuevaSesion);
+    try {
+      localStorage.setItem('user_session', JSON.stringify(nuevaSesion));
+    } catch (e) {
+      console.warn('No se pudo guardar la sesión en localStorage:', e);
+    }
+  }
+
+  /**
+   * Actualiza el perfil de un usuario en el backend
+   */
+  actualizarPerfilUsuario(idUsuario: number | string, datos: any): Observable<any> {
+    const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
+    return this.http.patch<any>(`${urlBase}/usuarios/${idUsuario}/`, datos);
+  }
+
+  /**
+   * Obtiene los datos del perfil de un usuario desde el backend
+   */
+  obtenerPerfilUsuario(idUsuario: number | string): Observable<any> {
+    const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
+    return this.http.get<any>(`${urlBase}/usuarios/${idUsuario}/`);
   }
 
   /**
@@ -356,11 +409,28 @@ getMedicamentosCatalogo() {
 
         const rolFinal = this.normalizarRol(rolTextoRaw ?? idRolRaw);
 
+        const idUsuarioRaw =
+          res.id_usuario ??
+          res.id ??
+          res.usuario?.id_usuario ??
+          res.usuario?.id ??
+          res['user']?.id_usuario ??
+          res['user']?.id ??
+          decoded?.id_usuario ??
+          decoded?.user_id ??
+          decoded?.id;
+
         const sessionData: UserSession = {
+          id_usuario: idUsuarioRaw ? Number(idUsuarioRaw) : undefined,
           email: res.email || res.usuario?.email || res['user']?.email || decoded?.email || credenciales.email,
           nombre: res.nombre || res.usuario?.nombre || res['user']?.nombre || decoded?.nombre || '',
           apellido: res.apellido || res.usuario?.apellido || res['user']?.apellido || decoded?.apellido || '',
           identificacion: res.identificacion || res.usuario?.identificacion || decoded?.identificacion || '',
+          telefono: res.telefono || res.usuario?.telefono || res['user']?.telefono || decoded?.telefono || '',
+          direccion: res.direccion || res.usuario?.direccion || res['user']?.direccion || decoded?.direccion || '',
+          tarjeta_profesional: res.tarjeta_profesional || res.usuario?.tarjeta_profesional || res['user']?.tarjeta_profesional || decoded?.tarjeta_profesional || '',
+          matricula: res.matricula || res.usuario?.matricula || res['user']?.matricula || decoded?.matricula || '',
+          foto: res.foto || res.usuario?.foto || res.foto_perfil || res.usuario?.foto_perfil || decoded?.foto || '',
           id_rol: idRolRaw ? Number(idRolRaw) : (rolFinal === 'Veterinario' ? 2 : 1),
           rol: rolFinal
         };

@@ -1,0 +1,5 @@
+/* Estilos complementarios para PerfilComponent */
+:host {
+  display: block;
+  width: 100%;
+}
