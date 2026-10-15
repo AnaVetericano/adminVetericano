@@ -19,6 +19,7 @@ import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintient
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
 import { Proveedores } from './proveedores/proveedores';
 import { authGuard, loginGuard, roleGuard } from './services/auth.guard';
+import { pendingChangesGuard } from './services/pending-changes.guard';
 import { Compra } from './compra/compra';
 import { Inventario } from './inventario/inventario';
 import { PerfilComponent } from './perfil/perfil';
@@ -47,7 +48,9 @@ export const routes: Routes = [
 
       // Módulo Veterinario (y Administrador con acceso de supervisión)
       { path: 'acta-seres-sintientes', component: ActaSeresSintientes, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
-      { path: 'historia-clinica2', component: HistoriaClinica2Component, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+      { path: 'historia-clinica2', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+      { path: 'historia-clinica/editar/:id', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+      { path: 'historia-clinica/editar', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
 
       // Módulos compartidos / Catálogos clínicos
       { path: 'patologias', component: Patologias, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
