@@ -308,6 +308,17 @@ export class AuthService {
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
     return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
+  
+
+getMedicamentosCatalogo() {
+  const apiUrl = environment.apiUrl
+    .replace(/\/usuarios\/?$/, '')
+    .replace(/\/$/, '');
+
+  return this.http.get(`${apiUrl}/medicamentos-catalogo/`);
+}
+
+
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
     return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales).pipe(
@@ -509,6 +520,18 @@ export class AuthService {
     { headers }
   );
 }
+
+  obtenerSeguimientoPorId(idSeguimiento: number): Observable<any> {
+    const token = localStorage.getItem('token');
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
+
+    return this.http.get<any>(
+      `https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/${idSeguimiento}/`,
+      { headers }
+    );
+  }
 
   eliminarPostulacionVoluntariado(id: number) {
     return this.http.delete(`${this.baseUrlVoluntariado}/postulaciones/${id}/`);
