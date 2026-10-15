@@ -1,0 +1,569 @@
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+
+  <!-- BARRA SUPERIOR / ENCABEZADO -->
+  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+    <div class="flex items-center justify-between max-w-7xl mx-auto flex-wrap gap-3">
+      <div class="flex items-center gap-3.5">
+        <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+          <!-- Icono de Maletín / Kit Médico de Campo -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+              Inventario Veterinario
+            </h1>
+            <span class="bg-[#F1C63C]/20 text-amber-900 border border-[#F1C63C] text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
+              Kit de Campo
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-gray-500 font-medium">
+            Maletín asignado a: <span class="font-bold text-[#4141a5]">{{ veterinarioNombre }}</span> · Saldo en tiempo real para atención de animales
+          </p>
+        </div>
+      </div>
+
+      <!-- BOTONES DE ACCIÓN RÁPIDA Y SELECTOR SUPERVISOR -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <div *ngIf="esAdmin && veterinariosDisponibles.length > 0" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-xs">
+          <span class="text-xs font-bold text-gray-500 hidden sm:inline">Supervisar maletín de:</span>
+          <select
+            [(ngModel)]="veterinarioSeleccionadoId"
+            (change)="cambiarVeterinario()"
+            class="bg-transparent text-xs font-extrabold text-[#4141a5] outline-none cursor-pointer">
+            <option *ngFor="let v of veterinariosDisponibles" [value]="v.id_usuario">
+              👨‍⚕️ {{ v.nombre }} (ID: {{ v.id_usuario }})
+            </option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          (click)="cargarDatos()"
+          class="h-10 px-4 bg-white border border-gray-200 hover:border-[#4141a5]/50 hover:bg-gray-50 text-[#170B3D] rounded-xl font-bold text-xs uppercase tracking-wider shadow-xs active:scale-95 transition flex items-center gap-2 cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" [class.animate-spin]="cargando" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Sincronizar Kit
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-y-auto lg:pl-20 transition-all duration-300 space-y-4">
+
+    <!-- BANNER DE ALERTA DE STOCK BAJO (UMBRAL <= 10 UNIDADES) -->
+    @if (productosConStockBajo.length > 0) {
+      <div class="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-[#F1C63C] rounded-2xl p-4 shadow-sm shrink-0 animate-in fade-in duration-300">
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-[#F1C63C] text-amber-950 flex items-center justify-center shrink-0 shadow-xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <h3 class="text-sm font-extrabold text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                <span>⚠️ Alerta de Stock Bajo en tu Kit de Campo (Umbral &le; 10 unidades)</span>
+                <span class="bg-[#F1C63C] text-amber-950 text-[10px] font-black px-2 py-0.5 rounded-full">
+                  {{ productosConStockBajo.length }} Producto(s)
+                </span>
+              </h3>
+            </div>
+            
+            <div class="mt-2.5 space-y-2">
+              @for (prod of productosConStockBajo; track prod.id) {
+                <div class="bg-white/80 border border-amber-200/80 rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                    <span class="font-bold text-[#170B3D] text-xs sm:text-sm">{{ prod.nombre }}</span>
+                    <span class="text-[10px] text-amber-800 bg-amber-100 font-extrabold px-2 py-0.5 rounded-full border border-amber-300">
+                      Saldo: {{ prod.saldoDisponible }} uds
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <!-- MENSAJE TEXTUAL OBLIGATORIO -->
+                    <span class="text-xs font-semibold text-amber-950 italic">
+                      "Recuerda que te quedan {{ prod.saldoDisponible }} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general."
+                    </span>
+                    <button
+                      type="button"
+                      (click)="mostrarAlertaStockBajoSweetAlert(prod)"
+                      class="px-2.5 py-1 text-[11px] font-bold text-amber-900 bg-[#F1C63C] hover:bg-amber-400 rounded-lg shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap"
+                    >
+                      Ver Detalle
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TARJETAS DE RESUMEN METRICO DEL KIT -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
+      
+      <!-- 1. Total Productos en Maletín -->
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Productos en Kit</p>
+          <p class="text-lg sm:text-xl font-extrabold text-[#170B3D]">{{ totalProductos }}</p>
+        </div>
+      </div>
+
+      <!-- 2. Cantidad Entregada -->
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Cantidad Entregada</p>
+          <p class="text-lg sm:text-xl font-extrabold text-blue-700">{{ totalEntregadas }} uds</p>
+        </div>
+      </div>
+
+      <!-- 3. Cantidad Consumida -->
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Cantidad Consumida</p>
+          <p class="text-lg sm:text-xl font-extrabold text-purple-700">{{ totalConsumidas }} uds</p>
+        </div>
+      </div>
+
+      <!-- 4. Saldo Disponible (Con acento amarillo #F1C63C) -->
+      <div class="bg-white rounded-2xl p-4 border-2 border-[#F1C63C]/60 shadow-xs flex items-center gap-3.5 relative overflow-hidden">
+        <div class="w-11 h-11 rounded-xl bg-[#F1C63C]/30 text-amber-900 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-amber-900 uppercase tracking-wider">Saldo Disponible</p>
+          <p class="text-lg sm:text-xl font-black text-amber-900">{{ totalSaldoDisponible }} uds</p>
+        </div>
+        @if (productosConStockBajo.length > 0) {
+          <span class="absolute top-2 right-2 bg-[#F1C63C] text-amber-950 font-black text-[9px] px-1.5 py-0.5 rounded-full uppercase" title="Hay productos con stock bajo">
+            {{ productosConStockBajo.length }} Bajos
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- BARRA DE FILTROS Y BÚSQUEDA -->
+    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 shrink-0">
+      <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full md:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300">
+        <div class="flex items-center px-4 flex-1 gap-3 min-w-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="textoFiltro"
+            (input)="aplicarFiltro()"
+            placeholder="Buscar producto, principio activo, tipo o lote en tu kit..."
+            class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate"
+          />
+          @if (textoFiltro) {
+            <button
+              type="button"
+              (click)="limpiarFiltro()"
+              class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0"
+            >
+              Limpiar
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <select
+          [(ngModel)]="filtroEstado"
+          (change)="aplicarFiltro()"
+          class="h-12 bg-white border border-gray-200 rounded-2xl px-4 text-xs sm:text-sm font-bold text-gray-600 outline-none focus:border-[#4141a5] cursor-pointer shadow-xs"
+        >
+          <option value="todos">Todos los productos ({{ itemsKit.length }})</option>
+          <option value="disponible">Stock adecuado (> 10 uds)</option>
+          <option value="bajo">Stock bajo (&le; 10 uds) ({{ productosConStockBajo.length }})</option>
+          <option value="agotado">Agotados (0 uds) ({{ productosAgotados.length }})</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABLA DE INVENTARIO VETERINARIO (4 COLUMNAS PRINCIPALES) -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-xs overflow-hidden flex flex-col flex-1 min-h-[380px]">
+      @if (cargando) {
+        <div class="flex-1 flex flex-col items-center justify-center gap-3 py-16 text-gray-400">
+          <svg class="w-9 h-9 animate-spin text-[#4141a5]" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <p class="text-sm font-bold tracking-wider uppercase">Cargando inventario de campo del veterinario...</p>
+        </div>
+      } @else {
+        <div class="flex-1 overflow-auto">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm min-w-[850px]">
+            <thead class="bg-gray-50 border-b border-gray-100 sticky top-0 z-10 text-xs font-extrabold text-gray-500 uppercase tracking-wider">
+              <tr>
+                <!-- Columna 1: Producto -->
+                <th class="px-5 py-4 w-2/5">1. Producto</th>
+                <!-- Columna 2: Cantidad Entregada -->
+                <th class="px-4 py-4 text-center">2. Cantidad Entregada</th>
+                <!-- Columna 3: Cantidad Consumida -->
+                <th class="px-4 py-4 text-center">3. Cantidad Consumida</th>
+                <!-- Columna 4: Saldo Disponible -->
+                <th class="px-4 py-4 text-center">4. Saldo Disponible</th>
+                <!-- Acciones -->
+                <th class="px-5 py-4 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (item of itemsFiltrados; track item.id_medicamento) {
+                <tr class="hover:bg-slate-50/80 transition-colors group">
+                  
+                  <!-- COLUMNA 1: PRODUCTO -->
+                  <td class="px-5 py-4">
+                    <div class="flex items-start gap-3">
+                      <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs"
+                           [ngClass]="item.saldoDisponible <= 10 && item.saldoDisponible > 0 ? 'bg-[#F1C63C]/30 text-amber-950 border border-[#F1C63C]' : 'bg-[#4141a5]/10 text-[#4141a5]'">
+                        {{ item.nombre.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-extrabold text-[#170B3D] text-sm group-hover:text-[#4141a5] transition-colors">
+                            {{ item.nombre }}
+                          </span>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            {{ item.tipo }}
+                          </span>
+                        </div>
+                        <p class="text-xs text-gray-500 line-clamp-1 mt-0.5" [title]="item.descripcion">
+                          {{ item.descripcion || 'Sin descripción adicional' }}
+                        </p>
+                        <div class="flex items-center gap-3 text-[11px] text-gray-400 mt-1 font-medium">
+                          <span>📦 {{ item.presentacion || 'Presentación clínica' }}</span>
+                          <span>🏷️ {{ item.lote || 'Kit General' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- COLUMNA 2: CANTIDAD ENTREGADA -->
+                  <td class="px-4 py-4 text-center">
+                    <div class="font-bold text-slate-700 text-sm">
+                      {{ item.cantidadEntregada }} <span class="text-xs font-normal text-slate-400">uds</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-semibold block">Asignadas a maletín</span>
+                  </td>
+
+                  <!-- COLUMNA 3: CANTIDAD CONSUMIDA -->
+                  <td class="px-4 py-4 text-center">
+                    <div class="font-bold text-purple-700 text-sm">
+                      {{ item.cantidadConsumida }} <span class="text-xs font-normal text-purple-400">uds</span>
+                    </div>
+                    <span class="text-[10px] text-purple-400 font-semibold block">Formuladas / Usadas</span>
+                  </td>
+
+                  <!-- COLUMNA 4: SALDO DISPONIBLE -->
+                  <td class="px-4 py-4 text-center">
+                    @if (item.saldoDisponible <= 0) {
+                      <div class="inline-flex flex-col items-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-700 border border-rose-200">
+                          Agotado (0 uds)
+                        </span>
+                        <span class="text-[10px] text-rose-500 font-bold mt-0.5">Reabastecer</span>
+                      </div>
+                    } @else if (item.saldoDisponible <= 10) {
+                      <!-- ALERTA VISUAL DE STOCK BAJO (<= 10 UNIDADES) -->
+                      <div class="inline-flex flex-col items-center gap-1 cursor-pointer"
+                           (click)="mostrarAlertaStockBajoSweetAlert(item)"
+                           title="Haz clic para ver la alerta de reaprovisionamiento">
+                        <span class="px-3 py-1 rounded-full text-xs font-black bg-[#F1C63C]/30 text-amber-950 border-2 border-[#F1C63C] flex items-center gap-1.5 shadow-xs">
+                          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                          ⚠️ {{ item.saldoDisponible }} uds disponibles
+                        </span>
+                        <span class="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                          Stock Bajo (&le; 10)
+                        </span>
+                      </div>
+                    } @else {
+                      <div class="inline-flex flex-col items-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {{ item.saldoDisponible }} uds disponibles
+                        </span>
+                        <span class="text-[10px] text-emerald-600 font-medium mt-0.5">Stock óptimo</span>
+                      </div>
+                    }
+                  </td>
+
+                  <!-- ACCIONES: FORMULAR / REGISTRAR CONSUMO -->
+                  <td class="px-5 py-4 text-right">
+                    <button
+                      type="button"
+                      [disabled]="item.saldoDisponible <= 0"
+                      (click)="abrirModalConsumo(item)"
+                      class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-end gap-1.5 ml-auto active:scale-95 shadow-xs cursor-pointer"
+                      [ngClass]="item.saldoDisponible > 0 ? 'bg-[#4141a5] hover:bg-[#33338b] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Formular
+                    </button>
+                  </td>
+
+                </tr>
+              }
+
+              @if (itemsKit.length === 0) {
+                <tr>
+                  <td colspan="5" class="py-14 px-6 text-center">
+                    <div class="max-w-md mx-auto flex flex-col items-center">
+                      <div class="w-16 h-16 rounded-3xl bg-[#F1C63C]/20 text-[#4141a5] flex items-center justify-center mb-3.5 shadow-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                      </div>
+                      <h3 class="text-base font-extrabold text-[#170B3D] mb-1">Maletín de Campo sin Lotes Asignados</h3>
+                      <p class="text-xs text-gray-500 leading-relaxed mb-4">
+                        Este médico veterinario aún no tiene medicamentos o suministros asignados desde el inventario general de CBA. 
+                        Los lotes se transfieren directamente desde la tabla de inventario mediante el botón <strong>"Asignar a Veterinario"</strong>.
+                      </p>
+                      <a routerLink="/inventario" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-95 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ir al Inventario General para Asignar
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              } @else if (itemsFiltrados.length === 0) {
+                <tr>
+                  <td colspan="5" class="py-12 text-center text-gray-400">
+                    <p class="font-bold text-base">No se encontraron medicamentos o suministros.</p>
+                    <p class="text-xs text-gray-500 mt-1">Prueba ajustando el texto de búsqueda o el filtro de estado.</p>
+                    <button type="button" (click)="limpiarFiltro()" class="mt-3 text-xs font-bold text-[#4141a5] underline cursor-pointer">
+                      Restablecer filtros
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PIE DE TABLA -->
+        <div class="border-t border-gray-100 px-5 py-3.5 bg-gray-50/50 flex items-center justify-between text-xs text-gray-500 font-bold shrink-0 flex-wrap gap-2">
+          <span>Mostrando {{ itemsFiltrados.length }} de {{ totalProductos }} productos asignados</span>
+          <div class="flex items-center gap-4">
+            <span class="text-amber-900 font-black">Stock bajo (&le; 10): {{ productosConStockBajo.length }}</span>
+            <span class="text-[#4141a5] font-black">Saldo Total en Kit: {{ totalSaldoDisponible }} uds</span>
+          </div>
+        </div>
+      }
+    </div>
+
+  </main>
+
+  <!-- MODAL / FORMULARIO DE PRESCRIPCIÓN Y REGISTRO DE CONSUMO DE CAMPO -->
+  @if (modalConsumoAbierto && itemSeleccionadoParaConsumo) {
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-5 sm:p-7 border border-gray-100 relative flex flex-col max-h-[95vh]">
+        
+        <!-- Botón Cerrar -->
+        <button
+          type="button"
+          (click)="cerrarModalConsumo()"
+          class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 cursor-pointer"
+        >
+          ✕
+        </button>
+
+        <!-- Cabecera del Modal -->
+        <div class="mb-4 pr-8 shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="p-2 bg-[#4141a5]/10 text-[#4141a5] rounded-xl text-base">💊</span>
+            <div>
+              <h2 class="text-base sm:text-xl font-extrabold text-[#170B3D] uppercase tracking-wider">
+                Formular / Registrar Consumo
+              </h2>
+              <p class="text-xs text-gray-500 font-medium">
+                Descuento directo del inventario del maletín de campo
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4 overflow-y-auto flex-1 pr-1 py-1">
+
+          <!-- FICHA DEL PRODUCTO -->
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Producto Seleccionado</span>
+              <span class="text-xs font-black px-2.5 py-0.5 rounded-full border"
+                    [ngClass]="itemSeleccionadoParaConsumo.saldoDisponible <= 10 ? 'bg-[#F1C63C]/30 text-amber-950 border-[#F1C63C]' : 'bg-emerald-50 text-emerald-700 border-emerald-200'">
+                Saldo Disponible: {{ itemSeleccionadoParaConsumo.saldoDisponible }} uds
+              </span>
+            </div>
+            <h4 class="font-extrabold text-sm sm:text-base text-[#170B3D]">
+              {{ itemSeleccionadoParaConsumo.nombre }}
+            </h4>
+            <p class="text-xs text-slate-500">
+              {{ itemSeleccionadoParaConsumo.presentacion }} · {{ itemSeleccionadoParaConsumo.tipo }}
+            </p>
+          </div>
+
+          <!-- ALERTA VISUAL DE STOCK BAJO (<= 10 UNIDADES) -->
+          @if (itemSeleccionadoParaConsumo.saldoDisponible <= 10 && itemSeleccionadoParaConsumo.saldoDisponible > 0) {
+            <div class="p-3 rounded-2xl bg-amber-50 border-2 border-[#F1C63C] text-amber-950 text-xs flex items-start gap-2.5 shadow-xs animate-in fade-in">
+              <span class="text-base leading-none">⚠️</span>
+              <div>
+                <p class="font-extrabold uppercase text-[10px] text-amber-900 tracking-wider">Alerta de Stock Bajo (&le; 10)</p>
+                <!-- MENSAJE TEXTUAL EXACTO EXIGIDO -->
+                <p class="font-bold text-amber-950 mt-0.5">
+                  Recuerda que te quedan {{ itemSeleccionadoParaConsumo.saldoDisponible }} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- INPUT DE CANTIDAD A FORMULAR/CONSUMIR CON VALIDACIÓN EN TIEMPO REAL -->
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+              Cantidad a Formular / Administrar <span class="text-red-500">*</span>
+            </label>
+            <div class="flex items-center gap-3">
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="cantidadConsumo"
+                (ngModelChange)="validarCantidadConsumo()"
+                class="w-32 border-2 rounded-xl px-4 py-2.5 text-base font-extrabold text-center outline-none transition"
+                [ngClass]="validacionConsumo && !validacionConsumo.valido ? 'border-red-500 bg-red-50 text-red-900 focus:ring-2 focus:ring-red-200' : 'border-gray-200 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 bg-white text-slate-800'"
+              />
+              <span class="text-xs font-bold text-gray-500">unidades de campo</span>
+            </div>
+          </div>
+
+          <!-- MENSAJE DE ERROR CLARO Y BLOQUEO DE ACCIÓN (SI CANTIDAD > SALDO) -->
+          @if (validacionConsumo && !validacionConsumo.valido) {
+            <div class="p-3.5 rounded-2xl bg-red-50 border-2 border-red-300 text-red-900 text-xs space-y-1 shadow-xs animate-in shake">
+              <div class="flex items-center gap-1.5 font-extrabold uppercase text-[11px] text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Acción Bloqueada: Stock Insuficiente</span>
+              </div>
+              <!-- MENSAJE DE ERROR TEXTUAL EXACTO -->
+              <p class="font-bold text-red-900 leading-relaxed">
+                {{ validacionConsumo.mensajeError }}
+              </p>
+            </div>
+
+            <!-- PRODUCTOS ALTERNATIVOS DISPONIBLES EN STOCK -->
+            @if (validacionConsumo.alternativasDisponibles.length > 0) {
+              <div class="mt-3 p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-[#4141a5] uppercase tracking-wider flex items-center gap-1">
+                    🔄 Alternativas disponibles en tu stock:
+                  </span>
+                  <span class="text-[10px] text-indigo-700 font-bold bg-white px-2 py-0.5 rounded-md border border-indigo-200">
+                    {{ validacionConsumo.alternativasDisponibles.length }} opciones
+                  </span>
+                </div>
+                <p class="text-[11px] text-indigo-800">
+                  Puedes seleccionar una de las siguientes opciones que sí cuentan con saldo en tu maletín:
+                </p>
+
+                <div class="grid grid-cols-1 gap-2 pt-1">
+                  @for (alt of validacionConsumo.alternativasDisponibles; track alt.id_medicamento) {
+                    <div class="bg-white border border-indigo-100 hover:border-[#4141a5] rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-xs transition">
+                      <div class="min-w-0">
+                        <div class="font-bold text-xs text-[#170B3D] truncate">{{ alt.nombre }}</div>
+                        <div class="text-[10px] text-gray-500">{{ alt.tipo }} · {{ alt.presentacion }}</div>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[11px] font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {{ alt.saldoDisponible }} uds
+                        </span>
+                        <button
+                          type="button"
+                          (click)="seleccionarAlternativa(alt)"
+                          class="px-2.5 py-1 text-xs font-bold text-white bg-[#4141a5] hover:bg-[#33338b] rounded-lg transition active:scale-95 cursor-pointer"
+                        >
+                          Usar esta
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+
+          <!-- OBSERVACIONES ADICIONALES -->
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+              Observaciones / Animal Tratado (Opcional)
+            </label>
+            <textarea
+              rows="2"
+              [(ngModel)]="observacionesConsumo"
+              placeholder="Ej. Rescate canino callejero, herida infectada en miembro posterior..."
+              class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 bg-gray-50/50 outline-none focus:border-[#4141a5] focus:bg-white transition"
+            ></textarea>
+          </div>
+
+        </div>
+
+        <!-- BOTONES DE ACCIÓN (EL BOTÓN GUARDAR SE DESACTIVA CUANDO LA VALIDACIÓN NO ES VÁLIDA) -->
+        <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-gray-100 shrink-0">
+          <button
+            type="button"
+            (click)="cerrarModalConsumo()"
+            class="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider cursor-pointer"
+          >
+            Cancelar
+          </button>
+          
+          <!-- BOTÓN GUARDAR: BLOQUEADO Y DESACTIVADO SI SUPERA EL STOCK DISPONIBLE -->
+          <button
+            type="button"
+            [disabled]="!validacionConsumo || !validacionConsumo.valido || guardandoConsumo"
+            (click)="confirmarConsumo()"
+            class="px-5 py-2.5 rounded-xl font-bold transition text-xs uppercase tracking-wider shadow-md flex items-center gap-1.5 cursor-pointer"
+            [ngClass]="validacionConsumo && validacionConsumo.valido && !guardandoConsumo ? 'bg-[#4141a5] hover:bg-[#33338b] text-white active:scale-95' : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60 shadow-none'"
+          >
+            @if (guardandoConsumo) {
+              <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+              <span>Guardando...</span>
+            } @else {
+              <span>Confirmar y Descontar</span>
+            }
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>
+

@@ -23,6 +23,7 @@ import { pendingChangesGuard } from './services/pending-changes.guard';
 import { Compra } from './compra/compra';
 import { Inventario } from './inventario/inventario';
 import { PerfilComponent } from './perfil/perfil';
+import { VeterinaryInventoryComponent } from './veterinary-inventory/veterinary-inventory.component';
 
 export const routes: Routes = [
   { path: '', component: Landepage },
@@ -47,6 +48,7 @@ export const routes: Routes = [
       { path: 'inventario', component: Inventario, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
 
       // Módulo Veterinario (y Administrador con acceso de supervisión)
+      { path: 'inventario-veterinario', component: VeterinaryInventoryComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'acta-seres-sintientes', component: ActaSeresSintientes, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica2', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica/editar/:id', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
