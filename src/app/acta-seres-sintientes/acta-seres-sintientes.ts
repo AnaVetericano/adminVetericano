@@ -1,8 +1,11 @@
 import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { ComprasService } from '../services/compras.service';
+import { PatologiaService, Patologia } from '../services/patologia.service';
+import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { finalize, forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -18,11 +21,19 @@ import Swal from 'sweetalert2';
 })
 export class ActaSeresSintientes implements OnInit {
   // Campos de diagnóstico y tratamiento
-descripcionHallazgos = '';
-diagnosticoFinal = '';
-materialesUtilizados = '';
-planProcedimientos = '';
-pronostico = 'Favorable';
+  descripcionHallazgos = '';
+  diagnosticoFinal = '';
+  materialesUtilizados = '';
+  planProcedimientos = '';
+  pronostico = 'Favorable';
+
+  // Catálogo de Patologías (Criterios 1, 2 y 3)
+  patologias: Patologia[] = [];
+  patologiasFiltradas: Patologia[] = [];
+  cargandoPatologias: boolean = false;
+  busquedaPatologia: string = '';
+  idPatologiaSeleccionada: number | null = null;
+  patologiaSeleccionada: Patologia | null = null;
 
 problemasClinicos: string[] = ['', '', '', '', '', '', ''];
 diagnosticosDiferenciales: string[] = ['', '', '', '', '', '', ''];
@@ -141,6 +152,7 @@ guardarExpedienteCompleto(): void {
         ),
 
       diagnosticoFinal: this.diagnosticoFinal,
+      idPatologia: this.idPatologiaSeleccionada || undefined,
 
       tratamientos: this.medicamentosSeleccionados.map(
         (medicamento: any) => ({
@@ -267,11 +279,16 @@ guardarExpedienteCompleto(): void {
   mapaStockPorId: Map<number, number> = new Map();
   mapaStockPorNombre: Map<string, number> = new Map();
 
-  // Catálogo y selección de exámenes
-  mostrarExamenes = false;
-  examenesClinicos: any[] = [];
-  cargandoExamenes = false;
-  mensajeExamenes = '';
+  // Catálogo oficial de exámenes clínicos (Criterios 1, 2, 3 y 4)
+  examenesClinicos: ExamenClinico[] = [];
+  examenesFiltrados: ExamenClinico[] = [];
+  cargandoExamenes: boolean = false;
+  mensajeExamenes: string = '';
+  busquedaExamen: string = '';
+  paginaActualExamenes: number = 1;
+  tamanoPaginaExamenes: number = 5;
+  totalExamenes: number = 0;
+  examenSeleccionadoParaSolicitud: ExamenClinico | null = null;
   examenesSolicitados: any[] = [];
 
   // Evaluación física
@@ -294,12 +311,151 @@ guardarExpedienteCompleto(): void {
     private authService: AuthService,
     private comprasService: ComprasService,
     private cdr: ChangeDetectorRef,
-    private http: HttpClient
+    private http: HttpClient,
+    private router: Router,
+    private patologiaService: PatologiaService,
+    private examenesClinicosService: ExamenesClinicosService
   ) {}
+
+  /**
+   * Resuelve el ID único del animal/paciente correspondiente a un registro de seguimiento
+   */
+  obtenerIdAnimal(item: any): number | string {
+    if (!item) return '';
+    return (
+      item.id_animal ??
+      item.id_animal_id ??
+      item.animal?.id_animal ??
+      item.animal?.id ??
+      item.animales?.[0]?.id_animal ??
+      item.animales?.[0]?.id ??
+      item.paciente?.id_animal ??
+      item.paciente?.id ??
+      item.id_historia ??
+      item.id_consulta ??
+      item.id_seguimiento ??
+      item.id ??
+      ''
+    );
+  }
+
+  /**
+   * Obtiene el nombre del animal para enriquecer la navegación y búsqueda
+   */
+  obtenerNombrePaciente(item: any): string {
+    if (!item) return '';
+    return (
+      item.nombre_paciente ||
+      item.nombre_animal ||
+      item.nombre ||
+      item.animal?.nombre ||
+      item.animales?.[0]?.nombre ||
+      item.paciente?.nombre ||
+      ''
+    );
+  }
+
+  /**
+   * Identificador único seguro para el ciclo *ngFor
+   */
+  trackBySeguimiento = (index: number, item: any): any => {
+    if (!item) return index;
+    return (
+      item.id_animal ??
+      item.id_animal_id ??
+      item.animal?.id_animal ??
+      item.animales?.[0]?.id_animal ??
+      item.id_seguimiento ??
+      item.id ??
+      index
+    );
+  };
+
+  /**
+   * Redirige a la vista de edición de historia clínica garantizando el ID y nombre del paciente específico
+   */
+  irAEditarHistoria(seguimiento: any, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!seguimiento) return;
+
+    const id = this.obtenerIdAnimal(seguimiento);
+    const nombre = this.obtenerNombrePaciente(seguimiento);
+
+    this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
+      queryParams: nombre ? { nombre } : undefined
+    });
+  }
 
   ngOnInit(): void {
     this.cargarSeguimientos();
     this.cargarSistemasGuardados();
+    this.cargarPatologias();
+    this.cargarExamenesClinicos();
+  }
+
+  // =========================================================================
+  // GESTIÓN DEL CATÁLOGO DE PATOLOGÍAS (Criterios 1, 2 y 3)
+  // =========================================================================
+
+  /**
+   * Criterio 1: Carga el listado de patologías llamando al servicio al iniciar
+   */
+  cargarPatologias(): void {
+    this.cargandoPatologias = true;
+    this.patologiaService.obtenerPatologias().subscribe({
+      next: (lista: Patologia[]) => {
+        this.patologias = lista;
+        this.patologiasFiltradas = [...lista];
+        this.cargandoPatologias = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error al cargar patologías:', err);
+        this.cargandoPatologias = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * Criterio 2: Búsqueda por nombre de patología en tiempo real
+   */
+  filtrarPatologias(): void {
+    this.patologiasFiltradas = this.patologiaService.filtrarPatologiasLocales(
+      this.patologias,
+      this.busquedaPatologia
+    );
+  }
+
+  /**
+   * Limpia el input de búsqueda y restaura la lista de patologías
+   */
+  limpiarBusquedaPatologia(): void {
+    this.busquedaPatologia = '';
+    this.filtrarPatologias();
+  }
+
+  /**
+   * Criterio 1: Al seleccionar una patología, actualiza el estado y renderiza su descripción
+   */
+  onSeleccionarPatologia(id: number | null): void {
+    this.idPatologiaSeleccionada = id;
+    if (!id) {
+      this.patologiaSeleccionada = null;
+      return;
+    }
+
+    const encontrada = this.patologias.find(p => p.id_patologia === id);
+    this.patologiaSeleccionada = encontrada || null;
+
+    if (this.patologiaSeleccionada) {
+      // Sugerir el nombre de la patología en el diagnóstico final si está vacío
+      if (!this.diagnosticoFinal || this.diagnosticoFinal.trim() === '') {
+        this.diagnosticoFinal = this.patologiaSeleccionada.nombre;
+      }
+    }
   }
 
   alternarNuevosCasos(): void {
@@ -308,6 +464,9 @@ guardarExpedienteCompleto(): void {
 
   cambiarPestana(pestana: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos'): void {
     this.pestanaActiva = pestana;
+    if (pestana === 'examenes' && this.examenesClinicos.length === 0) {
+      this.cargarExamenesClinicos();
+    }
   }
 
   obtenerFotoPaciente(paciente: any): string {
@@ -375,16 +534,29 @@ guardarExpedienteCompleto(): void {
     const texto = (this.textoBusqueda || '').trim().toLowerCase();
 
     this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {
-      const especie = String(seguimiento?.paciente_especie || '').trim().toLowerCase();
+      const especie = String(
+        seguimiento?.paciente_especie ||
+        seguimiento?.especie ||
+        seguimiento?.animales?.[0]?.especie ||
+        ''
+      ).trim().toLowerCase();
+
       const coincideEspecie =
         this.filtroEspecie === 'Todos' ||
+        !this.filtroEspecie ||
         especie === this.filtroEspecie.trim().toLowerCase();
 
       const campos = [
         seguimiento?.nombre_paciente,
+        seguimiento?.nombre_animal,
+        seguimiento?.nombre,
+        seguimiento?.animales?.[0]?.nombre,
         seguimiento?.paciente_especie,
+        seguimiento?.especie,
         seguimiento?.paciente_raza,
-        seguimiento?.microchip
+        seguimiento?.raza,
+        seguimiento?.microchip,
+        seguimiento?.numero_radicado
       ];
 
       const coincideTexto = !texto || campos.some((campo: any) =>
@@ -467,6 +639,14 @@ seleccionarSeguimiento(seguimiento: any): void {
   console.log('Veterinario asignado:', this.nombreVeterinario);
 
   this.cdr.detectChanges();
+
+  // Desplazamiento automático suave hacia la información del paciente (UX)
+  setTimeout(() => {
+    const seccionFicha = document.getElementById('seccion-ficha-paciente');
+    if (seccionFicha) {
+      seccionFicha.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 60);
 }
 
   // Catálogo de medicamentos
@@ -772,43 +952,99 @@ tarjetaProfesional: string = '';
     }
   }
 
-  // Catálogo de exámenes clínicos
-  desplegarExamenes(): void {
-    this.mostrarExamenes = !this.mostrarExamenes;
+  // =========================================================================
+  // GESTIÓN DEL CATÁLOGO DE EXÁMENES CLÍNICOS (Criterios 1, 2, 3 y 4)
+  // =========================================================================
 
-    if (!this.mostrarExamenes || this.examenesClinicos.length > 0) {
-      return;
-    }
+  get totalPaginasExamenes(): number {
+    return Math.ceil(this.examenesFiltrados.length / this.tamanoPaginaExamenes) || 1;
+  }
 
+  get examenesPaginados(): ExamenClinico[] {
+    const inicio = (this.paginaActualExamenes - 1) * this.tamanoPaginaExamenes;
+    return this.examenesFiltrados.slice(inicio, inicio + this.tamanoPaginaExamenes);
+  }
+
+  get paginasDisponiblesExamenes(): number[] {
+    const total = this.totalPaginasExamenes;
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  get indiceInicioExamenes(): number {
+    if (this.examenesFiltrados.length === 0) return 0;
+    return (this.paginaActualExamenes - 1) * this.tamanoPaginaExamenes + 1;
+  }
+
+  get indiceFinExamenes(): number {
+    return Math.min(this.paginaActualExamenes * this.tamanoPaginaExamenes, this.examenesFiltrados.length);
+  }
+
+  /**
+   * Criterio 1: Carga los exámenes clínicos adaptándose a la metadata de respuesta del backend
+   */
+  cargarExamenesClinicos(): void {
     this.cargandoExamenes = true;
     this.mensajeExamenes = '';
 
-    this.authService.getCatalogo().subscribe({
-      next: (respuesta: any) => {
-        if (Array.isArray(respuesta)) {
-          this.examenesClinicos = respuesta;
-        } else if (Array.isArray(respuesta?.results)) {
-          this.examenesClinicos = respuesta.results;
-        } else if (Array.isArray(respuesta?.data)) {
-          this.examenesClinicos = respuesta.data;
-        } else {
-          this.examenesClinicos = [];
-        }
-
-        if (this.examenesClinicos.length === 0) {
-          this.mensajeExamenes = 'El catálogo no contiene exámenes clínicos.';
-        }
-
+    this.examenesClinicosService.obtenerTodos().subscribe({
+      next: (lista: ExamenClinico[]) => {
+        this.examenesClinicos = lista;
+        this.examenesFiltrados = [...lista];
+        this.totalExamenes = lista.length;
         this.cargandoExamenes = false;
         this.cdr.detectChanges();
       },
       error: (error: any) => {
-        console.error('Error al cargar los exámenes:', error);
+        console.error('Error al cargar exámenes clínicos:', error);
         this.mensajeExamenes = 'No se pudieron cargar los exámenes clínicos.';
         this.cargandoExamenes = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * Criterio 2: Búsqueda por nombre en tiempo real
+   */
+  filtrarExamenes(): void {
+    const query = (this.busquedaExamen || '').trim().toLowerCase();
+    if (!query) {
+      this.examenesFiltrados = [...this.examenesClinicos];
+    } else {
+      this.examenesFiltrados = this.examenesClinicos.filter(e =>
+        (e.nombre && e.nombre.toLowerCase().includes(query)) ||
+        (e.descripcion && e.descripcion.toLowerCase().includes(query))
+      );
+    }
+    this.paginaActualExamenes = 1;
+  }
+
+  /**
+   * Limpia la barra de búsqueda y restaura el listado de exámenes
+   */
+  limpiarBusquedaExamen(): void {
+    this.busquedaExamen = '';
+    this.filtrarExamenes();
+  }
+
+  /**
+   * Paginación interactiva
+   */
+  cambiarPaginaExamenes(pagina: number): void {
+    if (pagina >= 1 && pagina <= this.totalPaginasExamenes) {
+      this.paginaActualExamenes = pagina;
+    }
+  }
+
+  /**
+   * Agrega el examen seleccionado a la orden diagnóstica del paciente
+   */
+  solicitarExamenSeleccionado(): void {
+    if (!this.examenSeleccionadoParaSolicitud) {
+      return;
+    }
+    this.agregarExamen(this.examenSeleccionadoParaSolicitud);
+    this.examenSeleccionadoParaSolicitud = null;
   }
 
   agregarExamen(examen: any): void {

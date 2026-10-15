@@ -1,113 +1,691 @@
-<div class="max-w-7xl w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden my-6 border border-gray-200 text-sm">
-  
-  <!-- Encabezado institucional -->
- <header class="bg-indigo-950 text-white p-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-yellow-500">
-      <div class="flex items-center space-x-3 mb-2 sm:mb-0">
-        <!-- Ícono / Logo placeholder -->
-        <div class="w-12 h-12  rounded-full flex items-center justify-center text-indigo-950 font-bold shadow">       
-        <img [src]="popalog.logopop" alt="Escudo Popayan"
-         class="w-full h-full object-cover object-center"
-        />
-        
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+
+  <!-- ========================================================================= -->
+  <!-- 1. ENCABEZADO INSTITUCIONAL                                               -->
+  <!-- ========================================================================= -->
+  <header class="bg-white shrink-0 py-3.5 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full transition-all duration-300">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
+      
+      <!-- Marca y Escudo Institucional -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-[#170B3D] text-white flex items-center justify-center shrink-0 shadow-xs overflow-hidden border border-indigo-900">
+          <img [src]="popalog.logopop" alt="Escudo Popayán" class="w-8 h-10 object-contain" />
         </div>
         <div>
-          <h1 class="text-xl font-bold tracking-wide">ALCALDÍA DE POPAYÁN</h1>
-          <p class="text-xs text-gray-300">HISTORIA CLINICA VETERINARIA</p>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-xl font-extrabold text-[#170B3D] tracking-wide uppercase">
+              Alcaldía de Popayánnnn
+            </h1>
+            <span class="bg-[#4141a5]/10 text-[#4141a5] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
+              Edición de Historia Clínica
+            </span>
+          </div>
+          <p class="text-xs text-gray-500 font-medium">
+            Centro de Bienestar Animal (CBA) · Secretaría de Salud y Zoonosis
+          </p>
         </div>
       </div>
-      <div class="text-right text-xs bg-indigo-900/60 p-2 rounded border border-indigo-800">
-        <p><span class="font-semibold">Código:</span> F-GS-F-03-08</p>
-        <p><span class="font-semibold">Versión:</span> 01</p>
-        <p><span class="font-semibold">Página:</span> 2 de 2</p>
+
+      <!-- Acciones de Cabecera -->
+      <div class="flex items-center gap-2 self-end sm:self-center">
+        <button 
+          type="button"
+          (click)="cancelarEdicion()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-50 text-gray-600 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95"
+          title="Regresar al módulo clínico">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Volver al Módulo</span>
+        </button>
       </div>
+
+    </div>
   </header>
 
-  <form (ngSubmit)="guardarHistoria()" class="p-6 space-y-6">
-    
-    <!-- Fecha y Número de Historia -->
-  
+  <!-- ========================================================================= -->
+  <!-- 2. CONTENIDO PRINCIPAL (SCROLLABLE)                                       -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 overflow-y-auto space-y-5">
 
-    <!-- 1. DATOS DEL PACIENTE -->
-  
-
-    <!-- 2. MOTIVO DE CONSULTA -->
-    <div class="border border-indigo-900 rounded-md overflow-hidden">
-      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
-        2. MOTIVO DE CONSULTA
-      </div>
-      <div class="p-4 bg-white">
-        <textarea rows="3" [(ngModel)]="formData.motivoConsulta" name="motivoConsulta" placeholder="Describa el motivo de la consulta..." class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-      </div>
+    <!-- SPINNER DE CARGA INICIAL -->
+    <div *ngIf="cargando" class="flex flex-col items-center justify-center p-16 space-y-4 bg-white rounded-3xl border border-gray-100 shadow-xs">
+      <div class="w-12 h-12 border-4 border-[#4141a5]/20 border-t-[#4141a5] rounded-full animate-spin"></div>
+      <p class="text-sm font-bold text-gray-500">Cargando expediente clínico del animal...</p>
     </div>
 
-    <!-- 3. EXAMEN CLÍNICO -->
-    
-    <!-- 4. ÓRGANOS Y SISTEMAS -->
-    <div class="border border-indigo-900 rounded-md overflow-hidden">
-      <div class="bg-[#1e1b4b] text-white px-4 py-2 font-semibold text-xs tracking-wider">
-        4. ÓRGANOS Y SISTEMAS
+    <div *ngIf="!cargando">
+
+      <!-- BANNER DE NOTIFICACIÓN DE ERROR -->
+      <div *ngIf="mensajeError" class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div class="flex-1 text-xs">
+          <p class="font-bold text-rose-900">Atención en el Formulario</p>
+          <p class="mt-0.5">{{ mensajeError }}</p>
+        </div>
       </div>
-      <div class="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- BANNER DE ÉXITO -->
+      <div *ngIf="mensajeExito" class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="flex-1 text-xs">
+          <p class="font-bold text-emerald-900">Operación Completada</p>
+          <p class="mt-0.5">{{ mensajeExito }}</p>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- 3. TARJETA RESUMEN DEL PACIENTE VETERINARIO                           -->
+      <!-- ===================================================================== -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs mb-5">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          
+          <!-- Avatar e Identificación del Animal -->
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#4141a5] to-[#170B3D] text-white flex items-center justify-center font-extrabold text-2xl shadow-sm shrink-0">
+              <span *ngIf="!paciente?.foto_url">{{ paciente?.nombre?.charAt(0) || 'P' }}</span>
+              <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre" class="w-full h-full object-cover rounded-2xl" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-xl font-extrabold text-[#170B3D]">{{ paciente?.nombre || 'Paciente Sin Nombre' }}</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-[#4141a5] border border-indigo-100">
+                  {{ paciente?.especie }} · {{ paciente?.raza }}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                  [ngClass]="{
+                    'bg-emerald-50 text-emerald-700 border border-emerald-200': formHistoria.get('pronostico')?.value === 'Favorable',
+                    'bg-amber-50 text-amber-700 border border-amber-200': formHistoria.get('pronostico')?.value === 'Reservado',
+                    'bg-rose-50 text-rose-700 border border-rose-200': formHistoria.get('pronostico')?.value === 'Desfavorable' || formHistoria.get('pronostico')?.value === 'Crítico'
+                  }">
+                  Pronóstico: {{ formHistoria.get('pronostico')?.value }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+                <span><strong>Historia Nº:</strong> {{ historiaOriginal?.numero_historia }}</span>
+                <span>•</span>
+                <span><strong>Sexo:</strong> {{ paciente?.sexo }}</span>
+                <span>•</span>
+                <span><strong>Peso actual:</strong> {{ paciente?.peso }} kg</span>
+                <span>•</span>
+                <span><strong>Microchip:</strong> {{ paciente?.microchip || 'N/A' }}</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Tenedor / Rescate y Fecha Apertura -->
+          <div class="bg-gray-50/70 rounded-2xl p-3 border border-gray-100 text-xs text-gray-600 min-w-[240px]">
+            <p class="font-bold text-[#170B3D] uppercase tracking-wider text-[10px]">Tenedor / Responsable</p>
+            <p class="font-semibold text-gray-800">{{ paciente?.tenedor_nombre || 'Sin acudiente registrado' }}</p>
+            <p class="text-gray-400 text-[11px] mt-0.5">Tel: {{ paciente?.tenedor_telefono || 'No disponible' }}</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- 4. FORMULARIO REACTIVO DE EDICIÓN CLÍNICA                             -->
+      <!-- ===================================================================== -->
+      <form [formGroup]="formHistoria" (ngSubmit)="guardarEdicion()" novalidate class="space-y-5">
+
+        <!-- GRID DE DOS COLUMNAS PRINCIPALES -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          <!-- =============================================================== -->
+          <!-- COLUMNA IZQUIERDA: DIAGNÓSTICO Y PROBLEMAS CLÍNICOS             -->
+          <!-- =============================================================== -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
+            
+            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+              <div class="w-8 h-8 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center font-bold text-xs shrink-0">
+                1
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+                  Diagnóstico y Hallazgos Clínicos
+                </h3>
+                <p class="text-xs text-gray-400">Corrección o ratificación diagnóstica del paciente</p>
+              </div>
+            </div>
+
+            <!-- CATÁLOGO DE PATOLOGÍAS CLÍNICAS (Criterios 1, 2 y 3) -->
+            <div class="bg-gray-50/70 border border-gray-200 rounded-2xl p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold text-[#170B3D] uppercase flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Catálogo de Patologías
+                </span>
+                <span *ngIf="!cargandoPatologias" class="text-[10px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-md border border-gray-200">
+                  {{ patologiasFiltradas.length }} disponibles
+                </span>
+              </div>
+
+              <!-- Input de búsqueda (Criterio 2) -->
+              <div class="relative">
+                <input
+                  type="text"
+                  [(ngModel)]="busquedaPatologia"
+                  [ngModelOptions]="{standalone: true}"
+                  (input)="filtrarPatologias()"
+                  placeholder="Buscar patología por nombre..."
+                  class="w-full border border-gray-200 rounded-xl px-3 py-2 pl-8 pr-7 text-xs bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5] shadow-2xs"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <button
+                  *ngIf="busquedaPatologia"
+                  type="button"
+                  (click)="limpiarBusquedaPatologia()"
+                  class="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <!-- Lista desplegable / Select (Criterio 1) -->
+              <div *ngIf="!cargandoPatologias && patologiasFiltradas.length > 0" class="space-y-2">
+                <select
+                  [(ngModel)]="idPatologiaSeleccionada"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onSeleccionarPatologia($event)"
+                  class="w-full border border-gray-200 rounded-xl p-2 text-xs bg-white font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5]"
+                >
+                  <option [ngValue]="null">-- Seleccionar del catálogo (autocompleta diagnóstico) --</option>
+                  <option *ngFor="let p of patologiasFiltradas" [ngValue]="p.id_patologia">
+                    {{ p.nombre }}
+                  </option>
+                </select>
+
+                <!-- Renderizado dinámico de la descripción (Criterio 1) -->
+                <div *ngIf="patologiaSeleccionada" class="p-3 bg-white border border-[#4141a5]/20 rounded-xl text-xs space-y-1 animate-fade-in shadow-2xs">
+                  <p class="font-bold text-[#170B3D] text-[11px] flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-[#4141a5]"></span>
+                    {{ patologiaSeleccionada.nombre }}
+                  </p>
+                  <p class="text-gray-600 text-[11px] leading-relaxed">
+                    {{ patologiaSeleccionada.descripcion || 'Sin descripción clínica registrada.' }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Empty state si no hay resultados (Criterio 3) -->
+              <div *ngIf="!cargandoPatologias && patologiasFiltradas.length === 0" class="p-4 border border-dashed border-gray-200 bg-white rounded-xl text-center space-y-1 animate-fade-in">
+                <p class="text-xs font-bold text-gray-700">No se encontraron patologías</p>
+                <p class="text-[11px] text-gray-400">No hay coincidencias para "{{ busquedaPatologia }}"</p>
+                <button type="button" (click)="limpiarBusquedaPatologia()" class="text-[11px] text-[#4141a5] font-bold underline">
+                  Restablecer lista
+                </button>
+              </div>
+            </div>
+
+            <!-- DIAGNÓSTICO PRINCIPAL (OBLIGATORIO) -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="diagnosticoPrincipal" class="block text-xs font-bold text-gray-700 uppercase">
+                  Diagnóstico Principal / Definitivo <span class="text-rose-500">*</span>
+                </label>
+                <span class="text-[10px] text-gray-400 font-medium">Requerido</span>
+              </div>
+              <textarea 
+                id="diagnosticoPrincipal"
+                formControlName="diagnosticoPrincipal"
+                rows="3"
+                placeholder="Especifique el diagnóstico patológico o clínico corregido..."
+                [ngClass]="{
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('diagnosticoPrincipal'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('diagnosticoPrincipal')
+                }"
+                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all"></textarea>
+              
+              <!-- Mensaje de error reactivo -->
+              <div *ngIf="esInvalido('diagnosticoPrincipal')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span>{{ obtenerMensajeError('diagnosticoPrincipal') }}</span>
+              </div>
+            </div>
+
+            <!-- DIAGNÓSTICO DIFERENCIAL -->
+            <div>
+              <label for="diagnosticoDiferencial" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Diagnósticos Diferenciales
+              </label>
+              <textarea 
+                id="diagnosticoDiferencial"
+                formControlName="diagnosticoDiferencial"
+                rows="2"
+                placeholder="Patologías descartadas o en evaluación complementaria..."
+                class="w-full border border-gray-200 rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 bg-gray-50/50 transition-all"></textarea>
+            </div>
+
+            <!-- LISTA DE PROBLEMAS -->
+            <div>
+              <label for="listaProblemas" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Lista Maestra de Problemas / Signos
+              </label>
+              <textarea 
+                id="listaProblemas"
+                formControlName="listaProblemas"
+                rows="2"
+                placeholder="1. Vómito, 2. Letargia, 3. Dolor abdominal..."
+                class="w-full border border-gray-200 rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 bg-gray-50/50 transition-all"></textarea>
+            </div>
+
+            <!-- PRONÓSTICO (OBLIGATORIO) -->
+            <div>
+              <label for="pronostico" class="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+                Pronóstico Clínico Estimado <span class="text-rose-500">*</span>
+              </label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <label *ngFor="let opcion of opcionesPronostico" 
+                  class="flex items-center justify-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition-all"
+                  [ngClass]="{
+                    'bg-[#4141a5] text-white border-[#4141a5] shadow-xs': formHistoria.get('pronostico')?.value === opcion,
+                    'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100': formHistoria.get('pronostico')?.value !== opcion
+                  }">
+                  <input 
+                    type="radio" 
+                    formControlName="pronostico" 
+                    [value]="opcion" 
+                    class="hidden">
+                  <span>{{ opcion }}</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- =============================================================== -->
+          <!-- COLUMNA DERECHA: EVOLUCIÓN MÉDICA Y PLAN TERAPÉUTICO            -->
+          <!-- =============================================================== -->
+          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
+            
+            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+              <div class="w-8 h-8 rounded-xl bg-purple-50 text-[#4141a5] flex items-center justify-center font-bold text-xs shrink-0">
+                2
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+                  Evolución Clínica y Tratamiento
+                </h3>
+                <p class="text-xs text-gray-400">Progreso del animal bajo atención veterinaria</p>
+              </div>
+            </div>
+
+            <!-- EVOLUCIÓN (OBLIGATORIO) -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="evolucion" class="block text-xs font-bold text-gray-700 uppercase">
+                  Evolución del Paciente <span class="text-rose-500">*</span>
+                </label>
+                <span class="text-[10px] text-gray-400 font-medium">Requerido (Mín. 10 car.)</span>
+              </div>
+              <textarea 
+                id="evolucion"
+                formControlName="evolucion"
+                rows="4"
+                placeholder="Describa detalladamente el estado actual del paciente, respuesta al tratamiento, cambios fisiológicos y progreso..."
+                [ngClass]="{
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('evolucion'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('evolucion')
+                }"
+                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all"></textarea>
+              
+              <!-- Mensaje de error reactivo -->
+              <div *ngIf="esInvalido('evolucion')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span>{{ obtenerMensajeError('evolucion') }}</span>
+              </div>
+            </div>
+
+            <!-- PLAN DE TRATAMIENTO Y PROCEDIMIENTOS (OBLIGATORIO) -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label for="planTratamiento" class="block text-xs font-bold text-gray-700 uppercase">
+                  Plan de Tratamiento Actualizado <span class="text-rose-500">*</span>
+                </label>
+                <span class="text-[10px] text-gray-400 font-medium">Requerido</span>
+              </div>
+              <textarea 
+                id="planTratamiento"
+                formControlName="planTratamiento"
+                rows="3"
+                placeholder="Fármacos formulados, dosis, vía de administración, procedimientos quirúrgicos o cuidados en canil..."
+                [ngClass]="{
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('planTratamiento'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('planTratamiento')
+                }"
+                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all"></textarea>
+              
+              <!-- Mensaje de error reactivo -->
+              <div *ngIf="esInvalido('planTratamiento')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span>{{ obtenerMensajeError('planTratamiento') }}</span>
+              </div>
+            </div>
+
+            <!-- CONSTANTES FISIOLÓGICAS (GRID COMPACTO) -->
+            <div class="pt-2">
+              <label class="block text-xs font-bold text-gray-700 uppercase mb-2">
+                Constantes Fisiológicas en la Evolución
+              </label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                
+                <!-- Temperatura -->
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Temp. (°C)</span>
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    formControlName="temperatura"
+                    placeholder="38.5"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+
+                <!-- Frecuencia Cardíaca -->
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">F.C. (LPM)</span>
+                  <input 
+                    type="number" 
+                    formControlName="frecuenciaCardiaca"
+                    placeholder="110"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+
+                <!-- Frecuencia Respiratoria -->
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">F.R. (RPM)</span>
+                  <input 
+                    type="number" 
+                    formControlName="frecuenciaRespiratoria"
+                    placeholder="26"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+
+                <!-- Peso Actual -->
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Peso (Kg)</span>
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    formControlName="peso"
+                    placeholder="15.0"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- BLOQUE 3: JUSTIFICACIÓN DE LA MODIFICACIÓN (TRAZABILIDAD Y AUDITORÍA)-->
+        <!-- =================================================================== -->
+        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-3">
+          
+          <div class="flex items-center gap-2.5 pb-2 border-b border-gray-100">
+            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs shrink-0">
+              3
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+                Motivo y Justificación de la Modificación <span class="text-rose-500">*</span>
+              </h3>
+              <p class="text-xs text-gray-400">Requerido por normatividad clínica para el registro en auditoría médica</p>
+            </div>
+          </div>
+
+          <div>
+            <input 
+              type="text" 
+              id="motivoModificacion"
+              formControlName="motivoModificacion"
+              placeholder="Ej: Corrección diagnóstica por confirmación de frotis sanguíneo / Evolución favorable a las 72h..."
+              [ngClass]="{
+                'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('motivoModificacion'),
+                'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('motivoModificacion')
+              }"
+              class="w-full border rounded-2xl px-4 py-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all">
+            
+            <div *ngIf="esInvalido('motivoModificacion')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ obtenerMensajeError('motivoModificacion') }}</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- BARRA DE ACCIÓN Y BOTONES (CRITERIOS 1, 2 Y 4)                       -->
+        <!-- =================================================================== -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          
+          <div class="text-xs text-gray-400 font-medium flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" [ngClass]="formHistoria.dirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'"></span>
+            <span>{{ formHistoria.dirty ? 'Tienes modificaciones sin guardar en la historia.' : 'Formulario sincronizado sin cambios pendientes.' }}</span>
+          </div>
+
+          <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            
+            <!-- Botón Restablecer -->
+            <button 
+              type="button" 
+              (click)="restablecerValores()" 
+              [disabled]="!formHistoria.dirty || guardando"
+              class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+              Restablecer
+            </button>
+
+            <!-- Botón Cancelar (Criterio 4) -->
+            <button 
+              type="button" 
+              (click)="cancelarEdicion()" 
+              [disabled]="guardando"
+              class="px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-50">
+              Cancelar
+            </button>
+
+            <!-- Botón Guardar (Criterios 1 y 2) -->
+            <button 
+              type="submit" 
+              [disabled]="formHistoria.invalid || guardando"
+              [ngClass]="{
+                'opacity-50 cursor-not-allowed bg-gray-400': formHistoria.invalid || guardando,
+                'bg-[#4141a5] hover:bg-[#343485] active:scale-95 shadow-md shadow-[#4141a5]/20': !formHistoria.invalid && !guardando
+              }"
+              class="px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+              
+              <svg *ngIf="guardando" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+              
+              <svg *ngIf="!guardando" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              
+              <span>{{ guardando ? 'Guardando historia...' : 'Guardar Modificaciones' }}</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </form>
+
+      <!-- ===================================================================== -->
+      <!-- 5. CRITERIO 3: HISTORIAL DE MODIFICACIONES Y AUDITORÍA                -->
+      <!-- ===================================================================== -->
+      <section class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4 mt-6">
         
-        <!-- Columna 1 -->
-        <div class="space-y-3 text-xs">
-          <div class="flex justify-between items-center border-b pb-2" *ngFor="let item of [
-            {key: 'estadoGeneral', label: '1. Estado general...'},
-            {key: 'hidratacion', label: '2. Estado de hidratación...'},
-            {key: 'tegumentario', label: '3. Sistema tegumentario'},
-            {key: 'ojos', label: '4. Ojos'},
-            {key: 'oidos', label: '5. Oídos'}
-          ]">
-            <span class="font-medium text-gray-700 w-1/2">{{item.label}}</span>
-            <div class="flex space-x-4 w-1/2 justify-end">
-              <label class="inline-flex items-center">
-                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Normal" class="text-indigo-600">
-                <span class="ml-1">Normal</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Anormal" class="text-indigo-600">
-                <span class="ml-1">Anormal</span>
-              </label>
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 flex-wrap gap-2">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-[#4141a5]/10 text-[#4141a5] rounded-xl flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-[#170B3D] tracking-wide uppercase">
+                Historial de Modificaciones y Auditoría
+              </h3>
+              <p class="text-xs text-gray-500 font-medium">
+                Trazabilidad oficial de cambios de evolución, diagnósticos previos y responsables
+              </p>
             </div>
           </div>
+
+          <span class="px-3 py-1 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs border border-gray-200">
+            {{ historialModificaciones.length }} registro(s) de auditoría
+          </span>
         </div>
 
-        <!-- Columna 2 -->
-        <div class="space-y-3 text-xs">
-          <div class="flex justify-between items-center border-b pb-2" *ngFor="let item of [
-            {key: 'digestivo', label: '6. Sistema digestivo'},
-            {key: 'respiratorio', label: '7. Sistema respiratorio'},
-            {key: 'nervioso', label: '8. Sistema nervioso'},
-            {key: 'musculoEsqueletico', label: '9. Músculo esquelético'},
-            {key: 'cardiovascular', label: '10. Sistema cardiovascular'},
-            {key: 'genitourinario', label: '11. Genitourinario'}
-          ]">
-            <span class="font-medium text-gray-700 w-1/2">{{item.label}}</span>
-            <div class="flex space-x-4 w-1/2 justify-end">
-              <label class="inline-flex items-center">
-                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Normal" class="text-indigo-600">
-                <span class="ml-1">Normal</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="radio" [(ngModel)]="formData.organos[item.key]" [name]="item.key" value="Anormal" class="text-indigo-600">
-                <span class="ml-1">Anormal</span>
-              </label>
-            </div>
-          </div>
+        <!-- TABLA DE HISTORIAL ESTILIZADA -->
+        <div class="overflow-x-auto rounded-2xl border border-gray-100">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+                <th class="py-3 px-4">Fecha y Hora</th>
+                <th class="py-3 px-4">Veterinario / Usuario</th>
+                <th class="py-3 px-4">Acción y Motivo</th>
+                <th class="py-3 px-4">Campos Modificados</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              
+              <!-- ESTADO VACÍO -->
+              <tr *ngIf="historialModificaciones.length === 0">
+                <td colspan="4" class="text-center py-8 text-gray-400 text-xs">
+                  Esta historia clínica no registra modificaciones previas.
+                </td>
+              </tr>
+
+              <!-- FILAS DE AUDITORÍA -->
+              <tr *ngFor="let reg of historialModificaciones" class="hover:bg-gray-50/50 transition-colors">
+                
+                <!-- Fecha y Hora -->
+                <td class="py-3.5 px-4 font-bold text-gray-700 whitespace-nowrap align-top">
+                  {{ reg.fecha_hora | date:'dd/MM/yyyy, hh:mm a' }}
+                </td>
+
+                <!-- Usuario y Rol -->
+                <td class="py-3.5 px-4 align-top">
+                  <div class="font-bold text-[#170B3D]">{{ reg.usuario }}</div>
+                  <div class="text-[11px] text-gray-400">{{ reg.rol }}</div>
+                </td>
+
+                <!-- Acción y Motivo -->
+                <td class="py-3.5 px-4 align-top max-w-xs">
+                  <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#4141a5]/10 text-[#4141a5] mb-1">
+                    {{ reg.tipo_accion }}
+                  </span>
+                  <p class="text-gray-600 font-medium italic text-[11px]">
+                    "{{ reg.motivo_cambio }}"
+                  </p>
+                </td>
+
+                <!-- Campos Modificados con Valores Previos y Nuevos -->
+                <td class="py-3.5 px-4 align-top">
+                  <div class="space-y-1.5">
+                    <div *ngFor="let campo of reg.campos_cambiados" class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-[11px]">
+                      <span class="font-bold text-gray-800">{{ campo.etiqueta || campo.campo }}:</span>
+                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span class="text-rose-600 line-through bg-rose-50 px-1.5 py-0.5 rounded text-[10px]">
+                          {{ campo.valor_anterior || '(vacío)' }}
+                        </span>
+                        <span class="text-gray-400 text-xs">➔</span>
+                        <span class="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">
+                          {{ campo.valor_nuevo }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
+              </tr>
+
+            </tbody>
+          </table>
         </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 6. CRITERIO 4: MODAL DE CONFIRMACIÓN DE CANCELACIÓN (LOOK & FEEL APP)     -->
+  <!-- ========================================================================= -->
+  <div *ngIf="mostrarModalCancelar" 
+       class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden animate-fade-in"
+       role="dialog"
+       aria-modal="true">
+    
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-100 relative flex flex-col">
+      
+      <!-- Botón cerrar esquina -->
+      <button 
+        type="button"
+        (click)="cerrarModalCancelar()" 
+        class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 transition-colors">
+        ✕
+      </button>
+
+      <!-- Ícono de advertencia -->
+      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mb-4 shadow-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+
+      <!-- Título del Modal -->
+      <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] tracking-wide uppercase">
+        ¿Descartar cambios no guardados?
+      </h2>
+
+      <!-- Mensaje descriptivo -->
+      <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2 leading-relaxed">
+        Has realizado modificaciones en la evolución o diagnóstico de la historia clínica. Si sales ahora, se descartarán todos los cambios ingresados y se restaurarán los valores originales.
+      </p>
+
+      <!-- Botones de Acción del Modal -->
+      <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+        
+        <button 
+          type="button" 
+          (click)="cerrarModalCancelar()"
+          class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all active:scale-95">
+          Continuar editando
+        </button>
+
+        <button 
+          type="button" 
+          (click)="confirmarDescarte()"
+          class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-600/20 transition-all active:scale-95">
+          Sí, descartar cambios
+        </button>
 
       </div>
+
     </div>
 
-    <!-- Botones de Acción -->
-    <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-      <button type="button" (click)="limpiarFormulario()" class="px-5 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-100 font-medium transition">
-        Limpiar
-      </button>
-      <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium transition shadow">
-        Guardar
-      </button>
-    </div>
+  </div>
 
-  </form>
 </div>
