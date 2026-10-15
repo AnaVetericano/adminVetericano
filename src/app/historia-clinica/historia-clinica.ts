@@ -45,6 +45,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   cargando: boolean = true;
   guardando: boolean = false;
   formularioEnviado: boolean = false;
+  historiaAnulada: boolean = false;
   mensajeExito: string = '';
   mensajeError: string = '';
 
@@ -240,6 +241,27 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           motivoModificacion: '' // Se inicia vacío para exigir la justificación de la nueva edición
         });
 
+        // Criterio Jira HE06-HU013 Escenario 3.0: Edición bloqueada en historia anulada
+        const estadoGen = String(data.estado_general || '').trim().toLowerCase();
+        if (estadoGen === 'anulado') {
+          this.historiaAnulada = true;
+          this.formHistoria.disable();
+          Swal.fire({
+            title: 'Historia Anulada',
+            text: 'Esta historia clínica se encuentra anulada en el sistema y no admite modificaciones (Jira HE06-HU013).',
+            icon: 'warning',
+            confirmButtonColor: '#4141a5',
+            confirmButtonText: 'Entendido',
+            customClass: {
+              popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
+              confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+            }
+          });
+        } else {
+          this.historiaAnulada = false;
+          this.formHistoria.enable();
+        }
+
         // El formulario cargado debe estar en estado prístino (sin cambios aún)
         this.formHistoria.markAsPristine();
         this.formHistoria.markAsUntouched();
@@ -258,6 +280,20 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
    * Criterio 1 y 2: Guarda la edición si el formulario es válido
    */
   guardarEdicion(): void {
+    if (this.historiaAnulada) {
+      Swal.fire({
+        title: 'Historia Anulada',
+        text: 'No es posible modificar una historia clínica en estado anulado (Jira HE06-HU013 Escenario 3.0).',
+        icon: 'warning',
+        confirmButtonColor: '#4141a5',
+        customClass: {
+          popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
+          confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+        }
+      });
+      return;
+    }
+
     this.formularioEnviado = true;
     this.mensajeError = '';
     this.mensajeExito = '';
@@ -343,14 +379,19 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (err: any) => {
         this.guardando = false;
-        this.mensajeError = 'Ocurrió un error al guardar las modificaciones. Intente nuevamente.';
+        const msg = err?.error?.detail || err?.error?.mensaje || 'Ocurrió un error al guardar las modificaciones. Intente nuevamente.';
+        this.mensajeError = msg;
         Swal.fire({
           title: 'Error de Guardado',
-          text: 'No se pudo comunicar con el servidor para persistir los cambios.',
+          text: msg,
           icon: 'error',
-          confirmButtonColor: '#4141a5'
+          confirmButtonColor: '#4141a5',
+          customClass: {
+            popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
+            confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+          }
         });
         this.cdr.detectChanges();
       }

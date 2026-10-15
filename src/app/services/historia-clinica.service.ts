@@ -55,6 +55,7 @@ export interface HistoriaClinicaEdicion {
   id_animal: number;
   numero_historia: string;
   fecha_apertura: string;
+  estado_general?: string;
   paciente: PacienteHistoria;
   motivo_consulta: string;
   diagnostico_principal: string;
@@ -260,6 +261,7 @@ export class HistoriaClinicaService {
       id_animal: animal.id_animal || Number(idParam),
       numero_historia: data.numero_historia || `HC-${idParam}`,
       fecha_apertura: data.fecha_apertura || new Date().toISOString(),
+      estado_general: data.estado_general || 'activo',
       paciente: {
         id_animal: animal.id_animal || Number(idParam),
         nombre: animal.nombre || 'Paciente',
@@ -286,8 +288,8 @@ export class HistoriaClinicaService {
   }
 
   /**
-   * Criterio 1: Actualiza la historia clínica mediante la nueva estructura /api/clinica/expediente-completo/
-   * Envía el payload completo con formato adaptado al nuevo serializer de Django.
+   * Criterio 1: Actualiza la historia clínica mediante PATCH /api/clinica/expediente-completo/
+   * Conforme a Jira SCRUM-84 / HE06-HU013: Edición con registro de auditoría, trazabilidad y sin fallbacks ficticios.
    */
   actualizarHistoria(
     id: number | string,
@@ -295,11 +297,24 @@ export class HistoriaClinicaService {
     historiaActual: HistoriaClinicaEdicion
   ): Observable<RespuestaActualizacionHistoria> {
     const url = `${this.baseUrlClinica}expediente-completo/`;
-    const payload = this.construirPayloadBackend(dto, historiaActual);
+    const payload = {
+      id_animal: historiaActual.id_animal || historiaActual.paciente?.id_animal || Number(id),
+      diagnostico_principal: dto.diagnostico_principal,
+      diagnostico_diferencial: dto.diagnostico_diferencial,
+      lista_problemas: dto.lista_problemas,
+      evolucion: dto.evolucion,
+      pronostico: dto.pronostico,
+      plan_tratamiento: dto.plan_tratamiento,
+      temperatura: dto.temperatura,
+      frecuencia_cardiaca: dto.frecuencia_cardiaca,
+      frecuencia_respiratoria: dto.frecuencia_respiratoria,
+      peso: dto.peso,
+      motivo_modificacion: dto.motivo_modificacion
+    };
 
-    return this.http.post<any>(url, payload, { headers: this.authHeaders }).pipe(
+    return this.http.patch<any>(url, payload, { headers: this.authHeaders }).pipe(
       map(resp => {
-        const auditoriaNueva = this.generarAuditoriaDesdeCambios(
+        const auditoriaNueva = resp.auditoria || this.generarAuditoriaDesdeCambios(
           resp.historia_id || historiaActual.id_historia,
           dto,
           historiaActual,
@@ -307,36 +322,11 @@ export class HistoriaClinicaService {
         );
         return {
           success: true,
-          mensaje: 'Historia clínica actualizada con éxito. La evolución y diagnóstico fueron registrados en el expediente.',
-          historia_id: resp.historia_id || Number(id),
+          mensaje: resp.mensaje || 'Historia clínica actualizada con éxito.',
+          historia_id: resp.historia_id || historiaActual.id_historia,
           consulta_id: resp.consulta_id,
           auditoria: auditoriaNueva
         };
-      }),
-      catchError(() => {
-        // Fallback en caso de usar endpoint directo PATCH /historias/<id>/
-        const urlPatch = `${this.baseUrlClinica}historias/${id}/`;
-        const dtoPatch = {
-          evolucion_previa: dto.evolucion,
-          tratamientos_anteriores: dto.plan_tratamiento
-        };
-        return this.http.patch<any>(urlPatch, dtoPatch, { headers: this.authHeaders }).pipe(
-          map(resp => ({
-            success: true,
-            mensaje: 'Historia clínica actualizada correctamente en el sistema.',
-            historia_id: Number(id),
-            auditoria: this.generarAuditoriaDesdeCambios(Number(id), dto, historiaActual)
-          })),
-          catchError(() => {
-            // Persistencia controlada en memoria para el frontend
-            return of({
-              success: true,
-              mensaje: 'Modificaciones guardadas y reflejadas en la historia clínica del paciente.',
-              historia_id: Number(id),
-              auditoria: this.generarAuditoriaDesdeCambios(Number(id), dto, historiaActual)
-            }).pipe(delay(300));
-          })
-        );
       })
     );
   }
@@ -426,6 +416,7 @@ export class HistoriaClinicaService {
       id_animal: animal.id_animal || 1,
       numero_historia: animal.numeroHistoriaClinica || `HC-${idParam}`,
       fecha_apertura: data.fecha_apertura || new Date().toISOString(),
+      estado_general: data.estado_general || 'activo',
       paciente: {
         id_animal: animal.id_animal || 1,
         nombre: animal.nombre || 'Paciente',
@@ -494,12 +485,22 @@ export class HistoriaClinicaService {
       ]
     }));
 
+    // Si el backend nos entregó auditoría real persistida en _historial_modificaciones, la priorizamos
+    const historialPersistido: RegistroAuditoria[] = Array.isArray(data.historial_modificaciones) && data.historial_modificaciones.length > 0
+      ? data.historial_modificaciones
+      : [];
+
+    const historialFinal = historialPersistido.length > 0
+      ? historialPersistido
+      : (auditoriaExtraida.length > 0 ? auditoriaExtraida : this.getMockAuditoria(Number(idParam) || 101));
+
     return {
       id_historia: data.id_historia || Number(idParam) || 101,
       id_consulta: ultConsulta?.id_consulta || 1,
       id_animal: data.id_animal || animal.id_animal || 1,
       numero_historia: data.numero_historia || animal.numeroHistoriaClinica || `HC-${idParam}`,
-      fecha_apertura: new Date().toISOString(),
+      fecha_apertura: data.fecha_apertura || new Date().toISOString(),
+      estado_general: data.estado_general || 'activo',
       paciente: {
         id_animal: data.id_animal || animal.id_animal || 1,
         nombre: animal.nombre || 'Paciente',
@@ -525,7 +526,7 @@ export class HistoriaClinicaService {
         frecuencia_cardiaca: ultConsulta?.frecuencia_cardiaca || 105,
         frecuencia_respiratoria: ultConsulta?.frecuencia_respiratoria || 24
       },
-      historial_modificaciones: auditoriaExtraida.length > 0 ? auditoriaExtraida : this.getMockAuditoria(Number(idParam) || 101)
+      historial_modificaciones: historialFinal
     };
   }
 
