@@ -37,7 +37,7 @@
 </div></div>
 <div class="flex items-center gap-2 shrink-0">
 <select [(ngModel)]="filtroEstado" (change)="filtrar()" class="h-12 bg-white border border-gray-200 rounded-2xl px-4 text-sm font-bold text-gray-600 outline-none focus:border-[#4141a5] cursor-pointer shadow-xs">
-<option value="todos">Todos los estados</option><option value="disponible">Disponibles</option><option value="bajo">Stock bajo</option><option value="agotado">Agotados</option>
+<option value="todos">Todos los estados</option><option value="disponible">Disponibles</option><option value="bajo">Stock bajo</option><option value="agotado">Agotados</option><option value="sin_lote">Sin lote registrado</option>
 </select>
 <button type="button" (click)="cargar()" title="Recargar" class="h-12 px-5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-md active:scale-95 transition flex items-center gap-2">
 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" [class.animate-spin]="cargando" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -53,20 +53,31 @@ Recargar</button>
 </tr></thead>
 <tbody class="divide-y divide-gray-100">
 <tr *ngFor="let f of filas" class="hover:bg-gray-50/50 transition">
-<td class="px-4 py-3 font-extrabold text-[#170B3D]">#{{ f.idInv ?? '—' }}<div class="text-[11px] font-bold text-gray-400">det.compra: {{ f.idDetComp ?? '—' }} · det.salida: {{ f.idDetSal ?? '—' }}</div></td>
+<td class="px-4 py-3 font-extrabold text-[#170B3D]">#{{ f.idInv ?? '—' }}<div class="text-[11px] font-bold text-gray-400">det.compra: {{ f.idDetComp ?? '—' }}</div></td>
 <td class="px-4 py-3"><div class="font-bold text-[#170B3D]">{{ f.nombre }}</div><div class="text-[11px] text-gray-400 line-clamp-1" [title]="f.descripcion">{{ f.descripcion }}</div></td>
-<td class="px-4 py-3 text-center font-extrabold text-[#170B3D]">{{ f.stock }} uds<div *ngIf="f.descuadre" class="text-[11px] font-bold text-amber-600" [title]="'En tabla inventarios suma ' + f.refCantidad">BD: {{ f.refCantidad }} uds</div></td>
-<td class="px-4 py-3 text-center text-gray-500 font-bold">{{ f.cantidadEntrada ?? '—' }}</td>
+<td class="px-4 py-3 text-center">
+  <ng-container *ngIf="f.sinLote; else conStock">
+    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200" title="No se encontró registro de existencias en el inventario. No se asume stock no verificado.">
+      Sin lote registrado
+    </span>
+  </ng-container>
+  <ng-template #conStock>
+    <div class="font-extrabold text-[#170B3D]">{{ f.stock }} uds</div>
+    <div *ngIf="f.consumidas > 0" class="text-[11px] font-bold text-gray-400" [title]="'Descontado en consultas clínicas o salidas: ' + f.consumidas + ' uds'">Uso: {{ f.consumidas }} uds</div>
+  </ng-template>
+</td>
+<td class="px-4 py-3 text-center text-gray-500 font-bold">{{ f.cantidadEntrada }} uds</td>
 <td class="px-4 py-3 text-gray-600 font-bold">{{ f.vencimiento || '—' }}</td>
 <td class="px-4 py-3 text-center">
-<span *ngIf="f.estado==='disponible'" class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold">{{ f.estadoDb }}</span>
-<span *ngIf="f.estado==='bajo'" class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold">Stock bajo</span>
-<span *ngIf="f.estado==='agotado'" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-bold">{{ f.estadoDb }}</span>
+<span *ngIf="f.estado==='disponible'" class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold">Disponible</span>
+<span *ngIf="f.estado==='bajo'" class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-600 text-[11px] font-bold">Stock bajo ({{ f.stock }})</span>
+<span *ngIf="f.estado==='agotado'" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 text-[11px] font-bold">Agotado</span>
+<span *ngIf="f.estado==='sin_lote'" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">Sin verificar</span>
 </td>
 <td class="px-4 py-3 text-gray-600">{{ f.proveedor }}</td>
-<td class="px-4 py-3 text-gray-500">{{ f.idCompra ? '#' + f.idCompra + ' · ' + (f.fecha || '') : '—' }}</td>
+<td class="px-4 py-3 text-gray-500">{{ f.facturaTexto || (f.idCompra ? '#' + f.idCompra + ' · ' + (f.fecha || '') : '—') }}</td>
 </tr>
 <tr *ngIf="filas.length===0"><td colspan="8" class="px-4 py-10 text-center text-gray-400">{{ error || 'Sin resultados.' }} <button type="button" (click)="limpiar()" class="text-[#4141a5] underline font-bold">Limpiar</button></td></tr>
 </tbody></table></div>
-<div class="border-t border-gray-100 px-4 py-3 flex items-center justify-between text-xs text-gray-400 font-bold shrink-0"><span>{{ filas.length }} de {{ totalRef }} medicamentos · {{ totalCompras }} factura(s)</span><span>Total unidades (facturas): {{ totalUnd }}</span></div>
+<div class="border-t border-gray-100 px-4 py-3 flex items-center justify-between text-xs text-gray-400 font-bold shrink-0"><span>{{ filas.length }} de {{ totalRef }} medicamentos · {{ totalCompras }} factura(s)</span><span>Stock total disponible en CBA: {{ totalUnd }} uds</span></div>
 </div></main></div>
