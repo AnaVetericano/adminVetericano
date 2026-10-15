@@ -271,7 +271,7 @@ export class HistoriaClinicaService {
         tenedor_nombre: tutor.nombre || '',
         tenedor_documento: tutor.documento || '',
         tenedor_telefono: tutor.telefono || '',
-        foto_url: animal.foto_url || ''
+        foto_url: animal.foto_url || animal.foto || animal.imagen || ''
       },
       motivo_consulta: ultConsulta.motivo_consulta || 'Control clínico',
       diagnostico_principal: ultConsulta.diagnostico_final || 'Sin diagnóstico registrado',
@@ -437,7 +437,7 @@ export class HistoriaClinicaService {
         tenedor_nombre: tenedor.nombres || '',
         tenedor_documento: tenedor.documentoIdentidad || '',
         tenedor_telefono: tenedor.telefono || '',
-        foto_url: animal.fotoUrl || ''
+        foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
       },
       motivo_consulta: data.motivoConsulta || 'Revisión y evolución clínica',
       diagnostico_principal: hoja2.diagnosticoFinal || anamnesicos.enfermedadesAnteriores || 'Gastroenteritis aguda presuntiva',
@@ -511,7 +511,7 @@ export class HistoriaClinicaService {
         tenedor_nombre: tenedor.nombres || '',
         tenedor_documento: tenedor.documentoIdentidad || '',
         tenedor_telefono: tenedor.telefono || '',
-        foto_url: animal.fotoUrl || ''
+        foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
       },
       motivo_consulta: ultConsulta?.motivo_consulta || 'Seguimiento clínico rutinario',
       diagnostico_principal: ultConsulta?.diagnostico_final || 'Gastroenteritis infecciosa en resolución',

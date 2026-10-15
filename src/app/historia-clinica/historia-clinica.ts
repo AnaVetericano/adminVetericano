@@ -80,6 +80,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       const idParam = params.get('id');
       const idQuery = this.route.snapshot.queryParamMap.get('id');
       const nombreQuery = this.route.snapshot.queryParamMap.get('nombre') || '';
+      const fotoQuery = this.route.snapshot.queryParamMap.get('foto') || '';
 
       if (idParam) {
         this.idHistoria = idParam;
@@ -87,8 +88,74 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.idHistoria = idQuery;
       }
 
-      this.cargarHistoria(nombreQuery);
+      this.cargarHistoria(nombreQuery, fotoQuery);
     });
+  }
+
+  /**
+   * Normaliza URLs relativas de Django (/media/...) hacia la API de producción
+   */
+  normalizarUrlFoto(url: any): string {
+    if (!url || typeof url !== 'string' || !url.trim()) return '';
+    const u = url.trim();
+    if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
+      return u;
+    }
+    if (u.startsWith('/media/')) {
+      return `https://backendvetericano-production.up.railway.app${u}`;
+    }
+    if (u.startsWith('media/')) {
+      return `https://backendvetericano-production.up.railway.app/${u}`;
+    }
+    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+  }
+
+  /**
+   * Genera un color único y consistente para cada animal cuando no dispone de foto
+   */
+  obtenerColorAvatar(item: any): string {
+    const paleta = [
+      'bg-gradient-to-br from-blue-600 to-indigo-800',
+      'bg-gradient-to-br from-emerald-500 to-teal-800',
+      'bg-gradient-to-br from-violet-600 to-purple-800',
+      'bg-gradient-to-br from-amber-500 to-orange-700',
+      'bg-gradient-to-br from-cyan-600 to-blue-800',
+      'bg-gradient-to-br from-rose-500 to-red-800',
+      'bg-gradient-to-br from-fuchsia-600 to-pink-800'
+    ];
+    const clave = String(
+      item?.nombre ||
+      item?.nombre_paciente ||
+      item?.id_animal ||
+      'P'
+    );
+    let hash = 0;
+    for (let i = 0; i < clave.length; i++) {
+      hash = clave.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % paleta.length;
+    return paleta[index];
+  }
+
+  /**
+   * Genera las iniciales del nombre del animal para su avatar único
+   */
+  obtenerIniciales(item: any): string {
+    const nombre = (item?.nombre || item?.nombre_paciente || 'P').trim();
+    if (!nombre) return 'P';
+    const partes = nombre.split(' ').filter(Boolean);
+    if (partes.length >= 2) {
+      return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+    }
+    return nombre.substring(0, 2).toUpperCase();
+  }
+
+  /**
+   * Controlador de respaldo ante error de carga de imagen
+   */
+  imagenNoDisponible(event: Event): void {
+    const imagen = event.target as HTMLImageElement;
+    imagen.style.display = 'none';
   }
 
   /**
@@ -128,11 +195,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   /**
    * Criterio 1: Carga los datos previos de la historia clínica en el formulario
    */
-  cargarHistoria(nombrePaciente?: string): void {
+  cargarHistoria(nombrePaciente?: string, fotoPaciente?: string): void {
     this.cargando = true;
     this.mensajeError = '';
 
     const nombre = nombrePaciente || this.route.snapshot.queryParamMap.get('nombre') || '';
+    const foto = fotoPaciente || this.route.snapshot.queryParamMap.get('foto') || '';
 
     this.historiaService.obtenerHistoria(this.idHistoria, nombre).subscribe({
       next: (data: HistoriaClinicaEdicion) => {
@@ -143,6 +211,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         // Si el paciente retornado no tiene nombre específico pero venía en queryParams, asignarlo
         if (this.paciente && (!this.paciente.nombre || this.paciente.nombre === 'Paciente') && nombre) {
           this.paciente.nombre = nombre;
+        }
+
+        // ASIGNACIÓN EXACTA DE LA FOTO DEL PACIENTE:
+        // Prioridad 1: Si vino una foto específica desde la tarjeta seleccionada, esa es la foto exacta a mostrar
+        if (this.paciente) {
+          if (foto && foto.trim() !== '') {
+            this.paciente.foto_url = this.normalizarUrlFoto(foto);
+          } else if (data.paciente?.foto_url && data.paciente.foto_url.trim() !== '') {
+            this.paciente.foto_url = this.normalizarUrlFoto(data.paciente.foto_url);
+          } else {
+            this.paciente.foto_url = '';
+          }
         }
 
         // Poblamos el formulario reactivo con los datos previos

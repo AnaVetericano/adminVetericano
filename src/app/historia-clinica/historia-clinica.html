@@ -86,9 +86,21 @@
           
           <!-- Avatar e Identificación del Animal -->
           <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#4141a5] to-[#170B3D] text-white flex items-center justify-center font-extrabold text-2xl shadow-sm shrink-0">
-              <span *ngIf="!paciente?.foto_url">{{ paciente?.nombre?.charAt(0) || 'P' }}</span>
-              <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre" class="w-full h-full object-cover rounded-2xl" />
+            <div class="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center font-extrabold text-2xl shadow-sm shrink-0 border border-slate-200">
+              <img
+                *ngIf="paciente?.foto_url"
+                [src]="paciente?.foto_url"
+                [alt]="paciente?.nombre || 'Paciente'"
+                (error)="imagenNoDisponible($event)"
+                class="w-full h-full object-cover rounded-2xl"
+              />
+              <div
+                *ngIf="!paciente?.foto_url"
+                [ngClass]="obtenerColorAvatar(paciente)"
+                class="w-full h-full flex items-center justify-center font-black text-2xl text-white uppercase select-none"
+              >
+                {{ obtenerIniciales(paciente) }}
+              </div>
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">

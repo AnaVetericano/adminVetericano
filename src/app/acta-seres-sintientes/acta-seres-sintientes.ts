@@ -382,9 +382,13 @@ guardarExpedienteCompleto(): void {
 
     const id = this.obtenerIdAnimal(seguimiento);
     const nombre = this.obtenerNombrePaciente(seguimiento);
+    const foto = this.obtenerFotoPaciente(seguimiento);
 
     this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
-      queryParams: nombre ? { nombre } : undefined
+      queryParams: {
+        ...(nombre ? { nombre } : {}),
+        ...(foto ? { foto } : {})
+      }
     });
   }
 
@@ -469,26 +473,99 @@ guardarExpedienteCompleto(): void {
     }
   }
 
+  /**
+   * Normaliza URLs relativas provenientes de Django (/media/...) hacia la API de producción
+   */
+  normalizarUrlFoto(url: any): string {
+    if (!url || typeof url !== 'string' || !url.trim()) return '';
+    const u = url.trim();
+    if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
+      return u;
+    }
+    if (u.startsWith('/media/')) {
+      return `https://backendvetericano-production.up.railway.app${u}`;
+    }
+    if (u.startsWith('media/')) {
+      return `https://backendvetericano-production.up.railway.app/${u}`;
+    }
+    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+  }
+
+  /**
+   * Resuelve la foto específica de cada animal analizando todas las fuentes de datos posibles
+   */
   obtenerFotoPaciente(paciente: any): string {
     if (!paciente) {
-      return 'images/perro-default.png';
+      return '';
     }
 
-    return (
+    const candidata =
       paciente.foto ||
+      (Array.isArray(paciente.fotos) && paciente.fotos.length > 0 ? paciente.fotos[0] : null) ||
+      (Array.isArray(paciente.multimedia) && paciente.multimedia.length > 0 ? paciente.multimedia[0]?.url : null) ||
       paciente.imagen ||
       paciente.foto_paciente ||
       paciente.imagen_paciente ||
+      paciente.foto_url ||
+      paciente.fotoUrl ||
       paciente.animales?.[0]?.foto ||
       paciente.animales?.[0]?.imagen ||
-      'images/perro-default.png'
+      paciente.animales?.[0]?.foto_url ||
+      paciente.animal?.foto ||
+      paciente.animal?.fotoUrl ||
+      paciente.animal?.foto_url ||
+      (Array.isArray(paciente.evidencias) && paciente.evidencias.length > 0 ? paciente.evidencias[0]?.ruta_archivo : null) ||
+      null;
+
+    if (!candidata) return '';
+    return this.normalizarUrlFoto(candidata);
+  }
+
+  /**
+   * Genera un color único y consistente para cada animal cuando no dispone de foto
+   */
+  obtenerColorAvatar(item: any): string {
+    const paleta = [
+      'bg-gradient-to-br from-blue-600 to-indigo-800',
+      'bg-gradient-to-br from-emerald-500 to-teal-800',
+      'bg-gradient-to-br from-violet-600 to-purple-800',
+      'bg-gradient-to-br from-amber-500 to-orange-700',
+      'bg-gradient-to-br from-cyan-600 to-blue-800',
+      'bg-gradient-to-br from-rose-500 to-red-800',
+      'bg-gradient-to-br from-fuchsia-600 to-pink-800'
+    ];
+    const clave = String(
+      item?.nombre_paciente ||
+      item?.nombre_animal ||
+      item?.nombre ||
+      item?.id_animal ||
+      item?.id ||
+      'P'
     );
+    let hash = 0;
+    for (let i = 0; i < clave.length; i++) {
+      hash = clave.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % paleta.length;
+    return paleta[index];
+  }
+
+  /**
+   * Genera las iniciales del nombre del animal para su avatar único
+   */
+  obtenerIniciales(item: any): string {
+    const nombre = (item?.nombre_paciente || item?.nombre_animal || item?.nombre || 'P').trim();
+    if (!nombre) return 'P';
+    const partes = nombre.split(' ').filter(Boolean);
+    if (partes.length >= 2) {
+      return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+    }
+    return nombre.substring(0, 2).toUpperCase();
   }
 
   imagenNoDisponible(event: Event): void {
     const imagen = event.target as HTMLImageElement;
-    imagen.onerror = null;
-    imagen.src = 'images/perro-default.png';
+    imagen.style.display = 'none';
   }
 
   cargarSeguimientos(): void {
