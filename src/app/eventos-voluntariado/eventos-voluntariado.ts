@@ -23,9 +23,7 @@ export interface VoluntarioPostulado {
 })
 export class EventosVoluntariado implements OnInit {
 
-  // =========================================================
   // VARIABLES DE ESTADO
-  // =========================================================
 
   eventos: EventoVoluntariado[] = [];
   eventosFiltrados: EventoVoluntariado[] = [];
