@@ -24,6 +24,10 @@ export class InicioDeSesionAdministradorComponent {
   emailRecuperacion: string = '';
   codigoIngresado: string = '';
   nuevaPassword: string = '';
+
+  // Control de visibilidad de contraseñas
+  mostrarPasswordLogin: boolean = false;
+  mostrarNuevaPassword: boolean = false;
   
   cargandoPaso1: boolean = false;
   cargandoPaso2: boolean = false;

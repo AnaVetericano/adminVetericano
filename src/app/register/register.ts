@@ -4,14 +4,18 @@ import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import Swal from 'sweetalert2';
 
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
 export class Register {
+  mostrarPassword: boolean = false;
+
   register = {
     email: '',
     identificacion:'',
