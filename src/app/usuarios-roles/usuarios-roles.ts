@@ -25,6 +25,7 @@ export class UsuariosRoles implements OnInit{
   modal = false;
   editar = false;
   mostrarFiltros = false;
+  mostrarPasswordUsuario = false;
 
   usuarioSeleccionadoRol: any = null;
   rolesDisponibles: any[] = [
@@ -105,6 +106,7 @@ listarUsuarios(): void {
     };
 
     this.editar = false;
+    this.mostrarPasswordUsuario = false;
     this.modal = true;
     
   }
