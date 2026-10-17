@@ -116,6 +116,13 @@
                   }">
                   Pronóstico: {{ formHistoria.get('pronostico')?.value }}
                 </span>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                  [ngClass]="{
+                    'bg-rose-100 text-rose-800 border border-rose-300': historiaAnulada,
+                    'bg-emerald-50 text-emerald-700 border border-emerald-200': !historiaAnulada
+                  }">
+                  {{ historiaAnulada ? 'Estado: Anulada' : 'Estado: Activa' }}
+                </span>
               </div>
               <p class="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
                 <span><strong>Historia Nº:</strong> {{ historiaOriginal?.numero_historia }}</span>
@@ -136,6 +143,17 @@
             <p class="text-gray-400 text-[11px] mt-0.5">Tel: {{ paciente?.tenedor_telefono || 'No disponible' }}</p>
           </div>
 
+        </div>
+      </div>
+
+      <!-- BANNER DE HISTORIA ANULADA (Jira HE06-HU013 Escenario 3.0) -->
+      <div *ngIf="historiaAnulada" class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <div class="flex-1 text-xs">
+          <p class="font-bold text-rose-900">Historia Clínica Anulada (Solo Lectura)</p>
+          <p class="mt-0.5">Esta historia clínica se encuentra anulada en el sistema. Conforme a las políticas clínicas y normativas de auditoría (Jira HE06-HU013 Escenario 3.0), no es posible registrar modificaciones ni nuevas evoluciones sobre historias clínicas anuladas.</p>
         </div>
       </div>
 
@@ -516,10 +534,10 @@
             <!-- Botón Guardar (Criterios 1 y 2) -->
             <button 
               type="submit" 
-              [disabled]="formHistoria.invalid || guardando"
+              [disabled]="formHistoria.invalid || guardando || historiaAnulada"
               [ngClass]="{
-                'opacity-50 cursor-not-allowed bg-gray-400': formHistoria.invalid || guardando,
-                'bg-[#4141a5] hover:bg-[#343485] active:scale-95 shadow-md shadow-[#4141a5]/20': !formHistoria.invalid && !guardando
+                'opacity-50 cursor-not-allowed bg-gray-400': formHistoria.invalid || guardando || historiaAnulada,
+                'bg-[#4141a5] hover:bg-[#343485] active:scale-95 shadow-md shadow-[#4141a5]/20': !formHistoria.invalid && !guardando && !historiaAnulada
               }"
               class="px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
               
