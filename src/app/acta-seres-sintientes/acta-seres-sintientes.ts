@@ -49,6 +49,23 @@ funcionarioRecibeCBA = '';
 guardarExpedienteCompleto(): void {
   const animal = this.seguimientoSeleccionado;
 
+  // Validación estricta de stock en inventario de campo antes de permitir guardar
+  const medExcedido = this.medicamentosSeleccionados.find((m: any) =>
+    !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+  );
+
+  if (medExcedido) {
+    const disp = Number(medExcedido.stockDisponible) || 0;
+    const sol = Number(medExcedido.cantidadAAdministrar) || 0;
+    Swal.fire({
+      icon: 'error',
+      title: 'Stock insuficiente en inventario de campo',
+      text: `No cuentas con suficiente stock en tu inventario de campo (Disponibles: ${disp}, Solicitados: ${sol}). Por favor, ajusta la cantidad o utiliza una alternativa de medicamento disponible.`,
+      confirmButtonColor: '#4141A5'
+    });
+    return;
+  }
+
   if (!animal) {
     Swal.fire(
       'Selecciona un animal',
@@ -918,8 +935,8 @@ tarjetaProfesional: string = '';
     if (cantidad > stockActual) {
       Swal.fire({
         icon: 'error',
-        title: 'Stock insuficiente',
-        text: `Intentas administrar ${cantidad} uds, pero solo quedan ${stockActual} uds disponibles en el inventario.`,
+        title: 'Stock insuficiente en inventario de campo',
+        text: `No cuentas con suficiente stock en tu inventario de campo (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Por favor, ajusta la cantidad o utiliza una alternativa de medicamento disponible.`,
         confirmButtonColor: '#4141A5'
       });
       return;
@@ -995,6 +1012,75 @@ tarjetaProfesional: string = '';
       return;
     }
     this.medicamentosSeleccionados.splice(indice, 1);
+  }
+
+  // --- Módulo Inventario Veterinario: Alertas Stock Bajo (<= 10 uds) y Alternativas ---
+
+  esStockBajo(stock: any): boolean {
+    const n = Number(stock);
+    return !isNaN(n) && n > 0 && n <= 10;
+  }
+
+  alertaStockBajoSweetAlert(nombre: string, stock: any): void {
+    const s = Number(stock) || 0;
+    Swal.fire({
+      icon: 'warning',
+      title: '¡Alerta de Stock Bajo!',
+      html: `
+        <div class="text-left text-sm space-y-2">
+          <div class="p-3 bg-amber-50 border-l-4 border-[#F1C63C] rounded-r-xl">
+            <p class="font-bold text-amber-950">
+              Recuerda que te quedan ${s} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
+            </p>
+          </div>
+          <p class="text-xs text-slate-500">Producto en maletín: <b>${nombre}</b></p>
+        </div>
+      `,
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#4141A5'
+    });
+  }
+
+  obtenerAlternativasStock(idMedicamentoActual: any): any[] {
+    const idAct = Number(idMedicamentoActual);
+    return this.medicamentosCatalogo.filter((m: any) => {
+      const id = Number(m.id_medicamento ?? m.id);
+      return id !== idAct && (Number(m.stockDisponible) || 0) > 0;
+    }).slice(0, 3);
+  }
+
+  reemplazarMedicamento(indice: number, nuevoMed: any): void {
+    const stock = Number(nuevoMed.stockDisponible) || 0;
+    const nombre = nuevoMed.nombre || 'Medicamento sin nombre';
+    this.medicamentosSeleccionados[indice] = {
+      id: nuevoMed.id_medicamento ?? nuevoMed.id,
+      nombre,
+      principio_activo: nuevoMed.principio_activo || '',
+      concentracion: nuevoMed.concentracion || '',
+      presentacion: nuevoMed.presentacion || '',
+      dosis: '',
+      via: '',
+      frecuencia: '',
+      stockDisponible: stock,
+      cantidadAAdministrar: 1,
+      administrado: false,
+      cantidadEfectivaAdministrada: 0,
+      administrando: false
+    };
+    this.cdr.detectChanges();
+    Swal.fire({
+      icon: 'success',
+      title: 'Medicamento alternativo seleccionado',
+      text: `Se seleccionó ${nombre} con ${stock} uds disponibles.`,
+      timer: 1600,
+      showConfirmButton: false
+    });
+  }
+
+  get hayMedicamentosConStockInsuficiente(): boolean {
+    return this.medicamentosSeleccionados.some((m: any) =>
+      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+    );
   }
 
   // Evaluación física: guardar y recuperar en este navegador

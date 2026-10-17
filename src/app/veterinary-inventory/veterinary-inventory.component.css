@@ -1,0 +1,7 @@
+/* Estilos específicos para el módulo de Inventario Veterinario */
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+

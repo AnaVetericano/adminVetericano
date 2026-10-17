@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
+import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 
 @Component({
   selector: 'app-inventario',
@@ -22,7 +24,22 @@ export class Inventario implements OnInit {
   umbralBajo = 10;
   totalCompras = 0;
 
-  constructor(private svc: ComprasService, private cdr: ChangeDetectorRef) {}
+  // Estado del Modal de Asignación de Lote a Veterinario
+  modalAsignarAbierto = false;
+  loteSeleccionado: any = null;
+  veterinarios: any[] = [];
+  cargandoVeterinarios = false;
+  idVeterinarioSeleccionado: number | null = null;
+  cantidadAAsignar: number = 1;
+  motivoAsignacion = 'Dotación para maletín de campo veterinario';
+  guardandoAsignacion = false;
+  errorAsignacion = '';
+
+  constructor(
+    private svc: ComprasService,
+    private vetInvSvc: VeterinaryInventoryService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void { this.cargar(); }
 
@@ -287,7 +304,9 @@ export class Inventario implements OnInit {
         proveedor: g.provs.length ? g.provs.join(', ') : '—',
         fecha: g.ultima,
         idCompra: g.comprasSet.size === 1 ? Array.from(g.comprasSet)[0] : null,
-        facturaTexto
+        facturaTexto,
+        refInv: g.refInv,
+        idInvs: g.idInvs
       };
     });
 
@@ -320,4 +339,157 @@ export class Inventario implements OnInit {
   get totalBajo(): number { return this.filasBase.filter((f: any) => f.estado === 'bajo').length; }
   get totalAgot(): number { return this.filasBase.filter((f: any) => f.estado === 'agotado').length; }
   get totalSinLote(): number { return this.filasBase.filter((f: any) => f.sinLote).length; }
+
+  // --- LÓGICA DE ASIGNACIÓN DE LOTE / MALETÍN A VETERINARIO ---
+
+  abrirModalAsignar(fila: any): void {
+    if (fila.sinLote || (Number(fila.stock) || 0) <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Stock no disponible',
+        text: 'Este registro no cuenta con unidades disponibles en CBA para asignar a un veterinario.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.loteSeleccionado = fila;
+    this.cantidadAAsignar = Math.min(Number(fila.stock) || 1, 5);
+    this.motivoAsignacion = `Dotación de campo: ${fila.nombre}`;
+    this.errorAsignacion = '';
+    this.modalAsignarAbierto = true;
+
+    if (this.veterinarios.length === 0) {
+      this.cargarVeterinarios();
+    }
+  }
+
+  cerrarModalAsignar(): void {
+    this.modalAsignarAbierto = false;
+    this.loteSeleccionado = null;
+    this.guardandoAsignacion = false;
+    this.errorAsignacion = '';
+  }
+
+  cargarVeterinarios(): void {
+    this.cargandoVeterinarios = true;
+    this.vetInvSvc.obtenerVeterinarios().subscribe({
+      next: (vets) => {
+        this.veterinarios = vets;
+        if (vets.length > 0 && !this.idVeterinarioSeleccionado) {
+          this.idVeterinarioSeleccionado = vets[0].id_usuario;
+        }
+        this.cargandoVeterinarios = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cargandoVeterinarios = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  confirmarAsignacion(): void {
+    this.errorAsignacion = '';
+
+    if (!this.loteSeleccionado) return;
+
+    if (!this.idVeterinarioSeleccionado) {
+      this.errorAsignacion = 'Por favor selecciona un médico veterinario de destino.';
+      return;
+    }
+
+    const cant = Number(this.cantidadAAsignar) || 0;
+    const stockActual = Number(this.loteSeleccionado.stock) || 0;
+
+    if (cant <= 0) {
+      this.errorAsignacion = 'La cantidad a asignar debe ser mayor a 0.';
+      return;
+    }
+
+    if (cant > stockActual) {
+      this.errorAsignacion = `No puedes asignar ${cant} unidades porque solo hay ${stockActual} disponibles en este lote.`;
+      return;
+    }
+
+    const vet = this.veterinarios.find(v => Number(v.id_usuario) === Number(this.idVeterinarioSeleccionado));
+    const nombreVet = vet ? vet.nombre : `Veterinario #${this.idVeterinarioSeleccionado}`;
+
+    this.guardandoAsignacion = true;
+
+    // 1. Calcular nuevo stock en CBA y nuevo estado
+    const nuevoStock = Math.max(0, stockActual - cant);
+    let nuevoEstado = 'Disponible';
+    if (nuevoStock <= 0) {
+      nuevoEstado = 'Agotado';
+    } else if (nuevoStock <= this.umbralBajo) {
+      nuevoEstado = 'Stock bajo';
+    }
+
+    // 2. Si el registro tiene ID de inventario real en backend, actualizarlo vía API
+    const idInventarioReal = this.loteSeleccionado.refInv?.id_inventario ?? 
+      (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0 ? this.loteSeleccionado.idInvs[0] : null);
+
+    const ejecutarActualizacionInventario = idInventarioReal
+      ? this.svc.actualizarInventario(idInventarioReal, {
+          cantidad_actual: nuevoStock,
+          estado: nuevoEstado
+        })
+      : of(null);
+
+    ejecutarActualizacionInventario.subscribe({
+      next: () => {
+        // 3. Registrar asignación en el kit de campo del veterinario
+        this.vetInvSvc.asignarLoteAVeterinario(Number(this.idVeterinarioSeleccionado), {
+          id_inventario: idInventarioReal || Number(this.loteSeleccionado.idMed) || Date.now(),
+          id_medicamento: Number(this.loteSeleccionado.idMed) || 0,
+          nombre: this.loteSeleccionado.nombre,
+          tipo: this.loteSeleccionado.tipo,
+          descripcion: this.loteSeleccionado.descripcion,
+          lote: idInventarioReal ? `LOTE-${idInventarioReal}` : 'LOTE-CBA',
+          cantidad: cant,
+          motivo: this.motivoAsignacion,
+          veterinarioNombre: nombreVet
+        }).subscribe({
+          next: () => {
+            this.guardandoAsignacion = false;
+            this.cerrarModalAsignar();
+
+            Swal.fire({
+              icon: 'success',
+              title: '¡Lote Asignado al Veterinario!',
+              html: `
+                <div class="text-left text-sm space-y-2">
+                  <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
+                  <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
+                  <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
+                  <p><strong>Nuevo saldo disponible en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
+                  <div class="p-2.5 bg-[#4141a5]/10 border border-[#4141a5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
+                    El producto ya está disponible en el <strong>"Inventario Veterinario"</strong> del doctor para sus prescripciones y atenciones de campo.
+                  </div>
+                </div>
+              `,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#4141a5'
+            });
+
+            // Recargar la tabla de inventario para reflejar el stock descontado
+            this.cargar();
+          },
+          error: (err) => {
+            console.error('Error al registrar asignación en kit:', err);
+            this.guardandoAsignacion = false;
+            this.errorAsignacion = 'Error al asignar al kit del veterinario. Intenta nuevamente.';
+            this.cdr.detectChanges();
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error al actualizar inventario en backend:', err);
+        this.guardandoAsignacion = false;
+        this.errorAsignacion = 'No se pudo descontar el stock del inventario en el servidor.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
 }

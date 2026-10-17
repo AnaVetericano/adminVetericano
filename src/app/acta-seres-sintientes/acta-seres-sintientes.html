@@ -1420,53 +1420,125 @@
 
     <!-- SECCIÓN DE ADMINISTRACIÓN REAL Y DESCUENTO DE INVENTARIO -->
     <div class="mt-3 pt-3 border-t border-slate-200 space-y-2">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between flex-wrap gap-1">
         <label class="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-          Administración Real
+          Administración en Campo
         </label>
-        <span class="text-[10px] font-bold" [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'text-emerald-700' : 'text-rose-600'">
-          Disponible: {{ medicamento.stockDisponible ?? 0 }} uds
-        </span>
+        
+        <!-- Saldo Disponible con Alerta de Stock Bajo (<= 10 uds) -->
+        <div class="flex items-center gap-1.5">
+          <span *ngIf="esStockBajo(medicamento.stockDisponible)"
+                (click)="alertaStockBajoSweetAlert(medicamento.nombre, medicamento.stockDisponible)"
+                class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C]/30 text-[#170B3D] border border-[#F1C63C] cursor-pointer shadow-xs animate-pulse">
+            ⚠️ Stock Bajo: {{ medicamento.stockDisponible }} uds
+          </span>
+          <span class="text-[10px] font-bold" [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'text-[#4141a5]' : 'text-slate-500'">
+            Disponible: {{ medicamento.stockDisponible ?? 0 }} uds
+          </span>
+        </div>
+      </div>
+
+      <!-- BANNER DE ALERTA DE STOCK BAJO (UMBRAL <= 10 UNIDADES) -->
+      <div *ngIf="esStockBajo(medicamento.stockDisponible)"
+           class="p-2.5 rounded-xl bg-[#F1C63C]/15 border-2 border-[#F1C63C] text-[#170B3D] text-[11px] leading-tight space-y-1 shadow-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-black uppercase text-[10px] text-[#170B3D] tracking-wider">⚠️ Advertencia de Reaprovisionamiento</span>
+          <button type="button" (click)="alertaStockBajoSweetAlert(medicamento.nombre, medicamento.stockDisponible)" class="text-[10px] underline font-bold text-[#8d7010] cursor-pointer">Ver alerta</button>
+        </div>
+        <!-- TEXTO EXACTO REQUERIDO -->
+        <p class="font-bold text-[#170B3D]">
+          Recuerda que te quedan {{ medicamento.stockDisponible }} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
+        </p>
       </div>
 
       <!-- Si YA fue administrado -->
-      <div *ngIf="medicamento.administrado" class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+      <div *ngIf="medicamento.administrado" class="p-2.5 rounded-xl bg-[#4141a5]/10 border border-[#4141a5]/20 text-[#170B3D] text-xs flex items-center justify-between">
         <div class="flex items-center gap-1.5 font-bold">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
           <span>Administrado: {{ medicamento.cantidadEfectivaAdministrada }} uds</span>
         </div>
-        <span class="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded-md border border-emerald-300">
+        <span class="text-[10px] font-mono font-bold bg-white text-[#4141a5] px-2 py-0.5 rounded-md border border-[#4141a5]/30">
           ✓ Descontado de inventario
         </span>
       </div>
 
       <!-- Si NO ha sido administrado aún -->
-      <div *ngIf="!medicamento.administrado" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
-        <div class="flex items-center gap-2 flex-1">
-          <span class="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">Cant. aplicada:</span>
-          <input
-            type="number"
-            min="1"
-            [max]="medicamento.stockDisponible || 9999"
-            [(ngModel)]="medicamento.cantidadAAdministrar"
-            placeholder="1"
-            class="w-16 bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs font-bold text-center text-slate-800 focus:bg-white focus:border-[#4141A5]"
+      <div *ngIf="!medicamento.administrado" class="space-y-2">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2.5 rounded-xl border"
+             [ngClass]="(medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0) ? 'border-red-400 bg-red-50/30' : 'border-slate-200'">
+          
+          <div class="flex items-center gap-2 flex-1">
+            <span class="text-[10px] font-bold uppercase whitespace-nowrap"
+                  [ngClass]="(medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0) ? 'text-red-700' : 'text-slate-500'">
+              Cant. a usar:
+            </span>
+            <input
+              type="number"
+              min="1"
+              [(ngModel)]="medicamento.cantidadAAdministrar"
+              placeholder="1"
+              class="w-20 rounded-lg p-1.5 text-xs font-black text-center outline-none border transition"
+              [ngClass]="(medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0) ? 'border-red-500 bg-red-100/70 text-red-900 focus:ring-2 focus:ring-red-200' : 'bg-slate-50 border-slate-300 text-slate-800 focus:bg-white focus:border-[#4141A5]'"
+            >
+            <span class="text-[11px] text-slate-500 font-semibold">uds</span>
+          </div>
+
+          <!-- BOTÓN GUARDAR/ADMINISTRAR: BLOQUEADO Y DESACTIVADO SI SUPERA EL STOCK DISPONIBLE -->
+          <button
+            type="button"
+            [disabled]="medicamento.administrando || (medicamento.stockDisponible || 0) <= 0 || (medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0)"
+            (click)="registrarAdministracion(medicamento, i)"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+            [ngClass]="(medicamento.stockDisponible || 0) > 0 && (medicamento.cantidadAAdministrar || 0) <= (medicamento.stockDisponible || 0) && !medicamento.administrando ? 'bg-[#4141a5] hover:bg-[#33338b] text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'"
           >
-          <span class="text-[11px] text-slate-500 font-semibold">uds</span>
+            <svg *ngIf="medicamento.administrando" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            <svg *ngIf="!medicamento.administrando" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>{{ medicamento.administrando ? 'Descontando...' : 'Confirmar Administración' }}</span>
+          </button>
         </div>
 
-        <button
-          type="button"
-          [disabled]="medicamento.administrando || (medicamento.stockDisponible || 0) <= 0"
-          (click)="registrarAdministracion(medicamento, i)"
-          class="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-xs transition flex items-center justify-center gap-1.5 shrink-0"
-          [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-95' : 'bg-slate-300 cursor-not-allowed text-slate-500'"
-        >
-          <svg *ngIf="medicamento.administrando" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-          <svg *ngIf="!medicamento.administrando" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span>{{ medicamento.administrando ? 'Descontando...' : 'Confirmar Administración' }}</span>
-        </button>
+        <!-- ERROR CLARO Y BLOQUEO CUANDO LA CANTIDAD SOLICITADA SUPERA EL STOCK -->
+        <div *ngIf="(medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0)"
+             class="p-3 rounded-xl bg-red-50 border-2 border-red-300 text-red-900 text-xs space-y-1.5 shadow-xs animate-in shake">
+          <div class="flex items-center gap-1 font-black uppercase text-[10px] text-red-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <span>Acción Bloqueada: Stock Insuficiente</span>
+          </div>
+          <!-- MENSAJE DE ERROR TEXTUAL EXACTO -->
+          <p class="font-bold text-red-900 leading-snug">
+            No cuentas con suficiente stock en tu inventario de campo (Disponibles: {{ medicamento.stockDisponible || 0 }}, Solicitados: {{ medicamento.cantidadAAdministrar || 0 }}). Por favor, ajusta la cantidad o utiliza una alternativa de medicamento disponible.
+          </p>
+
+          <!-- LISTADO VISUAL DE PRODUCTOS ALTERNATIVOS DISPONIBLES EN STOCK -->
+          <div *ngIf="obtenerAlternativasStock(medicamento.id).length > 0" class="pt-2 border-t border-red-200 mt-2 space-y-1.5">
+            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-900 block">
+              🔄 Alternativas con stock en tu maletín:
+            </span>
+            <div class="space-y-1">
+              <div *ngFor="let alt of obtenerAlternativasStock(medicamento.id)"
+                   class="bg-white p-2 rounded-lg border border-red-100 flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <span class="font-bold text-[11px] text-[#170B3D] block truncate">{{ alt.nombre }}</span>
+                  <span class="text-[9px] text-gray-500">{{ alt.tipo || 'General' }}</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-[10px] font-extrabold text-[#4141a5] bg-[#4141a5]/10 px-2 py-0.5 rounded-full border border-[#4141a5]/20">
+                    {{ alt.stockDisponible }} uds
+                  </span>
+                  <button
+                    type="button"
+                    (click)="reemplazarMedicamento(i, alt)"
+                    class="px-2 py-0.5 bg-[#4141a5] hover:bg-[#33338b] text-white text-[10px] font-bold rounded-md shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    Usar alternativa
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -1572,24 +1644,28 @@
 
 </div>
 
-                <div class="flex justify-end gap-5 mt-6 pt-4 border-t border-slate-200">
-  <button
-    type="button"
-    (click)="guardarSistemas()"
-    class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700
-           text-white font-semibold text-sm px-6 py-3 rounded-xl
-           shadow-sm transition"
-  >
-   cancelar
-  </button>
-   <button
-  type="button"
-  (click)="guardarExpedienteCompleto()"
-  class="px-6 py-3 rounded-lg bg-[#4141A5] text-white font-semibold hover:bg-[#170B3D] transition"
->
-  Guardar expediente completo
-</button>
-</div>
+  <div class="flex flex-col sm:flex-row items-end sm:items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
+    <span *ngIf="hayMedicamentosConStockInsuficiente" class="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl">
+      ⚠️ Acción bloqueada: Ajusta las cantidades solicitadas o selecciona alternativas antes de guardar.
+    </span>
+
+    <button
+      type="button"
+      (click)="guardarSistemas()"
+      class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-6 py-3 rounded-xl shadow-sm transition"
+    >
+      cancelar
+    </button>
+    <button
+      type="button"
+      [disabled]="hayMedicamentosConStockInsuficiente"
+      (click)="guardarExpedienteCompleto()"
+      class="px-6 py-3 rounded-lg font-semibold transition shadow-sm"
+      [ngClass]="!hayMedicamentosConStockInsuficiente ? 'bg-[#4141A5] text-white hover:bg-[#170B3D] cursor-pointer' : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'"
+    >
+      Guardar expediente completo
+    </button>
+  </div>
 
             </div>
         </div>
