@@ -324,7 +324,7 @@ export class VeterinaryInventoryService {
   }
 
   /**
-   * Obtiene la lista de veterinarios del sistema para asignarles lotes
+   * Obtiene la lista de veterinarios ACTIVOS del sistema para asignarles lotes y supervisar sus maletines
    */
   public obtenerVeterinarios(): Observable<any[]> {
     const urlBase = environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl;
@@ -343,8 +343,20 @@ export class VeterinaryInventoryService {
       map(({ funcionarios, usuarios }) => {
         const mapaVets = new Map<number, any>();
 
-        // Filtrar de funcionarios
+        // Función estricta para asegurar que el usuario esté ACTIVO
+        const esUsuarioActivo = (item: any): boolean => {
+          if (!item) return false;
+          // Si el campo activo o is_active es explícitamente false o 'false' o 0, NO está activo
+          if (item['activo'] === false || item['activo'] === 'false' || item['activo'] === 0) return false;
+          if (item['is_active'] === false || item['is_active'] === 'false' || item['is_active'] === 0) return false;
+          if (typeof item['estado'] === 'string' && item['estado'].toLowerCase().includes('inactiv')) return false;
+          return true;
+        };
+
+        // 1. Filtrar funcionarios ACTIVOS con rol Veterinario
         (funcionarios || []).forEach((f: any) => {
+          if (!esUsuarioActivo(f)) return;
+
           const id = Number(f['id_usuario'] ?? f['id']);
           const rol = String(f['rol'] ?? f['nombre_rol'] ?? '').toLowerCase();
           const idRol = Number(f['id_rol'] ?? 0);
@@ -355,13 +367,16 @@ export class VeterinaryInventoryService {
               nombre,
               email: f['email'] || '',
               identificacion: f['identificacion'] || '',
-              rol: 'Veterinario'
+              rol: 'Veterinario',
+              activo: true
             });
           }
         });
 
-        // Filtrar de usuarios
+        // 2. Filtrar usuarios ACTIVOS con rol Veterinario
         (usuarios || []).forEach((u: any) => {
+          if (!esUsuarioActivo(u)) return;
+
           const id = Number(u['id_usuario'] ?? u['id']);
           const idRol = Number(u['id_rol']?.['id_rol'] ?? u['id_rol'] ?? 0);
           const nombreRol = String(u['nombre_rol'] ?? u['id_rol']?.['nombre_rol'] ?? '').toLowerCase();
@@ -373,7 +388,8 @@ export class VeterinaryInventoryService {
                 nombre,
                 email: u['email'] || '',
                 identificacion: u['identificacion'] || '',
-                rol: 'Veterinario'
+                rol: 'Veterinario',
+                activo: true
               });
             }
           }

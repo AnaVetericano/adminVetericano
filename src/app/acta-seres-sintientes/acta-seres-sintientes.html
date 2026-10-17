@@ -1430,10 +1430,10 @@
         <div class="flex items-center gap-1.5">
           <span *ngIf="esStockBajo(medicamento.stockDisponible)"
                 (click)="alertaStockBajoSweetAlert(medicamento.nombre, medicamento.stockDisponible)"
-                class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C]/30 text-amber-950 border border-[#F1C63C] cursor-pointer shadow-xs animate-pulse">
+                class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C]/30 text-[#170B3D] border border-[#F1C63C] cursor-pointer shadow-xs animate-pulse">
             ⚠️ Stock Bajo: {{ medicamento.stockDisponible }} uds
           </span>
-          <span class="text-[10px] font-bold" [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'text-emerald-700' : 'text-rose-600'">
+          <span class="text-[10px] font-bold" [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'text-[#4141a5]' : 'text-slate-500'">
             Disponible: {{ medicamento.stockDisponible ?? 0 }} uds
           </span>
         </div>
@@ -1441,24 +1441,24 @@
 
       <!-- BANNER DE ALERTA DE STOCK BAJO (UMBRAL <= 10 UNIDADES) -->
       <div *ngIf="esStockBajo(medicamento.stockDisponible)"
-           class="p-2.5 rounded-xl bg-amber-50 border-2 border-[#F1C63C] text-amber-950 text-[11px] leading-tight space-y-1 shadow-xs">
+           class="p-2.5 rounded-xl bg-[#F1C63C]/15 border-2 border-[#F1C63C] text-[#170B3D] text-[11px] leading-tight space-y-1 shadow-xs">
         <div class="flex items-center justify-between">
-          <span class="font-black uppercase text-[10px] text-amber-900 tracking-wider">⚠️ Advertencia de Reaprovisionamiento</span>
-          <button type="button" (click)="alertaStockBajoSweetAlert(medicamento.nombre, medicamento.stockDisponible)" class="text-[10px] underline font-bold text-amber-800">Ver alerta</button>
+          <span class="font-black uppercase text-[10px] text-[#170B3D] tracking-wider">⚠️ Advertencia de Reaprovisionamiento</span>
+          <button type="button" (click)="alertaStockBajoSweetAlert(medicamento.nombre, medicamento.stockDisponible)" class="text-[10px] underline font-bold text-[#8d7010] cursor-pointer">Ver alerta</button>
         </div>
         <!-- TEXTO EXACTO REQUERIDO -->
-        <p class="font-bold text-amber-950">
+        <p class="font-bold text-[#170B3D]">
           Recuerda que te quedan {{ medicamento.stockDisponible }} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
         </p>
       </div>
 
       <!-- Si YA fue administrado -->
-      <div *ngIf="medicamento.administrado" class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+      <div *ngIf="medicamento.administrado" class="p-2.5 rounded-xl bg-[#4141a5]/10 border border-[#4141a5]/20 text-[#170B3D] text-xs flex items-center justify-between">
         <div class="flex items-center gap-1.5 font-bold">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
           <span>Administrado: {{ medicamento.cantidadEfectivaAdministrada }} uds</span>
         </div>
-        <span class="text-[10px] font-mono font-bold bg-white px-2 py-0.5 rounded-md border border-emerald-300">
+        <span class="text-[10px] font-mono font-bold bg-white text-[#4141a5] px-2 py-0.5 rounded-md border border-[#4141a5]/30">
           ✓ Descontado de inventario
         </span>
       </div>
@@ -1490,7 +1490,7 @@
             [disabled]="medicamento.administrando || (medicamento.stockDisponible || 0) <= 0 || (medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0)"
             (click)="registrarAdministracion(medicamento, i)"
             class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
-            [ngClass]="(medicamento.stockDisponible || 0) > 0 && (medicamento.cantidadAAdministrar || 0) <= (medicamento.stockDisponible || 0) && !medicamento.administrando ? 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'"
+            [ngClass]="(medicamento.stockDisponible || 0) > 0 && (medicamento.cantidadAAdministrar || 0) <= (medicamento.stockDisponible || 0) && !medicamento.administrando ? 'bg-[#4141a5] hover:bg-[#33338b] text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'"
           >
             <svg *ngIf="medicamento.administrando" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
             <svg *ngIf="!medicamento.administrando" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -1523,13 +1523,13 @@
                   <span class="text-[9px] text-gray-500">{{ alt.tipo || 'General' }}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span class="text-[10px] font-extrabold text-[#4141a5] bg-[#4141a5]/10 px-2 py-0.5 rounded-full border border-[#4141a5]/20">
                     {{ alt.stockDisponible }} uds
                   </span>
                   <button
                     type="button"
                     (click)="reemplazarMedicamento(i, alt)"
-                    class="px-2 py-0.5 bg-[#4141a5] hover:bg-[#33338b] text-white text-[10px] font-bold rounded-md shadow-xs active:scale-95"
+                    class="px-2 py-0.5 bg-[#4141a5] hover:bg-[#33338b] text-white text-[10px] font-bold rounded-md shadow-xs active:scale-95 cursor-pointer"
                   >
                     Usar alternativa
                   </button>

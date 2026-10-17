@@ -462,9 +462,9 @@ export class Inventario implements OnInit {
                 <div class="text-left text-sm space-y-2">
                   <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
                   <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                  <p><strong>Cantidad entregada:</strong> <span class="text-emerald-600 font-bold">${cant} unidades</span></p>
-                  <p><strong>Nuevo saldo disponible en CBA:</strong> <span class="text-[#4141a5] font-bold">${nuevoStock} unidades</span></p>
-                  <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-xs mt-3">
+                  <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
+                  <p><strong>Nuevo saldo disponible en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
+                  <div class="p-2.5 bg-[#4141a5]/10 border border-[#4141a5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
                     El producto ya está disponible en el <strong>"Inventario Veterinario"</strong> del doctor para sus prescripciones y atenciones de campo.
                   </div>
                 </div>
