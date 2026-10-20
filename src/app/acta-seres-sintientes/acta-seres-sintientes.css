@@ -1,0 +1,30 @@
+/* Animaciones de transición suave para selección de paciente y layout slide-up */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDownFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-slow {
+  animation: slideUpFadeIn 0.35s ease-out forwards;
+}
