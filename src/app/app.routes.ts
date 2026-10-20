@@ -17,6 +17,7 @@ import { EventosVoluntariado } from './eventos-voluntariado/eventos-voluntariado
 import { Adopciones } from './adopciones/adopciones';
 import { ActaSeresSintientes } from './acta-seres-sintientes/acta-seres-sintientes';
 import { HistoriaClinica2Component } from './historia-clinica/historia-clinica';
+import { HistoriaClinicaListComponent } from './historia-clinica-list/historia-clinica-list';
 import { Proveedores } from './proveedores/proveedores';
 import { authGuard, loginGuard, roleGuard } from './services/auth.guard';
 import { pendingChangesGuard } from './services/pending-changes.guard';
@@ -50,6 +51,8 @@ export const routes: Routes = [
       // Módulo Veterinario (y Administrador con acceso de supervisión)
       { path: 'inventario-veterinario', component: VeterinaryInventoryComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'acta-seres-sintientes', component: ActaSeresSintientes, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+      { path: 'historias-clinicas', component: HistoriaClinicaListComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+      { path: 'historia-clinica/lista', component: HistoriaClinicaListComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica2', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica/editar/:id', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica/editar', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
