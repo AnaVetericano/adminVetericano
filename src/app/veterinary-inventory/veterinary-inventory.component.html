@@ -1,7 +1,7 @@
-<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+<div class="w-full bg-[#F4F5F7] min-h-screen text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white relative">
 
   <!-- BARRA SUPERIOR / ENCABEZADO -->
-  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full transition-all duration-300">
     <div class="flex items-center justify-between max-w-7xl mx-auto flex-wrap gap-3">
       <div class="flex items-center gap-3.5">
         <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
@@ -54,7 +54,7 @@
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-y-auto lg:pl-20 transition-all duration-300 space-y-4">
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 flex flex-col space-y-5">
 
     <!-- BANNER DE ALERTA DE STOCK BAJO (UMBRAL <= 10 UNIDADES) -->
     @if (productosConStockBajo.length > 0) {
@@ -101,6 +101,25 @@
                 </div>
               }
             </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ALERTA DE LOTES VENCIDOS SEGÚN BACKEND -->
+    @if (backendAlertas?.vencidos && backendAlertas!.vencidos.length > 0) {
+      <div class="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 shadow-xs shrink-0 animate-in fade-in">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center shrink-0 font-bold text-sm">
+            ⚠️
+          </div>
+          <div class="flex-1">
+            <h4 class="text-xs sm:text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+              Lotes Vencidos en Kit ({{ backendAlertas!.vencidos.length }} lote(s))
+            </h4>
+            <p class="text-xs text-slate-600 mt-0.5">
+              Existen unidades con fecha de vencimiento cumplida en este maletín. Estas unidades no están disponibles para formular y deben gestionarse mediante devolución o retiro a bodega.
+            </p>
           </div>
         </div>
       </div>
@@ -311,6 +330,13 @@
                         <span class="text-[10px] text-slate-500 font-medium mt-0.5">Stock óptimo</span>
                       </div>
                     }
+                    @if (item.saldoVencido && item.saldoVencido > 0) {
+                      <div class="mt-1">
+                        <span class="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200" title="Unidades no aptas para consumo">
+                          ⛔ {{ item.saldoVencido }} vencidas
+                        </span>
+                      </div>
+                    }
                   </td>
 
                   <!-- ACCIONES: FORMULAR / REGISTRAR CONSUMO -->
@@ -346,7 +372,7 @@
                         Este médico veterinario aún no tiene medicamentos o suministros asignados desde el inventario general de CBA. 
                         Los lotes se transfieren directamente desde la tabla de inventario mediante el botón <strong>"Asignar a Veterinario"</strong>.
                       </p>
-                      <a routerLink="/inventario" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-95 cursor-pointer">
+                      <a routerLink="/inicio-admin/inventario" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-95 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
