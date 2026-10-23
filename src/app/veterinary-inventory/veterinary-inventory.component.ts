@@ -6,7 +6,8 @@ import Swal from 'sweetalert2';
 import {
   VeterinaryInventoryService,
   VeterinaryKitItem,
-  ConsumoValidationResult
+  ConsumoValidationResult,
+  KitAlertasResponse
 } from '../services/veterinary-inventory.service';
 import { AuthService } from '../services/auth';
 
@@ -27,6 +28,7 @@ export class VeterinaryInventoryComponent implements OnInit {
   error = '';
   itemsKit: VeterinaryKitItem[] = [];
   itemsFiltrados: VeterinaryKitItem[] = [];
+  backendAlertas: KitAlertasResponse | null = null;
 
   // Filtros
   textoFiltro = '';
@@ -59,13 +61,20 @@ export class VeterinaryInventoryComponent implements OnInit {
     this.veterinarioNombre = this.inventoryService.getVeterinarioLogueadoNombre();
     this.veterinarioSeleccionadoId = this.veterinarioId;
 
+    // Limpiar claves locales residuales de pruebas anteriores, manteniendo aislado el id 41
+    this.inventoryService.limpiarDatosResidualesVeterinarios(41);
+
     if (this.esAdmin) {
       this.inventoryService.obtenerVeterinarios().subscribe({
         next: (vets) => {
           this.veterinariosDisponibles = vets;
           if (vets.length > 0) {
-            // Si el seleccionado no está en la lista de veterinarios, seleccionar el primero
-            if (!vets.some(v => Number(v.id_usuario) === Number(this.veterinarioSeleccionadoId))) {
+            // Priorizar el veterinario 41 (Ana Cano) por defecto al abrir la supervisión
+            const vet41 = vets.find(v => Number(v.id_usuario) === 41);
+            if (vet41) {
+              this.veterinarioSeleccionadoId = 41;
+              this.veterinarioNombre = vet41.nombre;
+            } else if (!vets.some(v => Number(v.id_usuario) === Number(this.veterinarioSeleccionadoId))) {
               this.veterinarioSeleccionadoId = vets[0].id_usuario;
               this.veterinarioNombre = vets[0].nombre;
             } else {
@@ -93,6 +102,7 @@ export class VeterinaryInventoryComponent implements OnInit {
   cargarDatos(): void {
     this.cargando = true;
     this.error = '';
+    this.backendAlertas = null;
 
     const idVet = this.esAdmin && this.veterinarioSeleccionadoId
       ? Number(this.veterinarioSeleccionadoId)
@@ -105,6 +115,17 @@ export class VeterinaryInventoryComponent implements OnInit {
         this.cargando = false;
         this.cdr.detectChanges();
 
+        // Consultar alertas oficiales del backend (agotados, criticos, bajos, vencidos, proximos_a_vencer)
+        this.inventoryService.obtenerAlertasKit(idVet).subscribe({
+          next: (alertas) => {
+            this.backendAlertas = alertas;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.backendAlertas = null;
+          }
+        });
+
         // Si hay items con stock bajo, verificar y alertar si es necesario
         this.verificarAlertasStockBajoAutomaticas();
       },
@@ -112,6 +133,7 @@ export class VeterinaryInventoryComponent implements OnInit {
         console.error('Error al cargar inventario veterinario:', err);
         this.error = 'No se pudo conectar con el inventario de campo. Revisa tu conexión.';
         this.cargando = false;
+        this.backendAlertas = null;
         this.cdr.detectChanges();
       }
     });

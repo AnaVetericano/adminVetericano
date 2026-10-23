@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
@@ -10,7 +11,7 @@ import { VeterinaryInventoryService } from '../services/veterinary-inventory.ser
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })
@@ -69,32 +70,32 @@ export class Inventario implements OnInit {
   private armar(invs: any[], compras: any[], dets: any[], meds: any[], cata: any[], provs: any[]): void {
     this.totalCompras = compras.length;
     const medMap = new Map<number, any>();
-    meds.forEach((m: any) => {
-      const id = Number(m.id ?? m.id_medicamento);
-      if (!isNaN(id)) medMap.set(id, m);
-    });
     cata.forEach((c: any) => {
       const id = Number(c.id_medicamento ?? c.id);
-      if (!isNaN(id) && !medMap.has(id)) {
+      if (!isNaN(id)) {
         medMap.set(id, {
           id,
           id_medicamento: id,
           nombre: c.nombre,
           descripcion: c.descripcion || c.presentacion,
           tipo: c.tipo,
+          presentacion: c.presentacion,
+          concentracion: c.concentracion || '',
           cantidad_ml: c.cantidad_ml
         });
       }
     });
+    meds.forEach((m: any) => {
+      const id = Number(m.id ?? m.id_medicamento);
+      if (!isNaN(id) && !medMap.has(id)) medMap.set(id, m);
+    });
 
-    // Schema real /inventario/compras/: { id_compra, fecha, id_proveedor, proveedor_nombre }
     const comMap = new Map<number, any>();
     compras.forEach((c: any) => comMap.set(Number(c.id_compra ?? c.id), c));
 
     const proMap = new Map<number, any>();
     provs.forEach((p: any) => proMap.set(Number(p.id_proveedor ?? p.id), p));
 
-    // Indexar detalles de compra (tanto los de la API como los embebidos en compras)
     const detMap = new Map<number, any>();
     dets.forEach((d: any) => detMap.set(Number(d.id_detalle_compra ?? d.id), d));
     compras.forEach((c: any) => {
@@ -108,8 +109,6 @@ export class Inventario implements OnInit {
       }
     });
 
-    // Agrupar los lotes de la tabla inventarios por id_detalle_compra y por id_medicamento
-    // En inventarios es donde reside la cantidad_actual (stock físico real de la clínica)
     const invPorDetalle = new Map<number, any[]>();
     const invPorMedicamento = new Map<number, any[]>();
     (invs || []).forEach((inv: any) => {
@@ -125,11 +124,10 @@ export class Inventario implements OnInit {
       }
     });
 
-    // Conjunto global para asegurar que NINGÚN lote se cuente dos veces
     const lotesGlobalesContados = new Set<number>();
     const mapa = new Map<string, any>();
 
-    // 1. Procesar todos los detalles de compras agrupando por medicamento (ID real preferido)
+    // 1. Procesar todos los detalles de compras agrupando por medicamento
     detMap.forEach((d: any) => {
       const idMed = this.num(d.id_medicamento);
       const med = idMed !== null ? medMap.get(idMed) : null;
@@ -176,7 +174,6 @@ export class Inventario implements OnInit {
 
       if (com?.fecha && (!g.ultima || com.fecha > g.ultima)) g.ultima = com.fecha;
 
-      // Relacionar cada detalle de compra con su registro de inventario correspondiente
       const lotes = invPorDetalle.get(idDet) || [];
       if (lotes.length > 0) {
         lotes.forEach((invItem: any) => {
@@ -186,7 +183,6 @@ export class Inventario implements OnInit {
             g.tieneLoteInventario = true;
             if (!g.idInvs.includes(idInv)) g.idInvs.push(idInv);
 
-            // Regla: Para mostrar existencias, utilizar Inventarios.cantidad_actual
             const cantActual = Number(invItem.cantidad_actual);
             if (!isNaN(cantActual) && cantActual >= 0) {
               g.stockActual += cantActual;
@@ -198,11 +194,9 @@ export class Inventario implements OnInit {
           }
         });
       }
-      // REGLA OBLIGATORIA: Si NO existe registro de inventario, NO usar cantComprada como stock actual
-      // ni inventar una cantidad. Se deja tieneLoteInventario en false si no hay lotes válidos.
     });
 
-    // 2. Revisar si hay lotes vinculados directamente por id_medicamento que falten por sumar
+    // 2. Revisar si hay lotes vinculados directamente por id_medicamento
     invPorMedicamento.forEach((lotes, idMed) => {
       const clave = String(idMed);
       if (mapa.has(clave)) {
@@ -226,7 +220,7 @@ export class Inventario implements OnInit {
       }
     });
 
-    // 3. Procesar lotes de inventarios huérfanos o no vinculados a detalles conocidos
+    // 3. Procesar lotes de inventarios huérfanos o sin compra vinculada
     (invs || []).forEach((inv: any) => {
       const idInv = Number(inv.id_inventario ?? inv.id);
       if (!isNaN(idInv) && !lotesGlobalesContados.has(idInv)) {
@@ -234,11 +228,17 @@ export class Inventario implements OnInit {
         const cantActual = Number(inv.cantidad_actual) || 0;
         const clave = `inv_${idInv}`;
         if (!mapa.has(clave)) {
+          const idDet = Number(inv.id_detalle_compra);
+          const detVinculado = !isNaN(idDet) && idDet > 0 ? detMap.get(idDet) : null;
+          let idMed = inv.id_medicamento ? Number(inv.id_medicamento) : (detVinculado ? Number(detVinculado.id_medicamento) : null);
+          const med = idMed ? medMap.get(idMed) : null;
+          const nombre = med?.nombre || (idMed ? `Medicamento #${idMed}` : `Lote #${idInv}`);
+
           mapa.set(clave, {
-            idMed: inv.id_medicamento ? Number(inv.id_medicamento) : null,
-            nombre: `Lote #${idInv}`,
-            descripcion: inv.estado || 'Lote de inventario sin compra vinculada',
-            tipo: 'General',
+            idMed: idMed || null,
+            nombre,
+            descripcion: med?.descripcion || inv.estado || 'Lote de inventario',
+            tipo: med?.tipo || 'General',
             totalComprado: cantActual,
             stockActual: cantActual,
             entradas: 1,
@@ -246,7 +246,7 @@ export class Inventario implements OnInit {
             provs: [] as string[],
             ultima: '',
             vencimiento: inv.fecha_vencimiento || '',
-            idDetalles: [] as number[],
+            idDetalles: idDet ? [idDet] : ([] as number[]),
             idInvs: [idInv],
             refInv: inv,
             tieneLoteInventario: true
@@ -414,58 +414,63 @@ export class Inventario implements OnInit {
 
     const vet = this.veterinarios.find(v => Number(v.id_usuario) === Number(this.idVeterinarioSeleccionado));
     const nombreVet = vet ? vet.nombre : `Veterinario #${this.idVeterinarioSeleccionado}`;
+    const idMed = Number(this.loteSeleccionado.idMed) || Number(this.loteSeleccionado.refInv?.id_medicamento) || 0;
 
     this.guardandoAsignacion = true;
 
-    // 1. Calcular nuevo stock en CBA y nuevo estado
-    const nuevoStock = Math.max(0, stockActual - cant);
-    let nuevoEstado = 'Disponible';
-    if (nuevoStock <= 0) {
-      nuevoEstado = 'Agotado';
-    } else if (nuevoStock <= this.umbralBajo) {
-      nuevoEstado = 'Stock bajo';
-    }
-
-    // 2. Si el registro tiene ID de inventario real en backend, actualizarlo vía API
     const idInventarioReal = this.loteSeleccionado.refInv?.id_inventario ?? 
       (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0 ? this.loteSeleccionado.idInvs[0] : null);
 
-    const ejecutarActualizacionInventario = idInventarioReal
-      ? this.svc.actualizarInventario(idInventarioReal, {
-          cantidad_actual: nuevoStock,
-          estado: nuevoEstado
-        })
+    const idsInvs: number[] = (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0)
+      ? this.loteSeleccionado.idInvs
+      : (idInventarioReal ? [idInventarioReal] : []);
+
+    // Asegurar que el lote en inventarios tenga el id_medicamento asociado para que el backend Django pueda asignar por FIFO
+    const necesitaPatch = idsInvs.length > 0 && idMed > 0 && !this.loteSeleccionado.refInv?.id_medicamento;
+    const prepararLotes$ = necesitaPatch
+      ? forkJoin(idsInvs.map(id => this.svc.actualizarInventario(id, { id_medicamento: idMed }))).pipe(
+          catchError(() => of(null))
+        )
       : of(null);
 
-    ejecutarActualizacionInventario.subscribe({
+    prepararLotes$.subscribe({
       next: () => {
-        // 3. Registrar asignación en el kit de campo del veterinario
-        this.vetInvSvc.asignarLoteAVeterinario(Number(this.idVeterinarioSeleccionado), {
-          id_inventario: idInventarioReal || Number(this.loteSeleccionado.idMed) || Date.now(),
-          id_medicamento: Number(this.loteSeleccionado.idMed) || 0,
-          nombre: this.loteSeleccionado.nombre,
-          tipo: this.loteSeleccionado.tipo,
-          descripcion: this.loteSeleccionado.descripcion,
-          lote: idInventarioReal ? `LOTE-${idInventarioReal}` : 'LOTE-CBA',
-          cantidad: cant,
-          motivo: this.motivoAsignacion,
-          veterinarioNombre: nombreVet
-        }).subscribe({
+        // Llamada al endpoint oficial del backend: POST /api/inventario/kit/asignar/
+        this.vetInvSvc.asignarStockKit(
+          Number(this.idVeterinarioSeleccionado),
+          [{
+            id_medicamento: idMed,
+            cantidad: cant
+          }],
+          this.motivoAsignacion
+        ).subscribe({
           next: () => {
+            // Guardar en asignaciones locales para sincronización inmediata
+            this.vetInvSvc.asignarLoteAVeterinario(Number(this.idVeterinarioSeleccionado), {
+              id_inventario: idInventarioReal || idMed || Date.now(),
+              id_medicamento: idMed,
+              nombre: this.loteSeleccionado.nombre,
+              tipo: this.loteSeleccionado.tipo,
+              descripcion: this.loteSeleccionado.descripcion,
+              lote: idInventarioReal ? `LOTE-${idInventarioReal}` : 'LOTE-CBA',
+              cantidad: cant,
+              motivo: this.motivoAsignacion,
+              veterinarioNombre: nombreVet
+            }).subscribe();
+
             this.guardandoAsignacion = false;
             this.cerrarModalAsignar();
 
             Swal.fire({
               icon: 'success',
-              title: '¡Lote Asignado al Veterinario!',
+              title: '¡Stock Asignado al Veterinario!',
               html: `
                 <div class="text-left text-sm space-y-2">
                   <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
                   <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                  <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
-                  <p><strong>Nuevo saldo disponible en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
+                  <p><strong>Cantidad transferida:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
                   <div class="p-2.5 bg-[#4141a5]/10 border border-[#4141a5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
-                    El producto ya está disponible en el <strong>"Inventario Veterinario"</strong> del doctor para sus prescripciones y atenciones de campo.
+                    El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
                   </div>
                 </div>
               `,
@@ -473,21 +478,91 @@ export class Inventario implements OnInit {
               confirmButtonColor: '#4141a5'
             });
 
-            // Recargar la tabla de inventario para reflejar el stock descontado
+            // Recargar inventario para reflejar saldos actualizados
             this.cargar();
           },
           error: (err) => {
-            console.error('Error al registrar asignación en kit:', err);
-            this.guardandoAsignacion = false;
-            this.errorAsignacion = 'Error al asignar al kit del veterinario. Intenta nuevamente.';
-            this.cdr.detectChanges();
+            console.warn('Respuesta en asignación de kit:', err);
+            const errObj = err?.error;
+            const errorCodigo = errObj?.error || errObj?.detail || errObj?.mensaje;
+
+            if (errorCodigo === 'STOCK_INSUFICIENTE_BODEGA') {
+              this.guardandoAsignacion = false;
+              this.errorAsignacion = 'Stock insuficiente en la bodega general para cubrir la cantidad solicitada.';
+              this.cdr.detectChanges();
+              return;
+            }
+
+            if (errorCodigo === 'CANTIDAD_INVALIDA') {
+              this.guardandoAsignacion = false;
+              this.errorAsignacion = 'La cantidad solicitada no es válida.';
+              this.cdr.detectChanges();
+              return;
+            }
+
+            // Fallback: descontar stock en bodega general directamente y registrar en kit de campo
+            const nuevoStock = Math.max(0, stockActual - cant);
+            let nuevoEstado = nuevoStock <= 0 ? 'Agotado' : (nuevoStock <= this.umbralBajo ? 'Stock bajo' : 'Disponible');
+
+            const actualizarInv$ = idInventarioReal
+              ? this.svc.actualizarInventario(idInventarioReal, { 
+                  cantidad_actual: nuevoStock, 
+                  estado: nuevoEstado,
+                  ...(idMed > 0 ? { id_medicamento: idMed } : {})
+                })
+              : of(null);
+
+            actualizarInv$.subscribe({
+              next: () => {
+                this.vetInvSvc.asignarLoteAVeterinario(Number(this.idVeterinarioSeleccionado), {
+                  id_inventario: idInventarioReal || idMed || Date.now(),
+                  id_medicamento: idMed,
+                  nombre: this.loteSeleccionado.nombre,
+                  tipo: this.loteSeleccionado.tipo,
+                  descripcion: this.loteSeleccionado.descripcion,
+                  lote: idInventarioReal ? `LOTE-${idInventarioReal}` : 'LOTE-CBA',
+                  cantidad: cant,
+                  motivo: this.motivoAsignacion,
+                  veterinarioNombre: nombreVet
+                }).subscribe({
+                  next: () => {
+                    this.guardandoAsignacion = false;
+                    this.cerrarModalAsignar();
+                    Swal.fire({
+                      icon: 'success',
+                      title: '¡Lote Asignado al Veterinario!',
+                      html: `
+                        <div class="text-left text-sm space-y-2">
+                          <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
+                          <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
+                          <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
+                          <p><strong>Nuevo saldo en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
+                        </div>
+                      `,
+                      confirmButtonText: 'Entendido',
+                      confirmButtonColor: '#4141a5'
+                    });
+                    this.cargar();
+                  },
+                  error: () => {
+                    this.guardandoAsignacion = false;
+                    this.errorAsignacion = 'Error al registrar la asignación en el kit de campo.';
+                    this.cdr.detectChanges();
+                  }
+                });
+              },
+              error: () => {
+                this.guardandoAsignacion = false;
+                this.errorAsignacion = typeof errorCodigo === 'string' ? errorCodigo : 'No se pudo completar la asignación en el servidor.';
+                this.cdr.detectChanges();
+              }
+            });
           }
         });
       },
-      error: (err) => {
-        console.error('Error al actualizar inventario en backend:', err);
+      error: () => {
         this.guardandoAsignacion = false;
-        this.errorAsignacion = 'No se pudo descontar el stock del inventario en el servidor.';
+        this.errorAsignacion = 'No se pudo preparar el lote en bodega antes de asignar.';
         this.cdr.detectChanges();
       }
     });
