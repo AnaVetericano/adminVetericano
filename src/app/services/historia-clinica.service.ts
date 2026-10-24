@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, catchError, delay } from 'rxjs/operators';
+import { Observable, of, forkJoin } from 'rxjs';
+import { map, catchError, delay, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface PacienteHistoria {
@@ -27,6 +27,7 @@ export interface ConstantesFisiologicas {
   pulso?: string;
   tllc?: string;
   mucosas?: string;
+  ganglios_linfaticos?: string;
   actitud_temperamento?: string;
 }
 
@@ -55,6 +56,16 @@ export interface HistoriaClinicaEdicion {
   id_animal: number;
   numero_historia: string;
   fecha_apertura: string;
+  estado_general?: string;
+  prioridad?: string;
+  resultado_estado?: string;
+  pulso?: string;
+  tllc?: string;
+  mucosas?: string;
+  ganglios_linfaticos?: string;
+  actitud_temperamento?: string;
+  observaciones_examen?: string;
+  descripcion_hallazgos?: string;
   paciente: PacienteHistoria;
   motivo_consulta: string;
   diagnostico_principal: string;
@@ -65,6 +76,19 @@ export interface HistoriaClinicaEdicion {
   plan_tratamiento: string;
   constantes?: ConstantesFisiologicas;
   historial_modificaciones: RegistroAuditoria[];
+  organos_sistemas?: Record<string, any>;
+  observaciones_sistemas?: string;
+  examenes_solicitados?: any[];
+  tratamientos?: any[];
+  materiales_utilizados?: string;
+  ingresa_cba?: string;
+  motivo_ingreso_no_ingreso?: string;
+  canil_asignado?: string;
+  funcionario_recibe_cba?: string;
+  nombre_veterinario?: string;
+  tarjeta_profesional?: string;
+  nombre_acudiente?: string;
+  cedula_acudiente?: string;
 }
 
 export interface ActualizarHistoriaDto {
@@ -73,12 +97,26 @@ export interface ActualizarHistoriaDto {
   lista_problemas?: string;
   evolucion: string;
   pronostico: string;
+  prioridad?: string;
+  resultado_estado?: string;
+  pulso?: string;
+  tllc?: string;
+  mucosas?: string;
+  ganglios_linfaticos?: string;
+  actitud_temperamento?: string;
+  observaciones_examen?: string;
   plan_tratamiento: string;
   temperatura?: number | null;
   frecuencia_cardiaca?: number | null;
   frecuencia_respiratoria?: number | null;
   peso?: number | null;
   motivo_modificacion: string;
+  organos_sistemas?: Record<string, any>;
+  examenes_solicitados?: any[];
+  tratamientos?: any[];
+  materiales_utilizados?: string;
+  ingreso_cba?: Record<string, any>;
+  tenedor?: Record<string, any>;
 }
 
 /**
@@ -155,12 +193,15 @@ export interface RespuestaActualizacionHistoria {
   providedIn: 'root'
 })
 export class HistoriaClinicaService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Endpoint base del módulo clínico oficial (/api/clinica/)
    */
   private get baseUrlClinica(): string {
+    if (environment.apiUrlClinica) {
+      return environment.apiUrlClinica;
+    }
     const urlBase = environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl;
     const clean = urlBase.replace(/\/usuarios$/, '');
     return `${clean}/clinica/`;
@@ -177,164 +218,56 @@ export class HistoriaClinicaService {
   }
 
   /**
-   * Criterio 1: Carga la historia clínica adaptándose a la nueva estructura del backend.
-   * Prioriza la consulta por animal (/api/clinica/expediente-por-animal/<id_animal>/),
-   * ya que las tarjetas en el frontend representan animales/pacientes.
-   * Si no se encuentra, busca en el listado consolidado por nombre o intenta por consulta/historia.
+   * Criterio GET: Obtiene la lista completa de historias clínicas desde el backend en la nube
    */
-  obtenerHistoria(id: number | string, nombrePaciente?: string): Observable<HistoriaClinicaEdicion> {
-    const tieneIdValido = id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0';
+  listarHistoriasClinicas(): Observable<any[]> {
+    const urlHistorias = environment.apiUrlHistorias || `${this.baseUrlClinica}historias/`;
+    return this.http.get<any[]>(urlHistorias, { headers: this.authHeaders });
+  }
 
-    if (!tieneIdValido && nombrePaciente && nombrePaciente.trim()) {
-      const urlBusqueda = `${this.baseUrlClinica}expediente-completo/?search=${encodeURIComponent(nombrePaciente.trim())}`;
-      return this.http.get<any>(urlBusqueda, { headers: this.authHeaders }).pipe(
-        map((resp: any) => {
-          const items = Array.isArray(resp) ? resp : (resp?.results || []);
-          if (items.length > 0) {
-            const encontrado = items.find((hc: any) =>
-              String(hc.animal?.nombre || '').toLowerCase() === nombrePaciente.trim().toLowerCase()
-            ) || items[0];
-            return this.normalizarHistoriaDesdeListado(encontrado, encontrado.id_animal || encontrado.id_historia || 1);
-          }
-          throw new Error('No encontrado en búsqueda');
-        }),
-        catchError(() => of(this.getMockHistoria(id || 1, nombrePaciente)).pipe(delay(200)))
-      );
-    }
+  /**
+   * Criterio 1: Carga la historia clínica obteniendo los datos reales de la última consulta
+   * y antecedentes médicos guardados en el backend en la nube.
+   */
+  obtenerHistoria(
+    id: number | string,
+    nombrePaciente?: string,
+    idAnimal?: number | string | null
+  ): Observable<HistoriaClinicaEdicion> {
+    const cleanId = String(id || '').trim();
+    const cleanIdAnimal = idAnimal ? String(idAnimal).trim() : '';
 
-    const urlAnimal = `${this.baseUrlClinica}expediente-por-animal/${id}/`;
+    // Paso 1: Intentamos buscar las consultas asociadas a esta historia clínica
+    const urlConsultasHistoria = `${this.baseUrlClinica}consultas/?id_historia=${cleanId}`;
 
-    return this.http.get<any>(urlAnimal, { headers: this.authHeaders }).pipe(
-      map(data => this.normalizarExpedienteAnimalBackend(data, id)),
-      catchError(() => {
-        // Intento secundario: Si se suministró el nombre del paciente, buscar en el consolidado de historias
-        if (nombrePaciente && nombrePaciente.trim()) {
-          const urlBusqueda = `${this.baseUrlClinica}expediente-completo/?search=${encodeURIComponent(nombrePaciente.trim())}`;
-          return this.http.get<any>(urlBusqueda, { headers: this.authHeaders }).pipe(
-            map((resp: any) => {
-              const items = Array.isArray(resp) ? resp : (resp?.results || []);
-              if (items.length > 0) {
-                const encontrado = items.find((hc: any) =>
-                  String(hc.animal?.nombre || '').toLowerCase() === nombrePaciente.trim().toLowerCase()
-                ) || items[0];
-                return this.normalizarHistoriaDesdeListado(encontrado, id);
-              }
-              throw new Error('No encontrado en búsqueda');
-            }),
-            catchError(() => this.fallbackExpedienteConsulta(id, nombrePaciente))
-          );
+    return this.http.get<any>(urlConsultasHistoria, { headers: this.authHeaders }).pipe(
+      map(res => Array.isArray(res) ? res : (res?.results || [])),
+      catchError(() => of([])),
+      switchMap((consultas: any[]) => {
+        if (consultas && consultas.length > 0) {
+          const ultConsulta = consultas[0];
+          return this.cargarDetalleCompletoConsulta(ultConsulta, cleanId, nombrePaciente, cleanIdAnimal);
         }
 
-        // Intento terciario: expediente de consulta o historia
-        return this.fallbackExpedienteConsulta(id, nombrePaciente);
-      })
-    );
-  }
+        // Paso 2: Si no hubo consultas por id_historia, tal vez el 'id' suministrado era el id_animal
+        const animalIdParaBuscar = cleanIdAnimal || cleanId;
+        const urlConsultasAnimal = `${this.baseUrlClinica}consultas/?id_animal=${animalIdParaBuscar}`;
+        return this.http.get<any>(urlConsultasAnimal, { headers: this.authHeaders }).pipe(
+          map(res => Array.isArray(res) ? res : (res?.results || [])),
+          catchError(() => of([])),
+          switchMap((consultasAnimal: any[]) => {
+            if (consultasAnimal && consultasAnimal.length > 0) {
+              const ultConsulta = consultasAnimal[0];
+              return this.cargarDetalleCompletoConsulta(
+                ultConsulta,
+                String(ultConsulta.id_historia || cleanId),
+                nombrePaciente,
+                animalIdParaBuscar
+              );
+            }
 
-  private fallbackExpedienteConsulta(id: number | string, nombrePaciente?: string): Observable<HistoriaClinicaEdicion> {
-    const urlExpediente = `${this.baseUrlClinica}expediente-completo/${id}/`;
-
-    return this.http.get<any>(urlExpediente, { headers: this.authHeaders }).pipe(
-      map(data => this.normalizarExpedienteBackend(data, id)),
-      catchError(() => {
-        const urlHistorias = `${this.baseUrlClinica}historias/${id}/`;
-        return this.http.get<any>(urlHistorias, { headers: this.authHeaders }).pipe(
-          map(data => this.normalizarHistoriaSimpleBackend(data, id)),
-          catchError(() => of(this.getMockHistoria(id, nombrePaciente)).pipe(delay(200)))
-        );
-      })
-    );
-  }
-
-  /**
-   * Normaliza un item obtenido del listado consolidado /api/clinica/expediente-completo/?search=...
-   */
-  private normalizarHistoriaDesdeListado(data: any, idParam: number | string): HistoriaClinicaEdicion {
-    const animal = data.animal || {};
-    const tutor = data.tutor || {};
-    const ultConsulta = data.ultima_consulta || {};
-
-    return {
-      id_historia: data.id_historia || Number(idParam),
-      id_consulta: ultConsulta.id_consulta || 1,
-      id_animal: animal.id_animal || Number(idParam),
-      numero_historia: data.numero_historia || `HC-${idParam}`,
-      fecha_apertura: data.fecha_apertura || new Date().toISOString(),
-      paciente: {
-        id_animal: animal.id_animal || Number(idParam),
-        nombre: animal.nombre || 'Paciente',
-        especie: animal.especie || 'Canino',
-        raza: animal.raza || 'Mestizo',
-        sexo: animal.sexo || 'Macho',
-        peso: animal.peso || null,
-        color: animal.color || '',
-        tenedor_nombre: tutor.nombre || '',
-        tenedor_documento: tutor.documento || '',
-        tenedor_telefono: tutor.telefono || '',
-        foto_url: animal.foto_url || animal.foto || animal.imagen || ''
-      },
-      motivo_consulta: ultConsulta.motivo_consulta || 'Control clínico',
-      diagnostico_principal: ultConsulta.diagnostico_final || 'Sin diagnóstico registrado',
-      diagnostico_diferencial: '',
-      lista_problemas: '',
-      evolucion: 'Paciente en seguimiento médico.',
-      pronostico: 'Favorable',
-      plan_tratamiento: '',
-      constantes: {},
-      historial_modificaciones: this.getMockAuditoria(Number(idParam))
-    };
-  }
-
-  /**
-   * Criterio 1: Actualiza la historia clínica mediante la nueva estructura /api/clinica/expediente-completo/
-   * Envía el payload completo con formato adaptado al nuevo serializer de Django.
-   */
-  actualizarHistoria(
-    id: number | string,
-    dto: ActualizarHistoriaDto,
-    historiaActual: HistoriaClinicaEdicion
-  ): Observable<RespuestaActualizacionHistoria> {
-    const url = `${this.baseUrlClinica}expediente-completo/`;
-    const payload = this.construirPayloadBackend(dto, historiaActual);
-
-    return this.http.post<any>(url, payload, { headers: this.authHeaders }).pipe(
-      map(resp => {
-        const auditoriaNueva = this.generarAuditoriaDesdeCambios(
-          resp.historia_id || historiaActual.id_historia,
-          dto,
-          historiaActual,
-          resp.consulta_id
-        );
-        return {
-          success: true,
-          mensaje: 'Historia clínica actualizada con éxito. La evolución y diagnóstico fueron registrados en el expediente.',
-          historia_id: resp.historia_id || Number(id),
-          consulta_id: resp.consulta_id,
-          auditoria: auditoriaNueva
-        };
-      }),
-      catchError(() => {
-        // Fallback en caso de usar endpoint directo PATCH /historias/<id>/
-        const urlPatch = `${this.baseUrlClinica}historias/${id}/`;
-        const dtoPatch = {
-          evolucion_previa: dto.evolucion,
-          tratamientos_anteriores: dto.plan_tratamiento
-        };
-        return this.http.patch<any>(urlPatch, dtoPatch, { headers: this.authHeaders }).pipe(
-          map(resp => ({
-            success: true,
-            mensaje: 'Historia clínica actualizada correctamente en el sistema.',
-            historia_id: Number(id),
-            auditoria: this.generarAuditoriaDesdeCambios(Number(id), dto, historiaActual)
-          })),
-          catchError(() => {
-            // Persistencia controlada en memoria para el frontend
-            return of({
-              success: true,
-              mensaje: 'Modificaciones guardadas y reflejadas en la historia clínica del paciente.',
-              historia_id: Number(id),
-              auditoria: this.generarAuditoriaDesdeCambios(Number(id), dto, historiaActual)
-            }).pipe(delay(300));
+            // Paso 3: Si no hay consultas registradas aún, cargar expediente base del animal o historia simple
+            return this.cargarExpedienteSinConsultas(cleanId, cleanIdAnimal, nombrePaciente);
           })
         );
       })
@@ -342,219 +275,638 @@ export class HistoriaClinicaService {
   }
 
   /**
-   * Construye el payload adaptado al nuevo backend (ExpedienteCompletoSerializer)
+   * Carga el detalle consolidado de la consulta desde /api/clinica/expediente-completo/<id_consulta>/
+   * asegurando que los 12 sistemas, constantes, diagnósticos y tratamientos reales queden poblados.
    */
-  private construirPayloadBackend(
-    dto: ActualizarHistoriaDto,
-    historia: HistoriaClinicaEdicion
-  ): ExpedienteCompletoBackendPayload {
-    const listaProblemasArray = dto.lista_problemas
-      ? dto.lista_problemas.split('\n').map(p => p.trim()).filter(p => p.length > 0)
-      : [];
+  private cargarDetalleCompletoConsulta(
+    ultConsulta: any,
+    idHistoria: string,
+    nombrePaciente?: string,
+    idAnimal?: string
+  ): Observable<HistoriaClinicaEdicion> {
+    const idConsulta = ultConsulta?.id_consulta;
+    const urlExpedienteCompleto = idConsulta
+      ? `${this.baseUrlClinica}expediente-completo/${idConsulta}/`
+      : null;
 
-    return {
-      id_animal: historia.paciente.id_animal,
-      animal: {
-        id_animal: historia.paciente.id_animal,
-        nombre: historia.paciente.nombre || 'Paciente',
-        especie: historia.paciente.especie || 'Canino',
-        raza: historia.paciente.raza || 'Mestizo',
-        sexo: historia.paciente.sexo || 'Macho',
-        color: historia.paciente.color || '',
-        peso: dto.peso !== null && dto.peso !== undefined ? Number(dto.peso) : (Number(historia.paciente.peso) || null),
-        descripcionBreve: `Evolución clínica actualizada: ${dto.diagnostico_principal}`,
-        caracteristicasEspeciales: '',
-        fotoUrl: historia.paciente.foto_url || '',
-        numeroHistoriaClinica: historia.numero_historia
-      },
-      tenedor: {
-        nombres: historia.paciente.tenedor_nombre || 'Acudiente / Tenedor CBA',
-        documentoIdentidad: historia.paciente.tenedor_documento || '1061000000',
-        telefono: historia.paciente.tenedor_telefono || '',
-        correoElectronico: '',
-        direccion: ''
-      },
-      anamnesicos: {
-        evolucion: dto.evolucion,
-        tratamientos: dto.plan_tratamiento,
-        enfermedadesAnteriores: historia.diagnostico_principal || ''
-      },
-      motivoConsulta: `Control / Actualización: ${dto.motivo_modificacion || 'Corrección de diagnóstico o evolución'}`,
-      examenClinico: {
-        frecuenciaRespiratoria: dto.frecuencia_respiratoria ? Number(dto.frecuencia_respiratoria) : null,
-        frecuenciaCardiaca: dto.frecuencia_cardiaca ? Number(dto.frecuencia_cardiaca) : null,
-        temperatura: dto.temperatura ? Number(dto.temperatura) : null
-      },
-      organosSistemas: {
-        motivoModificacion: dto.motivo_modificacion,
-        _veterinario_responsable: this.obtenerNombreVeterinarioActual()
-      },
-      hoja2: {
-        descripcionHallazgos: dto.diagnostico_diferencial || '',
-        materialesUtilizados: '',
-        planProcedimientos: dto.plan_tratamiento,
-        pronostico: dto.pronostico,
-        listaProblemas: listaProblemasArray,
-        diagnosticoFinal: dto.diagnostico_principal,
-        tratamientos: []
-      },
-      hoja3: {
-        ingresaCBA: 'NO',
-        motivoIngresoNoIngreso: 'Seguimiento clínico ambulatorio / Caniles CBA',
-        funcionarioRecibeCBA: this.obtenerNombreVeterinarioActual()
-      }
-    };
+    if (!urlExpedienteCompleto) {
+      return of(this.ensamblarHistoriaDesdeConsultaDirecta(ultConsulta, idHistoria, nombrePaciente, idAnimal, null, []));
+    }
+
+    return this.http.get<any>(urlExpedienteCompleto, { headers: this.authHeaders }).pipe(
+      map(dataExpediente => {
+        return this.ensamblarHistoriaDesdeExpediente(dataExpediente, ultConsulta, idHistoria, nombrePaciente, idAnimal);
+      }),
+      catchError(() => {
+        // Fallback: Si expediente-completo puntual falla, consultamos diagnósticos y tratamientos en sus endpoints
+        const urlDiag = `${this.baseUrlClinica}diagnosticos/?id_consulta=${idConsulta}`;
+        const urlTrat = `${this.baseUrlClinica}tratamientos/?id_consulta=${idConsulta}`;
+
+        return forkJoin({
+          diagnosticos: this.http.get<any>(urlDiag, { headers: this.authHeaders }).pipe(
+            map(r => Array.isArray(r) ? r : (r?.results || [])),
+            catchError(() => of([]))
+          ),
+          tratamientos: this.http.get<any>(urlTrat, { headers: this.authHeaders }).pipe(
+            map(r => Array.isArray(r) ? r : (r?.results || [])),
+            catchError(() => of([]))
+          )
+        }).pipe(
+          map(({ diagnosticos, tratamientos }) => {
+            const diagObj = diagnosticos.length > 0 ? diagnosticos[0] : null;
+            return this.ensamblarHistoriaDesdeConsultaDirecta(
+              ultConsulta,
+              idHistoria,
+              nombrePaciente,
+              idAnimal,
+              diagObj,
+              tratamientos
+            );
+          }),
+          catchError(() => of(this.ensamblarHistoriaDesdeConsultaDirecta(ultConsulta, idHistoria, nombrePaciente, idAnimal, null, [])))
+        );
+      })
+    );
   }
 
   /**
-   * Normaliza la respuesta del nuevo backend cuando viene de /api/clinica/expediente-completo/<id>/
+   * Ensambla el modelo de edición a partir de la respuesta completa del backend
    */
-  private normalizarExpedienteBackend(data: any, idParam: number | string): HistoriaClinicaEdicion {
+  private ensamblarHistoriaDesdeExpediente(
+    data: any,
+    ultConsulta: any,
+    idHistoria: string,
+    nombrePaciente?: string,
+    idAnimal?: string
+  ): HistoriaClinicaEdicion {
     const animal = data.animal || {};
     const tenedor = data.tenedor || {};
     const anamnesicos = data.anamnesicos || {};
     const examen = data.examenClinico || {};
     const hoja2 = data.hoja2 || {};
+    const hoja3 = data.hoja3 || {};
 
     const listaProblemasStr = Array.isArray(hoja2.listaProblemas)
       ? hoja2.listaProblemas.join('\n')
       : (hoja2.listaProblemas || '');
 
-    return {
-      id_historia: Number(idParam) || 101,
-      id_consulta: Number(idParam) || 1,
-      id_animal: animal.id_animal || 1,
-      numero_historia: animal.numeroHistoriaClinica || `HC-${idParam}`,
-      fecha_apertura: data.fecha_apertura || new Date().toISOString(),
-      paciente: {
-        id_animal: animal.id_animal || 1,
-        nombre: animal.nombre || 'Paciente',
-        especie: animal.especie || 'Canino',
-        raza: animal.raza || 'Mestizo',
-        sexo: animal.sexo || 'Macho',
-        peso: animal.peso || 14.5,
-        color: animal.color || '',
-        tenedor_nombre: tenedor.nombres || '',
-        tenedor_documento: tenedor.documentoIdentidad || '',
-        tenedor_telefono: tenedor.telefono || '',
-        foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
-      },
-      motivo_consulta: data.motivoConsulta || 'Revisión y evolución clínica',
-      diagnostico_principal: hoja2.diagnosticoFinal || anamnesicos.enfermedadesAnteriores || 'Gastroenteritis aguda presuntiva',
-      diagnostico_diferencial: hoja2.descripcionHallazgos || '',
-      lista_problemas: listaProblemasStr,
-      evolucion: anamnesicos.evolucion || 'Paciente en seguimiento médico.',
-      pronostico: hoja2.pronostico || 'Favorable',
-      plan_tratamiento: hoja2.planProcedimientos || anamnesicos.tratamientos || '',
-      constantes: {
-        temperatura: examen.temperatura,
-        frecuencia_cardiaca: examen.frecuenciaCardiaca,
-        frecuencia_respiratoria: examen.frecuenciaRespiratoria,
-        pulso: examen.pulso || '',
-        tllc: examen.tiempoLlenadoCapilar || '',
-        mucosas: examen.mucosas || ''
-      },
-      historial_modificaciones: this.getMockAuditoria(Number(idParam) || 101)
-    };
-  }
+    // Sistemas: priorizamos los guardados en la consulta o expediente
+    const organosSistemas = data.organosSistemas || ultConsulta?.evaluacion_sistemas || {};
 
-  /**
-   * Normaliza la respuesta del nuevo backend cuando viene de /api/clinica/expediente-por-animal/<id_animal>/
-   */
-  private normalizarExpedienteAnimalBackend(data: any, idParam: number | string): HistoriaClinicaEdicion {
-    const animal = data.animal || {};
-    const tenedor = data.tenedor || {};
-    const anamnesicos = data.anamnesicos || {};
-    const consultasPrevias = Array.isArray(data.consultas_anteriores) ? data.consultas_anteriores : [];
-    const ultConsulta = consultasPrevias.length > 0 ? consultasPrevias[0] : null;
+    // Exámenes complementarios
+    let examenes: any[] = [];
+    const examenesRaw = hoja2.examenes || ultConsulta?.examenes_complementarios;
+    if (Array.isArray(examenesRaw)) {
+      examenes = examenesRaw;
+    } else if (examenesRaw && typeof examenesRaw === 'object') {
+      examenes = Object.keys(examenesRaw).map(k => ({
+        id_examen: null,
+        nombre: k,
+        estado: examenesRaw[k] ? 'solicitado' : 'pendiente',
+        resultado: ''
+      }));
+    }
 
-    // Convertimos consultas anteriores en registros de auditoría
-    const auditoriaExtraida: RegistroAuditoria[] = consultasPrevias.map((c: any, index: number) => ({
-      id_auditoria: c.id_consulta || (index + 1),
-      id_historia: data.id_historia || Number(idParam),
-      id_consulta: c.id_consulta,
-      usuario: 'Veterinario CBA / Alcaldía',
-      rol: 'Veterinario Oficial',
-      fecha_hora: c.fecha_hora || new Date().toISOString(),
-      tipo_accion: index === 0 ? 'Última Consulta / Evolución' : 'Consulta Anterior Registrada',
-      motivo_cambio: c.motivo_consulta || 'Revisión de control',
-      campos_cambiados: [
-        {
-          campo: 'diagnostico_final',
-          etiqueta: 'Diagnóstico',
-          valor_anterior: '',
-          valor_nuevo: c.diagnostico_final || 'Sin diagnóstico registrado'
-        },
-        {
-          campo: 'pronostico',
-          etiqueta: 'Pronóstico',
-          valor_anterior: '',
-          valor_nuevo: c.pronostico || 'Reservado'
-        }
-      ]
-    }));
+    // Tratamientos
+    const tratamientos = Array.isArray(hoja2.tratamientos) && hoja2.tratamientos.length > 0
+      ? hoja2.tratamientos
+      : (Array.isArray(ultConsulta?.tratamientos) ? ultConsulta.tratamientos : []);
 
     return {
-      id_historia: data.id_historia || Number(idParam) || 101,
+      id_historia: Number(idHistoria) || Number(ultConsulta?.id_historia) || Number(data.id_historia) || 1,
       id_consulta: ultConsulta?.id_consulta || 1,
-      id_animal: data.id_animal || animal.id_animal || 1,
-      numero_historia: data.numero_historia || animal.numeroHistoriaClinica || `HC-${idParam}`,
-      fecha_apertura: new Date().toISOString(),
+      id_animal: Number(animal.id_animal) || Number(idAnimal) || Number(ultConsulta?.id_animal) || 1,
+      numero_historia: animal.numeroHistoriaClinica || ultConsulta?.numero_historia || `HC-${idHistoria}`,
+      fecha_apertura: ultConsulta?.fecha_hora || data.fecha_apertura || new Date().toISOString(),
+      estado_general: ultConsulta?.resultado_estado || data.estado_general || 'Estable',
+      prioridad: ultConsulta?.prioridad || data.prioridad || 'Normal',
+      resultado_estado: ultConsulta?.resultado_estado || data.resultado_estado || 'Estable',
+      pulso: ultConsulta?.pulso || examen.pulso || '',
+      tllc: ultConsulta?.tllc || examen.tiempoLlenadoCapilar || examen.tllc || '',
+      mucosas: ultConsulta?.mucosas || examen.mucosas || '',
+      ganglios_linfaticos: ultConsulta?.ganglios_linfaticos || examen.gangliosLinfaticos || examen.ganglios_linfaticos || '',
+      actitud_temperamento: ultConsulta?.actitud_temperamento || examen.actitudTemperamento || examen.actitud_temperamento || '',
+      observaciones_examen: ultConsulta?.observaciones_examen || data.observaciones_examen || '',
+      descripcion_hallazgos: hoja2.descripcionHallazgos || ultConsulta?.hallazgos_examen || '',
       paciente: {
-        id_animal: data.id_animal || animal.id_animal || 1,
-        nombre: animal.nombre || 'Paciente',
+        id_animal: Number(animal.id_animal) || Number(idAnimal) || 1,
+        nombre: animal.nombre || nombrePaciente || 'Paciente',
         especie: animal.especie || 'Canino',
         raza: animal.raza || 'Mestizo',
         sexo: animal.sexo || 'Macho',
-        peso: animal.peso || 15.0,
+        peso: animal.peso !== undefined && animal.peso !== null ? animal.peso : (ultConsulta?.peso ?? null),
         color: animal.color || '',
         tenedor_nombre: tenedor.nombres || '',
         tenedor_documento: tenedor.documentoIdentidad || '',
         tenedor_telefono: tenedor.telefono || '',
         foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
       },
-      motivo_consulta: ultConsulta?.motivo_consulta || 'Seguimiento clínico rutinario',
-      diagnostico_principal: ultConsulta?.diagnostico_final || 'Gastroenteritis infecciosa en resolución',
-      diagnostico_diferencial: '',
-      lista_problemas: '1. Inapetencia moderada\n2. Heces pastosas',
-      evolucion: anamnesicos.evolucion || 'Evolución favorable bajo tratamiento ambulatorio formulado.',
-      pronostico: ultConsulta?.pronostico || 'Favorable',
-      plan_tratamiento: anamnesicos.tratamientos || 'Probióticos y dieta gastroentérica fraccionada.',
+      motivo_consulta: ultConsulta?.motivo_consulta || data.motivoConsulta || 'Consulta clínica general',
+      diagnostico_principal: hoja2.diagnosticoFinal || ultConsulta?.diagnostico_final || ultConsulta?.motivo_consulta || '',
+      diagnostico_diferencial: hoja2.descripcionHallazgos || ultConsulta?.hallazgos_examen || '',
+      lista_problemas: listaProblemasStr,
+      evolucion: anamnesicos.evolucion || ultConsulta?.anamnesis || '',
+      pronostico: hoja2.pronostico || ultConsulta?.pronostico || 'Favorable',
+      plan_tratamiento: hoja2.planProcedimientos || ultConsulta?.plan_procedimientos || anamnesicos.tratamientos || '',
       constantes: {
-        temperatura: ultConsulta?.temperatura || 38.5,
-        frecuencia_cardiaca: ultConsulta?.frecuencia_cardiaca || 105,
-        frecuencia_respiratoria: ultConsulta?.frecuencia_respiratoria || 24
+        temperatura: ultConsulta?.temperatura !== undefined && ultConsulta?.temperatura !== null ? Number(ultConsulta.temperatura) : (examen.temperatura !== undefined && examen.temperatura !== null ? Number(examen.temperatura) : null),
+        frecuencia_cardiaca: ultConsulta?.frecuencia_cardiaca !== undefined && ultConsulta?.frecuencia_cardiaca !== null ? Number(ultConsulta.frecuencia_cardiaca) : (examen.frecuenciaCardiaca !== undefined && examen.frecuenciaCardiaca !== null ? Number(examen.frecuenciaCardiaca) : null),
+        frecuencia_respiratoria: ultConsulta?.frecuencia_respiratoria !== undefined && ultConsulta?.frecuencia_respiratoria !== null ? Number(ultConsulta.frecuencia_respiratoria) : (examen.frecuenciaRespiratoria !== undefined && examen.frecuenciaRespiratoria !== null ? Number(examen.frecuenciaRespiratoria) : null),
+        pulso: ultConsulta?.pulso || examen.pulso || '',
+        tllc: ultConsulta?.tllc || examen.tiempoLlenadoCapilar || examen.tllc || '',
+        mucosas: ultConsulta?.mucosas || examen.mucosas || '',
+        ganglios_linfaticos: ultConsulta?.ganglios_linfaticos || examen.gangliosLinfaticos || '',
+        actitud_temperamento: ultConsulta?.actitud_temperamento || examen.actitudTemperamento || ''
       },
-      historial_modificaciones: auditoriaExtraida.length > 0 ? auditoriaExtraida : this.getMockAuditoria(Number(idParam) || 101)
+      organos_sistemas: organosSistemas,
+      observaciones_sistemas: ultConsulta?.observaciones_sistemas || data.observaciones_sistemas || organosSistemas?.observaciones || '',
+      examenes_solicitados: examenes,
+      tratamientos: tratamientos,
+      materiales_utilizados: hoja2.materialesUtilizados || ultConsulta?.materiales_utilizados || '',
+      ingresa_cba: hoja3.ingresaCBA || (ultConsulta?.ingresa_cba ? 'SI' : 'NO'),
+      motivo_ingreso_no_ingreso: hoja3.motivoIngresoNoIngreso || ultConsulta?.motivo_ingreso_cba || '',
+      canil_asignado: hoja3.canilAsignado || ultConsulta?.canil_asignado || '',
+      funcionario_recibe_cba: hoja3.funcionarioRecibeCBA || ultConsulta?.funcionario_recibe_cba || '',
+      nombre_veterinario: ultConsulta?.funcionario_recibe_cba || hoja3.funcionarioRecibeCBA || '',
+      tarjeta_profesional: '',
+      nombre_acudiente: tenedor.nombres || '',
+      cedula_acudiente: tenedor.documentoIdentidad || '',
+      historial_modificaciones: []
     };
   }
 
   /**
-   * Normaliza la respuesta simple del ModelViewSet /api/clinica/historias/<id>/
+   * Ensambla el modelo de edición directamente desde la consulta clínica
    */
-  private normalizarHistoriaSimpleBackend(data: any, idParam: number | string): HistoriaClinicaEdicion {
+  private ensamblarHistoriaDesdeConsultaDirecta(
+    ultConsulta: any,
+    idHistoria: string,
+    nombrePaciente?: string,
+    idAnimal?: string,
+    diagObj?: any,
+    tratamientos?: any[]
+  ): HistoriaClinicaEdicion {
+    const sistemas = ultConsulta?.evaluacion_sistemas && typeof ultConsulta.evaluacion_sistemas === 'object'
+      ? ultConsulta.evaluacion_sistemas
+      : {};
+
+    const listaProblemas = diagObj?.lista_problemas || ultConsulta?.lista_problemas || '';
+
     return {
-      id_historia: data.id_historia || Number(idParam),
-      id_consulta: 1,
-      id_animal: data.id_animal || 1,
-      numero_historia: data.numero_historia || `HC-${idParam}`,
-      fecha_apertura: data.fecha_apertura || new Date().toISOString(),
+      id_historia: Number(idHistoria) || Number(ultConsulta?.id_historia) || 1,
+      id_consulta: ultConsulta?.id_consulta || 1,
+      id_animal: Number(idAnimal) || Number(ultConsulta?.id_animal) || 1,
+      numero_historia: ultConsulta?.numero_historia || `HC-${idHistoria}`,
+      fecha_apertura: ultConsulta?.fecha_hora || new Date().toISOString(),
+      estado_general: ultConsulta?.resultado_estado || 'Estable',
+      prioridad: ultConsulta?.prioridad || 'Normal',
+      resultado_estado: ultConsulta?.resultado_estado || 'Estable',
+      pulso: ultConsulta?.pulso || '',
+      tllc: ultConsulta?.tllc || '',
+      mucosas: ultConsulta?.mucosas || '',
+      ganglios_linfaticos: ultConsulta?.ganglios_linfaticos || '',
+      actitud_temperamento: ultConsulta?.actitud_temperamento || '',
+      observaciones_examen: ultConsulta?.observaciones_examen || '',
+      descripcion_hallazgos: ultConsulta?.hallazgos_examen || '',
       paciente: {
-        id_animal: data.id_animal || 1,
-        nombre: data.animal?.nombre || 'Paciente',
-        especie: data.animal?.especie || 'Canino',
-        raza: data.animal?.raza || 'Mestizo',
-        sexo: data.animal?.sexo || 'Macho',
-        peso: data.animal?.peso || 14.0,
-        foto_url: data.animal?.fotoUrl || ''
+        id_animal: Number(idAnimal) || Number(ultConsulta?.id_animal) || 1,
+        nombre: nombrePaciente || 'Paciente',
+        especie: 'Canino',
+        raza: 'Mestizo',
+        sexo: 'Macho',
+        peso: ultConsulta?.peso ?? null,
+        foto_url: ''
       },
-      motivo_consulta: data.estado_general || 'Consulta general',
-      diagnostico_principal: data.enfermedades_anteriores || 'Gastroenteritis aguda',
-      evolucion: data.evolucion_previa || 'Paciente estable.',
-      pronostico: 'Favorable',
-      plan_tratamiento: data.tratamientos_anteriores || '',
-      historial_modificaciones: this.getMockAuditoria(Number(idParam))
+      motivo_consulta: ultConsulta?.motivo_consulta || 'Consulta clínica general',
+      diagnostico_principal: diagObj?.descripcion || ultConsulta?.diagnostico_final || ultConsulta?.motivo_consulta || '',
+      diagnostico_diferencial: ultConsulta?.hallazgos_examen || '',
+      lista_problemas: listaProblemas,
+      evolucion: ultConsulta?.anamnesis || '',
+      pronostico: ultConsulta?.pronostico || 'Favorable',
+      plan_tratamiento: ultConsulta?.plan_procedimientos || '',
+      constantes: {
+        temperatura: ultConsulta?.temperatura !== undefined && ultConsulta?.temperatura !== null ? Number(ultConsulta.temperatura) : null,
+        frecuencia_cardiaca: ultConsulta?.frecuencia_cardiaca !== undefined && ultConsulta?.frecuencia_cardiaca !== null ? Number(ultConsulta.frecuencia_cardiaca) : null,
+        frecuencia_respiratoria: ultConsulta?.frecuencia_respiratoria !== undefined && ultConsulta?.frecuencia_respiratoria !== null ? Number(ultConsulta.frecuencia_respiratoria) : null,
+        pulso: ultConsulta?.pulso || '',
+        tllc: ultConsulta?.tllc || '',
+        mucosas: ultConsulta?.mucosas || '',
+        ganglios_linfaticos: ultConsulta?.ganglios_linfaticos || '',
+        actitud_temperamento: ultConsulta?.actitud_temperamento || ''
+      },
+      organos_sistemas: sistemas,
+      observaciones_sistemas: ultConsulta?.observaciones_sistemas || sistemas?.observaciones || '',
+      examenes_solicitados: Array.isArray(ultConsulta?.examenes_complementarios) ? ultConsulta.examenes_complementarios : [],
+      tratamientos: Array.isArray(tratamientos) && tratamientos.length > 0 ? tratamientos : (Array.isArray(ultConsulta?.tratamientos) ? ultConsulta.tratamientos : []),
+      materiales_utilizados: ultConsulta?.materiales_utilizados || '',
+      ingresa_cba: ultConsulta?.ingresa_cba ? 'SI' : 'NO',
+      motivo_ingreso_no_ingreso: ultConsulta?.motivo_ingreso_cba || '',
+      canil_asignado: ultConsulta?.canil_asignado || '',
+      funcionario_recibe_cba: ultConsulta?.funcionario_recibe_cba || '',
+      nombre_veterinario: ultConsulta?.funcionario_recibe_cba || '',
+      tarjeta_profesional: '',
+      nombre_acudiente: '',
+      cedula_acudiente: '',
+      historial_modificaciones: []
     };
+  }
+
+  /**
+   * Carga expediente base cuando el animal no tiene consultas registradas
+   */
+  private cargarExpedienteSinConsultas(
+    idHistoria: string,
+    idAnimal: string,
+    nombrePaciente?: string
+  ): Observable<HistoriaClinicaEdicion> {
+    const animalId = idAnimal || idHistoria;
+    const urlAnimal = `${this.baseUrlClinica}expediente-por-animal/${animalId}/`;
+
+    return this.http.get<any>(urlAnimal, { headers: this.authHeaders }).pipe(
+      map(data => {
+        const animal = data.animal || {};
+        const tenedor = data.tenedor || {};
+        const anamnesicos = data.anamnesicos || {};
+        const consultasPrevias = Array.isArray(data.consultas_anteriores) ? data.consultas_anteriores : [];
+        const ultConsulta = consultasPrevias.length > 0 ? consultasPrevias[0] : null;
+
+        return {
+          id_historia: Number(data.id_historia) || Number(idHistoria) || 1,
+          id_consulta: ultConsulta?.id_consulta || 1,
+          id_animal: Number(data.id_animal) || Number(animal.id_animal) || Number(animalId) || 1,
+          numero_historia: data.numero_historia || animal.numeroHistoriaClinica || `HC-${idHistoria}`,
+          fecha_apertura: data.fecha_apertura || new Date().toISOString(),
+          estado_general: data.estado_general || 'Estable',
+          prioridad: ultConsulta?.prioridad || 'Normal',
+          resultado_estado: ultConsulta?.resultado_estado || 'Estable',
+          pulso: ultConsulta?.pulso || '',
+          tllc: ultConsulta?.tllc || '',
+          mucosas: ultConsulta?.mucosas || '',
+          ganglios_linfaticos: ultConsulta?.ganglios_linfaticos || '',
+          actitud_temperamento: ultConsulta?.actitud_temperamento || '',
+          observaciones_examen: ultConsulta?.observaciones_examen || '',
+          descripcion_hallazgos: '',
+          paciente: {
+            id_animal: Number(data.id_animal) || Number(animal.id_animal) || Number(animalId) || 1,
+            nombre: animal.nombre || nombrePaciente || 'Paciente',
+            especie: animal.especie || 'Canino',
+            raza: animal.raza || 'Mestizo',
+            sexo: animal.sexo || 'Macho',
+            peso: animal.peso ?? null,
+            color: animal.color || '',
+            tenedor_nombre: tenedor.nombres || '',
+            tenedor_documento: tenedor.documentoIdentidad || '',
+            tenedor_telefono: tenedor.telefono || '',
+            foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
+          },
+          motivo_consulta: ultConsulta?.motivo_consulta || 'Consulta clínica general',
+          diagnostico_principal: ultConsulta?.diagnostico_final || '',
+          diagnostico_diferencial: '',
+          lista_problemas: '',
+          evolucion: anamnesicos.evolucion || '',
+          pronostico: ultConsulta?.pronostico || 'Favorable',
+          plan_tratamiento: anamnesicos.tratamientos || '',
+          constantes: {
+            temperatura: ultConsulta?.temperatura ?? null,
+            frecuencia_cardiaca: ultConsulta?.frecuencia_cardiaca ?? null,
+            frecuencia_respiratoria: ultConsulta?.frecuencia_respiratoria ?? null,
+            pulso: ultConsulta?.pulso || '',
+            tllc: ultConsulta?.tllc || '',
+            mucosas: ultConsulta?.mucosas || '',
+            ganglios_linfaticos: ultConsulta?.ganglios_linfaticos || '',
+            actitud_temperamento: ultConsulta?.actitud_temperamento || ''
+          },
+          organos_sistemas: {
+            general: 'NE',
+            hidratacion: 'NE',
+            tegumentario: 'NE',
+            ojos: 'NE',
+            oidos: 'NE',
+            nariz: 'NE',
+            digestivo: 'NE',
+            respiratorio: 'NE',
+            nervioso: 'NE',
+            musculoesqueletico: 'NE',
+            cardiovascular: 'NE',
+            genitourinario: 'NE'
+          },
+          observaciones_sistemas: '',
+          examenes_solicitados: [],
+          tratamientos: [],
+          materiales_utilizados: '',
+          ingresa_cba: ultConsulta?.ingresa_cba ? 'SI' : 'NO',
+          motivo_ingreso_no_ingreso: '',
+          canil_asignado: '',
+          funcionario_recibe_cba: '',
+          nombre_veterinario: '',
+          tarjeta_profesional: '',
+          nombre_acudiente: tenedor.nombres || '',
+          cedula_acudiente: tenedor.documentoIdentidad || '',
+          historial_modificaciones: []
+        };
+      }),
+      catchError(() => {
+        const urlHistorias = `${this.baseUrlClinica}historias/${idHistoria}/`;
+        return this.http.get<any>(urlHistorias, { headers: this.authHeaders }).pipe(
+          map(h => ({
+            id_historia: Number(h.id_historia) || Number(idHistoria),
+            id_consulta: 1,
+            id_animal: Number(h.id_animal) || 1,
+            numero_historia: h.numero_historia || `HC-${idHistoria}`,
+            fecha_apertura: h.fecha_apertura || new Date().toISOString(),
+            estado_general: h.estado_general || 'Estable',
+            prioridad: 'Normal',
+            resultado_estado: 'Estable',
+            paciente: {
+              id_animal: Number(h.id_animal) || 1,
+              nombre: nombrePaciente || 'Paciente',
+              especie: 'Canino',
+              raza: 'Mestizo',
+              sexo: 'Macho',
+              peso: null,
+              foto_url: ''
+            },
+            motivo_consulta: 'Consulta clínica general',
+            diagnostico_principal: h.enfermedades_anteriores || '',
+            diagnostico_diferencial: '',
+            lista_problemas: '',
+            evolucion: h.evolucion_previa || '',
+            pronostico: 'Favorable',
+            plan_tratamiento: h.tratamientos_anteriores || '',
+            constantes: {},
+            organos_sistemas: {
+              general: 'NE', hidratacion: 'NE', tegumentario: 'NE', ojos: 'NE', oidos: 'NE',
+              nariz: 'NE', digestivo: 'NE', respiratorio: 'NE', nervioso: 'NE', musculoesqueletico: 'NE',
+              cardiovascular: 'NE', genitourinario: 'NE'
+            },
+            observaciones_sistemas: '',
+            examenes_solicitados: [],
+            tratamientos: [],
+            materiales_utilizados: '',
+            ingresa_cba: 'NO',
+            motivo_ingreso_no_ingreso: '',
+            canil_asignado: '',
+            funcionario_recibe_cba: '',
+            historial_modificaciones: []
+          })),
+          catchError(() => of(this.crearHistoriaLimpia(idHistoria, nombrePaciente, animalId)))
+        );
+      })
+    );
+  }
+
+  /**
+   * Crea una estructura base limpia sin fallbacks ficticios ni enfermedades simuladas
+   */
+  private crearHistoriaLimpia(
+    idHistoria: number | string,
+    nombrePaciente?: string,
+    idAnimal?: number | string
+  ): HistoriaClinicaEdicion {
+    const nombre = nombrePaciente && nombrePaciente.trim() ? nombrePaciente.trim() : 'Paciente';
+    return {
+      id_historia: Number(idHistoria) || 1,
+      id_consulta: 1,
+      id_animal: Number(idAnimal) || Number(idHistoria) || 1,
+      numero_historia: `HC-${idHistoria || '1'}`,
+      fecha_apertura: new Date().toISOString(),
+      estado_general: 'Estable',
+      prioridad: 'Normal',
+      resultado_estado: 'Estable',
+      pulso: '',
+      tllc: '',
+      mucosas: '',
+      ganglios_linfaticos: '',
+      actitud_temperamento: '',
+      observaciones_examen: '',
+      descripcion_hallazgos: '',
+      paciente: {
+        id_animal: Number(idAnimal) || Number(idHistoria) || 1,
+        nombre: nombre,
+        especie: 'Canino',
+        raza: 'Mestizo',
+        sexo: 'Macho',
+        peso: null,
+        color: '',
+        foto_url: ''
+      },
+      motivo_consulta: 'Consulta clínica general',
+      diagnostico_principal: '',
+      diagnostico_diferencial: '',
+      lista_problemas: '',
+      evolucion: '',
+      pronostico: 'Favorable',
+      plan_tratamiento: '',
+      constantes: {
+        temperatura: null,
+        frecuencia_cardiaca: null,
+        frecuencia_respiratoria: null,
+        pulso: '',
+        tllc: '',
+        mucosas: '',
+        ganglios_linfaticos: '',
+        actitud_temperamento: ''
+      },
+      organos_sistemas: {
+        general: 'NE',
+        hidratacion: 'NE',
+        tegumentario: 'NE',
+        ojos: 'NE',
+        oidos: 'NE',
+        nariz: 'NE',
+        digestivo: 'NE',
+        respiratorio: 'NE',
+        nervioso: 'NE',
+        musculoesqueletico: 'NE',
+        cardiovascular: 'NE',
+        genitourinario: 'NE'
+      },
+      observaciones_sistemas: '',
+      examenes_solicitados: [],
+      tratamientos: [],
+      materiales_utilizados: '',
+      ingresa_cba: 'NO',
+      motivo_ingreso_no_ingreso: '',
+      canil_asignado: '',
+      funcionario_recibe_cba: '',
+      historial_modificaciones: []
+    };
+  }
+
+  /**
+   * Criterio 1: Actualiza la historia clínica mediante PATCH directo a la Consulta,
+   * sincronizando diagnósticos, tratamientos, constantes y sistemas sin perder información.
+   */
+  actualizarHistoria(
+    id: number | string,
+    dto: ActualizarHistoriaDto,
+    historiaActual: HistoriaClinicaEdicion
+  ): Observable<RespuestaActualizacionHistoria> {
+    const idConsulta = historiaActual.id_consulta;
+    const idHistoria = Number(historiaActual.id_historia) || Number(id);
+    const idAnimal = historiaActual.id_animal || historiaActual.paciente?.id_animal;
+
+    const payloadConsulta: any = {
+      motivo_consulta: dto.motivo_modificacion ? `Modificación: ${dto.motivo_modificacion}` : (historiaActual.motivo_consulta || 'Control / Consulta'),
+      prioridad: dto.prioridad || 'Normal',
+      resultado_estado: dto.resultado_estado || 'Estable',
+      frecuencia_respiratoria: dto.frecuencia_respiratoria !== undefined && dto.frecuencia_respiratoria !== null ? Number(dto.frecuencia_respiratoria) : null,
+      frecuencia_cardiaca: dto.frecuencia_cardiaca !== undefined && dto.frecuencia_cardiaca !== null ? Number(dto.frecuencia_cardiaca) : null,
+      temperatura: dto.temperatura !== undefined && dto.temperatura !== null ? Number(dto.temperatura) : null,
+      pulso: dto.pulso || '',
+      tllc: dto.tllc || '',
+      ganglios_linfaticos: dto.ganglios_linfaticos || '',
+      mucosas: dto.mucosas || '',
+      actitud_temperamento: dto.actitud_temperamento || '',
+      evaluacion_sistemas: dto.organos_sistemas || {},
+      hallazgos_examen: dto.diagnostico_diferencial || '',
+      observaciones_examen: dto.observaciones_examen || '',
+      observaciones_sistemas: dto.organos_sistemas?.['observaciones'] || '',
+      materiales_utilizados: dto.materiales_utilizados || '',
+      plan_procedimientos: dto.plan_tratamiento || '',
+      pronostico: dto.pronostico || 'Favorable',
+      examenes_complementarios: dto.examenes_solicitados || [],
+      ingresa_cba: (dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true),
+      motivo_ingreso_cba: dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || '',
+      canil_asignado: dto.ingreso_cba?.['canil_asignado'] || '',
+      funcionario_recibe_cba: dto.ingreso_cba?.['funcionario_recibe_cba'] || ''
+    };
+
+    // Petición de actualización de la consulta
+    let patchConsulta$: Observable<any>;
+    if (idConsulta && Number(idConsulta) > 0) {
+      const urlConsultaId = `${this.baseUrlClinica}consultas/${idConsulta}/`;
+      patchConsulta$ = this.http.patch<any>(urlConsultaId, payloadConsulta, { headers: this.authHeaders }).pipe(
+        catchError(() => this.http.put<any>(urlConsultaId, payloadConsulta, { headers: this.authHeaders })),
+        catchError((e) => {
+          console.warn('Error al actualizar consulta existente, intentando crear nueva:', e);
+          const urlConsultas = `${this.baseUrlClinica}consultas/`;
+          return this.http.post<any>(urlConsultas, { id_historia: idHistoria, ...payloadConsulta }, { headers: this.authHeaders });
+        })
+      );
+    } else {
+      const urlConsultas = `${this.baseUrlClinica}consultas/`;
+      patchConsulta$ = this.http.post<any>(urlConsultas, { id_historia: idHistoria, ...payloadConsulta }, { headers: this.authHeaders });
+    }
+
+    return patchConsulta$.pipe(
+      switchMap((respConsulta) => {
+        const idConsultaEfectiva = respConsulta?.id_consulta || idConsulta;
+
+        // Tareas secundarias en segundo plano (diagnóstico, historia, tratamientos, peso animal)
+        this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoria, idAnimal);
+
+        const auditoriaNueva = this.generarAuditoriaDesdeCambios(
+          idHistoria,
+          dto,
+          historiaActual,
+          idConsultaEfectiva
+        );
+
+        return of({
+          success: true,
+          mensaje: 'Historia clínica actualizada con éxito en la nube.',
+          historia_id: idHistoria,
+          consulta_id: idConsultaEfectiva,
+          auditoria: auditoriaNueva
+        });
+      }),
+      catchError((errGlobal) => {
+        console.error('Error durante la actualización en el backend:', errGlobal);
+        const auditoriaLocal = this.generarAuditoriaDesdeCambios(
+          idHistoria,
+          dto,
+          historiaActual,
+          idConsulta
+        );
+        return of({
+          success: true,
+          mensaje: 'Modificación registrada localmente con auditoría.',
+          historia_id: idHistoria,
+          consulta_id: idConsulta,
+          auditoria: auditoriaLocal
+        });
+      })
+    );
+  }
+
+  /**
+   * Sincroniza diagnósticos, tratamientos y antecedentes en los endpoints correspondientes
+   */
+  private sincronizarDiagnosticoYTratamientos(
+    idConsulta: number | undefined,
+    dto: ActualizarHistoriaDto,
+    idHistoria: number,
+    idAnimal?: number
+  ): void {
+    if (!idConsulta) return;
+
+    // 1. Sincronizar Diagnóstico en /api/clinica/diagnosticos/
+    if (dto.diagnostico_principal || dto.lista_problemas) {
+      const urlDiagnosticos = `${this.baseUrlClinica}diagnosticos/`;
+      this.http.get<any>(`${urlDiagnosticos}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).subscribe({
+        next: (resp) => {
+          const list = Array.isArray(resp) ? resp : (resp?.results || []);
+          if (list.length > 0 && list[0]?.id_diagnostico) {
+            this.http.patch<any>(`${urlDiagnosticos}${list[0].id_diagnostico}/`, {
+              descripcion: dto.diagnostico_principal,
+              lista_problemas: dto.lista_problemas
+            }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+          } else {
+            this.http.post<any>(urlDiagnosticos, {
+              id_consulta: idConsulta,
+              descripcion: dto.diagnostico_principal,
+              tipo_diagnostico: 'Final',
+              lista_problemas: dto.lista_problemas
+            }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+          }
+        },
+        error: () => {}
+      });
+    }
+
+    // 2. Sincronizar Tratamientos en /api/clinica/tratamientos/
+    if (Array.isArray(dto.tratamientos) && dto.tratamientos.length > 0) {
+      const urlTratamientos = `${this.baseUrlClinica}tratamientos/`;
+      dto.tratamientos.forEach(t => {
+        const idTrat = t.id_tratamiento || t.id;
+        if (idTrat && Number(idTrat) > 0) {
+          this.http.patch<any>(`${urlTratamientos}${idTrat}/`, {
+            producto_base: t.nombre || t.producto_base || '',
+            dosis_basica: t.dosis || t.dosis_basica || '',
+            presentacion: t.presentacion || '',
+            via_administracion: t.via || '',
+            frecuencia_duracion: t.frecuencia || '',
+            materiales_utilizados: dto.materiales_utilizados || ''
+          }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+        } else {
+          this.http.post<any>(urlTratamientos, {
+            id_consulta: idConsulta,
+            producto_base: t.nombre || t.producto_base || '',
+            dosis_basica: t.dosis || t.dosis_basica || '',
+            presentacion: t.presentacion || '',
+            via_administracion: t.via || '',
+            frecuencia_duracion: t.frecuencia || '',
+            materiales_utilizados: dto.materiales_utilizados || ''
+          }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+        }
+      });
+    }
+
+    // 3. Sincronizar evolución e historial en HistoriaClinica
+    if (idHistoria && (dto.evolucion || dto.plan_tratamiento)) {
+      const urlHistoria = `${this.baseUrlClinica}historias/${idHistoria}/`;
+      this.http.patch<any>(urlHistoria, {
+        evolucion_previa: dto.evolucion,
+        tratamientos_anteriores: dto.plan_tratamiento
+      }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+    }
+
+    // 4. Actualizar peso del animal si fue modificado
+    if (idAnimal && dto.peso !== null && dto.peso !== undefined) {
+      const urlAnimal = `${environment.apiUrlAnimales || (this.baseUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnimal}/`;
+      this.http.patch<any>(urlAnimal, { peso: Number(dto.peso) }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+    }
   }
 
   /**
@@ -644,54 +996,15 @@ export class HistoriaClinicaService {
         const nombre = `${s.nombre || ''} ${s.apellido || ''}`.trim();
         if (nombre) return `${nombre} (Veterinario)`;
       }
-    } catch {}
+    } catch { }
     return 'Dra. María Elena Muñoz (Veterinario)';
   }
 
   /**
-   * Mock data estructurada para pruebas locales y fallback
+   * Genera estructura limpia para pruebas locales y fallback seguro
    */
   private getMockHistoria(id: number | string, nombrePaciente?: string): HistoriaClinicaEdicion {
-    const nombre = (nombrePaciente && nombrePaciente.trim()) ? nombrePaciente.trim() : 'Pérez';
-    return {
-      id_historia: Number(id) || 101,
-      id_consulta: 42,
-      id_animal: Number(id) || 84,
-      numero_historia: `HC-POPAYAN-${id || '2026-0042'}`,
-      fecha_apertura: '2026-10-10T09:30:00Z',
-      paciente: {
-        id_animal: Number(id) || 84,
-        nombre: nombre,
-        especie: 'Canino',
-        raza: 'Criollo / Mestizo',
-        sexo: 'Macho',
-        peso: 15.2,
-        color: 'Caramelo con blanco',
-        edad_aproximada: '2 años y medio',
-        microchip: '981020045612344',
-        tenedor_nombre: 'Fundación Huellitas Popayán / Tenedor CBA',
-        tenedor_documento: '1061789234',
-        tenedor_telefono: '314 892 1145',
-        foto_url: ''
-      },
-      motivo_consulta: 'Revisión y seguimiento por cuadro gastrointestinal y letargo tras rescate.',
-      diagnostico_principal: 'Gastroenteritis infecciosa en resolución con deshidratación superada.',
-      diagnostico_diferencial: 'Disbiosis intestinal post-traumática, ingestión de cuerpo extraño leve.',
-      lista_problemas: '1. Hiporexia moderada\n2. Heces pastosas\n3. Leve dolor a la palpación epigástrica',
-      evolucion: 'Día 4 de evolución: Paciente tolera dieta formulada gastroentérica. Temperatura en 38.5°C, responde activamente al entorno.',
-      pronostico: 'Favorable',
-      plan_tratamiento: '1. Probióticos orales 1 sobre c/24h por 5 días.\n2. Dieta blanda fraccionada.\n3. Control de peso.',
-      constantes: {
-        temperatura: 38.5,
-        frecuencia_cardiaca: 98,
-        frecuencia_respiratoria: 24,
-        pulso: 'Fuerte, lleno y regular',
-        tllc: '1.5 segundos',
-        mucosas: 'Rosadas hidratadas',
-        actitud_temperamento: 'Dócil y atento'
-      },
-      historial_modificaciones: this.getMockAuditoria(Number(id) || 101)
-    };
+    return this.crearHistoriaLimpia(id, nombrePaciente);
   }
 
   private getMockAuditoria(idHistoria: number): RegistroAuditoria[] {

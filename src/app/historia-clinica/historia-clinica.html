@@ -1,22 +1,26 @@
-<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+<div
+  class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
 
   <!-- ========================================================================= -->
   <!-- 1. ENCABEZADO INSTITUCIONAL                                               -->
   <!-- ========================================================================= -->
-  <header class="bg-white shrink-0 py-3.5 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full transition-all duration-300">
+  <header
+    class="bg-white shrink-0 py-3.5 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full transition-all duration-300">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
-      
+
       <!-- Marca y Escudo Institucional -->
       <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-[#170B3D] text-white flex items-center justify-center shrink-0 shadow-xs overflow-hidden border border-indigo-900">
+        <div
+          class="w-12 h-12 rounded-2xl bg-[#170B3D] text-white flex items-center justify-center shrink-0 shadow-xs overflow-hidden border border-white/10">
           <img [src]="popalog.logopop" alt="Escudo Popayán" class="w-8 h-10 object-contain" />
         </div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-base sm:text-xl font-extrabold text-[#170B3D] tracking-wide uppercase">
-              Alcaldía de Popayánnnn
+              Alcaldía de Popayán
             </h1>
-            <span class="bg-[#4141a5]/10 text-[#4141a5] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
+            <span
+              class="bg-[#4141a5]/10 text-[#4141a5] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
               Edición de Historia Clínica
             </span>
           </div>
@@ -28,15 +32,14 @@
 
       <!-- Acciones de Cabecera -->
       <div class="flex items-center gap-2 self-end sm:self-center">
-        <button 
-          type="button"
-          (click)="cancelarEdicion()"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-50 text-gray-600 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95"
-          title="Regresar al módulo clínico">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <button type="button" (click)="cancelarEdicion()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-50 text-gray-600 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+          title="Regresar al listado de historias clínicas">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>Volver al Módulo</span>
+          <span>Volver al Listado</span>
         </button>
       </div>
 
@@ -49,17 +52,21 @@
   <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 overflow-y-auto space-y-5">
 
     <!-- SPINNER DE CARGA INICIAL -->
-    <div *ngIf="cargando" class="flex flex-col items-center justify-center p-16 space-y-4 bg-white rounded-3xl border border-gray-100 shadow-xs">
+    <div *ngIf="cargando"
+      class="flex flex-col items-center justify-center p-16 space-y-4 bg-white rounded-3xl border border-gray-100 shadow-xs">
       <div class="w-12 h-12 border-4 border-[#4141a5]/20 border-t-[#4141a5] rounded-full animate-spin"></div>
       <p class="text-sm font-bold text-gray-500">Cargando expediente clínico del animal...</p>
     </div>
 
-    <div *ngIf="!cargando">
+    <div *ngIf="!cargando" class="space-y-5">
 
       <!-- BANNER DE NOTIFICACIÓN DE ERROR -->
-      <div *ngIf="mensajeError" class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      <div *ngIf="mensajeError"
+        class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <div class="flex-1 text-xs">
           <p class="font-bold text-rose-900">Atención en el Formulario</p>
@@ -68,8 +75,10 @@
       </div>
 
       <!-- BANNER DE ÉXITO -->
-      <div *ngIf="mensajeExito" class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div *ngIf="mensajeExito"
+        class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div class="flex-1 text-xs">
@@ -78,166 +87,847 @@
         </div>
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- 3. TARJETA RESUMEN DEL PACIENTE VETERINARIO                           -->
-      <!-- ===================================================================== -->
-      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs mb-5">
-        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          
-          <!-- Avatar e Identificación del Animal -->
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center font-extrabold text-2xl shadow-sm shrink-0 border border-slate-200">
-              <img
-                *ngIf="paciente?.foto_url"
-                [src]="paciente?.foto_url"
-                [alt]="paciente?.nombre || 'Paciente'"
-                (error)="imagenNoDisponible($event)"
-                class="w-full h-full object-cover rounded-2xl"
-              />
-              <div
-                *ngIf="!paciente?.foto_url"
-                [ngClass]="obtenerColorAvatar(paciente)"
-                class="w-full h-full flex items-center justify-center font-black text-2xl text-white uppercase select-none"
-              >
-                {{ obtenerIniciales(paciente) }}
-              </div>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="text-xl font-extrabold text-[#170B3D]">{{ paciente?.nombre || 'Paciente Sin Nombre' }}</h2>
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-[#4141a5] border border-indigo-100">
-                  {{ paciente?.especie }} · {{ paciente?.raza }}
-                </span>
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
-                  [ngClass]="{
-                    'bg-emerald-50 text-emerald-700 border border-emerald-200': formHistoria.get('pronostico')?.value === 'Favorable',
-                    'bg-amber-50 text-amber-700 border border-amber-200': formHistoria.get('pronostico')?.value === 'Reservado',
-                    'bg-rose-50 text-rose-700 border border-rose-200': formHistoria.get('pronostico')?.value === 'Desfavorable' || formHistoria.get('pronostico')?.value === 'Crítico'
-                  }">
-                  Pronóstico: {{ formHistoria.get('pronostico')?.value }}
-                </span>
-              </div>
-              <p class="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
-                <span><strong>Historia Nº:</strong> {{ historiaOriginal?.numero_historia }}</span>
-                <span>•</span>
-                <span><strong>Sexo:</strong> {{ paciente?.sexo }}</span>
-                <span>•</span>
-                <span><strong>Peso actual:</strong> {{ paciente?.peso }} kg</span>
-                <span>•</span>
-                <span><strong>Microchip:</strong> {{ paciente?.microchip || 'N/A' }}</span>
-              </p>
-            </div>
-          </div>
-
-          <!-- Tenedor / Rescate y Fecha Apertura -->
-          <div class="bg-gray-50/70 rounded-2xl p-3 border border-gray-100 text-xs text-gray-600 min-w-[240px]">
-            <p class="font-bold text-[#170B3D] uppercase tracking-wider text-[10px]">Tenedor / Responsable</p>
-            <p class="font-semibold text-gray-800">{{ paciente?.tenedor_nombre || 'Sin acudiente registrado' }}</p>
-            <p class="text-gray-400 text-[11px] mt-0.5">Tel: {{ paciente?.tenedor_telefono || 'No disponible' }}</p>
-          </div>
-
+      <!-- BANNER DE HISTORIA ANULADA -->
+      <div *ngIf="historiaAnulada"
+        class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        <div class="flex-1 text-xs">
+          <p class="font-bold text-rose-900">Historia Clínica Anulada (Solo Lectura)</p>
+          <p class="mt-0.5">Esta historia clínica se encuentra anulada en el sistema. Conforme a las normativas de
+            auditoría clínica (Jira HE06-HU013 Escenario 3.0), no es posible registrar modificaciones ni nuevas
+            evoluciones sobre historias clínicas anuladas.</p>
         </div>
       </div>
 
       <!-- ===================================================================== -->
-      <!-- 4. FORMULARIO REACTIVO DE EDICIÓN CLÍNICA                             -->
+      <!-- MENÚ SUPERIOR DE PASOS (STEPPER / WIZARD OFICIAL)                     -->
       <!-- ===================================================================== -->
-      <form [formGroup]="formHistoria" (ngSubmit)="guardarEdicion()" novalidate class="space-y-5">
+      <nav
+        class="bg-[#170B3D] p-2 sm:p-2.5 rounded-2xl flex flex-wrap items-center gap-2 shadow-md border border-white/10 w-full transition-all">
+        <!-- Paso 1: Consulta -->
+        <button type="button" (click)="cambiarPestana('consulta')"
+          [ngClass]="pestanaActiva === 'consulta' ? 'bg-[#4141A5] text-white shadow-md ring-1 ring-white/20' : 'hover:bg-white/10 text-white/75 hover:text-white'"
+          class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition-all cursor-pointer">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs"
+            [ngClass]="pestanaActiva === 'consulta' ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70'">1</div>
+          <div>
+            <div class="text-sm font-bold flex items-center justify-between">1. Consulta</div>
+            <div class="text-[11px] opacity-80 font-medium">Espera y Datos del Paciente</div>
+          </div>
+        </button>
 
-        <!-- GRID DE DOS COLUMNAS PRINCIPALES -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- Paso 2: Exámenes -->
+        <button type="button" (click)="cambiarPestana('examenes')"
+          [ngClass]="pestanaActiva === 'examenes' ? 'bg-[#4141A5] text-white shadow-md ring-1 ring-white/20' : 'hover:bg-white/10 text-white/75 hover:text-white'"
+          class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition-all cursor-pointer">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs"
+            [ngClass]="pestanaActiva === 'examenes' ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70'">2</div>
+          <div>
+            <div class="text-sm font-bold flex items-center justify-between">2. Exámenes</div>
+            <div class="text-[11px] opacity-80 font-medium">Pruebas y Sistemas Orgánicos</div>
+          </div>
+        </button>
 
-          <!-- =============================================================== -->
-          <!-- COLUMNA IZQUIERDA: DIAGNÓSTICO Y PROBLEMAS CLÍNICOS             -->
-          <!-- =============================================================== -->
-          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
-            
-            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center font-bold text-xs shrink-0">
-                1
+        <!-- Paso 3: Diagnóstico -->
+        <button type="button" (click)="cambiarPestana('diagnostico')"
+          [ngClass]="pestanaActiva === 'diagnostico' ? 'bg-[#4141A5] text-white shadow-md ring-1 ring-white/20' : 'hover:bg-white/10 text-white/75 hover:text-white'"
+          class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition-all cursor-pointer">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs"
+            [ngClass]="pestanaActiva === 'diagnostico' ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70'">3</div>
+          <div>
+            <div class="text-sm font-bold flex items-center justify-between">3. Diagnóstico</div>
+            <div class="text-[11px] opacity-80 font-medium">Patología y Plan de Acción</div>
+          </div>
+        </button>
+
+        <!-- Paso 4: Tratamientos -->
+        <button type="button" (click)="cambiarPestana('tratamientos')"
+          [ngClass]="pestanaActiva === 'tratamientos' ? 'bg-[#4141A5] text-white shadow-md ring-1 ring-white/20' : 'hover:bg-white/10 text-white/75 hover:text-white'"
+          class="flex-1 min-w-[200px] flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-left transition-all cursor-pointer">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs"
+            [ngClass]="pestanaActiva === 'tratamientos' ? 'bg-white/20 text-white' : 'bg-black/30 text-white/70'">4
+          </div>
+          <div>
+            <div class="text-sm font-bold flex items-center justify-between">4. Tratamientos</div>
+            <div class="text-[11px] opacity-80 font-medium">Fármacos, Insumos y Firmas</div>
+          </div>
+        </button>
+      </nav>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA 1: CONSULTA (Resumen de Ficha y Espera)                       -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaActiva === 'consulta'" class="space-y-6">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xs space-y-6">
+          <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div>
+              <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Paso 1 · Ficha de Consulta</span>
+              <h2 class="text-xl font-extrabold text-[#170B3D] mt-1">Datos del Paciente e Información Inicial</h2>
+            </div>
+            <span
+              class="bg-[#4141a5]/10 text-[#4141a5] font-mono text-xs font-bold px-3 py-1 rounded-xl border border-[#4141a5]/20">
+              HC Nº {{ historiaOriginal?.numero_historia || idHistoria }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Foto y Datos básicos -->
+            <div class="flex flex-col items-center sm:items-start gap-4">
+              <div
+                class="w-32 h-32 rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs relative">
+                <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre"
+                  class="w-full h-full object-cover" (error)="imagenNoDisponible($event)">
+                <div *ngIf="!paciente?.foto_url" [ngClass]="obtenerColorAvatar(paciente)"
+                  class="w-full h-full flex items-center justify-center font-black text-3xl text-white uppercase">
+                  {{ obtenerIniciales(paciente) }}
+                </div>
               </div>
               <div>
-                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
-                  Diagnóstico y Hallazgos Clínicos
-                </h3>
-                <p class="text-xs text-gray-400">Corrección o ratificación diagnóstica del paciente</p>
+                <h3 class="text-xl font-black text-slate-900">{{ paciente?.nombre || 'Paciente' }}</h3>
+                <p class="text-xs text-slate-500 font-semibold">{{ paciente?.especie }} · {{ paciente?.raza }}</p>
+                <p class="text-xs text-slate-400 mt-1">Sexo: {{ paciente?.sexo }} · Peso: {{ paciente?.peso }} kg</p>
               </div>
             </div>
 
-            <!-- CATÁLOGO DE PATOLOGÍAS CLÍNICAS (Criterios 1, 2 y 3) -->
-            <div class="bg-gray-50/70 border border-gray-200 rounded-2xl p-3.5 space-y-2.5">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-extrabold text-[#170B3D] uppercase flex items-center gap-1.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  Catálogo de Patologías
-                </span>
-                <span *ngIf="!cargandoPatologias" class="text-[10px] font-bold text-gray-500 bg-white px-2 py-0.5 rounded-md border border-gray-200">
-                  {{ patologiasFiltradas.length }} disponibles
-                </span>
+            <!-- Datos del Tenedor / Responsable -->
+            <div class="space-y-3 bg-slate-50/70 p-5 rounded-2xl border border-slate-200 text-xs">
+              <h4 class="font-bold text-[#170B3D] uppercase tracking-wider text-[11px]">Tenedor / Responsable</h4>
+              <p><strong>Nombre:</strong> {{ paciente?.tenedor_nombre || 'Sin acudiente' }}</p>
+              <p><strong>Documento:</strong> {{ paciente?.tenedor_documento || 'No registrado' }}</p>
+              <p><strong>Teléfono:</strong> {{ paciente?.tenedor_telefono || 'No disponible' }}</p>
+            </div>
+
+            <!-- Motivo de consulta inicial -->
+            <div class="space-y-3 bg-slate-50/70 p-5 rounded-2xl border border-slate-200 text-xs">
+              <h4 class="font-bold text-[#170B3D] uppercase tracking-wider text-[11px]">Motivo de la Atención</h4>
+              <p class="text-slate-700 leading-relaxed italic">"{{ historiaOriginal?.motivo_consulta || 'Sin motivo
+                inicial registrado.' }}"</p>
+              <p class="text-slate-400 text-[11px]">Fecha Apertura: {{ historiaOriginal?.fecha_apertura |
+                date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+
+          <!-- Navegación al Paso 2 -->
+          <div class="flex justify-end pt-4 border-t border-slate-100">
+            <button type="button" (click)="cambiarPestana('examenes')"
+              class="inline-flex items-center gap-2 bg-[#4141A5] hover:bg-[#33338B] text-white font-bold text-xs px-6 py-3 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+              <span>Continuar a Exámenes (Paso 2)</span>
+              <span class="text-sm font-black">→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA 2: EXÁMENES (Catálogo, Solicitud y 12 Sistemas Orgánicos)      -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaActiva === 'examenes'"
+        class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-fade-in">
+
+        <!-- COLUMNA IZQUIERDA: PRUEBAS Y SISTEMAS -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- HOJA 3: Catálogo y Exámenes Solicitados -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+              <div>
+                <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Paso 2 · Pruebas
+                  Diagnósticas</span>
+                <h2 class="text-xl font-black text-slate-900 mt-0.5">Catálogo y Orden de Exámenes</h2>
+              </div>
+              <span
+                class="text-xs font-bold bg-[#4141a5]/10 text-[#4141a5] px-3 py-1 rounded-xl border border-[#4141a5]/20">
+                {{ examenesSolicitados.length }} ordenados
+              </span>
+            </div>
+
+            <!-- CATÁLOGO OFICIAL DE EXÁMENES CLÍNICOS -->
+            <div class="bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-8 h-8 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center font-bold text-xs shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="font-extrabold text-[#170B3D] text-sm uppercase tracking-wide">
+                      Catálogo Oficial de Exámenes Clínicos
+                    </h3>
+                    <p class="text-xs text-slate-500">
+                      Consulta los exámenes y procedimientos diagnósticos disponibles en el CBA Popayán
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 self-start sm:self-center">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 text-slate-600 text-[11px] font-bold rounded-full shadow-2xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" fill="none"
+                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Vista de Consulta</span>
+                  </span>
+                  <span *ngIf="!cargandoExamenes"
+                    class="text-[11px] font-bold text-[#4141a5] bg-[#4141a5]/10 border border-[#4141a5]/20 px-2.5 py-1 rounded-full">
+                    {{ examenesFiltrados.length }} disponibles
+                  </span>
+                </div>
               </div>
 
-              <!-- Input de búsqueda (Criterio 2) -->
+              <!-- BARRA DE BÚSQUEDA -->
               <div class="relative">
-                <input
-                  type="text"
-                  [(ngModel)]="busquedaPatologia"
-                  [ngModelOptions]="{standalone: true}"
-                  (input)="filtrarPatologias()"
-                  placeholder="Buscar patología por nombre..."
-                  class="w-full border border-gray-200 rounded-xl px-3 py-2 pl-8 pr-7 text-xs bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5] shadow-2xs"
-                />
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <input type="text" [(ngModel)]="busquedaExamen" (input)="filtrarExamenes()"
+                  placeholder="Buscar examen clínico por nombre o descripción..."
+                  class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4141a5] shadow-2xs transition" />
+                <svg xmlns="http://www.w3.org/2000/svg"
+                  class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none"
+                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <button
-                  *ngIf="busquedaPatologia"
-                  type="button"
-                  (click)="limpiarBusquedaPatologia()"
-                  class="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 text-xs"
-                >
+                <button *ngIf="busquedaExamen" type="button" (click)="limpiarBusquedaExamen()"
+                  class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs transition cursor-pointer"
+                  title="Limpiar búsqueda">
                   ✕
                 </button>
               </div>
 
-              <!-- Lista desplegable / Select (Criterio 1) -->
-              <div *ngIf="!cargandoPatologias && patologiasFiltradas.length > 0" class="space-y-2">
-                <select
-                  [(ngModel)]="idPatologiaSeleccionada"
-                  [ngModelOptions]="{standalone: true}"
+              <!-- SPINNER DE CARGA -->
+              <div *ngIf="cargandoExamenes"
+                class="py-8 flex flex-col items-center justify-center bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                <div class="w-8 h-8 border-3 border-[#4141a5]/20 border-t-[#4141a5] rounded-full animate-spin"></div>
+                <p class="text-xs text-slate-500 font-bold">Cargando catálogo de exámenes clínicos...</p>
+              </div>
+
+              <!-- TABLA PAGINADA DE EXÁMENES -->
+              <div *ngIf="!cargandoExamenes && !mensajeExamenes && examenesFiltrados.length > 0"
+                class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                      <tr
+                        class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-black text-slate-700 uppercase tracking-wider">
+                        <th scope="col" class="py-3 px-4 w-1/3">Nombre</th>
+                        <th scope="col" class="py-3 px-4">Descripción</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-xs">
+                      <tr *ngFor="let examen of examenesPaginados" class="hover:bg-[#4141a5]/5 transition duration-150">
+                        <td class="py-3.5 px-4 align-top">
+                          <div class="font-extrabold text-slate-900 flex items-start gap-2">
+                            <span class="w-2 h-2 rounded-full bg-[#4141a5] mt-1.5 shrink-0"></span>
+                            <span class="leading-snug">{{ examen.nombre }}</span>
+                          </div>
+                          <span *ngIf="examen.tipo"
+                            class="inline-block mt-1 text-[10px] font-semibold text-[#4141a5] bg-[#4141a5]/10 px-2 py-0.5 rounded-md border border-[#4141a5]/20">
+                            {{ examen.tipo }}
+                          </span>
+                        </td>
+                        <td class="py-3.5 px-4 align-top text-slate-600 leading-relaxed">
+                          {{ examen.descripcion || 'Sin descripción clínica registrada en el sistema.' }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- PAGINADOR -->
+                <div
+                  class="bg-slate-50 border-t border-slate-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                  <div>
+                    <span>Mostrando <strong>{{ indiceInicioExamenes }}</strong> a <strong>{{ indiceFinExamenes
+                        }}</strong> de <strong>{{ examenesFiltrados.length }}</strong> exámenes</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button type="button" (click)="cambiarPaginaExamenes(paginaActualExamenes - 1)"
+                      [disabled]="paginaActualExamenes === 1"
+                      class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                      ← Anterior
+                    </button>
+                    <button *ngFor="let pag of paginasDisponiblesExamenes" type="button"
+                      (click)="cambiarPaginaExamenes(pag)"
+                      [ngClass]="pag === paginaActualExamenes ? 'bg-[#4141a5] text-white border-[#4141a5] shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'"
+                      class="w-7 h-7 flex items-center justify-center border rounded-lg text-xs font-bold transition cursor-pointer">
+                      {{ pag }}
+                    </button>
+                    <button type="button" (click)="cambiarPaginaExamenes(paginaActualExamenes + 1)"
+                      [disabled]="paginaActualExamenes === totalPaginasExamenes"
+                      class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                      Siguiente →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- EMPTY STATE EXÁMENES -->
+              <div *ngIf="!cargandoExamenes && !mensajeExamenes && examenesFiltrados.length === 0"
+                class="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center space-y-2 animate-fade-in shadow-2xs">
+                <p class="text-xs font-extrabold text-slate-800">No se encontraron exámenes clínicos</p>
+                <p class="text-xs text-slate-500">No hay registros que coincidan con "{{ busquedaExamen }}".</p>
+                <button type="button" (click)="limpiarBusquedaExamen()"
+                  class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+                  Restablecer búsqueda
+                </button>
+              </div>
+            </div>
+
+            <!-- EXÁMENES SOLICITADOS / ORDEN CLÍNICA -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wide">
+                    Exámenes Solicitados para este Animal
+                  </h3>
+                  <p class="text-xs text-slate-500">
+                    Pruebas diagnósticas formalmente asociadas al expediente del paciente
+                  </p>
+                </div>
+                <span
+                  class="bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 text-xs font-bold px-3 py-1 rounded-full self-start sm:self-center">
+                  {{ examenesSolicitados.length }} en orden
+                </span>
+              </div>
+
+              <!-- Selector para ordenar examen del catálogo -->
+              <div
+                class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <div class="flex-1">
+                  <select [(ngModel)]="examenSeleccionadoParaSolicitud"
+                    class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                    <option [ngValue]="null">-- Seleccionar examen del catálogo oficial para ordenar --</option>
+                    <option *ngFor="let ex of examenesClinicos" [ngValue]="ex">
+                      {{ ex.nombre }}
+                    </option>
+                  </select>
+                </div>
+
+                <button type="button" (click)="solicitarExamenSeleccionado()"
+                  [disabled]="!examenSeleccionadoParaSolicitud"
+                  class="px-4 py-2 bg-[#4141a5] hover:bg-[#343485] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition shrink-0 flex items-center justify-center gap-1.5 cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Ordenar Examen</span>
+                </button>
+              </div>
+
+              <!-- Estado vacío -->
+              <div *ngIf="examenesSolicitados.length === 0"
+                class="text-center py-6 text-sm text-slate-500 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                Todavía no has agregado exámenes a la orden médica.
+                <p class="text-xs mt-1 text-slate-400">Selecciona un examen del catálogo arriba para asociarlo a este
+                  paciente.</p>
+              </div>
+
+              <!-- Listado de solicitados -->
+              <div *ngIf="examenesSolicitados.length > 0" class="space-y-3">
+                <div *ngFor="let examen of examenesSolicitados; let i = index"
+                  class="p-4 border border-slate-200 rounded-2xl bg-white hover:border-[#4141a5]/30 shadow-2xs space-y-3 transition">
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <span
+                        class="flex items-center justify-center w-7 h-7 rounded-lg bg-[#4141a5]/10 text-[#4141a5] font-bold text-xs shrink-0">
+                        {{ i + 1 }}
+                      </span>
+                      <div class="min-w-0">
+                        <p class="text-sm font-extrabold text-slate-800 truncate">{{ examen.nombre }}</p>
+                        <span *ngIf="examen.tipo" class="text-[10px] text-[#4141a5] font-semibold bg-[#4141a5]/10 px-2 py-0.5 rounded-md">
+                          {{ examen.tipo }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <select [(ngModel)]="examen.estado" (ngModelChange)="formHistoria.markAsDirty()"
+                        class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                        <option value="solicitado">Solicitado</option>
+                        <option value="en_proceso">En Proceso</option>
+                        <option value="completado">Completado</option>
+                      </select>
+                      <button type="button" (click)="eliminarExamen(i)"
+                        class="flex items-center gap-1 text-red-600 hover:bg-red-50 border border-red-200 rounded-lg px-2.5 py-1 text-xs font-semibold transition shrink-0 cursor-pointer">
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Campos adicionales del modelo Examen (Backend) -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
+                    <div>
+                      <label class="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                        Resultado / Informe del Examen
+                      </label>
+                      <input type="text" [(ngModel)]="examen.resultado" (ngModelChange)="formHistoria.markAsDirty()"
+                        placeholder="Ej. Sin hallazgos patológicos / Leucocitosis leve"
+                        class="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-1 focus:ring-[#4141a5]">
+                    </div>
+                    <div>
+                      <label class="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                        Ruta o Enlace del Archivo / Soporte
+                      </label>
+                      <input type="text" [(ngModel)]="examen.ruta_archivo_resultado" (ngModelChange)="formHistoria.markAsDirty()"
+                        placeholder="Ej. /media/examenes/hemograma_01.pdf"
+                        class="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-1 focus:ring-[#4141a5]">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Descripción de Hallazgos en Pruebas -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                Descripción de Hallazgos en Pruebas Diagnósticas
+              </label>
+              <textarea rows="3" [(ngModel)]="descripcionHallazgos"
+                class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all"
+                placeholder="Describe los hallazgos observados en las pruebas de laboratorio, ecografía, rayos X, etc."></textarea>
+            </div>
+          </div>
+
+          <!-- HOJA 4: Evaluación Física de los 12 Sistemas Orgánicos -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+            <div
+              class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+              <div>
+                <h2 class="text-lg font-black text-slate-900 mt-0.5">Evaluación Física de Órganos y Sistemas</h2>
+                <p class="text-[11px] text-slate-500">Examen físico sistemático del paciente en consulta clínica.</p>
+              </div>
+              <div
+                class="text-[11px] font-semibold flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-600 rounded-full"></span> N:
+                  Normal</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-red-600 rounded-full"></span> AN:
+                  Anormal</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 bg-slate-400 rounded-full"></span> NE: No
+                  examinado</span>
+              </div>
+            </div>
+
+            <!-- Grilla Interactiva de los 12 Sistemas Orgánicos -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs font-medium">
+
+              <!-- 01. Estado general -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">01. Estado general</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['general'] = 'N'"
+                    [ngClass]="sistemas['general'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['general'] = 'AN'"
+                    [ngClass]="sistemas['general'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['general'] = 'NE'"
+                    [ngClass]="sistemas['general'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 02. Hidratación -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">02. Hidratación</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['hidratacion'] = 'N'"
+                    [ngClass]="sistemas['hidratacion'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['hidratacion'] = 'AN'"
+                    [ngClass]="sistemas['hidratacion'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['hidratacion'] = 'NE'"
+                    [ngClass]="sistemas['hidratacion'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 03. Tegumentario -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">03. S. Tegumentario</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['tegumentario'] = 'N'"
+                    [ngClass]="sistemas['tegumentario'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['tegumentario'] = 'AN'"
+                    [ngClass]="sistemas['tegumentario'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['tegumentario'] = 'NE'"
+                    [ngClass]="sistemas['tegumentario'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 04. Ojos -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">04. Ojos y anejos</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['ojos'] = 'N'"
+                    [ngClass]="sistemas['ojos'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['ojos'] = 'AN'"
+                    [ngClass]="sistemas['ojos'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['ojos'] = 'NE'"
+                    [ngClass]="sistemas['ojos'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 05. Oídos -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">05. Oídos y audición</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['oidos'] = 'N'"
+                    [ngClass]="sistemas['oidos'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['oidos'] = 'AN'"
+                    [ngClass]="sistemas['oidos'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['oidos'] = 'NE'"
+                    [ngClass]="sistemas['oidos'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 06. Nariz -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">06. Nariz y vías sup.</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['nariz'] = 'N'"
+                    [ngClass]="sistemas['nariz'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['nariz'] = 'AN'"
+                    [ngClass]="sistemas['nariz'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['nariz'] = 'NE'"
+                    [ngClass]="sistemas['nariz'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 07. Digestivo -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">07. Sistema digestivo</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['digestivo'] = 'N'"
+                    [ngClass]="sistemas['digestivo'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['digestivo'] = 'AN'"
+                    [ngClass]="sistemas['digestivo'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['digestivo'] = 'NE'"
+                    [ngClass]="sistemas['digestivo'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 08. Respiratorio -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">08. S. respiratorio</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['respiratorio'] = 'N'"
+                    [ngClass]="sistemas['respiratorio'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['respiratorio'] = 'AN'"
+                    [ngClass]="sistemas['respiratorio'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['respiratorio'] = 'NE'"
+                    [ngClass]="sistemas['respiratorio'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 09. Nervioso -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">09. Sistema nervioso</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['nervioso'] = 'N'"
+                    [ngClass]="sistemas['nervioso'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['nervioso'] = 'AN'"
+                    [ngClass]="sistemas['nervioso'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['nervioso'] = 'NE'"
+                    [ngClass]="sistemas['nervioso'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 10. Musculoesquelético -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">10. Musculoesquelético</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['musculoesqueletico'] = 'N'"
+                    [ngClass]="sistemas['musculoesqueletico'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['musculoesqueletico'] = 'AN'"
+                    [ngClass]="sistemas['musculoesqueletico'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['musculoesqueletico'] = 'NE'"
+                    [ngClass]="sistemas['musculoesqueletico'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 11. Cardiovascular -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">11. S. cardiovascular</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['cardiovascular'] = 'N'"
+                    [ngClass]="sistemas['cardiovascular'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['cardiovascular'] = 'AN'"
+                    [ngClass]="sistemas['cardiovascular'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['cardiovascular'] = 'NE'"
+                    [ngClass]="sistemas['cardiovascular'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+              <!-- 12. Genitourinario -->
+              <div
+                class="border border-slate-200 rounded-xl p-2.5 flex justify-between items-center bg-slate-50/70 hover:border-slate-300 transition">
+                <span class="text-slate-700 truncate pr-2">12. S. genitourinario</span>
+                <div class="flex bg-slate-200/70 p-0.5 rounded-lg shrink-0">
+                  <button type="button" (click)="sistemas['genitourinario'] = 'N'"
+                    [ngClass]="sistemas['genitourinario'] === 'N' ? 'bg-emerald-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-2 py-1 rounded-md text-[10px] transition cursor-pointer">N</button>
+                  <button type="button" (click)="sistemas['genitourinario'] = 'AN'"
+                    [ngClass]="sistemas['genitourinario'] === 'AN' ? 'bg-red-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">AN</button>
+                  <button type="button" (click)="sistemas['genitourinario'] = 'NE'"
+                    [ngClass]="sistemas['genitourinario'] === 'NE' ? 'bg-slate-600 text-white font-bold shadow-2xs' : 'text-slate-600 hover:text-slate-900'"
+                    class="px-1.5 py-1 rounded-md text-[10px] transition cursor-pointer">NE</button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Observaciones de Sistemas y Observaciones Generales del Examen (Backend Consulta) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Observaciones de la Exploración de Sistemas
+                </label>
+                <textarea rows="2" [(ngModel)]="observacionesSistemas"
+                  class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all"
+                  placeholder="Anotaciones sobre hallazgos anormales en órganos o sistemas..."></textarea>
+              </div>
+
+              <div [formGroup]="formHistoria" class="space-y-1.5">
+                <label class="text-[10px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Observaciones Generales del Examen Físico
+                </label>
+                <textarea rows="2" formControlName="observacionesExamen"
+                  class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-700 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all"
+                  placeholder="Inspección visual general, condición corporal, postura o notas clínicas del examen..."></textarea>
+              </div>
+            </div>
+
+            <!-- Botón opcional de confirmación de evaluación -->
+            <div class="flex justify-end pt-2">
+              <button type="button" (click)="guardarSistemas()"
+                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">
+                Confirmar evaluación física
+              </button>
+            </div>
+          </div>
+
+          <!-- BOTONES STEPPER DE NAVEGACIÓN -->
+          <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+            <button type="button" (click)="cambiarPestana('consulta')"
+              class="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-5 py-2.5 rounded-xl border border-slate-200 shadow-2xs transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+              <span>← Volver a Consulta</span>
+            </button>
+            <button type="button" (click)="cambiarPestana('diagnostico')"
+              class="inline-flex items-center gap-2 bg-[#4141A5] hover:bg-[#33338B] text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+              <span>Continuar a Diagnóstico</span>
+              <span class="text-sm font-black">→</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: FICHA LATERAL DEL PACIENTE -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 relative sticky top-6">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5] animate-pulse"></span>
+              <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
+            </div>
+            <span
+              class="text-[11px] font-mono bg-[#4141a5]/10 text-[#4141a5] px-2.5 py-1 rounded-xl font-bold border border-[#4141a5]/20">
+              HC - OFICIAL
+            </span>
+          </div>
+
+          <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
+            <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre"
+              class="w-full h-full object-cover" (error)="imagenNoDisponible($event)">
+            <div *ngIf="!paciente?.foto_url" [ngClass]="obtenerColorAvatar(paciente)"
+              class="w-full h-full flex items-center justify-center font-black text-4xl text-white uppercase select-none">
+              {{ obtenerIniciales(paciente) }}
+            </div>
+
+            <!-- Badges flotantes -->
+            <div
+              class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+              <span>{{ paciente?.especie || 'Canino' }}</span>
+            </div>
+            <div
+              class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
+              <span>{{ paciente?.sexo || 'Macho' }} · {{ paciente?.peso }} kg</span>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nombre del Paciente</span>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ paciente?.nombre || 'Paciente' }}</h3>
+            <p class="text-xs text-slate-500 font-medium">
+              {{ paciente?.raza || 'Mestizo' }}
+              <span *ngIf="paciente?.color"> · {{ paciente?.color }}</span>
+            </p>
+          </div>
+
+          <div
+            class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
+            <span>✓</span>
+            <span>Sincronizada con Historia Clínica</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA 3: DIAGNÓSTICO (Patología, Problemas y Plan de Intervención)   -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaActiva === 'diagnostico'"
+        class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-fade-in">
+
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- HOJA 5: Diagnóstico y Patología -->
+          <div [formGroup]="formHistoria" class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-5">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+              <div>
+                <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Paso 3 · Juicio Clínico</span>
+                <h2 class="text-xl font-black text-slate-900 mt-0.5">Diagnóstico y Patología Final</h2>
+              </div>
+              <div
+                class="border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold px-4 py-1.5 rounded-xl text-center">
+                Pronóstico: <span class="font-bold text-emerald-700">{{ formHistoria.get('pronostico')?.value ||
+                  'Favorable' }}</span>
+              </div>
+            </div>
+
+            <!-- TRIAGE / PRIORIDAD Y ESTADO CLÍNICO DEL PACIENTE (Backend Consulta) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200">
+              <div>
+                <label class="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                  Nivel de Prioridad / Triage Clínico
+                </label>
+                <select formControlName="prioridad"
+                  class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                  <option *ngFor="let opt of opcionesPrioridad" [value]="opt">{{ opt }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                  Estado Clínico del Paciente
+                </label>
+                <select formControlName="resultadoEstado"
+                  class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                  <option *ngFor="let opt of opcionesResultadoEstado" [value]="opt">{{ opt }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- CATÁLOGO OFICIAL DE PATOLOGÍAS CLÍNICAS -->
+            <div class="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <label class="text-xs font-black text-slate-800 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <span>CATÁLOGO DE PATOLOGÍAS CLÍNICAS</span>
+                </label>
+                <span *ngIf="!cargandoPatologias"
+                  class="text-[11px] font-semibold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                  {{ patologiasFiltradas.length }} disponibles
+                </span>
+              </div>
+
+              <!-- Buscador -->
+              <div class="relative">
+                <input type="text" [(ngModel)]="busquedaPatologia" [ngModelOptions]="{standalone: true}"
+                  (input)="filtrarPatologias()" placeholder="Buscar patología por nombre..."
+                  class="w-full border border-slate-200 rounded-xl px-4 py-2.5 pl-10 pr-9 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5] shadow-xs transition" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <button *ngIf="busquedaPatologia" type="button" (click)="limpiarBusquedaPatologia()"
+                  class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+                  ✕
+                </button>
+              </div>
+
+              <!-- Selector -->
+              <div *ngIf="!cargandoPatologias && patologiasFiltradas.length > 0" class="space-y-3">
+                <select [(ngModel)]="idPatologiaSeleccionada" [ngModelOptions]="{standalone: true}"
                   (ngModelChange)="onSeleccionarPatologia($event)"
-                  class="w-full border border-gray-200 rounded-xl p-2 text-xs bg-white font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5]"
-                >
-                  <option [ngValue]="null">-- Seleccionar del catálogo (autocompleta diagnóstico) --</option>
+                  class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141a5] shadow-xs">
+                  <option [ngValue]="null">-- Selecciona una patología del catálogo oficial --</option>
                   <option *ngFor="let p of patologiasFiltradas" [ngValue]="p.id_patologia">
                     {{ p.nombre }}
                   </option>
                 </select>
 
-                <!-- Renderizado dinámico de la descripción (Criterio 1) -->
-                <div *ngIf="patologiaSeleccionada" class="p-3 bg-white border border-[#4141a5]/20 rounded-xl text-xs space-y-1 animate-fade-in shadow-2xs">
-                  <p class="font-bold text-[#170B3D] text-[11px] flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-[#4141a5]"></span>
-                    {{ patologiaSeleccionada.nombre }}
-                  </p>
-                  <p class="text-gray-600 text-[11px] leading-relaxed">
-                    {{ patologiaSeleccionada.descripcion || 'Sin descripción clínica registrada.' }}
+                <!-- Descripción dinámica -->
+                <div *ngIf="patologiaSeleccionada"
+                  class="p-4 bg-white border border-[#4141a5]/20 rounded-xl shadow-xs space-y-2 animate-fade-in">
+                  <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <h4 class="font-extrabold text-[#170B3D] text-xs flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-[#4141a5]"></span>
+                      {{ patologiaSeleccionada.nombre }}
+                    </h4>
+                    <span
+                      class="text-[10px] bg-[#4141a5]/10 text-[#4141a5] font-bold px-2 py-0.5 rounded-full border border-[#4141a5]/20">
+                      ID #{{ patologiaSeleccionada.id_patologia }} · Catálogo Oficial
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-600 italic">
+                    {{ patologiaSeleccionada.descripcion || 'Sin descripción clínica registrada para esta patología.' }}
                   </p>
                 </div>
               </div>
-
-              <!-- Empty state si no hay resultados (Criterio 3) -->
-              <div *ngIf="!cargandoPatologias && patologiasFiltradas.length === 0" class="p-4 border border-dashed border-gray-200 bg-white rounded-xl text-center space-y-1 animate-fade-in">
-                <p class="text-xs font-bold text-gray-700">No se encontraron patologías</p>
-                <p class="text-[11px] text-gray-400">No hay coincidencias para "{{ busquedaPatologia }}"</p>
-                <button type="button" (click)="limpiarBusquedaPatologia()" class="text-[11px] text-[#4141a5] font-bold underline">
-                  Restablecer lista
-                </button>
-              </div>
             </div>
 
-            <!-- DIAGNÓSTICO PRINCIPAL (OBLIGATORIO) -->
+            <!-- DIAGNÓSTICO PRINCIPAL -->
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label for="diagnosticoPrincipal" class="block text-xs font-bold text-gray-700 uppercase">
@@ -245,94 +935,50 @@
                 </label>
                 <span class="text-[10px] text-gray-400 font-medium">Requerido</span>
               </div>
-              <textarea 
-                id="diagnosticoPrincipal"
-                formControlName="diagnosticoPrincipal"
-                rows="3"
-                placeholder="Especifique el diagnóstico patológico o clínico corregido..."
-                [ngClass]="{
-                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('diagnosticoPrincipal'),
-                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('diagnosticoPrincipal')
+              <textarea id="diagnosticoPrincipal" formControlName="diagnosticoPrincipal" rows="2"
+                placeholder="Especifique el diagnóstico patológico o clínico confirmado..." [ngClass]="{
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 text-rose-900': esInvalido('diagnosticoPrincipal'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5]': !esInvalido('diagnosticoPrincipal')
                 }"
-                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all"></textarea>
-              
-              <!-- Mensaje de error reactivo -->
-              <div *ngIf="esInvalido('diagnosticoPrincipal')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
+                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all"></textarea>
+              <div *ngIf="esInvalido('diagnosticoPrincipal')"
+                class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
                 <span>{{ obtenerMensajeError('diagnosticoPrincipal') }}</span>
               </div>
             </div>
 
-            <!-- DIAGNÓSTICO DIFERENCIAL -->
+            <!-- DIAGNÓSTICOS DIFERENCIALES -->
             <div>
               <label for="diagnosticoDiferencial" class="block text-xs font-bold text-gray-700 uppercase mb-1">
                 Diagnósticos Diferenciales
               </label>
-              <textarea 
-                id="diagnosticoDiferencial"
-                formControlName="diagnosticoDiferencial"
-                rows="2"
-                placeholder="Patologías descartadas o en evaluación complementaria..."
+              <textarea id="diagnosticoDiferencial" formControlName="diagnosticoDiferencial" rows="2"
+                placeholder="Patologías descartadas o en evaluación clínica complementaria..."
                 class="w-full border border-gray-200 rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 bg-gray-50/50 transition-all"></textarea>
             </div>
 
-            <!-- LISTA DE PROBLEMAS -->
-            <div>
-              <label for="listaProblemas" class="block text-xs font-bold text-gray-700 uppercase mb-1">
-                Lista Maestra de Problemas / Signos
+            <!-- LISTA MAESTRA DE PROBLEMAS CLÍNICOS -->
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-gray-700 uppercase">
+                Lista de Problemas Clínicos Detectados (1 al 4)
               </label>
-              <textarea 
-                id="listaProblemas"
-                formControlName="listaProblemas"
-                rows="2"
-                placeholder="1. Vómito, 2. Letargia, 3. Dolor abdominal..."
-                class="w-full border border-gray-200 rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 bg-gray-50/50 transition-all"></textarea>
-            </div>
-
-            <!-- PRONÓSTICO (OBLIGATORIO) -->
-            <div>
-              <label for="pronostico" class="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-                Pronóstico Clínico Estimado <span class="text-rose-500">*</span>
-              </label>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <label *ngFor="let opcion of opcionesPronostico" 
-                  class="flex items-center justify-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition-all"
-                  [ngClass]="{
-                    'bg-[#4141a5] text-white border-[#4141a5] shadow-xs': formHistoria.get('pronostico')?.value === opcion,
-                    'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100': formHistoria.get('pronostico')?.value !== opcion
-                  }">
-                  <input 
-                    type="radio" 
-                    formControlName="pronostico" 
-                    [value]="opcion" 
-                    class="hidden">
-                  <span>{{ opcion }}</span>
-                </label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <input type="text" [(ngModel)]="problemasClinicos[0]" [ngModelOptions]="{standalone: true}"
+                  placeholder="1. Problema clínico (ej. Vómito profuso)"
+                  class="border border-slate-200 rounded-xl p-2.5 bg-slate-50/70 focus:bg-white focus:border-[#4141a5] outline-none">
+                <input type="text" [(ngModel)]="problemasClinicos[1]" [ngModelOptions]="{standalone: true}"
+                  placeholder="2. Problema clínico (ej. Deshidratación 7%)"
+                  class="border border-slate-200 rounded-xl p-2.5 bg-slate-50/70 focus:bg-white focus:border-[#4141a5] outline-none">
+                <input type="text" [(ngModel)]="problemasClinicos[2]" [ngModelOptions]="{standalone: true}"
+                  placeholder="3. Problema clínico (ej. Dolor abdominal marcado)"
+                  class="border border-slate-200 rounded-xl p-2.5 bg-slate-50/70 focus:bg-white focus:border-[#4141a5] outline-none">
+                <input type="text" [(ngModel)]="problemasClinicos[3]" [ngModelOptions]="{standalone: true}"
+                  placeholder="4. Problema clínico (ej. Postración y letargia)"
+                  class="border border-slate-200 rounded-xl p-2.5 bg-slate-50/70 focus:bg-white focus:border-[#4141a5] outline-none">
               </div>
             </div>
 
-          </div>
-
-          <!-- =============================================================== -->
-          <!-- COLUMNA DERECHA: EVOLUCIÓN MÉDICA Y PLAN TERAPÉUTICO            -->
-          <!-- =============================================================== -->
-          <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4">
-            
-            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-xl bg-purple-50 text-[#4141a5] flex items-center justify-center font-bold text-xs shrink-0">
-                2
-              </div>
-              <div>
-                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
-                  Evolución Clínica y Tratamiento
-                </h3>
-                <p class="text-xs text-gray-400">Progreso del animal bajo atención veterinaria</p>
-              </div>
-            </div>
-
-            <!-- EVOLUCIÓN (OBLIGATORIO) -->
+            <!-- EVOLUCIÓN CLÍNICA -->
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label for="evolucion" class="block text-xs font-bold text-gray-700 uppercase">
@@ -340,216 +986,672 @@
                 </label>
                 <span class="text-[10px] text-gray-400 font-medium">Requerido (Mín. 10 car.)</span>
               </div>
-              <textarea 
-                id="evolucion"
-                formControlName="evolucion"
-                rows="4"
-                placeholder="Describa detalladamente el estado actual del paciente, respuesta al tratamiento, cambios fisiológicos y progreso..."
+              <textarea id="evolucion" formControlName="evolucion" rows="3"
+                placeholder="Describa el estado actual, respuesta a medicamentos, mejoría clínica o cambios fisiológicos..."
                 [ngClass]="{
-                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('evolucion'),
-                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('evolucion')
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 text-rose-900': esInvalido('evolucion'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5]': !esInvalido('evolucion')
                 }"
-                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all"></textarea>
-              
-              <!-- Mensaje de error reactivo -->
-              <div *ngIf="esInvalido('evolucion')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
+                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all"></textarea>
+              <div *ngIf="esInvalido('evolucion')"
+                class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
                 <span>{{ obtenerMensajeError('evolucion') }}</span>
               </div>
             </div>
 
-            <!-- PLAN DE TRATAMIENTO Y PROCEDIMIENTOS (OBLIGATORIO) -->
+            <!-- PRONÓSTICO CLÍNICO -->
             <div>
-              <div class="flex justify-between items-center mb-1">
-                <label for="planTratamiento" class="block text-xs font-bold text-gray-700 uppercase">
-                  Plan de Tratamiento Actualizado <span class="text-rose-500">*</span>
+              <label class="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+                Pronóstico Estimado <span class="text-rose-500">*</span>
+              </label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <label *ngFor="let opcion of opcionesPronostico"
+                  class="flex items-center justify-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs font-bold transition-all"
+                  [ngClass]="{
+                    'bg-[#4141a5] text-white border-[#4141a5] shadow-xs': formHistoria.get('pronostico')?.value === opcion,
+                    'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100': formHistoria.get('pronostico')?.value !== opcion
+                  }">
+                  <input type="radio" formControlName="pronostico" [value]="opcion" class="hidden">
+                  <span>{{ opcion }}</span>
                 </label>
-                <span class="text-[10px] text-gray-400 font-medium">Requerido</span>
               </div>
-              <textarea 
-                id="planTratamiento"
-                formControlName="planTratamiento"
-                rows="3"
-                placeholder="Fármacos formulados, dosis, vía de administración, procedimientos quirúrgicos o cuidados en canil..."
+            </div>
+
+            <!-- CONSTANTES FISIOLÓGICAS (Backend Consulta y Examen Clínico) -->
+            <div class="pt-2 space-y-3">
+              <label class="block text-xs font-bold text-gray-700 uppercase">
+                Constantes Fisiológicas y Parámetros Clínicos
+              </label>
+
+              <!-- Fila 1: Signos Vitales Principales -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Temp. (°C)</span>
+                  <input type="number" step="0.1" formControlName="temperatura" placeholder="38.5"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">F.C. (LPM)</span>
+                  <input type="number" formControlName="frecuenciaCardiaca" placeholder="110"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">F.R. (RPM)</span>
+                  <input type="number" formControlName="frecuenciaRespiratoria" placeholder="26"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Peso (Kg)</span>
+                  <input type="number" step="0.1" formControlName="peso" placeholder="15.0"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+              </div>
+
+              <!-- Fila 2: Exploración Física y Perfusión (Backend Consulta) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Pulso Arterial</span>
+                  <input type="text" formControlName="pulso" placeholder="Ej. Fuerte, lleno y simétrico"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">TLLC (Llenado Capilar)</span>
+                  <input type="text" formControlName="tiempoLlenadoCapilar" placeholder="Ej. 1 - 2 segundos"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Mucosas</span>
+                  <select formControlName="mucosas"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 font-semibold text-slate-800 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                    <option value="">-- Seleccionar estado --</option>
+                    <option *ngFor="let opt of opcionesMucosas" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
+                <div>
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Ganglios Linfáticos</span>
+                  <select formControlName="gangliosLinfaticos"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 font-semibold text-slate-800 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                    <option value="">-- Seleccionar evaluación --</option>
+                    <option *ngFor="let opt of opcionesGanglios" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Actitud y Temperamento</span>
+                  <select formControlName="actitudTemperamento"
+                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 font-semibold text-slate-800 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                    <option value="">-- Seleccionar comportamiento --</option>
+                    <option *ngFor="let opt of opcionesActitud" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- HOJA 6: Procedimientos y Plan de Acción -->
+          <div [formGroup]="formHistoria" class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+            <div>
+              <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Plan de Acción</span>
+              <h2 class="text-xl font-black text-slate-900 mt-0.5">Procedimientos e Intervención Clínica</h2>
+            </div>
+            <div>
+              <label for="planTratamiento" class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Plan de Tratamiento y Cuidados Clínicos <span class="text-rose-500">*</span>
+              </label>
+              <textarea id="planTratamiento" formControlName="planTratamiento" rows="3"
+                placeholder="Describa el protocolo terapéutico, pautas de manejo, curaciones, intervenciones quirúrgicas o cuidados en canil..."
                 [ngClass]="{
-                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('planTratamiento'),
-                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('planTratamiento')
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 text-rose-900': esInvalido('planTratamiento'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5]': !esInvalido('planTratamiento')
                 }"
-                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all"></textarea>
-              
-              <!-- Mensaje de error reactivo -->
-              <div *ngIf="esInvalido('planTratamiento')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
+                class="w-full border rounded-2xl p-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all"></textarea>
+              <div *ngIf="esInvalido('planTratamiento')"
+                class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
                 <span>{{ obtenerMensajeError('planTratamiento') }}</span>
               </div>
             </div>
 
-            <!-- CONSTANTES FISIOLÓGICAS (GRID COMPACTO) -->
-            <div class="pt-2">
-              <label class="block text-xs font-bold text-gray-700 uppercase mb-2">
-                Constantes Fisiológicas en la Evolución
-              </label>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                
-                <!-- Temperatura -->
-                <div>
-                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Temp. (°C)</span>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    formControlName="temperatura"
-                    placeholder="38.5"
-                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+            <!-- Navegación Stepper -->
+            <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+              <button type="button" (click)="cambiarPestana('examenes')"
+                class="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-5 py-2.5 rounded-xl border border-slate-200 shadow-2xs transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+                <span>← Volver a Exámenes</span>
+              </button>
+              <button type="button" (click)="cambiarPestana('tratamientos')"
+                class="inline-flex items-center gap-2 bg-[#4141A5] hover:bg-[#33338B] text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+                <span>Continuar a Tratamientos</span>
+                <span class="text-sm font-black">→</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: FICHA LATERAL -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 relative sticky top-6">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5] animate-pulse"></span>
+              <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
+            </div>
+            <span
+              class="text-[11px] font-mono bg-[#4141a5]/10 text-[#4141a5] px-2.5 py-1 rounded-xl font-bold border border-[#4141a5]/20">
+              HC - OFICIAL
+            </span>
+          </div>
+
+          <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
+            <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre"
+              class="w-full h-full object-cover" (error)="imagenNoDisponible($event)">
+            <div *ngIf="!paciente?.foto_url" [ngClass]="obtenerColorAvatar(paciente)"
+              class="w-full h-full flex items-center justify-center font-black text-4xl text-white uppercase select-none">
+              {{ obtenerIniciales(paciente) }}
+            </div>
+
+            <div
+              class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+              <span>{{ paciente?.especie || 'Canino' }}</span>
+            </div>
+            <div
+              class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
+              <span>{{ paciente?.sexo || 'Macho' }} · {{ paciente?.peso }} kg</span>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nombre del Paciente</span>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ paciente?.nombre || 'Paciente' }}</h3>
+            <p class="text-xs text-slate-500 font-medium">
+              {{ paciente?.raza || 'Mestizo' }}
+              <span *ngIf="paciente?.color"> · {{ paciente?.color }}</span>
+            </p>
+          </div>
+
+          <div
+            class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
+            <span>✓</span>
+            <span>Sincronizada con Historia Clínica</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA 4: TRATAMIENTOS (Fármacos, Insumos, CBA y Firmas Oficiales)   -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaActiva === 'tratamientos'"
+        class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-fade-in">
+
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- HOJA 7: Medicamentos Recetados e Insumos -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+              <div>
+                <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Paso 4 · Prescripción y
+                  Farmacología</span>
+                <h2 class="text-xl font-extrabold text-[#170B3D] mt-0.5">Medicamentos e Insumos Utilizados</h2>
+              </div>
+              <button type="button" (click)="desplegarMedicamentos()"
+                class="bg-[#4141a5] hover:bg-[#33338b] text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition active:scale-95 cursor-pointer uppercase tracking-wider">
+                {{ mostrarCatalogoMedicamentos ? '− Ocultar catálogo' : '＋ Fármaco' }}
+              </button>
+            </div>
+
+            <!-- CATÁLOGO DESPLEGABLE DE MEDICAMENTOS -->
+            <div *ngIf="mostrarCatalogoMedicamentos"
+              class="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-900 text-sm">Catálogo de Medicamentos CBA</h3>
+                <button type="button" (click)="recargarStockMedicamentos()"
+                  class="text-[11px] font-bold text-[#4141a5] hover:underline cursor-pointer">
+                  🔄 Actualizar existencias
+                </button>
+              </div>
+
+              <div *ngIf="cargandoMedicamentos" class="py-4 text-center text-xs text-slate-500 font-bold">
+                Cargando existencias de medicamentos...
+              </div>
+
+              <div *ngIf="!cargandoMedicamentos && medicamentosCatalogo.length > 0"
+                class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <button type="button" *ngFor="let med of medicamentosCatalogo" (click)="agregarMedicamento(med)"
+                  class="w-full text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white border border-slate-200 rounded-xl p-3 hover:bg-emerald-50 hover:border-emerald-300 transition cursor-pointer">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-xs text-slate-800">{{ med.nombre }}</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                      [ngClass]="(med.stockDisponible || 0) > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'">
+                      {{ (med.stockDisponible || 0) > 0 ? ((med.stockDisponible) + ' uds en stock') : 'Sin existencias'
+                      }}
+                    </span>
+                  </div>
+                  <span class="text-xs text-emerald-700 font-bold shrink-0">+ Prescribir</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- TARJETAS DINÁMICAS DE MEDICAMENTOS RECETADOS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div *ngIf="medicamentosSeleccionados.length === 0"
+                class="md:col-span-2 border border-dashed border-slate-300 rounded-2xl p-8 text-center text-slate-500 bg-slate-50/50">
+                <p class="font-bold">No hay medicamentos agregados al plan terapéutico.</p>
+                <p class="text-xs mt-1 text-slate-400">Pulsa <strong>+ Fármaco</strong> para prescribir medicamentos del
+                  inventario del CBA.</p>
+              </div>
+
+              <div *ngFor="let medicamento of medicamentosSeleccionados; let i = index"
+                class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-2.5">
+                <div class="flex justify-between items-center gap-2">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="font-bold text-[#4141a5] bg-[#4141a5]/10 border border-[#4141a5]/20 px-2.5 py-1 rounded-md text-[10px]">
+                      Fármaco #{{ i + 1 }}
+                    </span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                      [ngClass]="(medicamento.stockDisponible || 0) > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'">
+                      Stock: {{ medicamento.stockDisponible ?? 0 }} uds
+                    </span>
+                  </div>
+                  <button type="button" (click)="eliminarMedicamento(i)"
+                    class="text-red-600 hover:bg-red-50 border border-red-200 rounded-lg px-2 py-1 font-bold text-[11px] cursor-pointer">
+                    Eliminar
+                  </button>
                 </div>
 
-                <!-- Frecuencia Cardíaca -->
                 <div>
-                  <span class="block text-[10px] font-bold text-gray-400 uppercase">F.C. (LPM)</span>
-                  <input 
-                    type="number" 
-                    formControlName="frecuenciaCardiaca"
-                    placeholder="110"
-                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                  <label class="text-[9px] text-slate-400 font-bold block uppercase">PRODUCTO</label>
+                  <input type="text" [value]="medicamento.nombre" readonly
+                    class="w-full bg-white border border-slate-200 rounded-lg p-2 font-bold text-xs">
                 </div>
 
-                <!-- Frecuencia Respiratoria -->
-                <div>
-                  <span class="block text-[10px] font-bold text-gray-400 uppercase">F.R. (RPM)</span>
-                  <input 
-                    type="number" 
-                    formControlName="frecuenciaRespiratoria"
-                    placeholder="26"
-                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">DOSIS</label>
+                    <input type="text" [(ngModel)]="medicamento.dosis" placeholder="Ej. 10 mg/kg"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                  </div>
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">PRESENTACIÓN</label>
+                    <input type="text" [(ngModel)]="medicamento.presentacion" placeholder="Tableta / Fco"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                  </div>
                 </div>
 
-                <!-- Peso Actual -->
-                <div>
-                  <span class="block text-[10px] font-bold text-gray-400 uppercase">Peso (Kg)</span>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    formControlName="peso"
-                    placeholder="15.0"
-                    class="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50/50 outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20">
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">VÍA</label>
+                    <input type="text" [(ngModel)]="medicamento.via" placeholder="Oral / SC / IV"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                  </div>
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">FRECUENCIA</label>
+                    <input type="text" [(ngModel)]="medicamento.frecuencia" placeholder="C/12h por 5 días"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                  </div>
+                </div>
+
+                <!-- Campos adicionales del modelo Tratamiento (Backend) -->
+                <div class="space-y-2 pt-1 border-t border-slate-100">
+                  <div>
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">Posología / Indicaciones de Uso</label>
+                    <input type="text" [(ngModel)]="medicamento.descripcion" placeholder="Ej. Administrar junto con alimento húmedo..."
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-[9px] text-slate-400 font-bold block uppercase">Responsable Administración</label>
+                      <input type="text" [(ngModel)]="medicamento.responsable_admin" placeholder="Ej. Dr(a). Veterinario CBA"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                    </div>
+                    <div>
+                      <label class="text-[9px] text-slate-400 font-bold block uppercase">Tolerancia / Reacciones</label>
+                      <input type="text" [(ngModel)]="medicamento.reaccion_comentarios" placeholder="Ej. Buena tolerancia / Sin vómitos"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECCIÓN DE ADMINISTRACIÓN REAL Y DESCUENTO DE INVENTARIO -->
+                <div class="mt-3 pt-3 border-t border-slate-200 space-y-2">
+                  <div class="flex items-center justify-between flex-wrap gap-1">
+                    <label
+                      class="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                      </svg>
+                      Administración en Campo
+                    </label>
+
+                    <div class="flex items-center gap-1.5">
+                      <span *ngIf="esStockBajo(medicamento.stockDisponible)"
+                        (click)="alertaStockBajoSweetAlert(medicamento.nombre, medicamento.stockDisponible)"
+                        class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C]/30 text-[#170B3D] border border-[#F1C63C] cursor-pointer shadow-xs animate-pulse">
+                        ⚠️ Stock Bajo: {{ medicamento.stockDisponible }} uds
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Alerta de stock bajo -->
+                  <div *ngIf="esStockBajo(medicamento.stockDisponible)"
+                    class="p-2.5 rounded-xl bg-[#F1C63C]/15 border-2 border-[#F1C63C] text-[#170B3D] text-[11px] leading-tight space-y-1 shadow-xs">
+                    <p class="font-bold text-[#170B3D]">
+                      Recuerda que te quedan {{ medicamento.stockDisponible }} unidades de este producto. Es hora de
+                      solicitar reaprovisionamiento al inventario general.
+                    </p>
+                  </div>
+
+                  <!-- Si ya fue administrado -->
+                  <div *ngIf="medicamento.administrado"
+                    class="p-2.5 rounded-xl bg-[#4141a5]/10 border border-[#4141a5]/20 text-[#170B3D] text-xs flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 font-bold">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Administrado: {{ medicamento.cantidadEfectivaAdministrada }} uds</span>
+                    </div>
+                    <span
+                      class="text-[10px] font-mono font-bold bg-white text-[#4141a5] px-2 py-0.5 rounded-md border border-[#4141a5]/30">
+                      ✓ Descontado
+                    </span>
+                  </div>
+
+                  <!-- Si no ha sido administrado aún -->
+                  <div *ngIf="!medicamento.administrado" class="space-y-2">
+                    <div
+                      class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2.5 rounded-xl border"
+                      [ngClass]="(medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0) ? 'border-red-400 bg-red-50/30' : 'border-slate-200'">
+                      <div class="flex items-center gap-2 flex-1">
+                        <span class="text-[10px] font-bold uppercase whitespace-nowrap text-slate-500">Cant. a
+                          usar:</span>
+                        <input type="number" min="1" [(ngModel)]="medicamento.cantidadAAdministrar" placeholder="1"
+                          class="w-20 rounded-lg p-1.5 text-xs font-black text-center outline-none border border-slate-300 bg-slate-50 focus:bg-white focus:border-[#4141a5]">
+                        <span class="text-[11px] text-slate-500 font-semibold">uds</span>
+                      </div>
+
+                      <button type="button"
+                        [disabled]="medicamento.administrando || (medicamento.stockDisponible || 0) <= 0 || (medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0)"
+                        (click)="registrarAdministracion(medicamento, i)"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+                        [ngClass]="(medicamento.stockDisponible || 0) > 0 && (medicamento.cantidadAAdministrar || 0) <= (medicamento.stockDisponible || 0) && !medicamento.administrando ? 'bg-[#4141a5] hover:bg-[#33338b] text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'">
+                        <span>{{ medicamento.administrando ? 'Descontando...' : 'Confirmar Administración' }}</span>
+                      </button>
+                    </div>
+
+                    <!-- Mensaje si supera el stock -->
+                    <div *ngIf="(medicamento.cantidadAAdministrar || 0) > (medicamento.stockDisponible || 0)"
+                      class="p-2.5 rounded-xl bg-red-50 border border-red-300 text-red-900 text-xs space-y-1">
+                      <p class="font-bold">
+                        Stock insuficiente (Disponibles: {{ medicamento.stockDisponible || 0 }}, Solicitados: {{
+                        medicamento.cantidadAAdministrar || 0 }}).
+                      </p>
+                      <div *ngIf="obtenerAlternativasStock(medicamento.id).length > 0"
+                        class="pt-1.5 border-t border-red-200 space-y-1">
+                        <span class="text-[10px] font-bold text-[#170B3D]">Alternativas disponibles:</span>
+                        <div *ngFor="let alt of obtenerAlternativasStock(medicamento.id)"
+                          class="bg-white p-1.5 rounded-lg border border-red-100 flex items-center justify-between text-[11px]">
+                          <span>{{ alt.nombre }} ({{ alt.stockDisponible }} uds)</span>
+                          <button type="button" (click)="reemplazarMedicamento(i, alt)"
+                            class="text-[#4141a5] font-bold underline cursor-pointer">Usar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
               </div>
             </div>
 
+            <!-- Insumos y materiales -->
+            <div class="space-y-1 pt-2">
+              <label class="text-[11px] font-bold text-slate-700 uppercase block">02. Insumos y Materiales Quirúrgicos /
+                de Atención</label>
+              <textarea rows="2" [(ngModel)]="materialesUtilizados"
+                class="w-full border border-slate-200 rounded-xl p-3 text-xs bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none transition-all"
+                placeholder="Gasas, jeringas, suturas, catéteres, guantes, solución salina..."></textarea>
+            </div>
           </div>
 
-        </div>
-
-        <!-- =================================================================== -->
-        <!-- BLOQUE 3: JUSTIFICACIÓN DE LA MODIFICACIÓN (TRAZABILIDAD Y AUDITORÍA)-->
-        <!-- =================================================================== -->
-        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-3">
-          
-          <div class="flex items-center gap-2.5 pb-2 border-b border-gray-100">
-            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs shrink-0">
-              3
-            </div>
+          <!-- HOJA 3: Ingreso al CBA -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
             <div>
-              <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
-                Motivo y Justificación de la Modificación <span class="text-rose-500">*</span>
-              </h3>
-              <p class="text-xs text-gray-400">Requerido por normatividad clínica para el registro en auditoría médica</p>
+              <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Destino del Paciente</span>
+              <h2 class="text-xl font-extrabold text-[#170B3D] mt-0.5">Ingreso al Centro de Bienestar Animal (CBA)</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="col-span-1 md:col-span-2">
+                <span class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">¿Ingresa al
+                  CBA?</span>
+                <div class="grid grid-cols-2 gap-2 max-w-xs">
+                  <button type="button" (click)="ingresaCBA = 'SI'"
+                    [ngClass]="ingresaCBA === 'SI' ? 'bg-[#4141a5] text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold'"
+                    class="h-9 rounded-xl text-xs transition-all active:scale-95 cursor-pointer">
+                    Sí
+                  </button>
+                  <button type="button" (click)="ingresaCBA = 'NO'"
+                    [ngClass]="ingresaCBA === 'NO' ? 'bg-[#4141a5] text-white shadow-xs font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-semibold'"
+                    class="h-9 rounded-xl text-xs transition-all active:scale-95 cursor-pointer">
+                    No
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-span-1 md:col-span-2">
+                <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">
+                  {{ ingresaCBA === 'SI' ? 'Motivo de Ingreso al Canil / CBA' : 'Motivo de No Ingreso (Entrega a tutor /
+                  ambulatorio)' }}
+                </label>
+                <textarea rows="2" [(ngModel)]="motivoIngresoNoIngreso"
+                  placeholder="Describa la justificación clínica o administrativa..."
+                  class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-800 text-xs focus:bg-white focus:border-[#4141a5] outline-none transition-all resize-none"></textarea>
+              </div>
+
+              <ng-container *ngIf="ingresaCBA === 'SI'">
+                <div>
+                  <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">Canil
+                    asignado</label>
+                  <input type="text" maxlength="50" [(ngModel)]="canilAsignado" placeholder="Ej. Canil 4 - Aislamiento"
+                    class="w-full h-9 border border-slate-200 rounded-xl px-3 bg-slate-50 text-slate-800 text-xs font-medium focus:bg-white focus:border-[#4141a5] outline-none transition-all">
+                </div>
+                <div>
+                  <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">Funcionario que
+                    recibe</label>
+                  <input type="text" maxlength="150" [(ngModel)]="funcionarioRecibeCBA"
+                    placeholder="Nombre del funcionario del CBA"
+                    class="w-full h-9 border border-slate-200 rounded-xl px-3 bg-slate-50 text-slate-800 text-xs font-medium focus:bg-white focus:border-[#4141a5] outline-none transition-all">
+                </div>
+              </ng-container>
             </div>
           </div>
 
-          <div>
-            <input 
-              type="text" 
-              id="motivoModificacion"
-              formControlName="motivoModificacion"
-              placeholder="Ej: Corrección diagnóstica por confirmación de frotis sanguíneo / Evolución favorable a las 72h..."
-              [ngClass]="{
-                'border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-900': esInvalido('motivoModificacion'),
-                'border-gray-200 bg-gray-50/50 focus:border-[#4141a5] focus:ring-[#4141a5]/20': !esInvalido('motivoModificacion')
-              }"
-              class="w-full border rounded-2xl px-4 py-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 transition-all">
-            
-            <div *ngIf="esInvalido('motivoModificacion')" class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-              </svg>
-              <span>{{ obtenerMensajeError('motivoModificacion') }}</span>
+          <!-- HOJA 8: Firmas y Validación Oficial -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+            <div>
+              <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Validación Legal y Firmas</span>
+              <h2 class="text-xl font-extrabold text-[#170B3D] mt-0.5">Aval Profesional y del Acudiente</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <!-- Veterinario -->
+              <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
+                <h4 class="font-bold text-[#170B3D] uppercase text-xs">MÉDICO VETERINARIO TRATANTE</h4>
+                <div>
+                  <label class="text-[9px] text-slate-400 font-bold block uppercase">Nombre Completo</label>
+                  <input type="text" [(ngModel)]="nombreVeterinario"
+                    class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium text-xs">
+                </div>
+                <div>
+                  <label class="text-[9px] text-slate-400 font-bold block uppercase">Tarjeta Profesional
+                    (COMVEZCOL)</label>
+                  <input type="text" [(ngModel)]="tarjetaProfesional"
+                    class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium text-xs">
+                </div>
+              </div>
+
+              <!-- Acudiente / Tutor -->
+              <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
+                <h4 class="font-bold text-slate-800 uppercase text-xs">TUTOR / RECEPTOR RESPONSABLE</h4>
+                <div>
+                  <label class="text-[9px] text-slate-400 font-bold block uppercase">Nombre del Acudiente</label>
+                  <input type="text" [(ngModel)]="nombreAcudiente" placeholder="Nombre completo del tutor"
+                    class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium text-xs">
+                </div>
+                <div>
+                  <label class="text-[9px] text-slate-400 font-bold block uppercase">Cédula de Ciudadanía (C.C.)</label>
+                  <input type="text" [(ngModel)]="cedulaAcudiente" placeholder="Número de identificación"
+                    class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium text-xs">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MOTIVO DE MODIFICACIÓN (TRAZABILIDAD Y AUDITORÍA OBLIGATORIA) -->
+          <div [formGroup]="formHistoria" class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-3">
+            <div class="flex items-center gap-2.5 pb-2 border-b border-gray-100">
+              <div
+                class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs shrink-0">
+                !
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+                  Motivo y Justificación de la Modificación <span class="text-rose-500">*</span>
+                </h3>
+                <p class="text-xs text-gray-400">Requerido por normatividad clínica para el registro en auditoría médica
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <input type="text" id="motivoModificacion" formControlName="motivoModificacion"
+                placeholder="Ej: Modificación de prescripción farmacológica y actualización de constante física tras evolución clínica..."
+                [ngClass]="{
+                  'border-rose-400 bg-rose-50/30 focus:border-rose-500 text-rose-900': esInvalido('motivoModificacion'),
+                  'border-gray-200 bg-gray-50/50 focus:border-[#4141a5]': !esInvalido('motivoModificacion')
+                }"
+                class="w-full border rounded-2xl px-4 py-3 text-xs text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all">
+
+              <div *ngIf="esInvalido('motivoModificacion')"
+                class="flex items-center gap-1 mt-1 text-[11px] text-rose-600 font-semibold animate-fade-in">
+                <span>{{ obtenerMensajeError('motivoModificacion') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- BARRA DE ACCIÓN FINAL Y BOTÓN DE GUARDAR CAMBIOS -->
+          <div
+            class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-xs text-gray-400 font-medium flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full"
+                [ngClass]="formHistoria.dirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'"></span>
+              <span>{{ formHistoria.dirty ? 'Tienes modificaciones sin guardar en el expediente.' : 'Datos
+                sincronizados.' }}</span>
+            </div>
+
+            <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
+              <button type="button" (click)="cambiarPestana('diagnostico')"
+                class="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                ← Volver a Diagnóstico
+              </button>
+
+              <button type="button" (click)="restablecerValores()" [disabled]="!formHistoria.dirty || guardando"
+                class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                Restablecer
+              </button>
+
+              <button type="button" (click)="cancelarEdicion()" [disabled]="guardando"
+                class="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer">
+                Cancelar
+              </button>
+
+              <!-- BOTÓN FINAL DE GUARDAR CAMBIOS -->
+              <button type="button" (click)="guardarEdicion()"
+                [disabled]="formHistoria.invalid || guardando || historiaAnulada || hayMedicamentosConStockInsuficiente"
+                [ngClass]="{
+                  'opacity-50 cursor-not-allowed bg-gray-400': formHistoria.invalid || guardando || historiaAnulada || hayMedicamentosConStockInsuficiente,
+                  'bg-[#4141a5] hover:bg-[#343485] active:scale-95 shadow-md shadow-[#4141a5]/20 cursor-pointer': !formHistoria.invalid && !guardando && !historiaAnulada && !hayMedicamentosConStockInsuficiente
+                }"
+                class="px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-wider">
+
+                <svg *ngIf="guardando" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
+                  viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+
+                <svg *ngIf="!guardando" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+
+                <span>{{ guardando ? 'Guardando cambios...' : 'Guardar Cambios' }}</span>
+              </button>
             </div>
           </div>
 
         </div>
 
-        <!-- =================================================================== -->
-        <!-- BARRA DE ACCIÓN Y BOTONES (CRITERIOS 1, 2 Y 4)                       -->
-        <!-- =================================================================== -->
-        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-          
-          <div class="text-xs text-gray-400 font-medium flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full" [ngClass]="formHistoria.dirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'"></span>
-            <span>{{ formHistoria.dirty ? 'Tienes modificaciones sin guardar en la historia.' : 'Formulario sincronizado sin cambios pendientes.' }}</span>
+        <!-- COLUMNA DERECHA: FICHA LATERAL -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4 relative sticky top-6">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5] animate-pulse"></span>
+              <span class="text-xs font-black tracking-wider text-slate-800 uppercase">Ficha del Paciente</span>
+            </div>
+            <span
+              class="text-[11px] font-mono bg-[#4141a5]/10 text-[#4141a5] px-2.5 py-1 rounded-xl font-bold border border-[#4141a5]/20">
+              HC - OFICIAL
+            </span>
           </div>
 
-          <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            
-            <!-- Botón Restablecer -->
-            <button 
-              type="button" 
-              (click)="restablecerValores()" 
-              [disabled]="!formHistoria.dirty || guardando"
-              class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-              Restablecer
-            </button>
+          <div class="relative w-full h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs">
+            <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre"
+              class="w-full h-full object-cover" (error)="imagenNoDisponible($event)">
+            <div *ngIf="!paciente?.foto_url" [ngClass]="obtenerColorAvatar(paciente)"
+              class="w-full h-full flex items-center justify-center font-black text-4xl text-white uppercase select-none">
+              {{ obtenerIniciales(paciente) }}
+            </div>
 
-            <!-- Botón Cancelar (Criterio 4) -->
-            <button 
-              type="button" 
-              (click)="cancelarEdicion()" 
-              [disabled]="guardando"
-              class="px-5 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-50">
-              Cancelar
-            </button>
-
-            <!-- Botón Guardar (Criterios 1 y 2) -->
-            <button 
-              type="submit" 
-              [disabled]="formHistoria.invalid || guardando"
-              [ngClass]="{
-                'opacity-50 cursor-not-allowed bg-gray-400': formHistoria.invalid || guardando,
-                'bg-[#4141a5] hover:bg-[#343485] active:scale-95 shadow-md shadow-[#4141a5]/20': !formHistoria.invalid && !guardando
-              }"
-              class="px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
-              
-              <svg *ngIf="guardando" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-              </svg>
-              
-              <svg *ngIf="!guardando" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              
-              <span>{{ guardando ? 'Guardando historia...' : 'Guardar Modificaciones' }}</span>
-            </button>
-
+            <div
+              class="absolute top-3 left-3 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-sm">
+              <span>{{ paciente?.especie || 'Canino' }}</span>
+            </div>
+            <div
+              class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-slate-200/50 shadow-sm">
+              <span>{{ paciente?.sexo || 'Macho' }} · {{ paciente?.peso }} kg</span>
+            </div>
           </div>
 
+          <div class="space-y-1">
+            <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Nombre del Paciente</span>
+            <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ paciente?.nombre || 'Paciente' }}</h3>
+            <p class="text-xs text-slate-500 font-medium">
+              {{ paciente?.raza || 'Mestizo' }}
+              <span *ngIf="paciente?.color"> · {{ paciente?.color }}</span>
+            </p>
+          </div>
+
+          <div
+            class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-emerald-600 font-semibold">
+            <span>✓</span>
+            <span>Sincronizada con Historia Clínica</span>
+          </div>
         </div>
 
-      </form>
+      </div>
 
       <!-- ===================================================================== -->
-      <!-- 5. CRITERIO 3: HISTORIAL DE MODIFICACIONES Y AUDITORÍA                -->
+      <!-- HISTORIAL DE MODIFICACIONES Y AUDITORÍA MÉDICA                        -->
       <!-- ===================================================================== -->
       <section class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-xs space-y-4 mt-6">
-        
         <div class="flex items-center justify-between pb-3 border-b border-gray-100 flex-wrap gap-2">
           <div class="flex items-center gap-3">
             <div class="p-2.5 bg-[#4141a5]/10 text-[#4141a5] rounded-xl flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -568,11 +1670,11 @@
           </span>
         </div>
 
-        <!-- TABLA DE HISTORIAL ESTILIZADA -->
         <div class="overflow-x-auto rounded-2xl border border-gray-100">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+              <tr
+                class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
                 <th class="py-3 px-4">Fecha y Hora</th>
                 <th class="py-3 px-4">Veterinario / Usuario</th>
                 <th class="py-3 px-4">Acción y Motivo</th>
@@ -580,42 +1682,32 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              
-              <!-- ESTADO VACÍO -->
               <tr *ngIf="historialModificaciones.length === 0">
                 <td colspan="4" class="text-center py-8 text-gray-400 text-xs">
                   Esta historia clínica no registra modificaciones previas.
                 </td>
               </tr>
-
-              <!-- FILAS DE AUDITORÍA -->
               <tr *ngFor="let reg of historialModificaciones" class="hover:bg-gray-50/50 transition-colors">
-                
-                <!-- Fecha y Hora -->
                 <td class="py-3.5 px-4 font-bold text-gray-700 whitespace-nowrap align-top">
                   {{ reg.fecha_hora | date:'dd/MM/yyyy, hh:mm a' }}
                 </td>
-
-                <!-- Usuario y Rol -->
                 <td class="py-3.5 px-4 align-top">
                   <div class="font-bold text-[#170B3D]">{{ reg.usuario }}</div>
                   <div class="text-[11px] text-gray-400">{{ reg.rol }}</div>
                 </td>
-
-                <!-- Acción y Motivo -->
                 <td class="py-3.5 px-4 align-top max-w-xs">
-                  <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#4141a5]/10 text-[#4141a5] mb-1">
+                  <span
+                    class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#4141a5]/10 text-[#4141a5] mb-1">
                     {{ reg.tipo_accion }}
                   </span>
                   <p class="text-gray-600 font-medium italic text-[11px]">
                     "{{ reg.motivo_cambio }}"
                   </p>
                 </td>
-
-                <!-- Campos Modificados con Valores Previos y Nuevos -->
                 <td class="py-3.5 px-4 align-top">
                   <div class="space-y-1.5">
-                    <div *ngFor="let campo of reg.campos_cambiados" class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-[11px]">
+                    <div *ngFor="let campo of reg.campos_cambiados"
+                      class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-[11px]">
                       <span class="font-bold text-gray-800">{{ campo.etiqueta || campo.campo }}:</span>
                       <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                         <span class="text-rose-600 line-through bg-rose-50 px-1.5 py-0.5 rounded text-[10px]">
@@ -629,13 +1721,10 @@
                     </div>
                   </div>
                 </td>
-
               </tr>
-
             </tbody>
           </table>
         </div>
-
       </section>
 
     </div>
@@ -643,59 +1732,48 @@
   </main>
 
   <!-- ========================================================================= -->
-  <!-- 6. CRITERIO 4: MODAL DE CONFIRMACIÓN DE CANCELACIÓN (LOOK & FEEL APP)     -->
+  <!-- MODAL DE CONFIRMACIÓN DE CANCELACIÓN                                      -->
   <!-- ========================================================================= -->
-  <div *ngIf="mostrarModalCancelar" 
-       class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden animate-fade-in"
-       role="dialog"
-       aria-modal="true">
-    
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-100 relative flex flex-col">
-      
-      <!-- Botón cerrar esquina -->
-      <button 
-        type="button"
-        (click)="cerrarModalCancelar()" 
-        class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 transition-colors">
+  <div *ngIf="mostrarModalCancelar"
+    class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden animate-fade-in"
+    role="dialog" aria-modal="true">
+
+    <div
+      class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-100 relative flex flex-col">
+      <button type="button" (click)="cerrarModalCancelar()"
+        class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 transition-colors cursor-pointer">
         ✕
       </button>
 
-      <!-- Ícono de advertencia -->
-      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mb-4 shadow-xs">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      <div
+        class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mb-4 shadow-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       </div>
 
-      <!-- Título del Modal -->
       <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] tracking-wide uppercase">
         ¿Descartar cambios no guardados?
       </h2>
 
-      <!-- Mensaje descriptivo -->
       <p class="text-xs sm:text-sm text-gray-500 font-medium mt-2 leading-relaxed">
-        Has realizado modificaciones en la evolución o diagnóstico de la historia clínica. Si sales ahora, se descartarán todos los cambios ingresados y se restaurarán los valores originales.
+        Has realizado modificaciones en la historia clínica. Si sales ahora, se descartarán todos los cambios ingresados
+        y se restaurarán los valores originales.
       </p>
 
-      <!-- Botones de Acción del Modal -->
       <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
-        
-        <button 
-          type="button" 
-          (click)="cerrarModalCancelar()"
-          class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all active:scale-95">
+        <button type="button" (click)="cerrarModalCancelar()"
+          class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer">
           Continuar editando
         </button>
 
-        <button 
-          type="button" 
-          (click)="confirmarDescarte()"
-          class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-600/20 transition-all active:scale-95">
+        <button type="button" (click)="confirmarDescarte()"
+          class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-600/20 transition-all active:scale-95 cursor-pointer">
           Sí, descartar cambios
         </button>
-
       </div>
-
     </div>
 
   </div>

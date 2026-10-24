@@ -1,0 +1,588 @@
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+
+  <!-- ========================================================================= -->
+  <!-- 1. ENCABEZADO INSTITUCIONAL                                               -->
+  <!-- ========================================================================= -->
+  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
+      
+      <!-- Marca y Título del Módulo -->
+      <div class="flex items-center gap-3.5">
+        <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+              Historias Clínicas
+            </h1>
+            <span class="bg-[#4141a5]/10 text-[#4141a5] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
+              Base de Datos
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-gray-500 font-medium">
+            Consulta y seguimiento de historias clínicas almacenadas en el sistema
+          </p>
+        </div>
+      </div>
+
+      <!-- Acciones de Cabecera -->
+      <div class="flex items-center gap-2.5 self-end sm:self-center">
+        <!-- Botón Recargar -->
+        <button
+          type="button"
+          (click)="recargarLista()"
+          [disabled]="cargando || recargando"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+          title="Recargar listado desde el backend">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" [ngClass]="{'animate-spin': recargando}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden sm:inline">Actualizar</span>
+        </button>
+
+        <!-- Botón Nueva Consulta / Atención -->
+        <button
+          type="button"
+          (click)="irANuevaConsulta()"
+          class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-all text-xs tracking-wider uppercase whitespace-nowrap active:scale-95 cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>Nueva Atención</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. CONTENIDO PRINCIPAL                                                    -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+
+    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
+
+      <!-- Caja de Búsqueda -->
+      <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full sm:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300">
+        <div class="flex items-center px-4 flex-1 gap-3 min-w-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="filtroBusqueda"
+            (input)="aplicarFiltros()"
+            placeholder="Buscar por N° de historia, paciente, estado, vacunas..."
+            class="w-full outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+
+          <button
+            *ngIf="filtroBusqueda"
+            type="button"
+            (click)="limpiarBusqueda()"
+            class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0 cursor-pointer">
+            Limpiar
+          </button>
+        </div>
+
+        <div class="h-5 w-px bg-gray-200 shrink-0"></div>
+
+        <!-- Menú de Filtro por Estado -->
+        <div class="relative">
+          <button
+            type="button"
+            (click)="toggleMenuFiltro()"
+            class="px-4 sm:px-5 text-xs sm:text-sm font-bold text-gray-600 hover:text-[#4141a5] transition-colors flex items-center gap-2 shrink-0 h-full cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707v3.172a1 1 0 01-.553.894l-4 2A1 1 0 017 20.172v-9.172a1 1 0 00-.293-.707L.293 7.293A1 1 0 010 6.586V4z"/>
+            </svg>
+            <span>{{ filtroEstado }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <div
+            *ngIf="menuFiltroAbierto"
+            class="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
+            <div class="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+              Estado general
+            </div>
+            <button (click)="filtrarPorEstado('Todos')" class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] transition-colors flex items-center justify-between cursor-pointer">
+              <span>Todos los estados</span>
+              <span *ngIf="filtroEstado === 'Todos'" class="text-[#4141a5]">✓</span>
+            </button>
+            <button (click)="filtrarPorEstado('Estable')" class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] transition-colors flex items-center justify-between cursor-pointer">
+              <span>Estable</span>
+              <span *ngIf="filtroEstado === 'Estable'" class="text-[#4141a5]">✓</span>
+            </button>
+            <button (click)="filtrarPorEstado('En observación')" class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] transition-colors flex items-center justify-between cursor-pointer">
+              <span>En observación</span>
+              <span *ngIf="filtroEstado === 'En observación'" class="text-[#4141a5]">✓</span>
+            </button>
+            <button (click)="filtrarPorEstado('Crítico')" class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] transition-colors flex items-center justify-between cursor-pointer">
+              <span>Crítico</span>
+              <span *ngIf="filtroEstado === 'Crítico'" class="text-[#4141a5]">✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicador de Total y Selector de Modo de Vista -->
+      <div class="flex items-center justify-between sm:justify-end gap-3">
+        <span class="text-xs font-bold text-gray-500 bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs">
+          <strong class="text-[#4141a5]">{{ historiasFiltradas.length }}</strong> {{ historiasFiltradas.length === 1 ? 'registro' : 'registros' }}
+        </span>
+
+        <!-- Botones Tabla / Tarjetas -->
+        <div class="flex items-center bg-white p-1 rounded-xl border border-gray-200 shadow-2xs">
+          <button
+            type="button"
+            (click)="vistaModo = 'tabla'"
+            [ngClass]="vistaModo === 'tabla' ? 'bg-[#4141a5] text-white shadow-xs' : 'text-gray-500 hover:text-gray-800'"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            title="Vista en tabla">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="hidden md:inline">Tabla</span>
+          </button>
+          <button
+            type="button"
+            (click)="vistaModo = 'tarjetas'"
+            [ngClass]="vistaModo === 'tarjetas' ? 'bg-[#4141a5] text-white shadow-xs' : 'text-gray-500 hover:text-gray-800'"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            title="Vista en tarjetas">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span class="hidden md:inline">Tarjetas</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MENSAJE DE ERROR -->
+    <div *ngIf="errorCarga" class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start justify-between gap-3 shadow-xs mb-4 shrink-0">
+      <div class="flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div class="text-xs">
+          <p class="font-bold text-rose-900">Error al consultar el backend</p>
+          <p class="mt-0.5">{{ errorCarga }}</p>
+        </div>
+      </div>
+      <button (click)="cargarHistorias()" class="text-xs font-bold text-rose-700 underline hover:text-rose-900 cursor-pointer">
+        Reintentar
+      </button>
+    </div>
+
+    <!-- SPINNER DE CARGA INICIAL -->
+    <div *ngIf="cargando" class="flex-1 bg-white rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center p-12 space-y-3">
+      <div class="w-12 h-12 border-4 border-[#4141a5]/20 border-t-[#4141a5] rounded-full animate-spin"></div>
+      <p class="text-sm font-bold text-gray-600">Consultando historias clínicas desde el backend...</p>
+      <p class="text-xs text-gray-400 font-medium">Sincronizando con el servidor en la nube...</p>
+    </div>
+
+    <!-- VISTA EN TABLA (CUANDO HAY DATOS) -->
+    <div *ngIf="!cargando && vistaModo === 'tabla'" class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-2">
+      <div class="overflow-x-auto overflow-y-auto flex-1">
+        <table class="w-full text-left border-collapse min-w-[750px]">
+          <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-xs">
+            <tr>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">N° Historia</th>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Paciente / ID</th>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Estado General</th>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Fecha Apertura</th>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Desparasitación</th>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Vacunas</th>
+              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-xs">
+
+            <!-- Iteración con directiva de Angular *ngFor -->
+            <tr
+              *ngFor="let historia of historiasFiltradas"
+              class="hover:bg-[#4141a5]/5 transition-colors group">
+
+              <!-- N° Historia Clínica -->
+              <td class="px-5 py-3.5 whitespace-nowrap">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#4141a5]"></span>
+                  <span class="font-extrabold text-[#170B3D] text-xs">
+                    {{ historia.numero_historia }}
+                  </span>
+                </div>
+                <span class="text-[10px] text-gray-400 block font-mono pl-4">ID #{{ historia.id_historia }}</span>
+              </td>
+
+              <!-- Paciente / Animal -->
+              <td class="px-5 py-3.5">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                    <img
+                      *ngIf="historia.animal_foto"
+                      [src]="historia.animal_foto"
+                      [alt]="historia.animal_nombre"
+                      class="w-full h-full object-cover">
+                    <span *ngIf="!historia.animal_foto" class="text-xs font-extrabold text-slate-500">
+                      🐾
+                    </span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="font-bold text-gray-800 truncate">{{ historia.animal_nombre }}</p>
+                    <p class="text-[10px] text-gray-400 truncate">
+                      {{ historia.animal_especie }} · {{ historia.animal_raza }}
+                    </p>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Estado General -->
+              <td class="px-5 py-3.5 whitespace-nowrap">
+                <span
+                  [ngClass]="obtenerClaseEstado(historia.estado_general)"
+                  class="px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                  {{ historia.estado_general || 'Estable' }}
+                </span>
+              </td>
+
+              <!-- Fecha de Apertura -->
+              <td class="px-5 py-3.5 whitespace-nowrap text-gray-600 font-medium">
+                {{ formatearFechaHora(historia.fecha_apertura) }}
+              </td>
+
+              <!-- Desparasitación -->
+              <td class="px-5 py-3.5 text-gray-600">
+                <div *ngIf="historia.producto_desparasitacion || historia.fecha_ultima_desparasitacion">
+                  <span class="font-semibold text-gray-800 block truncate max-w-[160px]">
+                    {{ historia.producto_desparasitacion || 'Producto no especificado' }}
+                  </span>
+                  <span class="text-[10px] text-gray-400">
+                    {{ formatearFecha(historia.fecha_ultima_desparasitacion) }}
+                  </span>
+                </div>
+                <span *ngIf="!historia.producto_desparasitacion && !historia.fecha_ultima_desparasitacion" class="text-gray-400 italic">
+                  Sin registro
+                </span>
+              </td>
+
+              <!-- Vacunas -->
+              <td class="px-5 py-3.5 text-gray-600">
+                <span *ngIf="historia.vacunas" class="truncate block max-w-[180px] bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 text-[11px]" [title]="historia.vacunas">
+                  {{ historia.vacunas }}
+                </span>
+                <span *ngIf="!historia.vacunas" class="text-gray-400 italic">
+                  No registradas
+                </span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="px-5 py-3.5 whitespace-nowrap text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button
+                    type="button"
+                    (click)="abrirModalDetalle(historia)"
+                    class="p-1.5 rounded-lg text-[#4141a5] hover:bg-[#4141a5]/10 transition-colors cursor-pointer"
+                    title="Ver detalle del expediente">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="irAEditar(historia)"
+                    class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                    title="Editar evolución y diagnósticos">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VISTA EN TARJETAS (CUANDO SE SELECCIONA MODO TARJETA) -->
+    <div *ngIf="!cargando && vistaModo === 'tarjetas'" class="flex-1 overflow-y-auto mb-2 pr-1">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          *ngFor="let historia of historiasFiltradas"
+          class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs hover:shadow-md hover:border-[#4141a5]/40 transition-all flex flex-col justify-between space-y-4">
+
+          <div>
+            <!-- Header de la tarjeta -->
+            <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
+              <div>
+                <span class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wider block">Historia Clínica</span>
+                <h3 class="text-base font-extrabold text-[#170B3D]">{{ historia.numero_historia }}</h3>
+                <span class="text-[10px] text-gray-400">Apertura: {{ formatearFecha(historia.fecha_apertura) }}</span>
+              </div>
+              <span
+                [ngClass]="obtenerClaseEstado(historia.estado_general)"
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border">
+                {{ historia.estado_general || 'Estable' }}
+              </span>
+            </div>
+
+            <!-- Datos del Paciente -->
+            <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+              <div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                <img
+                  *ngIf="historia.animal_foto"
+                  [src]="historia.animal_foto"
+                  [alt]="historia.animal_nombre"
+                  class="w-full h-full object-cover">
+                <span *ngIf="!historia.animal_foto" class="text-lg">🐾</span>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-bold text-gray-900 text-xs truncate">{{ historia.animal_nombre }}</h4>
+                <p class="text-[11px] text-gray-500 truncate">{{ historia.animal_especie }} · {{ historia.animal_raza }}</p>
+                <p class="text-[10px] text-gray-400">ID Animal: #{{ historia.id_animal }}</p>
+              </div>
+            </div>
+
+            <!-- Resumen de antecedentes -->
+            <div class="space-y-1.5 py-3 text-[11px] text-gray-600">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Desparasitación:</span>
+                <span class="font-semibold text-gray-700 truncate max-w-[140px]">{{ historia.producto_desparasitacion || 'Sin registro' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Vacunas:</span>
+                <span class="font-semibold text-gray-700 truncate max-w-[140px]">{{ historia.vacunas || 'No registradas' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Alimentación:</span>
+                <span class="font-semibold text-gray-700 truncate max-w-[140px]">{{ historia.alimentacion || 'Estándar' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Reproductivo:</span>
+                <span class="font-semibold text-gray-700 truncate max-w-[140px]">{{ historia.estado_reproductivo || 'N/A' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              (click)="abrirModalDetalle(historia)"
+              class="flex-1 py-2 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all border border-gray-200 cursor-pointer text-center">
+              Ver Detalle
+            </button>
+            <button
+              type="button"
+              (click)="irAEditar(historia)"
+              class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition-all shadow-xs cursor-pointer text-center">
+              Editar
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO VACÍO (SIN RESULTADOS) -->
+    <div
+      *ngIf="!cargando && historiasFiltradas.length === 0"
+      class="flex-1 bg-white rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-4">
+      <div class="w-16 h-16 rounded-3xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center text-2xl shadow-xs">
+        📋
+      </div>
+      <div class="max-w-md space-y-1">
+        <h3 class="text-base font-extrabold text-[#170B3D]">No se encontraron historias clínicas</h3>
+        <p class="text-xs text-gray-500">
+          {{ filtroBusqueda ? 'No hay coincidencias con el término "' + filtroBusqueda + '". Intenta con otro criterio de búsqueda.' : 'Aún no se han registrado historias clínicas en la base de datos.' }}
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          *ngIf="filtroBusqueda || filtroEstado !== 'Todos'"
+          type="button"
+          (click)="limpiarBusqueda(); filtrarPorEstado('Todos')"
+          class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer">
+          Restablecer Filtros
+        </button>
+        <button
+          type="button"
+          (click)="irANuevaConsulta()"
+          class="px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+          Crear Nueva Historia
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 3. MODAL DE DETALLE COMPLETO DEL EXPEDIENTE                                -->
+  <!-- ========================================================================= -->
+  <div
+    *ngIf="modalDetalleAbierto && historiaSeleccionada"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+
+      <!-- Encabezado del Modal -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black shadow-xs">
+            HC
+          </div>
+          <div>
+            <h2 class="text-base font-extrabold text-[#170B3D]">
+              Expediente: {{ historiaSeleccionada.numero_historia }}
+            </h2>
+            <p class="text-[11px] text-gray-500">
+              Apertura: {{ formatearFechaHora(historiaSeleccionada.fecha_apertura) }}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="cerrarModalDetalle()"
+          class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold transition cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Cuerpo del Modal (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-5 text-xs">
+
+        <!-- 1. Tarjeta del Paciente -->
+        <div class="bg-[#4141a5]/5 rounded-2xl p-4 border border-[#4141a5]/15 flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-white border border-[#4141a5]/20 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+              <img *ngIf="historiaSeleccionada.animal_foto" [src]="historiaSeleccionada.animal_foto" class="w-full h-full object-cover">
+              <span *ngIf="!historiaSeleccionada.animal_foto" class="text-xl">🐾</span>
+            </div>
+            <div>
+              <p class="font-black text-[#170B3D] text-sm">{{ historiaSeleccionada.animal_nombre }}</p>
+              <p class="text-gray-500 text-[11px]">{{ historiaSeleccionada.animal_especie }} · {{ historiaSeleccionada.animal_raza }}</p>
+              <p class="text-gray-400 text-[10px]">Identificador de animal: #{{ historiaSeleccionada.id_animal }}</p>
+            </div>
+          </div>
+          <span
+            [ngClass]="obtenerClaseEstado(historiaSeleccionada.estado_general)"
+            class="px-3 py-1 rounded-full font-bold border">
+            Estado: {{ historiaSeleccionada.estado_general || 'Estable' }}
+          </span>
+        </div>
+
+        <!-- 2. Antecedentes y Desparasitación -->
+        <div class="space-y-3">
+          <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-1">
+            Desparasitación y Vacunación
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Última Desparasitación</span>
+              <p class="font-bold text-gray-800 mt-0.5">
+                {{ formatearFecha(historiaSeleccionada.fecha_ultima_desparasitacion) }}
+              </p>
+              <p class="text-[11px] text-gray-500 mt-1">
+                Producto: <strong>{{ historiaSeleccionada.producto_desparasitacion || 'No indicado' }}</strong>
+              </p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Esquema de Vacunación</span>
+              <p class="font-bold text-gray-800 mt-0.5 whitespace-pre-line">
+                {{ historiaSeleccionada.vacunas || 'Sin vacunas registradas' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Enfermedades y Tratamientos Previos -->
+        <div class="space-y-3">
+          <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-1">
+            Historial Patológico y Terapéutico
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Enfermedades Anteriores</span>
+              <p class="text-gray-700 mt-1 whitespace-pre-line font-medium">
+                {{ historiaSeleccionada.enfermedades_anteriores || 'Ninguna registrada' }}
+              </p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Tratamientos Previos</span>
+              <p class="text-gray-700 mt-1 whitespace-pre-line font-medium">
+                {{ historiaSeleccionada.tratamientos_anteriores || 'Ninguno registrado' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Evolución y Alimentación -->
+        <div class="space-y-3">
+          <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-1">
+            Evolución, Dieta e Historia Reproductiva
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Alimentación</span>
+              <p class="font-semibold text-gray-800 mt-0.5">
+                {{ historiaSeleccionada.alimentacion || 'No especificada' }}
+              </p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Estado Reproductivo</span>
+              <p class="font-semibold text-gray-800 mt-0.5">
+                {{ historiaSeleccionada.estado_reproductivo || 'No registrado' }}
+              </p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span class="text-[10px] text-gray-400 uppercase font-bold block">Último Celo / Parto</span>
+              <p class="font-semibold text-gray-800 mt-0.5">
+                Celo: {{ formatearFecha(historiaSeleccionada.fecha_ultimo_celo) }}<br>
+                Parto: {{ formatearFecha(historiaSeleccionada.fecha_ultimo_parto) }}
+              </p>
+            </div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+            <span class="text-[10px] text-gray-400 uppercase font-bold block">Evolución Previa Reportada</span>
+            <p class="text-gray-700 mt-1 font-medium whitespace-pre-line">
+              {{ historiaSeleccionada.evolucion_previa || 'Sin observaciones de evolución registradas.' }}
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          (click)="cerrarModalDetalle()"
+          class="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer">
+          Cerrar
+        </button>
+        <button
+          type="button"
+          (click)="cerrarModalDetalle(); irAEditar(historiaSeleccionada)"
+          class="px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+          Ir a Edición Clínica
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
