@@ -101,14 +101,77 @@
       <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <span class="text-xs text-[#4141a5] font-bold"> · TURNOS POR ATENDER</span>
-            <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] mt-1">Animales Listos para Iniciar Historia Clínica</h2>
-            <p class="text-xs text-slate-500">Seleccione el animal en espera para sincronizar sus datos con la consulta médica oficial.</p>
+            <span class="text-xs text-[#4141a5] font-bold">
+              {{ filtroEstadoAtencion === 'pendientes' ? '· TURNOS PENDIENTES' : '· HISTORIAS CLÍNICAS COMPLETADAS' }}
+            </span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] mt-1">
+              {{ filtroEstadoAtencion === 'pendientes' ? 'Animales Pendientes de Historia Clínica' : 'Animales Atendidos (Completados)' }}
+            </h2>
+            <p class="text-xs text-slate-500">
+              {{
+                filtroEstadoAtencion === 'pendientes'
+                  ? 'Seleccione un animal en espera para registrar su historia clínica y consulta médica oficial.'
+                  : 'Animales que ya cuentan con su historia clínica finalizada en el sistema.'
+              }}
+            </p>
           </div>
           <button
             class="bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer uppercase tracking-wider">
             <span>+</span> Nuevo Animal en Espera
           </button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- SISTEMA DE FILTROS VISUALES (PESTAÑAS / BOTONES): PENDIENTES vs COMPLETADOS -->
+        <!-- ========================================================================= -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-3 border-b border-slate-100">
+          <div class="inline-flex p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <!-- PESTAÑA: PENDIENTES (COLOR AMARILLO OFICIAL #F1C63C) -->
+            <button
+              type="button"
+              (click)="cambiarFiltroEstadoAtencion('pendientes')"
+              [ngClass]="filtroEstadoAtencion === 'pendientes'
+                ? 'bg-[#F1C63C] text-[#170B3D] shadow-md font-black border border-[#e5ba34]'
+                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/60'"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer">
+              <span class="flex items-center justify-center w-5 h-5 rounded-lg text-xs"
+                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#170B3D]/15 text-[#170B3D]' : 'bg-slate-200/70 text-slate-500'">
+                ⏳
+              </span>
+              <span>Pendientes</span>
+              <span
+                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#170B3D] text-white' : 'bg-slate-200 text-slate-600'"
+                class="px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
+                {{ totalPendientes }}
+              </span>
+            </button>
+
+            <!-- PESTAÑA: COMPLETADOS -->
+            <button
+              type="button"
+              (click)="cambiarFiltroEstadoAtencion('atendidos')"
+              [ngClass]="filtroEstadoAtencion === 'atendidos'
+                ? 'bg-[#4141a5] text-white shadow-md font-black border border-[#33338b]'
+                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/60'"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer">
+              <span class="flex items-center justify-center w-5 h-5 rounded-lg text-xs"
+                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-500'">
+                ✓
+              </span>
+              <span>Completados</span>
+              <span
+                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-white text-[#4141a5]' : 'bg-slate-200 text-slate-600'"
+                class="px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
+                {{ totalAtendidos }}
+              </span>
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-500 font-medium flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full"
+              [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]' : 'bg-[#F1C63C] animate-pulse'"></span>
+            <span>Mostrando: <strong class="text-slate-800">{{ seguimientosFiltrados.length }}</strong> {{ seguimientosFiltrados.length === 1 ? 'animal' : 'animales' }}</span>
+          </div>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
@@ -184,14 +247,33 @@
             {{ error }}
           </div>
 
-          <!-- SIN DATOS -->
-          <div *ngIf="!cargando && !error && seguimientos.length === 0"
-            class="col-span-full text-center py-10 text-slate-500 text-sm">
-            No hay animales en espera.
+          <!-- SIN DATOS / ESTADO VACÍO -->
+          <div *ngIf="!cargando && !error && seguimientosFiltrados.length === 0"
+            class="col-span-full text-center py-12 px-4 text-slate-500 text-sm bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-xl shadow-2xs"
+              [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]/10 text-[#4141a5]' : (filtroEstadoAtencion === 'pendientes' ? 'bg-[#F1C63C]/25 text-[#170B3D]' : 'bg-slate-100 text-slate-500')">
+              {{ filtroEstadoAtencion === 'atendidos' ? '✓' : (filtroEstadoAtencion === 'pendientes' ? '⏳' : '🐾') }}
+            </div>
+            <p class="font-bold text-slate-700 text-sm">
+              {{
+                filtroEstadoAtencion === 'atendidos'
+                  ? 'No hay animales con historia clínica completada'
+                  : (filtroEstadoAtencion === 'pendientes'
+                      ? 'No hay animales pendientes por atender'
+                      : 'No se encontraron animales')
+              }}
+            </p>
+            <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              {{ textoBusqueda || filtroEspecie !== 'Todos'
+                ? 'Prueba cambiando el término de búsqueda o seleccionando otra especie.'
+                : (filtroEstadoAtencion === 'pendientes'
+                    ? 'Todos los animales actuales ya han sido atendidos.'
+                    : 'Los animales que atiendas aparecerán en esta sección.') }}
+            </p>
           </div>
 
           <!-- TARJETAS -->
-          <div *ngFor="let seguimiento of seguimientosFiltrados" (click)="seleccionarSeguimiento(seguimiento)"
+          <div *ngFor="let seguimiento of seguimientosFiltrados; trackBy: trackBySeguimiento" (click)="seleccionarSeguimiento(seguimiento)"
             class="border border-slate-200 bg-white rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative cursor-pointer hover:border-[#4141a5] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group active:scale-[0.99]">
             <div class="flex items-center gap-3.5 flex-1 min-w-0">
               <div
@@ -214,8 +296,13 @@
                     || 'Sin nombre'
                     }}
                   </h4>
-                  <span class="text-[#4141a5] bg-[#4141a5]/10 border border-[#4141a5]/20 font-bold text-xs px-2.5 py-0.5 rounded-full shrink-0">
-                    ✓ Listo
+
+                  <!-- BADGE SOLO PARA COMPLETADOS -->
+                  <span *ngIf="esAnimalAtendido(seguimiento)"
+                    class="text-emerald-700 bg-emerald-50 border border-emerald-200 font-bold text-xs px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1 shadow-2xs"
+                    title="Historia clínica completada">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>✓ Listo</span>
                   </span>
                 </div>
 
