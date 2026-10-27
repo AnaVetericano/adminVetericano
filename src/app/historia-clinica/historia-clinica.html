@@ -443,7 +443,8 @@
                       </span>
                       <div class="min-w-0">
                         <p class="text-sm font-extrabold text-slate-800 truncate">{{ examen.nombre }}</p>
-                        <span *ngIf="examen.tipo" class="text-[10px] text-[#4141a5] font-semibold bg-[#4141a5]/10 px-2 py-0.5 rounded-md">
+                        <span *ngIf="examen.tipo"
+                          class="text-[10px] text-[#4141a5] font-semibold bg-[#4141a5]/10 px-2 py-0.5 rounded-md">
                           {{ examen.tipo }}
                         </span>
                       </div>
@@ -476,8 +477,8 @@
                       <label class="text-[10px] font-bold text-slate-600 uppercase block mb-1">
                         Ruta o Enlace del Archivo / Soporte
                       </label>
-                      <input type="text" [(ngModel)]="examen.ruta_archivo_resultado" (ngModelChange)="formHistoria.markAsDirty()"
-                        placeholder="Ej. /media/examenes/hemograma_01.pdf"
+                      <input type="text" [(ngModel)]="examen.ruta_archivo_resultado"
+                        (ngModelChange)="formHistoria.markAsDirty()" placeholder="Ej. /media/examenes/hemograma_01.pdf"
                         class="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-1 focus:ring-[#4141a5]">
                     </div>
                   </div>
@@ -1293,20 +1294,25 @@
                 <!-- Campos adicionales del modelo Tratamiento (Backend) -->
                 <div class="space-y-2 pt-1 border-t border-slate-100">
                   <div>
-                    <label class="text-[9px] text-slate-400 font-bold block uppercase">Posología / Indicaciones de Uso</label>
-                    <input type="text" [(ngModel)]="medicamento.descripcion" placeholder="Ej. Administrar junto con alimento húmedo..."
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">Posología / Indicaciones de
+                      Uso</label>
+                    <input type="text" [(ngModel)]="medicamento.descripcion"
+                      placeholder="Ej. Administrar junto con alimento húmedo..."
                       class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
                   </div>
 
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="text-[9px] text-slate-400 font-bold block uppercase">Responsable Administración</label>
-                      <input type="text" [(ngModel)]="medicamento.responsable_admin" placeholder="Ej. Dr(a). Veterinario CBA"
+                      <label class="text-[9px] text-slate-400 font-bold block uppercase">Responsable
+                        Administración</label>
+                      <input type="text" [(ngModel)]="medicamento.responsable_admin"
+                        placeholder="Ej. Dr(a). Veterinario CBA"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
                     </div>
                     <div>
                       <label class="text-[9px] text-slate-400 font-bold block uppercase">Tolerancia / Reacciones</label>
-                      <input type="text" [(ngModel)]="medicamento.reaccion_comentarios" placeholder="Ej. Buena tolerancia / Sin vómitos"
+                      <input type="text" [(ngModel)]="medicamento.reaccion_comentarios"
+                        placeholder="Ej. Buena tolerancia / Sin vómitos"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
                     </div>
                   </div>

@@ -20,6 +20,8 @@ export interface MedicamentoItem {
   descripcion?: string;
   cantidad_ml?: string | number;
   tipo?: string;
+  via_administracion?: string;
+  via?: string;
   activo?: boolean;
   estado?: boolean;
   presentacion?: string;

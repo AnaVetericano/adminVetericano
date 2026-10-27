@@ -22,6 +22,7 @@ export interface HistoriaClinicaItem {
   estado_reproductivo?: string;
   fecha_ultimo_celo?: string | null;
   fecha_ultimo_parto?: string | null;
+  id_consulta?: number;
   // Campos enriquecidos para la UI
   animal_nombre?: string;
   animal_especie?: string;
@@ -132,6 +133,7 @@ export class HistoriaClinicaListComponent implements OnInit {
       return {
         id_historia: h.id_historia,
         id_animal: h.id_animal,
+        id_consulta: h.id_consulta || h.ultima_consulta?.id_consulta || h.consulta?.id_consulta || null,
         numero_historia: h.numero_historia || `HC-${h.id_historia}`,
         fecha_apertura: h.fecha_apertura,
         estado_general: h.estado_general || 'Estable',
@@ -267,9 +269,10 @@ export class HistoriaClinicaListComponent implements OnInit {
 
   // Navegación
   irAEditar(historia: HistoriaClinicaItem): void {
-    const id = historia.id_historia || historia.id_animal;
+    const id = historia.id_consulta || historia.id_historia || historia.id_animal;
     this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
       queryParams: {
+        id_consulta: historia.id_consulta || '',
         id_animal: historia.id_animal || '',
         id_historia: historia.id_historia || '',
         nombre: historia.animal_nombre || '',

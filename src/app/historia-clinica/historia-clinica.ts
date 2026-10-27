@@ -154,11 +154,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       const idParam = params.get('id');
       const idQuery = this.route.snapshot.queryParamMap.get('id');
       const idHistoriaQuery = this.route.snapshot.queryParamMap.get('id_historia');
+      const idConsultaQuery = this.route.snapshot.queryParamMap.get('id_consulta');
       const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
       const nombreQuery = this.route.snapshot.queryParamMap.get('nombre') || '';
       const fotoQuery = this.route.snapshot.queryParamMap.get('foto') || '';
 
-      this.idHistoria = idParam || idHistoriaQuery || idQuery || '';
+      this.idHistoria = idParam || idConsultaQuery || idHistoriaQuery || idQuery || '';
 
       this.cargarHistoria(nombreQuery, fotoQuery, idAnimalQuery);
     });
@@ -306,7 +307,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           mucosas: data.constantes?.mucosas || data.mucosas || '',
           gangliosLinfaticos: data.constantes?.ganglios_linfaticos || data.ganglios_linfaticos || '',
           actitudTemperamento: data.constantes?.actitud_temperamento || data.actitud_temperamento || '',
-          observacionesExamen: data.observaciones_examen || '',
+          observacionesExamen: data.observaciones_examen || data.observaciones_sistemas || data.organos_sistemas?.['observaciones'] || '',
           planTratamiento: data.plan_tratamiento || '',
           temperatura: data.constantes?.temperatura ?? null,
           frecuenciaCardiaca: data.constantes?.frecuencia_cardiaca ?? null,
@@ -319,18 +320,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         if (data.organos_sistemas && typeof data.organos_sistemas === 'object') {
           this.sistemas = { ...this.sistemas, ...data.organos_sistemas };
         }
-        this.observacionesSistemas = data.observaciones_sistemas || data.organos_sistemas?.['observaciones'] || '';
+        this.observacionesSistemas = data.observaciones_sistemas || data.observaciones_examen || data.organos_sistemas?.['observaciones'] || '';
         this.descripcionHallazgos = (data as any).descripcion_hallazgos || (data as any).hallazgos_examen || data.diagnostico_diferencial || '';
         this.examenesSolicitados = Array.isArray(data.examenes_solicitados)
           ? data.examenes_solicitados.map((ex: any) => ({
-              id_examen: ex.id_examen || ex.id,
-              nombre: ex.nombre || ex.nombre_examen || 'Examen Clínico',
-              tipo: ex.tipo || 'General',
-              descripcion: ex.descripcion || '',
-              estado: ex.estado || 'solicitado',
-              resultado: ex.resultado || '',
-              ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
-            }))
+            id_examen: ex.id_examen || ex.id,
+            nombre: ex.nombre || ex.nombre_examen || 'Examen Clínico',
+            tipo: ex.tipo || 'General',
+            descripcion: ex.descripcion || '',
+            estado: ex.estado || 'solicitado',
+            resultado: ex.resultado || '',
+            ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+          }))
           : [];
 
         // 3. Población Paso 3: Diagnóstico y Lista de Problemas
@@ -1032,7 +1033,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       motivo_modificacion: formVal.motivoModificacion,
       organos_sistemas: {
         ...this.sistemas,
-        observaciones: this.observacionesSistemas
+        observaciones: this.observacionesSistemas || formVal.observacionesExamen || ''
       },
       examenes_solicitados: this.examenesSolicitados.map(ex => ({
         id_examen: ex.id_examen || ex.id,

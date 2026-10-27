@@ -61,12 +61,13 @@
     <!-- TABLA DE RESULTADOS -->
     <div class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
       <div class="overflow-x-auto overflow-y-auto flex-1">
-        <table class="w-full text-left border-collapse min-w-[600px]">
+        <table class="w-full text-left border-collapse min-w-[700px]">
           <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
             <tr>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Nombre</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Descripción</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Tipo</th>
+              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Vía de administración</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Cantidad (ml)</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Estado</th>
               <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Opciones</th>
@@ -74,15 +75,16 @@
           </thead>
           <tbody class="divide-y divide-gray-100 text-sm">
             <tr *ngIf="cargando">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">Cargando medicamentos...</td>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-400 font-medium">Cargando medicamentos...</td>
             </tr>
             <tr *ngIf="!cargando && medicamentos.length === 0">
-              <td colspan="6" class="px-6 py-8 text-center text-gray-400 font-medium">No se encontraron medicamentos registrados.</td>
+              <td colspan="7" class="px-6 py-8 text-center text-gray-400 font-medium">No se encontraron medicamentos registrados.</td>
             </tr>
             <tr *ngFor="let m of medicamentos" class="hover:bg-[#4141a5]/5 transition-colors group">
               <td class="px-6 py-3.5 font-bold text-[#170B3D]">{{ m.nombre }}</td>
               <td class="px-6 py-3.5 text-gray-600 max-w-xs sm:max-w-md truncate">{{ m.descripcion || 'Sin descripción' }}</td>
               <td class="px-6 py-3.5 text-center text-gray-600">{{ m.tipo || '-' }}</td>
+              <td class="px-6 py-3.5 text-center text-gray-600 font-medium">{{ m?.via_administracion || m?.via || '-' }}</td>
               <td class="px-6 py-3.5 text-center text-gray-600">{{ m.cantidad_ml ?? '-' }} ml</td>
               
               <!-- ESTADO (Píldora dinámica estilo examenes-clinicos) -->
@@ -148,6 +150,16 @@
             type="text" 
             [(ngModel)]="medicamento.tipo" 
             placeholder="Ej. Antibiótico, Analgésico..."
+            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50" 
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Vía de administración</label>
+          <input 
+            type="text" 
+            [(ngModel)]="medicamento.via_administracion" 
+            placeholder="Ej. Oral, SC, IV, Tópica..."
             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50" 
           />
         </div>

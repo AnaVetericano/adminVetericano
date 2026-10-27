@@ -166,15 +166,36 @@ export interface PostulacionVoluntariado {
   fecha_postulacion?: string;
 }
 
+export interface Medicamento {
+  id?: number;
+  id_medicamento?: number;
+  nombre: string;
+  descripcion?: string;
+  cantidad_ml?: number | string | null;
+  tipo?: string;
+  via_administracion?: string;
+  via?: string;
+  activo?: boolean;
+  estado?: boolean;
+}
+
 export interface CrearMedicamento {
   nombre: string;
   descripcion?: string;
+  cantidad_ml?: number | string | null;
+  tipo?: string;
+  via_administracion?: string;
+  via?: string;
   activo: boolean;
 }
 
 export interface ActualizarMedicamento {
   nombre: string;
   descripcion?: string;
+  cantidad_ml?: number | string | null;
+  tipo?: string;
+  via_administracion?: string;
+  via?: string;
   activo: boolean;
 }
 

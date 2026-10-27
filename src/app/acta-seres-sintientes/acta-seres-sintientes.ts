@@ -21,6 +21,9 @@ import { environment } from '../../environments/environment';
   styleUrl: './acta-seres-sintientes.css',
 })
 export class ActaSeresSintientes implements OnInit {
+  private readonly apiDiagnosticoPatologiaUrl = `${environment.apiUrlClinica}diagnostico-patologias/`;
+  private readonly apiHistoriasUrl = environment.apiUrlHistorias || `${environment.apiUrlClinica}historias/`;
+
   // Campos de diagnóstico y tratamiento
   descripcionHallazgos = '';
   diagnosticoFinal = '';
@@ -156,6 +159,43 @@ export class ActaSeresSintientes implements OnInit {
       item?.id;
     const n = Number(candidato);
     return Number.isInteger(n) && n > 0 ? n : undefined;
+  }
+
+  private asegurarHistoriaClinica(idAnimal: number, callbackExito?: () => void): void {
+    const token = localStorage.getItem('token');
+    const headers = token
+      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
+      : new HttpHeaders();
+
+    this.http.get<any>(`${this.apiHistoriasUrl}?id_animal=${idAnimal}`, { headers }).subscribe({
+      next: (res) => {
+        const lista = Array.isArray(res) ? res : (res?.results || []);
+        if (lista.length > 0 && lista[0].id_historia) {
+          const hist = lista[0];
+          if (hist.numero_historia) {
+            this.numeroRadicadoActual = hist.numero_historia;
+          }
+          // Cargar sus antecedentes anamnésicos previos en el formulario si existen
+          this.anamnesicos.ultimaDesparasitacion = hist.fecha_ultima_desparasitacion || this.anamnesicos.ultimaDesparasitacion;
+          this.anamnesicos.productoDesparasitacion = hist.producto_desparasitacion || this.anamnesicos.productoDesparasitacion;
+          this.anamnesicos.vacunas = hist.vacunas || this.anamnesicos.vacunas;
+          this.anamnesicos.enfermedadesAnteriores = hist.enfermedades_anteriores || this.anamnesicos.enfermedadesAnteriores;
+          this.anamnesicos.tratamientos = hist.tratamientos_anteriores || this.anamnesicos.tratamientos;
+          this.anamnesicos.evolucion = hist.evolucion_previa || this.anamnesicos.evolucion;
+          this.anamnesicos.alimentacion = hist.alimentacion || this.anamnesicos.alimentacion;
+          this.anamnesicos.historiaReproductiva = hist.estado_reproductivo || this.anamnesicos.historiaReproductiva;
+          this.anamnesicos.ultimoCelo = hist.fecha_ultimo_celo || this.anamnesicos.ultimoCelo;
+          this.anamnesicos.fechaUltimoParto = hist.fecha_ultimo_parto || this.anamnesicos.fechaUltimoParto;
+          this.cdr.detectChanges();
+          if (callbackExito) callbackExito();
+        } else {
+          if (callbackExito) callbackExito();
+        }
+      },
+      error: () => {
+        if (callbackExito) callbackExito();
+      }
+    });
   }
 
   private escaparHtml(texto: string): string {
@@ -343,60 +383,53 @@ export class ActaSeresSintientes implements OnInit {
       this.guardandoExpediente = true;
       this.cdr.detectChanges();
 
-      // 1. Petición POST principal al endpoint solicitado
-      this.http.post<any>(urlHistorias, payloadHistoria, { headers }).subscribe({
-        next: (respHistoria) => {
-          console.log('Historia clínica creada con éxito en el backend:', respHistoria);
-          const idHistoriaGenerada = respHistoria?.id_historia;
-          this.procesarConsultaAsociada(idHistoriaGenerada, respHistoria, headers);
-        },
-        error: (errorPost) => {
-          console.warn('Error en POST /api/clinica/historias/:', errorPost);
-
-          // Si ya existe una historia clínica para este id_animal (OneToOne unique constraint),
-          // buscamos la existente y la actualizamos con PATCH para que el proceso quede 100% completado.
-          const errorJson = JSON.stringify(errorPost?.error || '').toLowerCase();
-          const esErrorUnico =
-            errorPost?.status === 400 &&
-            (errorJson.includes('already exists') ||
-              errorJson.includes('ya existe') ||
-              errorJson.includes('unique'));
-
-          if (esErrorUnico) {
-            console.log('Historia existente detectada para el animal, actualizando datos...');
-            this.http.get<any>(`${urlHistorias}?id_animal=${idAnimal}`, { headers }).subscribe({
-              next: (listaResp) => {
-                const lista = Array.isArray(listaResp) ? listaResp : (listaResp?.results || []);
-                const historiaExistente = lista[0];
-                if (historiaExistente?.id_historia) {
-                  this.http.patch<any>(`${urlHistorias}${historiaExistente.id_historia}/`, payloadHistoria, { headers }).subscribe({
-                    next: (respPatch) => {
-                      console.log('Historia clínica actualizada correctamente:', respPatch);
-                      this.procesarConsultaAsociada(historiaExistente.id_historia, respPatch, headers, true);
-                    },
-                    error: (errPatch) => {
-                      this.guardandoExpediente = false;
-                      this.cdr.detectChanges();
-                      this.mostrarErrorServidor(errPatch, 'Error al actualizar historia clínica existente');
-                    }
-                  });
-                } else {
-                  this.guardandoExpediente = false;
-                  this.cdr.detectChanges();
-                  this.mostrarErrorServidor(errorPost, 'El paciente ya cuenta con historia clínica pero no se pudo recuperar su ID.');
-                }
+      // Búsqueda previa de GET /api/clinica/historias/?id_animal= antes de crear una historia para evitar el error 400 Bad Request por restricción UNIQUE de OneToOneField
+      this.http.get<any>(`${urlHistorias}?id_animal=${idAnimal}`, { headers }).subscribe({
+        next: (listaResp) => {
+          const lista = Array.isArray(listaResp) ? listaResp : (listaResp?.results || []);
+          if (lista.length > 0 && lista[0]?.id_historia) {
+            const historiaExistente = lista[0];
+            console.log('Historia existente detectada previa para el animal, actualizando datos con PATCH:', historiaExistente.id_historia);
+            this.http.patch<any>(`${urlHistorias}${historiaExistente.id_historia}/`, payloadHistoria, { headers }).subscribe({
+              next: (respPatch) => {
+                console.log('Historia clínica actualizada correctamente:', respPatch);
+                this.procesarConsultaAsociada(historiaExistente.id_historia, respPatch, headers, true);
               },
-              error: () => {
+              error: (errPatch) => {
                 this.guardandoExpediente = false;
                 this.cdr.detectChanges();
-                this.mostrarErrorServidor(errorPost, 'El paciente ya cuenta con una historia clínica registrada.');
+                this.mostrarErrorServidor(errPatch, 'Error al actualizar historia clínica existente');
               }
             });
           } else {
-            this.guardandoExpediente = false;
-            this.cdr.detectChanges();
-            this.mostrarErrorServidor(errorPost, 'No fue posible guardar la historia clínica.');
+            // No existe historia previa: crear con POST
+            this.http.post<any>(urlHistorias, payloadHistoria, { headers }).subscribe({
+              next: (respHistoria) => {
+                console.log('Historia clínica creada con éxito en el backend:', respHistoria);
+                const idHistoriaGenerada = respHistoria?.id_historia;
+                this.procesarConsultaAsociada(idHistoriaGenerada, respHistoria, headers);
+              },
+              error: (errorPost) => {
+                this.guardandoExpediente = false;
+                this.cdr.detectChanges();
+                this.mostrarErrorServidor(errorPost, 'No fue posible guardar la historia clínica.');
+              }
+            });
           }
+        },
+        error: () => {
+          // Fallback en caso de error en GET
+          this.http.post<any>(urlHistorias, payloadHistoria, { headers }).subscribe({
+            next: (respHistoria) => {
+              const idHistoriaGenerada = respHistoria?.id_historia;
+              this.procesarConsultaAsociada(idHistoriaGenerada, respHistoria, headers);
+            },
+            error: (errorPost) => {
+              this.guardandoExpediente = false;
+              this.cdr.detectChanges();
+              this.mostrarErrorServidor(errorPost, 'No fue posible guardar la historia clínica.');
+            }
+          });
         }
       });
     });
@@ -425,7 +458,13 @@ export class ActaSeresSintientes implements OnInit {
       ganglios_linfaticos: this.textoOpcional(this.signosVitales.gangliosLinfaticos) || '',
       mucosas: this.textoOpcional(this.signosVitales.mucosas) || '',
       actitud_temperamento: this.textoOpcional(this.signosVitales.actitudTemperamento) || '',
-      evaluacion_sistemas: this.sistemas,
+      evaluacion_sistemas: {
+        ...this.sistemas,
+        _veterinario_responsable: this.nombreVeterinario?.trim() || '',
+        _tarjeta_profesional: this.tarjetaProfesional?.trim() || '',
+        _acudiente_nombre: this.nombreAcudiente?.trim() || '',
+        _acudiente_cedula: this.cedulaAcudiente?.trim() || ''
+      },
       hallazgos_examen: this.textoOpcional(this.descripcionHallazgos) || '',
       observaciones_examen: this.textoOpcional(this.observacionesExamen) || '',
       observaciones_sistemas: this.textoOpcional(this.observacionesSistemas) || '',
@@ -467,7 +506,7 @@ export class ActaSeresSintientes implements OnInit {
           this.http.post<any>(`${environment.apiUrlClinica}diagnosticos/`, payloadDiag, { headers }).subscribe({
             next: (respDiag) => {
               if (this.idPatologiaSeleccionada && respDiag?.id_diagnostico) {
-                this.http.post<any>(`${environment.apiUrlClinica}diagnostico-patologia/`, {
+                this.http.post<any>(this.apiDiagnosticoPatologiaUrl, {
                   id_diagnostico: respDiag.id_diagnostico,
                   id_patologia: this.idPatologiaSeleccionada,
                   hallazgos_pruebas: this.descripcionHallazgos || ''
@@ -478,17 +517,24 @@ export class ActaSeresSintientes implements OnInit {
           });
         }
 
-        // 2. Registrar Tratamientos asociados a la consulta
+        // 2. Registrar Tratamientos asociados a la consulta con responsable_admin y reaccion_comentarios
         if (idConsultaGenerada && Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
           this.medicamentosSeleccionados.forEach((m: any) => {
+            const detallesExtra = [
+              m.descripcion?.trim(),
+              m.responsable_admin?.trim() ? `Resp: ${m.responsable_admin.trim()}` : '',
+              m.reaccion_comentarios?.trim() ? `Reacción/Obs: ${m.reaccion_comentarios.trim()}` : ''
+            ].filter(Boolean).join(' | ').slice(0, 255);
+
             const payloadTrat = {
               id_consulta: idConsultaGenerada,
-              producto_base: m.nombre || m.productoBase || 'Medicamento',
-              dosis_basica: m.dosis || m.dosisBasica || '',
-              presentacion: m.presentacion || '',
-              via_administracion: m.via || '',
-              frecuencia_duracion: m.frecuencia || m.frecuenciaDuracion || '',
-              materiales_utilizados: this.materialesUtilizados || ''
+              producto_base: (m.nombre || m.productoBase || 'Medicamento').slice(0, 150),
+              dosis_basica: (m.dosis?.trim() || m.dosisBasica?.trim() || 'Según valoración').slice(0, 100),
+              presentacion: (m.presentacion?.trim() || 'No especificada').slice(0, 100),
+              via_administracion: (m.via?.trim() || 'No especificada').slice(0, 100),
+              frecuencia_duracion: ([m.frecuencia?.trim() || m.frecuenciaDuracion?.trim(), m.duracion_dias ? `${m.duracion_dias} días` : ''].filter(Boolean).join(' · ') || 'Según evolución').slice(0, 100),
+              descripcion: detallesExtra || 'Aplicación en consulta',
+              materiales_utilizados: this.materialesUtilizados?.trim() || ''
             };
             this.http.post<any>(`${environment.apiUrlClinica}tratamientos/`, payloadTrat, { headers }).subscribe({ error: () => {} });
           });
@@ -496,12 +542,21 @@ export class ActaSeresSintientes implements OnInit {
 
         // 3. Actualizar peso del paciente si se especificó
         const idAnimalActual = this.resolverIdAnimal(this.seguimientoSeleccionado);
-        if (idAnimalActual && this.pesoPaciente) {
-          const pesoVal = Number(this.pesoPaciente);
-          if (!isNaN(pesoVal) && pesoVal > 0) {
-            this.http.patch<any>(`${environment.apiUrlAnimales}${idAnimalActual}/`, { peso: pesoVal }, { headers }).subscribe({ error: () => {} });
+        if (idAnimalActual) {
+          this.animalesConHistoriaIds.add(Number(idAnimalActual));
+          if (this.pesoPaciente) {
+            const pesoVal = Number(this.pesoPaciente);
+            if (!isNaN(pesoVal) && pesoVal > 0) {
+              this.http.patch<any>(`${environment.apiUrlAnimales}${idAnimalActual}/`, { peso: pesoVal }, { headers }).subscribe({ error: () => {} });
+            }
           }
         }
+
+        if (this.seguimientoSeleccionado) {
+          this.seguimientoSeleccionado.atendido = true;
+          this.seguimientoSeleccionado.peticion_estado = 'Atendida';
+        }
+        this.aplicarFiltros();
 
         Swal.fire({
           title: '¡Historia clínica y consulta guardadas!',
@@ -521,6 +576,16 @@ export class ActaSeresSintientes implements OnInit {
       },
       error: (errConsulta) => {
         console.warn('Historia clínica guardada, detalle de consulta:', errConsulta);
+        const idAnimalActual = this.resolverIdAnimal(this.seguimientoSeleccionado);
+        if (idAnimalActual) {
+          this.animalesConHistoriaIds.add(Number(idAnimalActual));
+        }
+        if (this.seguimientoSeleccionado) {
+          this.seguimientoSeleccionado.atendido = true;
+          this.seguimientoSeleccionado.peticion_estado = 'Atendida';
+        }
+        this.aplicarFiltros();
+
         Swal.fire({
           title: '¡Historia clínica registrada!',
           icon: 'success',
@@ -558,6 +623,11 @@ export class ActaSeresSintientes implements OnInit {
   error = '';
   textoBusqueda = '';
   filtroEspecie = 'Todos';
+
+  // Filtro visual de historia clínica: solo 'pendientes' y 'atendidos' (completados)
+  filtroEstadoAtencion: 'pendientes' | 'atendidos' = 'pendientes';
+  // Conjunto de IDs de animales que ya cuentan con historia clínica en la base de datos
+  animalesConHistoriaIds: Set<number> = new Set<number>();
 
   // Datos que se muestran en el aval profesional
   numeroRadicadoActual = '';
@@ -865,6 +935,9 @@ export class ActaSeresSintientes implements OnInit {
     this.cargando = true;
     this.error = '';
 
+    // Precargar historias clínicas existentes para determinar qué animales ya tienen historia finalizada
+    this.precargarHistoriasClinicasExistentes();
+
     this.authService.listarSeguimientos().subscribe({
       next: (respuesta: any) => {
         if (Array.isArray(respuesta)) {
@@ -891,6 +964,94 @@ export class ActaSeresSintientes implements OnInit {
     });
   }
 
+  /**
+   * Consulta las historias clínicas existentes para registrar los IDs de animales con historia finalizada
+   */
+  private precargarHistoriasClinicasExistentes(): void {
+    const token = localStorage.getItem('token');
+    const headers = token
+      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
+      : new HttpHeaders();
+
+    this.http.get<any>(this.apiHistoriasUrl, { headers }).subscribe({
+      next: (resp) => {
+        const lista = Array.isArray(resp) ? resp : (resp?.results || resp?.data || []);
+        lista.forEach((h: any) => {
+          const id = Number(h?.id_animal ?? h?.animal?.id_animal ?? h?.animal?.id);
+          if (id && !isNaN(id)) {
+            this.animalesConHistoriaIds.add(id);
+          }
+        });
+        this.aplicarFiltros();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.warn('No se pudieron precargar las historias clínicas existentes:', err);
+      }
+    });
+  }
+
+  /**
+   * Determina si un animal ya tiene su historia clínica finalizada / completada ('listo' o completado)
+   */
+  esAnimalAtendido(item: any): boolean {
+    if (!item) return false;
+
+    // 1. Verificación directa por ID del animal en historias clínicas guardadas
+    const idAnimal = this.resolverIdAnimal(item);
+    if (idAnimal && this.animalesConHistoriaIds.has(Number(idAnimal))) {
+      return true;
+    }
+
+    // 2. Flags booleanas explícitas de estado
+    if (
+      item.atendido === true ||
+      item.completado === true ||
+      item.listo === true ||
+      item.tiene_historia === true ||
+      item.finalizado === true
+    ) {
+      return true;
+    }
+    if (item.atendido === false || item.completado === false) {
+      return false;
+    }
+
+    // 3. IDs de expediente clínico o consulta vinculados
+    if (item.id_historia || item.id_consulta || item.historia || item.historia_clinica) {
+      return true;
+    }
+
+    // 4. Verificación por estados textuales de petición o atención
+    const estadosToCheck = [
+      item.peticion_estado,
+      item.estado,
+      item.estado_atencion,
+      item.estado_peticion,
+      item.status,
+      item.estado_clinico
+    ];
+
+    for (const estado of estadosToCheck) {
+      if (estado && typeof estado === 'string') {
+        const e = estado.trim().toLowerCase();
+        if (
+          e.includes('atendid') ||
+          e.includes('completad') ||
+          e.includes('listo') ||
+          e.includes('lista') ||
+          e.includes('finaliz') ||
+          e.includes('resuelt') ||
+          e.includes('alta')
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   filtrarPorEspecie(especie: string): void {
     this.filtroEspecie = especie;
     this.aplicarFiltros();
@@ -900,10 +1061,32 @@ export class ActaSeresSintientes implements OnInit {
     this.aplicarFiltros();
   }
 
+  cambiarFiltroEstadoAtencion(estado: 'pendientes' | 'atendidos'): void {
+    this.filtroEstadoAtencion = estado;
+    this.aplicarFiltros();
+  }
+
+  get totalPendientes(): number {
+    return this.seguimientos.filter(s => !this.esAnimalAtendido(s)).length;
+  }
+
+  get totalAtendidos(): number {
+    return this.seguimientos.filter(s => this.esAnimalAtendido(s)).length;
+  }
+
   aplicarFiltros(): void {
     const texto = (this.textoBusqueda || '').trim().toLowerCase();
 
     this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {
+      // 1. Filtro por estado de atención (Pendientes vs Completados)
+      const atendido = this.esAnimalAtendido(seguimiento);
+      const coincideEstadoAtencion = this.filtroEstadoAtencion === 'atendidos' ? atendido : !atendido;
+
+      if (!coincideEstadoAtencion) {
+        return false;
+      }
+
+      // 2. Filtro por especie
       const especie = String(
         seguimiento?.paciente_especie ||
         seguimiento?.especie ||
@@ -915,6 +1098,15 @@ export class ActaSeresSintientes implements OnInit {
         this.filtroEspecie === 'Todos' ||
         !this.filtroEspecie ||
         especie === this.filtroEspecie.trim().toLowerCase();
+
+      if (!coincideEspecie) {
+        return false;
+      }
+
+      // 3. Filtro por texto de búsqueda
+      if (!texto) {
+        return true;
+      }
 
       const campos = [
         seguimiento?.nombre_paciente,
@@ -929,11 +1121,9 @@ export class ActaSeresSintientes implements OnInit {
         seguimiento?.numero_radicado
       ];
 
-      const coincideTexto = !texto || campos.some((campo: any) =>
+      return campos.some((campo: any) =>
         String(campo || '').toLowerCase().includes(texto)
       );
-
-      return coincideEspecie && coincideTexto;
     });
   }
 
@@ -1052,8 +1242,10 @@ export class ActaSeresSintientes implements OnInit {
 
     console.log('Seguimiento seleccionado:', seguimiento);
     console.log('Nombre del tutor:', this.nombreAcudiente);
-    console.log('Cédula del tutor:', this.cedulaAcudiente);
-    console.log('Veterinario asignado:', this.nombreVeterinario);
+    const idAnimal = this.resolverIdAnimal(seguimiento);
+    if (idAnimal) {
+      this.asegurarHistoriaClinica(idAnimal);
+    }
 
     this.cdr.detectChanges();
 
