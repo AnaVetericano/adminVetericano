@@ -58,13 +58,20 @@ export interface HistoriaClinicaEdicion {
   fecha_apertura: string;
   estado_general?: string;
   prioridad?: string;
+  anamnesis?: string;
   resultado_estado?: string;
+  frecuencia_respiratoria?: number | null;
+  frecuencia_cardiaca?: number | null;
+  temperatura?: number | null;
   pulso?: string;
   tllc?: string;
   mucosas?: string;
   ganglios_linfaticos?: string;
   actitud_temperamento?: string;
+  hallazgos_examen?: string;
+  evaluacion_sistemas?: Record<string, any>;
   observaciones_examen?: string;
+  examenes_complementarios?: any[];
   descripcion_hallazgos?: string;
   paciente: PacienteHistoria;
   motivo_consulta: string;
@@ -73,6 +80,7 @@ export interface HistoriaClinicaEdicion {
   lista_problemas?: string;
   evolucion: string;
   pronostico: string;
+  plan_procedimientos?: string;
   plan_tratamiento: string;
   constantes?: ConstantesFisiologicas;
   historial_modificaciones: RegistroAuditoria[];
@@ -81,7 +89,8 @@ export interface HistoriaClinicaEdicion {
   examenes_solicitados?: any[];
   tratamientos?: any[];
   materiales_utilizados?: string;
-  ingresa_cba?: string;
+  ingresa_cba?: boolean | string;
+  motivo_ingreso_cba?: string;
   motivo_ingreso_no_ingreso?: string;
   canil_asignado?: string;
   funcionario_recibe_cba?: string;
@@ -692,6 +701,17 @@ export class HistoriaClinicaService {
     const idConsultaNum = Number(raw.id_consulta || ultimaConsulta.id_consulta || 1);
     const idHistoriaNum = Number(raw.id_historia || ultimaConsulta.id_historia || idFallback || 1);
     const idAnimalNum = Number(raw.id_animal || animal.id_animal || ultimaConsulta.id_animal || 1);
+    const hallazgosStr = hoja2Obj.descripcionHallazgos || hoja2Obj.hallazgos_pruebas || ultimaConsulta.hallazgos_examen || raw.hallazgos_examen || raw.descripcion_hallazgos || '';
+    const planProcStr = hoja2Obj.planProcedimientos || ultimaConsulta.plan_procedimientos || raw.plan_procedimientos || anamnesicos.tratamientos || raw.plan_tratamiento || '';
+    const anamnesisStr = ultimaConsulta.anamnesis || raw.anamnesis || anamnesicos.evolucion || anamnesicos.evolucionPrevia || ultimaConsulta.evolucion || raw.evolucion || '';
+    const ingresaCbaBool =
+      hoja3Obj.ingresaCBA === 'SI' ||
+      hoja3Obj.ingresaCBA === true ||
+      ultimaConsulta.ingresa_cba === true ||
+      String(ultimaConsulta.ingresa_cba || '').toUpperCase() === 'SI' ||
+      raw.ingresa_cba === true ||
+      String(raw.ingresa_cba || '').toUpperCase() === 'SI';
+    const motivoCbaStr = hoja3Obj.motivoIngresoNoIngreso || ultimaConsulta.motivo_ingreso_cba || raw.motivo_ingreso_cba || raw.motivo_ingreso_no_ingreso || '';
 
     return {
       id_historia: idHistoriaNum,
@@ -701,14 +721,21 @@ export class HistoriaClinicaService {
       fecha_apertura: ultimaConsulta.fecha_hora || raw.fecha_apertura || new Date().toISOString(),
       estado_general: ultimaConsulta.resultado_estado || raw.estado_general || 'Estable',
       prioridad: ultimaConsulta.prioridad || raw.prioridad || 'Normal',
+      anamnesis: anamnesisStr,
       resultado_estado: ultimaConsulta.resultado_estado || raw.resultado_estado || 'Estable',
+      frecuencia_respiratoria: fr,
+      frecuencia_cardiaca: fc,
+      temperatura: temp,
       pulso: examObj.pulso || ultimaConsulta.pulso || raw.pulso || '',
       tllc: examObj.tiempoLlenadoCapilar || examObj.tllc || ultimaConsulta.tllc || raw.tllc || '',
       mucosas: examObj.mucosas || ultimaConsulta.mucosas || raw.mucosas || '',
       ganglios_linfaticos: examObj.gangliosLinfaticos || examObj.ganglios || ultimaConsulta.ganglios_linfaticos || raw.ganglios_linfaticos || '',
       actitud_temperamento: examObj.actitudTemperamento || examObj.actitud || ultimaConsulta.actitud_temperamento || raw.actitud_temperamento || '',
+      hallazgos_examen: hallazgosStr,
+      evaluacion_sistemas: orgObj,
       observaciones_examen: obsExamen,
-      descripcion_hallazgos: hoja2Obj.descripcionHallazgos || hoja2Obj.hallazgos_pruebas || ultimaConsulta.hallazgos_examen || raw.descripcion_hallazgos || '',
+      examenes_complementarios: examenes,
+      descripcion_hallazgos: hallazgosStr,
       paciente: {
         id_animal: idAnimalNum,
         nombre: animal.nombre || nombrePaciente || 'Paciente',
@@ -726,11 +753,12 @@ export class HistoriaClinicaService {
       },
       motivo_consulta: motivoStr,
       diagnostico_principal: hoja2Obj.diagnosticoPresuntivo || hoja2Obj.diagnosticoFinal || ultimaConsulta.diagnostico_principal || ultimaConsulta.diagnostico_final || raw.diagnostico_principal || '',
-      diagnostico_diferencial: hoja2Obj.diagnosticoDiferencial || hoja2Obj.descripcionHallazgos || ultimaConsulta.diagnostico_diferencial || ultimaConsulta.hallazgos_examen || raw.diagnostico_diferencial || '',
+      diagnostico_diferencial: hoja2Obj.diagnosticoDiferencial || hallazgosStr || ultimaConsulta.diagnostico_diferencial || raw.diagnostico_diferencial || '',
       lista_problemas: listaProblemasStr,
-      evolucion: anamnesicos.evolucion || anamnesicos.evolucionPrevia || ultimaConsulta.evolucion || ultimaConsulta.hallazgos_examen || raw.evolucion || '',
+      evolucion: anamnesisStr || hallazgosStr,
       pronostico: hoja2Obj.pronostico || ultimaConsulta.pronostico || raw.pronostico || 'Favorable',
-      plan_tratamiento: hoja2Obj.planProcedimientos || ultimaConsulta.plan_procedimientos || anamnesicos.tratamientos || raw.plan_tratamiento || '',
+      plan_procedimientos: planProcStr,
+      plan_tratamiento: planProcStr,
       constantes: {
         temperatura: temp,
         frecuencia_cardiaca: fc,
@@ -746,10 +774,11 @@ export class HistoriaClinicaService {
       examenes_solicitados: examenes,
       tratamientos: tratamientos,
       materiales_utilizados: hoja2Obj.materialesUtilizados || ultimaConsulta.materiales_utilizados || raw.materiales_utilizados || '',
-      ingresa_cba: hoja3Obj.ingresaCBA || (ultimaConsulta.ingresa_cba ? 'SI' : 'NO') || (raw.ingresa_cba ? 'SI' : 'NO') || 'NO',
-      motivo_ingreso_no_ingreso: hoja3Obj.motivoIngresoNoIngreso || ultimaConsulta.motivo_ingreso_cba || raw.motivo_ingreso_no_ingreso || '',
+      ingresa_cba: ingresaCbaBool,
+      motivo_ingreso_cba: motivoCbaStr,
+      motivo_ingreso_no_ingreso: motivoCbaStr,
       canil_asignado: hoja3Obj.canilAsignado || ultimaConsulta.canil_asignado || raw.canil_asignado || '',
-      funcionario_recibe_cba: hoja3Obj.funcionarioRecibeCBA || ultimaConsulta.funcionario_recibe_cba || raw.funcionario_recibe_cba || '',
+      funcionario_recibe_cba: hoja3Obj.funcionarioRecibeCBA || hoja3Obj.funcionarioRecibe || ultimaConsulta.funcionario_recibe_cba || raw.funcionario_recibe_cba || '',
       nombre_veterinario: orgObj._veterinario_responsable || hoja3Obj.funcionarioRecibeCBA || ultimaConsulta.funcionario_recibe_cba || raw.nombre_veterinario || '',
       tarjeta_profesional: orgObj._tarjeta_profesional || raw.tarjeta_profesional || '',
       nombre_acudiente: orgObj._acudiente_nombre || tenedor.nombres || tenedor.nombre || raw.nombre_acudiente || '',
@@ -758,6 +787,166 @@ export class HistoriaClinicaService {
         ? raw.historial_modificaciones
         : (Array.isArray(orgObj._historial_modificaciones) ? orgObj._historial_modificaciones : [])
     };
+  }
+
+  /**
+   * Obtiene directamente los datos de la Consulta por id_historia, id_consulta, id_animal o nombre del paciente
+   * usando únicamente peticiones GET y filtrando estrictamente para no mezclar datos de otros animales.
+   */
+  obtenerConsultaPorHistoriaOId(
+    idHistoriaOIdConsulta?: number | string | null,
+    idAnimal?: number | string | null,
+    nombrePaciente?: string | null
+  ): Observable<any> {
+    const cleanId = String(idHistoriaOIdConsulta ?? '').trim();
+    const cleanIdAnimal = String(idAnimal ?? '').trim();
+    const cleanNombre = String(nombrePaciente ?? '').trim().toLowerCase();
+    const urlConsultas = environment.apiUrlConsultas || `${this.baseUrlClinica}consultas/`;
+    const urlHistorias = environment.apiUrlHistorias || `${this.baseUrlClinica}historias/`;
+
+    // Si no se especificó ningún criterio de búsqueda del paciente, no devolver consultas de otros animales
+    if (!cleanId && !cleanIdAnimal && !cleanNombre) {
+      return of(null);
+    }
+
+    // 1. Si tenemos id_animal, consultar directamente las consultas de ese animal (?id_animal=...)
+    const buscarPorAnimal$ = cleanIdAnimal
+      ? this.http.get<any>(`${urlConsultas}?id_animal=${cleanIdAnimal}`, { headers: this.authHeaders }).pipe(
+          map(res => this.extraerLista(res)),
+          catchError(() => of([]))
+        )
+      : of([]);
+
+    // 2. Si tenemos id_historia o id_consulta, consultar por id_historia
+    const buscarPorHistoria$ = cleanId
+      ? this.http.get<any>(`${urlConsultas}?id_historia=${cleanId}`, { headers: this.authHeaders }).pipe(
+          map(res => this.extraerLista(res)),
+          catchError(() => of([]))
+        )
+      : of([]);
+
+    return forkJoin({
+      porAnimal: buscarPorAnimal$,
+      porHistoria: buscarPorHistoria$
+    }).pipe(
+      switchMap(({ porAnimal, porHistoria }) => {
+        // Prioridad 1: Consultas filtradas por id_animal en el backend
+        if (porAnimal.length > 0) {
+          const ordenadasAnimal = [...porAnimal].sort(
+            (a, b) => Number(b?.id_consulta || 0) - Number(a?.id_consulta || 0)
+          );
+          return this.enriquecerConsultaConDiagnosticosYTratamientos(ordenadasAnimal[0]);
+        }
+
+        // Prioridad 2: Coincidencia estricta por id_historia o id_consulta
+        if (porHistoria.length > 0 && cleanId) {
+          const ordenadasHist = [...porHistoria].sort(
+            (a, b) => Number(b?.id_consulta || 0) - Number(a?.id_consulta || 0)
+          );
+          const coincidencia = ordenadasHist.find(
+            c =>
+              Number(c?.id_historia) === Number(cleanId) ||
+              Number(c?.id_consulta) === Number(cleanId)
+          );
+          if (coincidencia) {
+            return this.enriquecerConsultaConDiagnosticosYTratamientos(coincidencia);
+          }
+        }
+
+        // Prioridad 3: Buscar historia del animal en /api/clinica/historias/?id_animal=... y luego su consulta
+        if (cleanIdAnimal) {
+          return this.http.get<any>(`${urlHistorias}?id_animal=${cleanIdAnimal}`, { headers: this.authHeaders }).pipe(
+            map(res => this.extraerLista(res)),
+            catchError(() => of([])),
+            switchMap((historias: any[]) => {
+              const histExacta = historias.find((h: any) => Number(h?.id_animal) === Number(cleanIdAnimal));
+              if (histExacta?.id_historia) {
+                return this.http.get<any>(`${urlConsultas}?id_historia=${histExacta.id_historia}`, { headers: this.authHeaders }).pipe(
+                  map(res => this.extraerLista(res).filter((c: any) => Number(c?.id_historia) === Number(histExacta.id_historia))),
+                  catchError(() => of([])),
+                  switchMap((consList: any[]) => {
+                    if (consList.length > 0) {
+                      const ord = [...consList].sort((a, b) => Number(b?.id_consulta || 0) - Number(a?.id_consulta || 0));
+                      return this.enriquecerConsultaConDiagnosticosYTratamientos({
+                        ...ord[0],
+                        anamnesis: ord[0].anamnesis || histExacta.evolucion_previa || ''
+                      });
+                    }
+                    return this.buscarConsultaPorNombreEnExpediente(cleanNombre);
+                  })
+                );
+              }
+              return this.buscarConsultaPorNombreEnExpediente(cleanNombre);
+            })
+          );
+        }
+
+        return this.buscarConsultaPorNombreEnExpediente(cleanNombre);
+      })
+    );
+  }
+
+  /**
+   * Si el animal fue registrado desde la app móvil en expediente-completo con un ID distinto pero el mismo nombre,
+   * localiza su última consulta mediante GET /api/clinica/expediente-completo/?search=<nombre>.
+   */
+  private buscarConsultaPorNombreEnExpediente(nombrePacienteLower: string): Observable<any> {
+    if (!nombrePacienteLower) {
+      return of(null);
+    }
+    const urlExp = `${this.baseUrlClinica}expediente-completo/?search=${encodeURIComponent(nombrePacienteLower)}`;
+    const urlConsultas = environment.apiUrlConsultas || `${this.baseUrlClinica}consultas/`;
+
+    return this.http.get<any>(urlExp, { headers: this.authHeaders }).pipe(
+      map(res => this.extraerLista(res)),
+      catchError(() => of([])),
+      switchMap((resultados: any[]) => {
+        const coincidenciaNombre = resultados.find(
+          (item: any) => String(item?.animal?.nombre || '').trim().toLowerCase() === nombrePacienteLower
+        );
+        const idConsulta = coincidenciaNombre?.ultima_consulta?.id_consulta;
+        const idHistoria = coincidenciaNombre?.id_historia;
+
+        if (idConsulta) {
+          return this.http.get<any>(`${urlConsultas}${idConsulta}/`, { headers: this.authHeaders }).pipe(
+            switchMap(consultaDirecta => this.enriquecerConsultaConDiagnosticosYTratamientos(consultaDirecta)),
+            catchError(() => of(null))
+          );
+        }
+        if (idHistoria) {
+          return this.http.get<any>(`${urlConsultas}?id_historia=${idHistoria}`, { headers: this.authHeaders }).pipe(
+            map(res => this.extraerLista(res).filter((c: any) => Number(c?.id_historia) === Number(idHistoria))),
+            catchError(() => of([])),
+            switchMap((consList: any[]) => {
+              if (consList.length > 0) {
+                return this.enriquecerConsultaConDiagnosticosYTratamientos(consList[0]);
+              }
+              return of(null);
+            })
+          );
+        }
+        return of(null);
+      })
+    );
+  }
+
+  private enriquecerConsultaConDiagnosticosYTratamientos(consulta: any): Observable<any> {
+    if (!consulta || !consulta.id_consulta) {
+      return of(consulta);
+    }
+    return this.ensamblarExpedienteDesdeEndpoints(consulta.id_consulta).pipe(
+      map(({ diagnosticos, tratamientos }) => {
+        const diag = diagnosticos.length > 0 ? diagnosticos[0] : null;
+        return {
+          ...consulta,
+          diagnostico_principal: diag?.descripcion || consulta.diagnostico_principal || consulta.diagnostico_final || '',
+          diagnostico_diferencial: diag?.tipo_diagnostico || consulta.diagnostico_diferencial || '',
+          lista_problemas: diag?.lista_problemas || consulta.lista_problemas || '',
+          tratamientos: tratamientos.length > 0 ? tratamientos : (consulta.tratamientos || [])
+        };
+      }),
+      catchError(() => of(consulta))
+    );
   }
 
   /**

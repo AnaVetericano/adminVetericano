@@ -1,11 +1,12 @@
 import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { ComprasService } from '../services/compras.service';
 import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
+import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { finalize, forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -16,13 +17,77 @@ import { environment } from '../../environments/environment';
 @Component({
   selector: 'app-acta-seres-sintientes',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, ReactiveFormsModule, CommonModule],
   templateUrl: './acta-seres-sintientes.html',
   styleUrl: './acta-seres-sintientes.css',
 })
 export class ActaSeresSintientes implements OnInit {
   private readonly apiDiagnosticoPatologiaUrl = `${environment.apiUrlClinica}diagnostico-patologias/`;
   private readonly apiHistoriasUrl = environment.apiUrlHistorias || `${environment.apiUrlClinica}historias/`;
+
+  // Formulario Reactivo de los 4 apartados de la Consulta
+  formConsulta!: FormGroup;
+
+  // =========================================================================
+  // 1. CONSULTA (Espera y Datos del Paciente)
+  // =========================================================================
+  get motivo_consulta(): string { return this.motivoConsulta; }
+  set motivo_consulta(v: string) { this.motivoConsulta = v ?? ''; }
+  anamnesis = '';
+  get actitud_temperamento(): string { return this.signosVitales.actitudTemperamento; }
+  set actitud_temperamento(v: string) { this.signosVitales.actitudTemperamento = v ?? ''; }
+  get resultado_estado(): string { return this.resultadoEstado; }
+  set resultado_estado(v: string) { this.resultadoEstado = v || 'Estable'; }
+
+  // =========================================================================
+  // 2. EXÁMENES (Pruebas y Sistemas Orgánicos)
+  // =========================================================================
+  get frecuencia_respiratoria(): number | string | null { return this.signosVitales.frecuenciaRespiratoria; }
+  set frecuencia_respiratoria(v: number | string | null) { this.signosVitales.frecuenciaRespiratoria = v; }
+  get frecuencia_cardiaca(): number | string | null { return this.signosVitales.frecuenciaCardiaca; }
+  set frecuencia_cardiaca(v: number | string | null) { this.signosVitales.frecuenciaCardiaca = v; }
+  get temperatura(): number | string | null { return this.signosVitales.temperatura; }
+  set temperatura(v: number | string | null) { this.signosVitales.temperatura = v; }
+  get pulso(): string { return this.signosVitales.pulso; }
+  set pulso(v: string) { this.signosVitales.pulso = v ?? ''; }
+  get tllc(): string { return this.signosVitales.tiempoLlenadoCapilar; }
+  set tllc(v: string) { this.signosVitales.tiempoLlenadoCapilar = v ?? ''; }
+  get ganglios_linfaticos(): string { return this.signosVitales.gangliosLinfaticos; }
+  set ganglios_linfaticos(v: string) { this.signosVitales.gangliosLinfaticos = v ?? ''; }
+  get mucosas(): string { return this.signosVitales.mucosas; }
+  set mucosas(v: string) { this.signosVitales.mucosas = v ?? ''; }
+  get hallazgos_examen(): string { return this.descripcionHallazgos; }
+  set hallazgos_examen(v: string) { this.descripcionHallazgos = v ?? ''; }
+  get evaluacion_sistemas(): { [key: string]: string } { return this.sistemas; }
+  set evaluacion_sistemas(v: { [key: string]: string }) {
+    if (v && typeof v === 'object') {
+      this.sistemas = { ...this.crearSistemasPorDefecto(), ...v };
+    }
+  }
+  get observaciones_examen(): string { return this.observacionesExamen; }
+  set observaciones_examen(v: string) { this.observacionesExamen = v ?? ''; }
+  get examenes_complementarios(): any[] { return this.examenesSolicitados; }
+  set examenes_complementarios(v: any[]) { this.examenesSolicitados = Array.isArray(v) ? v : []; }
+
+  // =========================================================================
+  // 3. DIAGNÓSTICO (Patología y Plan de Acción)
+  // =========================================================================
+  get plan_procedimientos(): string { return this.planProcedimientos; }
+  set plan_procedimientos(v: string) { this.planProcedimientos = v ?? ''; }
+
+  // =========================================================================
+  // 4. TRATAMIENTOS (Fármacos, Insumos y Firmas)
+  // =========================================================================
+  get materiales_utilizados(): string { return this.materialesUtilizados; }
+  set materiales_utilizados(v: string) { this.materialesUtilizados = v ?? ''; }
+  get ingresa_cba(): boolean { return this.ingresaCBA === 'SI'; }
+  set ingresa_cba(v: boolean) { this.ingresaCBA = v ? 'SI' : 'NO'; }
+  get motivo_ingreso_cba(): string { return this.motivoIngresoNoIngreso; }
+  set motivo_ingreso_cba(v: string) { this.motivoIngresoNoIngreso = v ?? ''; }
+  get canil_asignado(): string { return this.canilAsignado; }
+  set canil_asignado(v: string) { this.canilAsignado = v ?? ''; }
+  get funcionario_recibe_cba(): string { return this.funcionarioRecibeCBA; }
+  set funcionario_recibe_cba(v: string) { this.funcionarioRecibeCBA = v ?? ''; }
 
   // Campos de diagnóstico y tratamiento
   descripcionHallazgos = '';
@@ -145,7 +210,7 @@ export class ActaSeresSintientes implements OnInit {
     return entero ? Math.round(n) : n;
   }
 
-  /** ID real del animal (entero positivo). */
+  /** ID real del animal (entero positivo), sin confundirlo con id_seguimiento. */
   private resolverIdAnimal(item: any): number | undefined {
     const candidato =
       item?.id_animal ??
@@ -156,9 +221,496 @@ export class ActaSeresSintientes implements OnInit {
       item?.animales?.[0]?.id ??
       item?.paciente?.id_animal ??
       item?.paciente?.id ??
-      item?.id;
+      item?.id_paciente ??
+      item?.paciente_id;
     const n = Number(candidato);
     return Number.isInteger(n) && n > 0 ? n : undefined;
+  }
+
+  private parsearJsonSeguro<T>(valor: any, valorPorDefecto: T): T {
+    if (!valor) return valorPorDefecto;
+    if (typeof valor === 'string') {
+      try {
+        return JSON.parse(valor) as T;
+      } catch {
+        return valorPorDefecto;
+      }
+    }
+    return valor as T;
+  }
+
+  private inicializarFormularioConsulta(): void {
+    this.formConsulta = this.fb.group({
+      // 1. Consulta (Espera y Datos del Paciente)
+      motivo_consulta: [''],
+      prioridad: ['Normal'],
+      anamnesis: [''],
+      actitud_temperamento: [''],
+      resultado_estado: ['Estable'],
+
+      // 2. Exámenes (Pruebas y Sistemas Orgánicos)
+      frecuencia_respiratoria: [null],
+      frecuencia_cardiaca: [null],
+      temperatura: [null],
+      pulso: [''],
+      tllc: [''],
+      ganglios_linfaticos: [''],
+      mucosas: [''],
+      hallazgos_examen: [''],
+      evaluacion_sistemas: [{}],
+      observaciones_examen: [''],
+      examenes_complementarios: [[]],
+
+      // 3. Diagnóstico (Patología y Plan de Acción)
+      pronostico: ['Favorable'],
+      plan_procedimientos: [''],
+
+      // 4. Tratamientos (Fármacos, Insumos y Firmas)
+      materiales_utilizados: [''],
+      ingresa_cba: [false],
+      motivo_ingreso_cba: [''],
+      canil_asignado: [''],
+      funcionario_recibe_cba: ['']
+    });
+  }
+
+  /**
+   * Consume el GET de Consulta (por id_historia, id_consulta, id_animal o nombre del paciente)
+   * y mapea todos los campos en los 4 apartados de la vista y en el Reactive Form.
+   */
+  cargarDatosConsulta(
+    idHistoriaOIdConsulta?: number | string | null,
+    idAnimal?: number | string | null,
+    nombrePaciente?: string | null
+  ): void {
+    const nombreEfectivo = nombrePaciente || this.obtenerNombrePaciente(this.seguimientoSeleccionado) || '';
+    this.historiaClinicaService
+      .obtenerConsultaPorHistoriaOId(idHistoriaOIdConsulta, idAnimal, nombreEfectivo)
+      .subscribe({
+        next: (consulta: any) => {
+          if (!consulta) return;
+          this.mapearConsultaEnCuatroPasos(consulta);
+        },
+        error: (err) => {
+          console.warn('No se pudo cargar consulta previa para este paciente:', err);
+        }
+      });
+  }
+
+  /**
+   * Extrae y mapea en las 4 pestañas toda la información clínica que fue diligenciada en la App Móvil
+   * dentro del registro de Seguimiento (GET /api/peticiones/seguimiento/listar/ y GET /api/peticiones/seguimiento/:id/).
+   */
+  private extraerYMapeoDesdeSeguimientoMovil(seguimiento: any): void {
+    if (!seguimiento) return;
+
+    const quejaRaw = String(seguimiento?.anamnesis_descripcion_queja || '').trim();
+    const observacionRaw = String(seguimiento?.observacion || seguimiento?.observaciones || '').trim();
+    const tratamientoRaw = String(seguimiento?.tratamiento_realizado || '').trim();
+    const compromisosRaw = String(seguimiento?.compromisos || '').trim();
+    const pruebasRaw = String(seguimiento?.pruebas_complementarias || '').trim();
+    const resultadoPruebasRaw = String(seguimiento?.resultado_pruebas || '').trim();
+
+    // 1. Separar texto base de anamnesis de los bloques estructurados que arma la app móvil
+    let anamnesisLimpia = quejaRaw
+      .replace(/\[Examen clínico:[^\]]*\]/gi, '')
+      .replace(/\[Exámenes clínicos[^\]]*\]/gi, '')
+      .split('=======================================================')[0]
+      .trim();
+
+    if (anamnesisLimpia) {
+      this.anamnesis = anamnesisLimpia;
+      this.anamnesicos.evolucion = anamnesisLimpia;
+    }
+    this.motivo_consulta = observacionRaw || anamnesisLimpia || this.motivoConsulta || '';
+
+    // 2. Extraer constantes fisiológicas embebidas desde la móvil: [Examen clínico: FC: 110 lpm. FR: 26 rpm. Mucosas: ...]
+    const matchFc = quejaRaw.match(/FC:\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchFc) {
+      const fcVal = Number(matchFc[1].replace(',', '.'));
+      if (fcVal > 0) this.frecuencia_cardiaca = fcVal;
+    }
+    const matchFr = quejaRaw.match(/FR:\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchFr) {
+      const frVal = Number(matchFr[1].replace(',', '.'));
+      if (frVal > 0) this.frecuencia_respiratoria = frVal;
+    }
+    const matchTemp = quejaRaw.match(/Temp(?:eratura)?:\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchTemp) {
+      const tVal = Number(matchTemp[1].replace(',', '.'));
+      if (tVal > 0) this.temperatura = tVal;
+    }
+    const matchMucosas = quejaRaw.match(/Mucosas:\s*([^.\]\n]+)/i);
+    if (matchMucosas && matchMucosas[1]?.trim()) {
+      const mucMovil = matchMucosas[1].trim();
+      const coincidenciaMucosa = this.opcionesMucosas.find(
+        m => m.toLowerCase().includes(mucMovil.toLowerCase()) || mucMovil.toLowerCase().includes(m.split('/')[0].trim().toLowerCase())
+      );
+      this.mucosas = coincidenciaMucosa || mucMovil;
+    }
+
+    // 3. Extraer Exámenes Complementarios desde pruebas_complementarias / resultado_pruebas o desde [Exámenes clínicos (...): ...]
+    const examenesExtraidos: any[] = [];
+    if (pruebasRaw) {
+      const nombresPruebas = pruebasRaw.split('|').map(s => s.trim()).filter(Boolean);
+      const paresResultados = resultadoPruebasRaw.split('|').map(s => s.trim()).filter(Boolean);
+      nombresPruebas.forEach((nombreP, idx) => {
+        const par = paresResultados[idx] || '';
+        const resLimpio = par.includes(':') ? par.split(':').slice(1).join(':').trim() : par;
+        examenesExtraidos.push({
+          id_examen: null,
+          nombre: nombreP,
+          tipo: 'Prueba Diagnóstica',
+          descripcion: '',
+          estado: resLimpio && resLimpio.toLowerCase() !== 'pendiente' ? 'completado' : 'solicitado',
+          resultado: resLimpio || 'Pendiente',
+          ruta_archivo_resultado: ''
+        });
+      });
+    } else {
+      const matchExBloque = quejaRaw.match(/\[Exámenes clínicos\s*\(\d+\):\s*([^\]]+)\]/i);
+      if (matchExBloque && matchExBloque[1]) {
+        const items = matchExBloque[1].split(';').map(s => s.trim()).filter(Boolean);
+        items.forEach(item => {
+          const m = item.match(/^(.+?)\s*\(([^)]*)\)$/);
+          const nombreEx = m ? m[1].trim() : item;
+          const resEx = m ? m[2].trim() : 'Solicitado';
+          examenesExtraidos.push({
+            id_examen: null,
+            nombre: nombreEx,
+            tipo: 'Prueba Diagnóstica',
+            descripcion: '',
+            estado: resEx.toLowerCase() !== 'pendiente' ? 'completado' : 'solicitado',
+            resultado: resEx,
+            ruta_archivo_resultado: ''
+          });
+        });
+      }
+    }
+    if (examenesExtraidos.length > 0) {
+      this.examenes_complementarios = examenesExtraidos;
+    }
+    if (resultadoPruebasRaw && !this.hallazgos_examen) {
+      this.hallazgos_examen = resultadoPruebasRaw;
+    }
+
+    // 4. Extraer Evaluación de Sistemas y Datos de Rescate / Ingreso al CBA si vienen en el Anexo de la móvil
+    if (quejaRaw.includes('ANEXO: ACTA DE RESCATE Y TRASLADO AL CBA')) {
+      this.ingresa_cba = true;
+      const matchCausal = quejaRaw.match(/•\s*Causal de rescate:\s*([^\n\r]+)/i);
+      if (matchCausal && matchCausal[1]?.trim()) {
+        this.motivo_ingreso_cba = matchCausal[1].trim();
+      }
+      const matchVetReceptor = quejaRaw.match(/•\s*Veterinario receptor:\s*([^\n\r]+)/i);
+      if (matchVetReceptor && matchVetReceptor[1]?.trim()) {
+        this.funcionario_recibe_cba = matchVetReceptor[1].trim();
+      }
+      const matchObsRescate = quejaRaw.match(/---\s*OBSERVACIONES DEL RESCATE\s*---\s*([\s\S]*?)(?:---\s*RECEPCIÓN EN CLÍNICA|$)/i);
+      if (matchObsRescate && matchObsRescate[1]?.trim()) {
+        this.observaciones_examen = matchObsRescate[1].trim();
+        this.observacionesSistemas = matchObsRescate[1].trim();
+      }
+
+      // Evaluar los sistemas reportados por la app móvil (SÍ = Anormal 'AN', NO = Normal 'N')
+      const tieneSi = (regex: RegExp) => regex.test(quejaRaw);
+      const nuevosSistemas = { ...this.crearSistemasPorDefecto() };
+      nuevosSistemas['respiratorio'] =
+        tieneSi(/Presenta moco:\s*S[ÍI]/i) ||
+        tieneSi(/dificulta respirar:\s*S[ÍI]/i) ||
+        tieneSi(/Tos:\s*S[ÍI]/i)
+          ? 'AN'
+          : 'N';
+      nuevosSistemas['ojos'] = tieneSi(/Lagaña o lagrimeo:\s*S[ÍI]/i) ? 'AN' : 'N';
+      nuevosSistemas['nariz'] = tieneSi(/Presenta moco:\s*S[ÍI]/i) ? 'AN' : 'N';
+      nuevosSistemas['digestivo'] =
+        tieneSi(/Presenta vómito:\s*S[ÍI]/i) || tieneSi(/Presenta diarrea:\s*S[ÍI]/i)
+          ? 'AN'
+          : 'N';
+      nuevosSistemas['hidratacion'] = tieneSi(/Deshidratado:\s*S[ÍI]/i) ? 'AN' : 'N';
+      nuevosSistemas['general'] = tieneSi(/Flaco o desnutrido:\s*S[ÍI]/i) || tieneSi(/Postrado:\s*S[ÍI]/i) ? 'AN' : 'N';
+      nuevosSistemas['musculoesqueletico'] =
+        tieneSi(/Caída de las patas:\s*S[ÍI]/i) ||
+        tieneSi(/Cojo:\s*S[ÍI]/i) ||
+        tieneSi(/herida abierta:\s*S[ÍI]/i) ||
+        tieneSi(/Postrado:\s*S[ÍI]/i)
+          ? 'AN'
+          : 'N';
+      nuevosSistemas['tegumentario'] =
+        tieneSi(/Presenta peladuras:\s*S[ÍI]/i) ||
+        tieneSi(/Heridas con sangre:\s*S[ÍI]/i) ||
+        tieneSi(/Pulgas o garrapatas:\s*S[ÍI]/i) ||
+        tieneSi(/moscos o gusanos:\s*S[ÍI]/i)
+          ? 'AN'
+          : 'N';
+      nuevosSistemas['genitourinario'] =
+        tieneSi(/masa o secreción:\s*S[ÍI]/i) ||
+        tieneSi(/gestante:\s*S[ÍI]/i) ||
+        tieneSi(/en celo:\s*S[ÍI]/i)
+          ? 'AN'
+          : 'N';
+      this.evaluacion_sistemas = nuevosSistemas;
+    }
+
+    // 5. Mapear Diagnóstico, Plan de Procedimientos y Tratamientos desde la móvil
+    if (tratamientoRaw) {
+      this.plan_procedimientos = tratamientoRaw;
+      if (!this.materiales_utilizados) {
+        this.materiales_utilizados = tratamientoRaw;
+      }
+    }
+    if (compromisosRaw && !this.observaciones_examen) {
+      this.observaciones_examen = compromisosRaw;
+    }
+    if (observacionRaw && !this.diagnosticoFinal) {
+      this.diagnosticoFinal = observacionRaw;
+    }
+
+    // 6. Extraer Tarjeta Profesional y firmas desde funcionarios del seguimiento móvil
+    const funcPrincipal = Array.isArray(seguimiento?.funcionarios) && seguimiento.funcionarios.length > 0
+      ? seguimiento.funcionarios[0]
+      : (Array.isArray(seguimiento?.funcionarios_detalle) && seguimiento.funcionarios_detalle.length > 0
+          ? seguimiento.funcionarios_detalle[0]
+          : null);
+    if (funcPrincipal) {
+      if (funcPrincipal.nombre && !this.nombreVeterinario) {
+        this.nombreVeterinario = funcPrincipal.nombre;
+      }
+      const mp = funcPrincipal.tarjeta_profesional || funcPrincipal.matricula_profesional;
+      if (mp) {
+        this.tarjetaProfesional = String(mp);
+      } else if (funcPrincipal.cargo) {
+        const matchMp = String(funcPrincipal.cargo).match(/M\.?P\.?\s*([A-Za-z0-9\-]+)/i);
+        if (matchMp && matchMp[1]) {
+          this.tarjetaProfesional = matchMp[1];
+        }
+      }
+    } else if (seguimiento?.funcionario_cargo || seguimiento?.notificador_cargo) {
+      const cargoStr = String(seguimiento.funcionario_cargo || seguimiento.notificador_cargo);
+      const matchMp = cargoStr.match(/M\.?P\.?\s*([A-Za-z0-9\-]+)/i);
+      if (matchMp && matchMp[1]) {
+        this.tarjetaProfesional = matchMp[1];
+      }
+    }
+
+    // Sincronizar con el Reactive Form
+    this.sincronizarFormConsulta();
+    this.cdr.detectChanges();
+  }
+
+  private sincronizarFormConsulta(): void {
+    if (!this.formConsulta) return;
+    this.formConsulta.patchValue({
+      motivo_consulta: this.motivo_consulta,
+      prioridad: this.prioridad,
+      anamnesis: this.anamnesis,
+      actitud_temperamento: this.actitud_temperamento,
+      resultado_estado: this.resultado_estado,
+      frecuencia_respiratoria: this.frecuencia_respiratoria,
+      frecuencia_cardiaca: this.frecuencia_cardiaca,
+      temperatura: this.temperatura,
+      pulso: this.pulso,
+      tllc: this.tllc,
+      ganglios_linfaticos: this.ganglios_linfaticos,
+      mucosas: this.mucosas,
+      hallazgos_examen: this.hallazgos_examen,
+      evaluacion_sistemas: this.evaluacion_sistemas,
+      observaciones_examen: this.observaciones_examen,
+      examenes_complementarios: this.examenes_complementarios,
+      pronostico: this.pronostico,
+      plan_procedimientos: this.plan_procedimientos,
+      materiales_utilizados: this.materiales_utilizados,
+      ingresa_cba: this.ingresa_cba,
+      motivo_ingreso_cba: this.motivo_ingreso_cba,
+      canil_asignado: this.canil_asignado,
+      funcionario_recibe_cba: this.funcionario_recibe_cba
+    });
+  }
+
+  /**
+   * Mapea la respuesta del modelo Consulta a las propiedades y al Reactive Form de los 4 pasos
+   */
+  private mapearConsultaEnCuatroPasos(consulta: any): void {
+    if (!consulta) return;
+
+    // 1. PASO 1: Consulta (Espera y Datos del Paciente)
+    if (consulta.motivo_consulta) {
+      this.motivo_consulta = consulta.motivo_consulta;
+    }
+    if (consulta.prioridad) {
+      this.prioridad = consulta.prioridad;
+    }
+    const anamnesisConsulta = consulta.anamnesis || consulta.evolucion || '';
+    if (anamnesisConsulta) {
+      this.anamnesis = anamnesisConsulta;
+      this.anamnesicos.evolucion = anamnesisConsulta;
+    }
+    const actitudConsulta = consulta.actitud_temperamento || consulta.constantes?.actitud_temperamento || '';
+    if (actitudConsulta) {
+      this.actitud_temperamento = actitudConsulta;
+    }
+    const estadoConsulta = consulta.resultado_estado || consulta.estado_general || '';
+    if (estadoConsulta) {
+      this.resultado_estado = estadoConsulta;
+      this.anamnesicos.estadoGeneral = estadoConsulta;
+    }
+
+    // 2. PASO 2: Exámenes (Pruebas y Sistemas Orgánicos)
+    const frRaw = consulta.frecuencia_respiratoria ?? consulta.constantes?.frecuencia_respiratoria;
+    if (frRaw !== null && frRaw !== undefined && Number(frRaw) > 0) {
+      this.frecuencia_respiratoria = Number(frRaw);
+    }
+    const fcRaw = consulta.frecuencia_cardiaca ?? consulta.constantes?.frecuencia_cardiaca;
+    if (fcRaw !== null && fcRaw !== undefined && Number(fcRaw) > 0) {
+      this.frecuencia_cardiaca = Number(fcRaw);
+    }
+    const tempRaw = consulta.temperatura ?? consulta.constantes?.temperatura;
+    if (tempRaw !== null && tempRaw !== undefined && Number(tempRaw) > 0) {
+      this.temperatura = Number(tempRaw);
+    }
+    if (consulta.pulso || consulta.constantes?.pulso) {
+      this.pulso = consulta.pulso || consulta.constantes?.pulso;
+    }
+    if (consulta.tllc || consulta.constantes?.tllc) {
+      this.tllc = consulta.tllc || consulta.constantes?.tllc;
+    }
+    if (consulta.ganglios_linfaticos || consulta.constantes?.ganglios_linfaticos) {
+      this.ganglios_linfaticos = consulta.ganglios_linfaticos || consulta.constantes?.ganglios_linfaticos;
+    }
+    if (consulta.mucosas || consulta.constantes?.mucosas) {
+      this.mucosas = consulta.mucosas || consulta.constantes?.mucosas;
+    }
+    if (consulta.hallazgos_examen || consulta.descripcion_hallazgos) {
+      this.hallazgos_examen = consulta.hallazgos_examen || consulta.descripcion_hallazgos;
+    }
+
+    const sistemasJson = this.parsearJsonSeguro<Record<string, any>>(
+      consulta.evaluacion_sistemas || consulta.organos_sistemas,
+      {}
+    );
+    if (sistemasJson && typeof sistemasJson === 'object' && Object.keys(sistemasJson).length > 0) {
+      const fusionados = { ...this.evaluacion_sistemas };
+      Object.keys(sistemasJson).forEach(k => {
+        if (!k.startsWith('_') && k !== 'observaciones' && sistemasJson[k]) {
+          fusionados[k] = sistemasJson[k];
+        }
+      });
+      this.evaluacion_sistemas = fusionados;
+
+      if (sistemasJson['_veterinario_responsable'] && !this.nombreVeterinario) {
+        this.nombreVeterinario = sistemasJson['_veterinario_responsable'];
+      }
+      if (sistemasJson['_tarjeta_profesional']) {
+        this.tarjetaProfesional = sistemasJson['_tarjeta_profesional'];
+      }
+      if (sistemasJson['_acudiente_nombre'] && !this.nombreAcudiente) {
+        this.nombreAcudiente = sistemasJson['_acudiente_nombre'];
+      }
+      if (sistemasJson['_acudiente_cedula'] && !this.cedulaAcudiente) {
+        this.cedulaAcudiente = sistemasJson['_acudiente_cedula'];
+      }
+    }
+
+    const obsEx =
+      consulta.observaciones_examen ||
+      consulta.observaciones_sistemas ||
+      sistemasJson?.['observaciones'] ||
+      '';
+    if (obsEx) {
+      this.observaciones_examen = obsEx;
+      this.observacionesSistemas = consulta.observaciones_sistemas || sistemasJson?.['observaciones'] || obsEx;
+    }
+
+    const examenesRaw = this.parsearJsonSeguro<any>(
+      consulta.examenes_complementarios || consulta.examenes_solicitados,
+      []
+    );
+    const listaExamenes = Array.isArray(examenesRaw)
+      ? examenesRaw
+      : Object.keys(examenesRaw || {}).map(k => ({
+          id_examen: null,
+          nombre: k,
+          estado: examenesRaw[k] ? 'solicitado' : 'pendiente',
+          resultado: ''
+        }));
+
+    if (listaExamenes.length > 0) {
+      this.examenes_complementarios = listaExamenes.map((ex: any) => ({
+        id_examen: ex.id_examen ?? ex.id ?? null,
+        nombre: ex.nombre || ex.nombre_examen || 'Examen clínico',
+        tipo: ex.tipo || 'General',
+        descripcion: ex.descripcion || '',
+        estado: ex.estado || 'solicitado',
+        resultado: ex.resultado || '',
+        ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+      }));
+    }
+
+    // 3. PASO 3: Diagnóstico (Patología y Plan de Acción)
+    if (consulta.pronostico) {
+      this.pronostico = consulta.pronostico;
+    }
+    if (consulta.plan_procedimientos || consulta.plan_tratamiento) {
+      this.plan_procedimientos = consulta.plan_procedimientos || consulta.plan_tratamiento;
+    }
+    if (consulta.diagnostico_principal || consulta.diagnostico_final) {
+      this.diagnosticoFinal = consulta.diagnostico_principal || consulta.diagnostico_final;
+    }
+    if (consulta.lista_problemas) {
+      const lineas = String(consulta.lista_problemas)
+        .split(/[\n;]/)
+        .map((l: string) => l.replace(/^\d+[\.\-]\s*/, '').trim())
+        .filter(Boolean);
+      lineas.slice(0, 7).forEach((p: string, idx: number) => {
+        this.problemasClinicos[idx] = p;
+      });
+    }
+
+    // 4. PASO 4: Tratamientos (Fármacos, Insumos y Firmas)
+    if (consulta.materiales_utilizados) {
+      this.materiales_utilizados = consulta.materiales_utilizados;
+    }
+    if (consulta.ingresa_cba !== undefined && consulta.ingresa_cba !== null) {
+      const ingresaBool =
+        consulta.ingresa_cba === true ||
+        String(consulta.ingresa_cba || '').toUpperCase() === 'SI' ||
+        String(consulta.ingresa_cba || '').toLowerCase() === 'true';
+      this.ingresa_cba = ingresaBool;
+    }
+    if (consulta.motivo_ingreso_cba || consulta.motivo_ingreso_no_ingreso) {
+      this.motivo_ingreso_cba = consulta.motivo_ingreso_cba || consulta.motivo_ingreso_no_ingreso;
+    }
+    if (consulta.canil_asignado) {
+      this.canil_asignado = consulta.canil_asignado;
+    }
+    if (consulta.funcionario_recibe_cba) {
+      this.funcionario_recibe_cba = consulta.funcionario_recibe_cba;
+    }
+
+    if (Array.isArray(consulta.tratamientos) && consulta.tratamientos.length > 0) {
+      this.medicamentosSeleccionados = consulta.tratamientos.map((t: any) => ({
+        id: t.id_medicamento ?? t.id ?? null,
+        nombre: t.nombre || t.producto_base || t.productoBase || t.producto || 'Medicamento',
+        principio_activo: t.principio_activo || '',
+        concentracion: t.concentracion || '',
+        presentacion: t.presentacion || '',
+        dosis: t.dosis || t.dosis_basica || t.dosisBasica || '',
+        via: t.via || t.via_administracion || '',
+        frecuencia: t.frecuencia || t.frecuencia_duracion || t.frecuenciaDuracion || '',
+        duracion_dias: t.duracion_dias ?? null,
+        descripcion: t.descripcion || t.posologia || '',
+        responsable_admin: t.responsable_admin || '',
+        reaccion_comentarios: t.reaccion_comentarios || '',
+        stockDisponible: t.stockDisponible ?? 10,
+        cantidadAAdministrar: t.cantidadAAdministrar ?? 1,
+        administrado: !!t.administrado,
+        cantidadEfectivaAdministrada: t.cantidadEfectivaAdministrada ?? 0,
+        administrando: false
+      }));
+    }
+
+    // Parchear el Reactive Form con todos los campos de los 4 apartados
+    this.sincronizarFormConsulta();
+    this.cdr.detectChanges();
   }
 
   private asegurarHistoriaClinica(idAnimal: number, callbackExito?: () => void): void {
@@ -166,33 +718,47 @@ export class ActaSeresSintientes implements OnInit {
     const headers = token
       ? new HttpHeaders({ Authorization: `Bearer ${token}` })
       : new HttpHeaders();
+    const nombrePaciente = this.obtenerNombrePaciente(this.seguimientoSeleccionado);
 
     this.http.get<any>(`${this.apiHistoriasUrl}?id_animal=${idAnimal}`, { headers }).subscribe({
       next: (res) => {
         const lista = Array.isArray(res) ? res : (res?.results || []);
-        if (lista.length > 0 && lista[0].id_historia) {
-          const hist = lista[0];
+        // Coincidencia estricta por id_animal (nunca usar lista[0] de otro animal)
+        const histCoincidente = lista.find(
+          (h: any) => Number(h?.id_animal) === Number(idAnimal)
+        );
+
+        if (histCoincidente && histCoincidente.id_historia) {
+          const hist = histCoincidente;
           if (hist.numero_historia) {
             this.numeroRadicadoActual = hist.numero_historia;
           }
-          // Cargar sus antecedentes anamnésicos previos en el formulario si existen
           this.anamnesicos.ultimaDesparasitacion = hist.fecha_ultima_desparasitacion || this.anamnesicos.ultimaDesparasitacion;
           this.anamnesicos.productoDesparasitacion = hist.producto_desparasitacion || this.anamnesicos.productoDesparasitacion;
           this.anamnesicos.vacunas = hist.vacunas || this.anamnesicos.vacunas;
           this.anamnesicos.enfermedadesAnteriores = hist.enfermedades_anteriores || this.anamnesicos.enfermedadesAnteriores;
           this.anamnesicos.tratamientos = hist.tratamientos_anteriores || this.anamnesicos.tratamientos;
-          this.anamnesicos.evolucion = hist.evolucion_previa || this.anamnesicos.evolucion;
+          if (hist.evolucion_previa && !this.anamnesis) {
+            this.anamnesicos.evolucion = hist.evolucion_previa;
+            this.anamnesis = hist.evolucion_previa;
+          }
           this.anamnesicos.alimentacion = hist.alimentacion || this.anamnesicos.alimentacion;
           this.anamnesicos.historiaReproductiva = hist.estado_reproductivo || this.anamnesicos.historiaReproductiva;
           this.anamnesicos.ultimoCelo = hist.fecha_ultimo_celo || this.anamnesicos.ultimoCelo;
           this.anamnesicos.fechaUltimoParto = hist.fecha_ultimo_parto || this.anamnesicos.fechaUltimoParto;
+
+          this.cargarDatosConsulta(hist.id_historia, idAnimal, nombrePaciente);
           this.cdr.detectChanges();
           if (callbackExito) callbackExito();
         } else {
+          const idHistOCons = this.seguimientoSeleccionado?.id_consulta || this.seguimientoSeleccionado?.id_historia || null;
+          this.cargarDatosConsulta(idHistOCons, idAnimal, nombrePaciente);
           if (callbackExito) callbackExito();
         }
       },
       error: () => {
+        const idHistOCons = this.seguimientoSeleccionado?.id_consulta || this.seguimientoSeleccionado?.id_historia || null;
+        this.cargarDatosConsulta(idHistOCons, idAnimal, nombrePaciente);
         if (callbackExito) callbackExito();
       }
     });
@@ -387,8 +953,8 @@ export class ActaSeresSintientes implements OnInit {
       this.http.get<any>(`${urlHistorias}?id_animal=${idAnimal}`, { headers }).subscribe({
         next: (listaResp) => {
           const lista = Array.isArray(listaResp) ? listaResp : (listaResp?.results || []);
-          if (lista.length > 0 && lista[0]?.id_historia) {
-            const historiaExistente = lista[0];
+          const historiaExistente = lista.find((h: any) => Number(h?.id_animal) === Number(idAnimal));
+          if (historiaExistente?.id_historia) {
             console.log('Historia existente detectada previa para el animal, actualizando datos con PATCH:', historiaExistente.id_historia);
             this.http.patch<any>(`${urlHistorias}${historiaExistente.id_historia}/`, payloadHistoria, { headers }).subscribe({
               next: (respPatch) => {
@@ -671,14 +1237,19 @@ export class ActaSeresSintientes implements OnInit {
   };
 
   constructor(
+    private fb: FormBuilder,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private comprasService: ComprasService,
+    private historiaClinicaService: HistoriaClinicaService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
     private router: Router,
     private patologiaService: PatologiaService,
     private examenesClinicosService: ExamenesClinicosService
-  ) { }
+  ) {
+    this.inicializarFormularioConsulta();
+  }
 
   /**
    * Resuelve el ID único del animal/paciente correspondiente a un registro de seguimiento
@@ -760,6 +1331,18 @@ export class ActaSeresSintientes implements OnInit {
     this.reiniciarSistemas('NE');
     this.cargarPatologias();
     this.cargarExamenesClinicos();
+
+    // Ejecutar el GET de Consulta al iniciar solo si existen parámetros de ruta/query
+    const idParam =
+      this.route.snapshot.paramMap.get('id') ||
+      this.route.snapshot.queryParamMap.get('id_consulta') ||
+      this.route.snapshot.queryParamMap.get('id_historia') ||
+      this.route.snapshot.queryParamMap.get('id') ||
+      '';
+    const idAnimalParam = this.route.snapshot.queryParamMap.get('id_animal') || '';
+    if (idParam || idAnimalParam) {
+      this.cargarDatosConsulta(idParam, idAnimalParam);
+    }
   }
 
   // =========================================================================
@@ -1128,10 +1711,13 @@ export class ActaSeresSintientes implements OnInit {
   }
 
   seleccionarSeguimiento(seguimiento: any): void {
-    // Guardar el animal seleccionado
+    // 1. Limpiar por completo el estado del paciente anterior antes de cargar el nuevo
+    this.reiniciarFormularioClinico();
+
+    // 2. Guardar el animal seleccionado
     this.seguimientoSeleccionado = seguimiento;
 
-    // TENEDOR / RESPONSABLE (precarga editable)
+    // 3. TENEDOR / RESPONSABLE (precarga editable)
     this.tenedor = {
       nombres: String(
         seguimiento?.propietario_nombre ??
@@ -1169,34 +1755,8 @@ export class ActaSeresSintientes implements OnInit {
       )
     };
 
-    // MOTIVO DE CONSULTA Y PESO (editables)
-    this.motivoConsulta = String(
-      seguimiento?.observaciones ??
-      seguimiento?.observacion ??
-      seguimiento?.anamnesis_descripcion_queja ??
-      ''
-    ).slice(0, 255);
+    // 4. PESO Y NÚMERO DE RADICADO
     this.pesoPaciente = seguimiento?.peso_paciente ?? null;
-
-    // ANAMNESIS Y SIGNOS VITALES: formulario limpio para cada paciente
-    this.anamnesicos = {
-      estadoGeneral: 'Estable',
-      ultimaDesparasitacion: '', productoDesparasitacion: '', vacunas: '', enfermedadesAnteriores: '',
-      tratamientos: '', evolucion: '', alimentacion: '', historiaReproductiva: '', ultimoCelo: '', fechaUltimoParto: ''
-    };
-    this.signosVitales = {
-      frecuenciaRespiratoria: null, frecuenciaCardiaca: null, temperatura: null, pulso: '',
-      tiempoLlenadoCapilar: '', gangliosLinfaticos: '', mucosas: '', actitudTemperamento: ''
-    };
-
-    // EVALUACIÓN FÍSICA: Reiniciar al estado por defecto para el nuevo paciente o cargar si existe
-    if (seguimiento?.evaluacion_sistemas && typeof seguimiento.evaluacion_sistemas === 'object') {
-      this.sistemas = { ...this.crearSistemasPorDefecto(), ...seguimiento.evaluacion_sistemas };
-    } else {
-      this.reiniciarSistemas('NE');
-    }
-
-    // NÚMERO DE RADICADO
     this.numeroRadicadoActual = String(
       seguimiento?.numero_radicado ??
       seguimiento?.radicado ??
@@ -1207,7 +1767,7 @@ export class ActaSeresSintientes implements OnInit {
       ''
     );
 
-    // DATOS DEL VETERINARIO
+    // 5. DATOS DEL VETERINARIO
     const veterinario =
       seguimiento?.veterinario ??
       seguimiento?.usuario_veterinario ??
@@ -1240,11 +1800,42 @@ export class ActaSeresSintientes implements OnInit {
       ''
     );
 
-    console.log('Seguimiento seleccionado:', seguimiento);
-    console.log('Nombre del tutor:', this.nombreAcudiente);
-    const idAnimal = this.resolverIdAnimal(seguimiento);
-    if (idAnimal) {
-      this.asegurarHistoriaClinica(idAnimal);
+    // 6. Extraer y mapear toda la información diligenciada desde la app móvil en el seguimiento
+    this.extraerYMapeoDesdeSeguimientoMovil(seguimiento);
+
+    const nombrePaciente = this.obtenerNombrePaciente(seguimiento);
+    const idAnimalInicial = this.resolverIdAnimal(seguimiento);
+
+    // 7. Hacer GET del detalle completo del seguimiento (/api/peticiones/seguimiento/{id}/)
+    // para traer pruebas_complementarias, resultado_pruebas, id_animal y funcionarios_detalle
+    if (seguimiento?.id_seguimiento) {
+      this.authService.obtenerSeguimientoPorId(Number(seguimiento.id_seguimiento)).subscribe({
+        next: (detalle: any) => {
+          if (!detalle || this.seguimientoSeleccionado?.id_seguimiento !== seguimiento.id_seguimiento) {
+            return;
+          }
+          this.seguimientoSeleccionado = { ...this.seguimientoSeleccionado, ...detalle };
+          this.extraerYMapeoDesdeSeguimientoMovil(this.seguimientoSeleccionado);
+
+          const idAnimalDetalle = this.resolverIdAnimal(this.seguimientoSeleccionado);
+          if (idAnimalDetalle && !idAnimalInicial) {
+            this.asegurarHistoriaClinica(idAnimalDetalle);
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    }
+
+    // 8. Ejecutar el GET de Historia Clínica y Consulta (con Diagnósticos y Tratamientos asociados)
+    if (idAnimalInicial) {
+      this.asegurarHistoriaClinica(idAnimalInicial);
+    } else {
+      this.cargarDatosConsulta(
+        seguimiento?.id_consulta || seguimiento?.id_historia || '',
+        '',
+        nombrePaciente
+      );
     }
 
     this.cdr.detectChanges();
