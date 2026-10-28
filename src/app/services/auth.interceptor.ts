@@ -18,9 +18,10 @@ const PUBLIC_ENDPOINTS = [
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
-  // 1. Si es login/registro/recuperación, viaja sin token
+  // 1. Si es login/registro/recuperación o servicio externo como Cloudinary, viaja sin token
+  const esExterna = req.url.includes('cloudinary.com') || req.url.includes('api.cloudinary.com');
   const esPublica = PUBLIC_ENDPOINTS.some((url) => req.url.includes(url));
-  if (esPublica) {
+  if (esExterna || esPublica) {
     return next(req);
   }
 
