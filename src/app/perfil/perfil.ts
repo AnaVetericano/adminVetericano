@@ -16,7 +16,11 @@ export class PerfilComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   guardando: boolean = false;
+  subiendoACloudinary: boolean = false;
   cargando: boolean = true;
+
+  // Archivo seleccionado pendiente de subida a Cloudinary
+  archivoSeleccionado: File | null = null;
 
   // Foto por defecto
   avatarPredeterminado: string = 'images/logoVetWhite.svg';
@@ -49,7 +53,7 @@ export class PerfilComponent implements OnInit {
     // Si contamos con id_usuario, consultar datos actualizados del backend
     if (sesion?.id_usuario) {
       this.authService.obtenerPerfilUsuario(sesion.id_usuario).subscribe({
-        next: (res) => {
+        next: (res: any) => {
           if (res) {
             this.usuario.identificacion = res.identificacion ?? this.usuario.identificacion;
             this.usuario.nombre = res.nombre ?? res.first_name ?? this.usuario.nombre;
@@ -58,9 +62,11 @@ export class PerfilComponent implements OnInit {
             this.usuario.telefono = res.telefono ?? this.usuario.telefono;
             this.usuario.direccion = res.direccion ?? this.usuario.direccion;
             this.usuario.tarjeta_profesional = res.tarjeta_profesional ?? this.usuario.tarjeta_profesional;
-            this.usuario.matricula = res.matricula ?? this.usuario.matricula;
-            this.usuario.foto = res.foto ?? res.foto_perfil ?? this.usuario.foto;
+            this.usuario.matricula = res.matricula ?? res.matricula_profesional ?? this.usuario.matricula;
             
+            const fotoActual = res.foto_perfil || res.foto || this.usuario.foto;
+            this.usuario.foto = fotoActual;
+
             // Actualizar sesión reactiva local
             this.authService.actualizarSesion({
               identificacion: this.usuario.identificacion,
@@ -71,14 +77,15 @@ export class PerfilComponent implements OnInit {
               direccion: this.usuario.direccion,
               tarjeta_profesional: this.usuario.tarjeta_profesional,
               matricula: this.usuario.matricula,
-              foto: this.usuario.foto
+              matricula_profesional: res.matricula_profesional ?? this.usuario.matricula,
+              foto: fotoActual,
+              foto_perfil: fotoActual
             });
           }
           this.cargando = false;
           this.cdr.detectChanges();
         },
         error: () => {
-          // Si el endpoint específico falla, se mantienen los datos cargados de sesión
           this.cargando = false;
           this.cdr.detectChanges();
         }
@@ -90,6 +97,7 @@ export class PerfilComponent implements OnInit {
   }
 
   private asignarDatosDesdeSesion(sesion: UserSession): void {
+    const sesionAny = sesion as any;
     this.usuario = {
       id_usuario: sesion.id_usuario,
       identificacion: sesion.identificacion || '',
@@ -99,8 +107,8 @@ export class PerfilComponent implements OnInit {
       telefono: sesion.telefono || '',
       direccion: sesion.direccion || '',
       tarjeta_profesional: sesion.tarjeta_profesional || '',
-      matricula: sesion.matricula || '',
-      foto: sesion.foto || '',
+      matricula: sesion.matricula || sesionAny.matricula_profesional || '',
+      foto: sesion.foto || sesionAny.foto_perfil || '',
       rol: sesion.rol || 'Veterinario'
     };
   }
@@ -123,17 +131,20 @@ export class PerfilComponent implements OnInit {
       return;
     }
 
-    // Validar tamaño máximo (máx 3 MB)
-    if (file.size > 3 * 1024 * 1024) {
+    // Validar tamaño máximo (máx 5 MB)
+    if (file.size > 5 * 1024 * 1024) {
       Swal.fire({
         icon: 'warning',
         title: 'Imagen muy pesada',
-        text: 'El tamaño de la imagen no debe superar los 3 MB.',
+        text: 'El tamaño de la imagen no debe superar los 5 MB.',
         confirmButtonColor: '#4141A5'
       });
       return;
     }
 
+    this.archivoSeleccionado = file;
+
+    // Vista previa inmediata para el usuario en la interfaz
     const reader = new FileReader();
     reader.onload = () => {
       this.usuario.foto = reader.result as string;
@@ -143,6 +154,7 @@ export class PerfilComponent implements OnInit {
   }
 
   eliminarFoto(): void {
+    this.archivoSeleccionado = null;
     this.usuario.foto = '';
     this.cdr.detectChanges();
   }
@@ -171,6 +183,35 @@ export class PerfilComponent implements OnInit {
 
     this.guardando = true;
 
+    // Si el usuario seleccionó un nuevo archivo de imagen, subirlo a Cloudinary
+    if (this.archivoSeleccionado) {
+      this.subiendoACloudinary = true;
+      this.cdr.detectChanges();
+
+      this.authService.subirImagenCloudinary(this.archivoSeleccionado).subscribe({
+        next: (secureUrl: string) => {
+          this.subiendoACloudinary = false;
+          this.archivoSeleccionado = null;
+          this.usuario.foto = secureUrl;
+          this.persistirPerfil(secureUrl);
+        },
+        error: (err: any) => {
+          console.warn('Error subiendo directamente a Cloudinary vía API, usando subida asistida por backend:', err);
+          this.subiendoACloudinary = false;
+          // Si falla la conexión directa a Cloudinary (bloqueadores, CORS), enviamos el Data URI base64 al backend
+          // donde validate_foto_perfil la subirá en el servidor.
+          this.persistirPerfil(this.usuario.foto);
+        }
+      });
+    } else {
+      // No hay archivo nuevo pendiente de subida, persistir directamente
+      this.persistirPerfil(this.usuario.foto);
+    }
+  }
+
+  private persistirPerfil(fotoUrl: string): void {
+    const credencialVeterinaria = (this.usuario.matricula || this.usuario.tarjeta_profesional || '').trim();
+
     const datosActualizados: Partial<UserSession> = {
       nombre: this.usuario.nombre.trim(),
       apellido: this.usuario.apellido.trim(),
@@ -180,10 +221,12 @@ export class PerfilComponent implements OnInit {
       direccion: this.usuario.direccion.trim(),
       tarjeta_profesional: this.usuario.tarjeta_profesional.trim(),
       matricula: this.usuario.matricula.trim(),
-      foto: this.usuario.foto
+      matricula_profesional: credencialVeterinaria,
+      foto: fotoUrl || '',
+      foto_perfil: fotoUrl || ''
     };
 
-    // Actualizamos de inmediato en el estado local y localStorage
+    // Actualizamos de inmediato en el estado reactivo local y localStorage
     this.authService.actualizarSesion(datosActualizados);
 
     // Si tenemos id de usuario, enviamos al backend
@@ -194,42 +237,52 @@ export class PerfilComponent implements OnInit {
         identificacion: this.usuario.identificacion.trim(),
         email: this.usuario.email.trim(),
         telefono: this.usuario.telefono.trim(),
-        direccion: this.usuario.direccion.trim(),
-        tarjeta_profesional: this.usuario.tarjeta_profesional.trim(),
-        matricula: this.usuario.matricula.trim(),
-        foto: this.usuario.foto
+        matricula_profesional: credencialVeterinaria || null,
+        foto_perfil: fotoUrl || null,
+        foto: fotoUrl || null
       };
 
       this.authService.actualizarPerfilUsuario(this.usuario.id_usuario, payloadBackend).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.guardando = false;
+          this.subiendoACloudinary = false;
+
+          const urlFinal = res?.foto_perfil || res?.foto || fotoUrl;
+          this.usuario.foto = urlFinal;
+          this.authService.actualizarSesion({
+            ...datosActualizados,
+            foto: urlFinal,
+            foto_perfil: urlFinal
+          });
           this.cdr.detectChanges();
+
           Swal.fire({
             icon: 'success',
             title: '¡Perfil actualizado!',
-            text: 'Tus datos de perfil se han guardado y sincronizado correctamente.',
+            text: 'Tu foto de perfil se guardó correctamente en Cloudinary y tus datos se sincronizaron con éxito.',
             confirmButtonColor: '#4141A5',
-            timer: 2000,
+            timer: 2300,
             showConfirmButton: false
           });
         },
-        error: (err) => {
-          console.warn('Advertencia al guardar en backend:', err);
+        error: (err: any) => {
+          console.error('Error al guardar en backend:', err);
           this.guardando = false;
+          this.subiendoACloudinary = false;
           this.cdr.detectChanges();
-          // Aun si el backend tiene algún campo restringido, se mantiene guardado en la sesión local
+
+          const mensajeError = err?.error?.detail || err?.error?.message || 'No fue posible guardar los cambios en el servidor. Por favor intenta nuevamente.';
           Swal.fire({
-            icon: 'success',
-            title: '¡Perfil guardado!',
-            text: 'Tus datos han sido actualizados en tu sesión del sistema.',
-            confirmButtonColor: '#4141A5',
-            timer: 2000,
-            showConfirmButton: false
+            icon: 'error',
+            title: 'Error al actualizar',
+            text: mensajeError,
+            confirmButtonColor: '#4141A5'
           });
         }
       });
     } else {
       this.guardando = false;
+      this.subiendoACloudinary = false;
       this.cdr.detectChanges();
       Swal.fire({
         icon: 'success',
