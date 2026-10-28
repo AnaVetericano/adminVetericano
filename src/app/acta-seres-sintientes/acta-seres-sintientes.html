@@ -492,6 +492,39 @@
                 class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700 text-xs focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all resize-none leading-snug"></textarea>
             </div>
 
+            <!-- FILA 6: PRIORIDAD, ESTADO, ACTITUD/TEMPERAMENTO Y ANAMNESIS (PASO 1 CONSULTA) -->
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">PRIORIDAD / TRIAGE</label>
+              <select [(ngModel)]="prioridad"
+                class="w-full h-9 border border-slate-200 rounded-xl px-3 py-1 bg-slate-50 text-slate-800 text-xs font-bold focus:bg-white focus:border-[#4141a5] focus:outline-none">
+                <option *ngFor="let p of opcionesPrioridad" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">RESULTADO / ESTADO</label>
+              <select [(ngModel)]="resultadoEstado"
+                class="w-full h-9 border border-slate-200 rounded-xl px-3 py-1 bg-slate-50 text-slate-800 text-xs font-bold focus:bg-white focus:border-[#4141a5] focus:outline-none">
+                <option *ngFor="let e of opcionesResultadoEstado" [value]="e">{{ e }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">ACTITUD / TEMPERAMENTO</label>
+              <select [(ngModel)]="signosVitales.actitudTemperamento"
+                class="w-full h-9 border border-slate-200 rounded-xl px-3 py-1 bg-slate-50 text-slate-800 text-xs font-semibold focus:bg-white focus:border-[#4141a5] focus:outline-none">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let a of opcionesActitud" [value]="a">{{ a }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">ANAMNESIS</label>
+              <textarea rows="2" [(ngModel)]="anamnesis" (ngModelChange)="anamnesicos.evolucion = $event"
+                placeholder="Antecedentes y relato anamnésico de la consulta..."
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 text-slate-700 text-xs focus:bg-white focus:border-[#4141a5] focus:outline-none resize-none leading-snug"></textarea>
+            </div>
+
           </div>
 
           <!-- MEJORA DE UX: BOTÓN DE CONTINUIDAD AL SIGUIENTE PASO -->
@@ -906,8 +939,58 @@
         </div>
       </div>
 
-      <!-- HOJA 4: Evaluación Física de Órganos y Sistemas con Botones Interactivos -->
+      <!-- HOJA 4: Signos Vitales, Examen Físico y Evaluación Física de Órganos y Sistemas -->
       <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="space-y-3 pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-lg font-black text-slate-900 mt-0.5">Signos Vitales y Examen Físico General</h2>
+            <p class="text-[11px] text-slate-500">Constantes fisiológicas registradas en la consulta.</p>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Frec. Respiratoria (RPM)</label>
+              <input type="number" [(ngModel)]="signosVitales.frecuenciaRespiratoria" placeholder="Ej. 26"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Frec. Cardíaca (LPM)</label>
+              <input type="number" [(ngModel)]="signosVitales.frecuenciaCardiaca" placeholder="Ej. 110"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Temperatura (°C)</label>
+              <input type="number" step="0.1" [(ngModel)]="signosVitales.temperatura" placeholder="Ej. 38.5"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Pulso</label>
+              <input type="text" [(ngModel)]="signosVitales.pulso" placeholder="Fuerte, lleno y regular"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">TLLC (Seg)</label>
+              <input type="text" [(ngModel)]="signosVitales.tiempoLlenadoCapilar" placeholder="2 seg"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ganglios Linfáticos</label>
+              <select [(ngModel)]="signosVitales.gangliosLinfaticos"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-semibold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let g of opcionesGanglios" [value]="g">{{ g }}</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Mucosas</label>
+              <select [(ngModel)]="signosVitales.mucosas"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-semibold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let m of opcionesMucosas" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
             <h2 class="text-lg font-black text-slate-900 mt-0.5">Evaluación Física de Órganos y Sistemas</h2>

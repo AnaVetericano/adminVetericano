@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -31,6 +31,15 @@ export class Peticion implements OnInit {
   cargandoPeticiones = false;
   mostrarLista = false;
 
+  // Filtros locales para la vista de tarjetas de peticiones
+  filtroBusqueda = '';
+  filtroEstadoAsignacion: 'Todos' | 'Asignadas' | 'Sin asignar' = 'Todos';
+  menuFiltroAbierto = false;
+
+  // Modal de detalle de la petición
+  modalDetalleAbierto = false;
+  peticionDetalle: any = null;
+
   funcionarios: any[] = [];
 
   // Solo veterinarios (id_rol === 3) para el combo de asignación.
@@ -47,10 +56,106 @@ export class Peticion implements OnInit {
     const apellido = (p.asignado_a_apellido || p.asignado_apellido || p.veterinario_apellido || '').toString().trim();
     const completo = `${nombre} ${apellido}`.trim();
     if (completo) return completo;
-    const directo = (p.asignado_a || p.veterinario || p.asignado || '').toString().trim();
-    // Si solo viene el id numérico, no inventar nombre: se muestra "Sin asignar"
-    if (/^\d+$/.test(directo)) return '';
+    const directo = (p.asignado_a ?? p.veterinario ?? p.asignado ?? p.id_veterinario ?? p.id_funcionario ?? '').toString().trim();
+    if (!directo) return '';
+    // Si viene el id numérico, buscar en la lista de funcionarios cargada en frontend
+    if (/^\d+$/.test(directo)) {
+      const vet = this.funcionarios.find((f: any) => Number(f.id_usuario ?? f.id) === Number(directo));
+      if (vet) {
+        const nomVet = `${vet.nombre || vet.first_name || vet.username || ''} ${vet.apellido || vet.last_name || ''}`.trim();
+        if (nomVet) return nomVet;
+      }
+      return '';
+    }
     return directo;
+  }
+
+  // Determina localmente si la petición ya fue asignada o sigue sin asignar
+  estaAsignada(p: any): boolean {
+    if (!p) return false;
+    if (this.nombreAsignado(p)) return true;
+    const idAsig = p.asignado_a ?? p.id_veterinario ?? p.id_funcionario ?? p.veterinario_id ?? p.asignado;
+    if (idAsig !== null && idAsig !== undefined && String(idAsig).trim() !== '' && Number(idAsig) > 0) {
+      return true;
+    }
+    if (p.fecha_asignacion) return true;
+    const estado = String(p.estado || '').toLowerCase().trim();
+    if (estado.includes('asignad') && !estado.includes('sin asignar')) return true;
+    return false;
+  }
+
+  // Lista filtrada localmente por búsqueda de texto y estado de asignación
+  get peticionesFiltradas(): any[] {
+    const q = (this.filtroBusqueda || '').trim().toLowerCase();
+
+    return this.peticionesLista.filter((p) => {
+      const asignada = this.estaAsignada(p);
+
+      if (this.filtroEstadoAsignacion === 'Asignadas' && !asignada) return false;
+      if (this.filtroEstadoAsignacion === 'Sin asignar' && asignada) return false;
+
+      if (!q) return true;
+
+      const radicado = String(p.numero_radicado || `rad-pet-${p.id_peticion}` || '').toLowerCase();
+      const idPet = String(p.id_peticion || '').toLowerCase();
+      const tipo = this.tipoLabel(p).toLowerCase();
+      const direccion = String(p.ubicacion_direccion || p.direccion || '').toLowerCase();
+      const descripcion = String(p.descripcion || '').toLowerCase();
+      const estado = String(p.estado || '').toLowerCase();
+      const prioridad = String(p.prioridad || '').toLowerCase();
+      const vet = this.nombreAsignado(p).toLowerCase();
+      const estAsigTexto = asignada ? 'asignada asignado' : 'sin asignar pendiente';
+
+      return (
+        radicado.includes(q) ||
+        idPet.includes(q) ||
+        tipo.includes(q) ||
+        direccion.includes(q) ||
+        descripcion.includes(q) ||
+        estado.includes(q) ||
+        prioridad.includes(q) ||
+        vet.includes(q) ||
+        estAsigTexto.includes(q)
+      );
+    });
+  }
+
+  filtrarPorEstadoAsignacion(estado: 'Todos' | 'Asignadas' | 'Sin asignar'): void {
+    this.filtroEstadoAsignacion = estado;
+    this.menuFiltroAbierto = false;
+  }
+
+  toggleMenuFiltro(): void {
+    this.menuFiltroAbierto = !this.menuFiltroAbierto;
+  }
+
+  limpiarBusqueda(): void {
+    this.filtroBusqueda = '';
+  }
+
+  abrirModalDetalle(p: any): void {
+    this.peticionDetalle = p;
+    this.modalDetalleAbierto = true;
+  }
+
+  cerrarModalDetalle(): void {
+    this.modalDetalleAbierto = false;
+    this.peticionDetalle = null;
+  }
+
+  formatearFechaCorta(valor: any): string {
+    if (!valor) return 'No registrada';
+    try {
+      const d = new Date(valor);
+      if (isNaN(d.getTime())) return String(valor);
+      return d.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+    } catch {
+      return String(valor);
+    }
   }
 
   cargandoFuncionarios = false;
@@ -150,10 +255,16 @@ export class Peticion implements OnInit {
     document.body.style.overflow = '';
   }
 
-  // Cierra el visor grande con la tecla Escape.
+  // Cierra el visor grande o modales con la tecla Escape.
   @HostListener('document:keydown.escape')
   cerrarEvidenciaConEscape(): void {
-    if (this.evidenciaSeleccionada) this.cerrarEvidencia();
+    if (this.evidenciaSeleccionada) {
+      this.cerrarEvidencia();
+    } else if (this.modalDetalleAbierto) {
+      this.cerrarModalDetalle();
+    } else if (this.menuFiltroAbierto) {
+      this.menuFiltroAbierto = false;
+    }
   }
 
   onImgError(event: Event): void {
