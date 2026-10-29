@@ -225,6 +225,10 @@ export class AuthService {
     const rol = (this.userRole() || '').toLowerCase();
     return rol.includes('vet');
   });
+  public isJuridico = computed(() => {
+    const rol = (this.userRole() || '').toLowerCase();
+    return rol.includes('jur');
+  });
 
   constructor(private http: HttpClient) { }
 
@@ -279,7 +283,8 @@ export class AuthService {
     const idNum = Number(rolRaw);
     if (!isNaN(idNum)) {
       if (idNum === 1) return 'Administrador';
-      if (idNum === 2 || idNum === 3) return 'Veterinario';
+      if (idNum === 2) return 'Jurídico';
+      if (idNum === 3) return 'Veterinario';
       if (idNum === 4) return 'Peticionario';
     }
 

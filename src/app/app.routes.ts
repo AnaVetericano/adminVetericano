@@ -38,7 +38,7 @@ export const routes: Routes = [
     canActivateChild: [authGuard],
     children: [
       // Módulo Administrador / Entrada general
-      { path: '', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
+      { path: '', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } },
       { path: 'graficas', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'usuarios-roles', component: UsuariosRoles, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'voluntarios', component: Voluntarios, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
@@ -63,8 +63,8 @@ export const routes: Routes = [
       { path: 'especies', component: Especies, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
       { path: 'listarmedicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
       { path: 'crear-medicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
-      { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
-      { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } }
+      { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } },
+      { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } }
     ]
   }
 ];

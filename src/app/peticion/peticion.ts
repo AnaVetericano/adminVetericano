@@ -29,27 +29,93 @@ export class Peticion implements OnInit {
 
   peticionesLista: any[] = [];
   cargandoPeticiones = false;
-  mostrarLista = false;
+  mostrarLista = true; // Por defecto mostramos la lista para Jurídico
 
   // Filtros locales para la vista de tarjetas de peticiones
   filtroBusqueda = '';
   filtroEstadoAsignacion: 'Todos' | 'Asignadas' | 'Sin asignar' = 'Todos';
+  filtroEstadoPeticion: string = 'Todos';
+  filtroPrioridad: 'Todos' | 'Urgentes' | 'Estandar' = 'Todos';
+  filtroAtrasadas = false;
   menuFiltroAbierto = false;
+  menuFiltroEstadoAbierto = false;
+
+  // Catálogo visual de estados previstos en el plan (a la espera de unificación con backend)
+  estadosCatalogoPrevistos: string[] = [
+    'En revisión',
+    'Asignada',
+    'En proceso',
+    'Atendida',
+    'En tratamiento',
+    'Finalizada',
+    'Lista para adopción'
+  ];
+
+  // Panel de Notificaciones (Preparación visual de SCRUM-212)
+  panelNotificacionesAbierto = false;
+  notificacionesDemo = [
+    {
+      id: 1,
+      titulo: 'Nueva petición desde app móvil',
+      mensaje: 'El usuario móvil reportó un presunto caso de Maltrato Animal en Comuna 4.',
+      radicado: 'PET-2026-00128',
+      tiempo: 'Hace 15 min',
+      urgente: true,
+      leida: false,
+      origen: 'Móvil'
+    },
+    {
+      id: 2,
+      titulo: 'Petición en espera de asignación',
+      mensaje: 'Caso de animal en condición de calle sin veterinario asignado hace 2 días.',
+      radicado: 'PET-2026-00120',
+      tiempo: 'Hace 2 horas',
+      urgente: false,
+      leida: false,
+      origen: 'Web'
+    },
+    {
+      id: 3,
+      titulo: 'Atención completada',
+      mensaje: 'Dr. Smith Ordóñez registró el acta de visita para el caso PET-2026-00095.',
+      radicado: 'PET-2026-00095',
+      tiempo: 'Ayer',
+      urgente: false,
+      leida: true,
+      origen: 'Móvil'
+    }
+  ];
+
+  get notificacionesNoLeidas(): number {
+    return this.notificacionesDemo.filter(n => !n.leida).length;
+  }
+
+  togglePanelNotificaciones(): void {
+    this.panelNotificacionesAbierto = !this.panelNotificacionesAbierto;
+  }
+
+  marcarTodasNotificacionesLeidas(): void {
+    this.notificacionesDemo.forEach(n => n.leida = true);
+  }
 
   // Modal de detalle de la petición
   modalDetalleAbierto = false;
   peticionDetalle: any = null;
 
+  // Modal preparado para Reasignación con motivo (SCRUM-210)
+  mostrarModalReasignar = false;
+  peticionParaReasignar: any = null;
+  nuevoVeterinarioSeleccionado: number | null = null;
+  motivoReasignacion = '';
+
   funcionarios: any[] = [];
 
   // Solo veterinarios (id_rol === 3) para el combo de asignación.
-  // Se calcula desde `funcionarios` que ya viene filtrado del backend/GET.
   get veterinariosDisponibles(): any[] {
     return this.funcionarios;
   }
 
   // Nombre del veterinario asignado tolerante a distintos nombres de campo
-  // que puede devolver el backend (sin tocar backend).
   nombreAsignado(p: any): string {
     if (!p) return '';
     const nombre = (p.asignado_a_nombre || p.asignado_nombre || p.veterinario_nombre || '').toString().trim();
@@ -58,7 +124,6 @@ export class Peticion implements OnInit {
     if (completo) return completo;
     const directo = (p.asignado_a ?? p.veterinario ?? p.asignado ?? p.id_veterinario ?? p.id_funcionario ?? '').toString().trim();
     if (!directo) return '';
-    // Si viene el id numérico, buscar en la lista de funcionarios cargada en frontend
     if (/^\d+$/.test(directo)) {
       const vet = this.funcionarios.find((f: any) => Number(f.id_usuario ?? f.id) === Number(directo));
       if (vet) {
@@ -70,7 +135,7 @@ export class Peticion implements OnInit {
     return directo;
   }
 
-  // Determina localmente si la petición ya fue asignada o sigue sin asignar
+  // Determina si la petición ya fue asignada o sigue sin asignar
   estaAsignada(p: any): boolean {
     if (!p) return false;
     if (this.nombreAsignado(p)) return true;
@@ -84,15 +149,93 @@ export class Peticion implements OnInit {
     return false;
   }
 
-  // Lista filtrada localmente por búsqueda de texto y estado de asignación
+  // Determina si una petición es urgente basándose en prioridad, tipo o estado
+  esUrgente(p: any): boolean {
+    if (!p) return false;
+    const prio = String(p.prioridad || '').toLowerCase();
+    const tipo = String(p.tipo || this.tipoLabel(p) || '').toLowerCase();
+    const est = String(p.estado || '').toLowerCase();
+    return prio.includes('urgente') || prio.includes('alta') || prio.includes('crit') ||
+           tipo.includes('herido') || est.includes('urgente');
+  }
+
+  // Calcula días transcurridos desde fecha_asignacion (o fecha de creación como fallback)
+  diasTranscurridos(p: any): number | null {
+    if (!p) return null;
+    const fechaRef = p.fecha_asignacion || p.fecha;
+    if (!fechaRef) return null;
+    try {
+      const d = new Date(fechaRef);
+      if (isNaN(d.getTime())) return null;
+      const diffMs = Date.now() - d.getTime();
+      return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    } catch {
+      return null;
+    }
+  }
+
+  // Determina si la petición lleva 5 o más días sin avances
+  // Criterio visual: Asignada o Pendiente con 5 días o más
+  esAtrasada(p: any): boolean {
+    const dias = this.diasTranscurridos(p);
+    if (dias === null) return false;
+    const estado = String(p.estado || '').toLowerCase();
+    // Si ya está atendida o finalizada, no cuenta como atrasada
+    if (estado.includes('atendid') || estado.includes('finaliz') || estado.includes('alta') || estado.includes('cerrad')) {
+      return false;
+    }
+    return dias >= 5;
+  }
+
+  // Contadores para el panel de métricas y resumen superior
+  get totalPeticiones(): number {
+    return this.peticionesLista.length;
+  }
+
+  get totalPendientes(): number {
+    return this.peticionesLista.filter(p => !this.estaAsignada(p)).length;
+  }
+
+  get totalAsignadas(): number {
+    return this.peticionesLista.filter(p => this.estaAsignada(p)).length;
+  }
+
+  get totalUrgentes(): number {
+    return this.peticionesLista.filter(p => this.esUrgente(p)).length;
+  }
+
+  get totalAtrasadas(): number {
+    return this.peticionesLista.filter(p => this.esAtrasada(p)).length;
+  }
+
+  // Lista filtrada localmente por búsqueda de texto, asignación, estado, prioridad y atraso
   get peticionesFiltradas(): any[] {
     const q = (this.filtroBusqueda || '').trim().toLowerCase();
 
     return this.peticionesLista.filter((p) => {
       const asignada = this.estaAsignada(p);
+      const urgente = this.esUrgente(p);
+      const atrasada = this.esAtrasada(p);
 
+      // Filtro de asignación
       if (this.filtroEstadoAsignacion === 'Asignadas' && !asignada) return false;
       if (this.filtroEstadoAsignacion === 'Sin asignar' && asignada) return false;
+
+      // Filtro de urgencia
+      if (this.filtroPrioridad === 'Urgentes' && !urgente) return false;
+      if (this.filtroPrioridad === 'Estandar' && urgente) return false;
+
+      // Filtro de casos atrasados (5+ días)
+      if (this.filtroAtrasadas && !atrasada) return false;
+
+      // Filtro por estado específico (si se eligió uno)
+      if (this.filtroEstadoPeticion !== 'Todos') {
+        const estP = String(p.estado || '').toLowerCase();
+        const estF = this.filtroEstadoPeticion.toLowerCase();
+        if (!estP.includes(estF) && !estF.includes(estP)) {
+          return false;
+        }
+      }
 
       if (!q) return true;
 
@@ -125,12 +268,37 @@ export class Peticion implements OnInit {
     this.menuFiltroAbierto = false;
   }
 
+  filtrarPorEstadoPeticion(estado: string): void {
+    this.filtroEstadoPeticion = estado;
+    this.menuFiltroEstadoAbierto = false;
+  }
+
+  filtrarPorPrioridad(prio: 'Todos' | 'Urgentes' | 'Estandar'): void {
+    this.filtroPrioridad = prio;
+  }
+
+  toggleFiltroAtrasadas(): void {
+    this.filtroAtrasadas = !this.filtroAtrasadas;
+  }
+
   toggleMenuFiltro(): void {
     this.menuFiltroAbierto = !this.menuFiltroAbierto;
   }
 
+  toggleMenuFiltroEstado(): void {
+    this.menuFiltroEstadoAbierto = !this.menuFiltroEstadoAbierto;
+  }
+
   limpiarBusqueda(): void {
     this.filtroBusqueda = '';
+  }
+
+  limpiarTodosFiltros(): void {
+    this.filtroBusqueda = '';
+    this.filtroEstadoAsignacion = 'Todos';
+    this.filtroEstadoPeticion = 'Todos';
+    this.filtroPrioridad = 'Todos';
+    this.filtroAtrasadas = false;
   }
 
   abrirModalDetalle(p: any): void {
@@ -160,9 +328,7 @@ export class Peticion implements OnInit {
 
   cargandoFuncionarios = false;
 
-  // ===== Helpers SOLO para la vista "Ver peticiones" (no tocan crear/asignar/mapa) =====
-
-  // Etiqueta legible del tipo (swagger: `tipo` string). Tolera id_tipo numérico.
+  // Etiqueta legible del tipo
   tipoLabel(p: any): string {
     const t = p?.tipo ?? p?.tipo_reporte ?? p?.nombre_tipo ?? p?.id_tipo;
     if (t === null || t === undefined || t === '') return 'Sin tipo';
@@ -178,22 +344,50 @@ export class Peticion implements OnInit {
     return String(t);
   }
 
-  // Color del badge de prioridad (swagger: `prioridad` string nullable).
-  prioridadClase(prioridad: any): string {
-    const v = String(prioridad || '').toLowerCase();
-    if (v.includes('alta') || v.includes('urgente') || v.includes('crít') || v.includes('crit')) {
-      return 'bg-red-100 text-red-700';
+  // Clase para los badges de estado
+  estadoBadgeClase(p: any): string {
+    const est = String(p?.estado || (this.estaAsignada(p) ? 'Asignada' : 'En revisión')).toLowerCase();
+    if (est.includes('revis') || est.includes('pend')) {
+      return 'bg-amber-50 text-amber-700 border-amber-200';
     }
-    if (v.includes('media')) {
-      return 'bg-amber-100 text-amber-700';
+    if (est.includes('asignad')) {
+      return 'bg-blue-50 text-blue-700 border-blue-200';
     }
-    if (v.includes('baja')) {
-      return 'bg-emerald-100 text-emerald-700';
+    if (est.includes('proces')) {
+      return 'bg-purple-50 text-purple-700 border-purple-200';
     }
-    return 'bg-gray-100 text-gray-600';
+    if (est.includes('atendid') || est.includes('resuelt')) {
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    }
+    if (est.includes('tratamient') || est.includes('observac')) {
+      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    }
+    if (est.includes('adopci')) {
+      return 'bg-pink-50 text-pink-700 border-pink-200';
+    }
+    if (est.includes('finaliz') || est.includes('alta') || est.includes('cerrad')) {
+      return 'bg-slate-100 text-slate-700 border-slate-300';
+    }
+    return 'bg-gray-100 text-gray-700 border-gray-200';
   }
 
-  // URL de la foto (swagger: `foto` string nullable). Tolera array u otros nombres.
+  // Color del badge de prioridad
+  prioridadClase(prioridad: any, esUrg: boolean = false): string {
+    if (esUrg) return 'bg-red-50 text-red-700 border-red-200';
+    const v = String(prioridad || '').toLowerCase();
+    if (v.includes('alta') || v.includes('urgente') || v.includes('crít') || v.includes('crit')) {
+      return 'bg-red-50 text-red-700 border-red-200';
+    }
+    if (v.includes('media')) {
+      return 'bg-amber-50 text-amber-700 border-amber-200';
+    }
+    if (v.includes('baja')) {
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    }
+    return 'bg-gray-50 text-gray-600 border-gray-200';
+  }
+
+  // URL de la foto
   fotoDe(p: any): string {
     if (!p) return '';
     const f: any = p.foto ?? p.foto_url ?? p.imagen ?? p.evidencia;
@@ -209,7 +403,7 @@ export class Peticion implements OnInit {
     return this.esVideo(f) ? '1 video' : '1 foto';
   }
 
-  // Link a Google Maps con lat/lng (swagger: ubicacion_latitud/longitud string decimal readonly).
+  // Link a Google Maps
   mapaLink(p: any): string {
     const lat = p?.ubicacion_latitud ?? p?.latitud;
     const lng = p?.ubicacion_longitud ?? p?.longitud;
@@ -230,11 +424,10 @@ export class Peticion implements OnInit {
     }
   }
 
-  // ===== Visor grande de evidencia (solo lista "Ver peticiones") =====
+  // Visor de evidencia
   evidenciaSeleccionada: string | null = null;
   evidenciaEsVideo = false;
 
-  // Detecta video por extensión o por firma de Cloudinary (/video/upload).
   esVideo(url: any): boolean {
     const u = String(url || '').toLowerCase().split('?')[0];
     if (!u) return false;
@@ -255,15 +448,23 @@ export class Peticion implements OnInit {
     document.body.style.overflow = '';
   }
 
-  // Cierra el visor grande o modales con la tecla Escape.
+  // Cierra el visor grande o modales con la tecla Escape
   @HostListener('document:keydown.escape')
-  cerrarEvidenciaConEscape(): void {
+  cerrarConEscape(): void {
     if (this.evidenciaSeleccionada) {
       this.cerrarEvidencia();
+    } else if (this.mostrarModalReasignar) {
+      this.cerrarModalReasignar();
+    } else if (this.mostrarModalAsignar) {
+      this.cerrarModalAsignar();
     } else if (this.modalDetalleAbierto) {
       this.cerrarModalDetalle();
+    } else if (this.panelNotificacionesAbierto) {
+      this.panelNotificacionesAbierto = false;
     } else if (this.menuFiltroAbierto) {
       this.menuFiltroAbierto = false;
+    } else if (this.menuFiltroEstadoAbierto) {
+      this.menuFiltroEstadoAbierto = false;
     }
   }
 
@@ -287,9 +488,14 @@ export class Peticion implements OnInit {
     this.reporteForm = this.fb.group({
       tipoPeticion: ['maltrato', Validators.required],
       otroEspecificacion: [''],
+      prioridad: ['Media'], // Preparación visual de urgencia en creación
       descripcion: ['', Validators.required],
       ubicacion: ['', Validators.required]
     });
+
+    // Cargar automáticamente las peticiones y funcionarios para Jurídico
+    this.obtenerPeticiones();
+    this.obtenerFuncionarios();
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -335,9 +541,6 @@ export class Peticion implements OnInit {
     this.http.get<any[]>(this.apiFuncionariosUrl, { headers: this.getAuthHeaders() }).subscribe({
       next: (data) => {
         const lista = Array.isArray(data) ? data : [];
-        // El endpoint trae roles 1,2,3 (admin/jurídico/veterinario), pero para
-        // asignar casos solo sirven veterinarios. Se filtra en frontend
-        // (sin tocar backend): id_rol === 3 o rol === 'Veterinario'.
         this.funcionarios = lista.filter((f: any) => {
           const idRol = Number(f.id_rol ?? f.idRol ?? f.rol_id ?? 0);
           const nombreRol = String(f.rol ?? f.nombre_rol ?? f.nombreRol ?? '').toLowerCase();
@@ -374,19 +577,18 @@ export class Peticion implements OnInit {
     this.asignando = true;
     const url = `https://backendvetericano-production.up.railway.app/api/peticiones/${this.peticionSeleccionada.id_peticion}/asignar/`;
 
-    // El backend (AsignarPeticionView) solo acepta PATCH con la llave "asignado_a".
-    // Antes se mandaba POST con "id_funcionario" y por eso fallaba con 400/405.
     this.http.patch(url, { asignado_a: Number(this.veterinarioSeleccionado) }, { headers: this.getAuthHeaders() }).subscribe({
       next: () => {
-        // Reflejar el asignado de inmediato en la fila (el PATCH no devuelve nombres).
         const vet = this.funcionarios.find((f: any) => Number(f.id_usuario ?? f.id) === Number(this.veterinarioSeleccionado));
         if (vet && this.peticionSeleccionada) {
           this.peticionSeleccionada.asignado_a_nombre = vet.nombre || vet.first_name || vet.username || '';
           this.peticionSeleccionada.asignado_a_apellido = vet.apellido || vet.last_name || '';
+          this.peticionSeleccionada.fecha_asignacion = new Date().toISOString();
           const idx = this.peticionesLista.findIndex((x: any) => x.id_peticion === this.peticionSeleccionada.id_peticion);
           if (idx >= 0) {
             this.peticionesLista[idx].asignado_a_nombre = this.peticionSeleccionada.asignado_a_nombre;
             this.peticionesLista[idx].asignado_a_apellido = this.peticionSeleccionada.asignado_a_apellido;
+            this.peticionesLista[idx].fecha_asignacion = this.peticionSeleccionada.fecha_asignacion;
           }
         }
         this.asignando = false;
@@ -400,6 +602,35 @@ export class Peticion implements OnInit {
         this.mostrarAlerta('Error al asignar', detalle, 'error');
       }
     });
+  }
+
+  // ===== Modal de Reasignación con Motivo (Preparación visual SCRUM-210) =====
+  abrirModalReasignar(peticion: any): void {
+    this.peticionParaReasignar = peticion;
+    this.nuevoVeterinarioSeleccionado = null;
+    this.motivoReasignacion = '';
+    this.mostrarModalReasignar = true;
+  }
+
+  cerrarModalReasignar(): void {
+    this.mostrarModalReasignar = false;
+    this.peticionParaReasignar = null;
+    this.nuevoVeterinarioSeleccionado = null;
+    this.motivoReasignacion = '';
+  }
+
+  confirmarReasignacionVisual(): void {
+    if (!this.peticionParaReasignar || !this.nuevoVeterinarioSeleccionado) {
+      this.mostrarAlerta('Selecciona el nuevo veterinario', 'Debes elegir el veterinario que asumirá el caso.', 'warning');
+      return;
+    }
+
+    // Por ahora utilizamos el endpoint actual de asignación (PATCH)
+    // respetando que el backend actual aún no persiste el motivo ni historial (Fase 5 pendiente)
+    this.peticionSeleccionada = this.peticionParaReasignar;
+    this.veterinarioSeleccionado = this.nuevoVeterinarioSeleccionado;
+    this.cerrarModalReasignar();
+    this.asignarVeterinario();
   }
 
   recargarPeticiones(): void {
@@ -542,6 +773,8 @@ export class Peticion implements OnInit {
       if (espec) descripcion = `[Especificación: ${espec}] - ${descripcion}`;
     }
 
+    const prioridadSeleccionada = this.reporteForm.get('prioridad')?.value || 'Media';
+
     Swal.fire({
       title: 'Enviando petición...',
       text: 'Por favor espera un momento.',
@@ -573,6 +806,7 @@ export class Peticion implements OnInit {
     const payload: any = {
       id_tipo: idTipo,
       descripcion,
+      prioridad: prioridadSeleccionada,
       direccion: this.reporteForm.get('ubicacion')?.value || ''
     };
 
@@ -589,7 +823,8 @@ export class Peticion implements OnInit {
       next: (response: any) => {
         this.mostrarAlerta('¡Petición enviada!', `El caso #${response.id_peticion || ''} ha sido registrado con éxito.`, 'success');
         this.resetearFormulario();
-        if (this.mostrarLista) this.obtenerPeticiones();
+        this.mostrarLista = true;
+        this.obtenerPeticiones();
       },
       error: (error) => {
         const detalle = error.error?.detail || error.error?.mensaje || 'Error al registrar la petición.';
@@ -599,7 +834,13 @@ export class Peticion implements OnInit {
   }
 
   private resetearFormulario(): void {
-    this.reporteForm.reset({ tipoPeticion: 'maltrato', otroEspecificacion: '', descripcion: '', ubicacion: '' });
+    this.reporteForm.reset({
+      tipoPeticion: 'maltrato',
+      otroEspecificacion: '',
+      prioridad: 'Media',
+      descripcion: '',
+      ubicacion: ''
+    });
     this.archivoSeleccionado = null;
     this.latitud = null;
     this.longitud = null;
