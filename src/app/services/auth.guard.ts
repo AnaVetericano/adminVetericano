@@ -23,7 +23,9 @@ export const loginGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const token = localStorage.getItem('token');
   if (token) {
-    if (authService.isVeterinario()) {
+    if (authService.isJuridico()) {
+      router.navigate(['/inicio-admin/peticion']);
+    } else if (authService.isVeterinario()) {
       router.navigate(['/inicio-admin/acta-seres-sintientes']);
     } else {
       router.navigate(['/inicio-admin']);
@@ -70,7 +72,9 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   });
 
   // Redirección inteligente al módulo principal según su rol
-  if (authService.isVeterinario()) {
+  if (authService.isJuridico()) {
+    router.navigate(['/inicio-admin/peticion']);
+  } else if (authService.isVeterinario()) {
     router.navigate(['/inicio-admin/acta-seres-sintientes']);
   } else {
     router.navigate(['/inicio-admin']);
