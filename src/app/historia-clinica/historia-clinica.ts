@@ -35,8 +35,28 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   pestanaActiva: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos' = 'examenes';
 
   // =========================================================================
+  // PASO 1: CONSULTA (ESPERA Y DATOS DEL PACIENTE)
+  // =========================================================================
+  motivo_consulta: string = '';
+  prioridad: string = 'Normal';
+  anamnesis: string = '';
+  actitud_temperamento: string = '';
+  resultado_estado: string = 'Estable';
+
+  // =========================================================================
   // PASO 2: EXÁMENES CLÍNICOS Y SISTEMAS ORGÁNICOS
   // =========================================================================
+  frecuencia_respiratoria: number | null = null;
+  frecuencia_cardiaca: number | null = null;
+  temperatura: number | null = null;
+  pulso: string = '';
+  tllc: string = '';
+  ganglios_linfaticos: string = '';
+  mucosas: string = '';
+  hallazgos_examen: string = '';
+  observaciones_examen: string = '';
+  examenes_complementarios: any[] = [];
+
   examenesClinicos: ExamenClinico[] = [];
   examenesFiltrados: ExamenClinico[] = [];
   cargandoExamenes: boolean = false;
@@ -64,11 +84,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     cardiovascular: 'NE',
     genitourinario: 'NE'
   };
+  evaluacion_sistemas: { [key: string]: string } = this.sistemas;
   observacionesSistemas: string = '';
 
   // =========================================================================
   // PASO 3: DIAGNÓSTICO, PATOLOGÍA Y PLAN
   // =========================================================================
+  pronostico: string = 'Favorable';
+  plan_procedimientos: string = '';
   patologias: Patologia[] = [];
   patologiasFiltradas: Patologia[] = [];
   cargandoPatologias: boolean = false;
@@ -89,11 +112,16 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   mapaStockPorId: Map<number, number> = new Map();
   mapaStockPorNombre: Map<string, number> = new Map();
   materialesUtilizados: string = '';
+  materiales_utilizados: string = '';
 
   // Destino CBA
+  ingresa_cba: boolean = false;
   ingresaCBA: string = 'NO';
+  motivo_ingreso_cba: string = '';
   motivoIngresoNoIngreso: string = '';
+  canil_asignado: string = '';
   canilAsignado: string = '';
+  funcionario_recibe_cba: string = '';
   funcionarioRecibeCBA: string = '';
 
   // Firmas y aval institucional
@@ -154,11 +182,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       const idParam = params.get('id');
       const idQuery = this.route.snapshot.queryParamMap.get('id');
       const idHistoriaQuery = this.route.snapshot.queryParamMap.get('id_historia');
+      const idConsultaQuery = this.route.snapshot.queryParamMap.get('id_consulta');
       const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
       const nombreQuery = this.route.snapshot.queryParamMap.get('nombre') || '';
       const fotoQuery = this.route.snapshot.queryParamMap.get('foto') || '';
 
-      this.idHistoria = idParam || idHistoriaQuery || idQuery || '';
+      this.idHistoria = idParam || idConsultaQuery || idHistoriaQuery || idQuery || '';
 
       this.cargarHistoria(nombreQuery, fotoQuery, idAnimalQuery);
     });
@@ -239,30 +268,68 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   private inicializarFormulario(): void {
     this.formHistoria = this.fb.group({
+      // 1. Consulta (Espera y Datos del Paciente)
+      motivo_consulta: [''],
+      prioridad: ['Normal'],
+      anamnesis: [''],
+      actitud_temperamento: [''],
+      actitudTemperamento: [''],
+      resultado_estado: ['Estable'],
+      resultadoEstado: ['Estable'],
+
+      // 2. Exámenes (Pruebas y Sistemas Orgánicos)
+      frecuencia_respiratoria: [null, [Validators.min(8), Validators.max(160)]],
+      frecuenciaRespiratoria: [null, [Validators.min(8), Validators.max(160)]],
+      frecuencia_cardiaca: [null, [Validators.min(20), Validators.max(280)]],
+      frecuenciaCardiaca: [null, [Validators.min(20), Validators.max(280)]],
+      temperatura: [null, [Validators.min(32), Validators.max(43)]],
+      peso: [null, [Validators.min(0.2), Validators.max(120)]],
+      pulso: [''],
+      tllc: [''],
+      tiempoLlenadoCapilar: [''],
+      ganglios_linfaticos: [''],
+      gangliosLinfaticos: [''],
+      mucosas: [''],
+      hallazgos_examen: [''],
+      observaciones_examen: [''],
+      observacionesExamen: [''],
+
+      // 3. Diagnóstico (Patología y Plan de Acción)
       diagnosticoPrincipal: ['', [Validators.required, Validators.minLength(5)]],
       diagnosticoDiferencial: [''],
       listaProblemas: [''],
       evolucion: ['', [Validators.required, Validators.minLength(10)]],
       pronostico: ['Favorable', [Validators.required]],
-      prioridad: ['Normal'],
-      resultadoEstado: ['Estable'],
-      pulso: [''],
-      tiempoLlenadoCapilar: [''],
-      mucosas: [''],
-      gangliosLinfaticos: [''],
-      actitudTemperamento: [''],
-      observacionesExamen: [''],
+      plan_procedimientos: [''],
       planTratamiento: ['', [Validators.required, Validators.minLength(5)]],
-      temperatura: [null, [Validators.min(32), Validators.max(43)]],
-      frecuenciaCardiaca: [null, [Validators.min(20), Validators.max(280)]],
-      frecuenciaRespiratoria: [null, [Validators.min(8), Validators.max(160)]],
-      peso: [null, [Validators.min(0.2), Validators.max(120)]],
+
+      // 4. Tratamientos (Fármacos, Insumos, CBA y Firmas)
+      materiales_utilizados: [''],
+      ingresa_cba: [false],
+      motivo_ingreso_cba: [''],
+      canil_asignado: [''],
+      funcionario_recibe_cba: [''],
       motivoModificacion: ['', [Validators.required, Validators.minLength(5)]]
     });
   }
 
   /**
-   * Carga los datos previos de la historia clínica en el formulario y en los modelos de cada paso
+   * Parsea de forma segura un campo que puede venir como JSON string u objeto/array desde la API
+   */
+  private parsearJsonSeguro<T>(valor: any, valorPorDefecto: T): T {
+    if (!valor) return valorPorDefecto;
+    if (typeof valor === 'string') {
+      try {
+        return JSON.parse(valor) as T;
+      } catch {
+        return valorPorDefecto;
+      }
+    }
+    return valor as T;
+  }
+
+  /**
+   * Carga los datos previos de la historia clínica / consulta en el formulario y en los 4 apartados
    */
   cargarHistoria(nombrePaciente?: string, fotoPaciente?: string, idAnimalParam?: string | number | null): void {
     this.cargando = true;
@@ -274,6 +341,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     this.historiaService.obtenerHistoria(this.idHistoria, nombre, idAnimal).subscribe({
       next: (data: HistoriaClinicaEdicion) => {
+        const raw = data as any;
         this.historiaOriginal = data;
         this.paciente = data.paciente;
         this.historialModificaciones = data.historial_modificaciones || [];
@@ -292,49 +360,76 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           }
         }
 
-        // 1. Población del formulario reactivo principal (Diagnóstico, Evolución, Constantes)
-        this.formHistoria.patchValue({
-          diagnosticoPrincipal: data.diagnostico_principal || '',
-          diagnosticoDiferencial: data.diagnostico_diferencial || (data as any).descripcion_hallazgos || (data as any).hallazgos_examen || '',
-          listaProblemas: data.lista_problemas || '',
-          evolucion: data.evolucion || '',
-          pronostico: data.pronostico || 'Favorable',
-          prioridad: data.prioridad || 'Normal',
-          resultadoEstado: data.resultado_estado || 'Estable',
-          pulso: data.constantes?.pulso || data.pulso || '',
-          tiempoLlenadoCapilar: data.constantes?.tllc || data.tllc || '',
-          mucosas: data.constantes?.mucosas || data.mucosas || '',
-          gangliosLinfaticos: data.constantes?.ganglios_linfaticos || data.ganglios_linfaticos || '',
-          actitudTemperamento: data.constantes?.actitud_temperamento || data.actitud_temperamento || '',
-          observacionesExamen: data.observaciones_examen || '',
-          planTratamiento: data.plan_tratamiento || '',
-          temperatura: data.constantes?.temperatura ?? null,
-          frecuenciaCardiaca: data.constantes?.frecuencia_cardiaca ?? null,
-          frecuenciaRespiratoria: data.constantes?.frecuencia_respiratoria ?? null,
-          peso: data.paciente?.peso ?? null,
-          motivoModificacion: ''
-        });
+        // =====================================================================
+        // 1. APARTADO 1: CONSULTA (Espera y Datos del Paciente)
+        // =====================================================================
+        this.motivo_consulta = raw.motivo_consulta || '';
+        this.prioridad = raw.prioridad || 'Normal';
+        this.anamnesis = raw.anamnesis || data.evolucion || '';
+        this.actitud_temperamento = data.constantes?.actitud_temperamento || raw.actitud_temperamento || '';
+        this.resultado_estado = raw.resultado_estado || data.estado_general || 'Estable';
 
-        // 2. Población Paso 2: Exámenes y 12 Sistemas Orgánicos
-        if (data.organos_sistemas && typeof data.organos_sistemas === 'object') {
-          this.sistemas = { ...this.sistemas, ...data.organos_sistemas };
+        // =====================================================================
+        // 2. APARTADO 2: EXÁMENES (Pruebas, Signos Vitales y Sistemas Orgánicos)
+        // =====================================================================
+        this.frecuencia_respiratoria = raw.frecuencia_respiratoria ?? data.constantes?.frecuencia_respiratoria ?? null;
+        this.frecuencia_cardiaca = raw.frecuencia_cardiaca ?? data.constantes?.frecuencia_cardiaca ?? null;
+        this.temperatura = raw.temperatura ?? data.constantes?.temperatura ?? null;
+        this.pulso = raw.pulso || data.constantes?.pulso || '';
+        this.tllc = raw.tllc || data.constantes?.tllc || '';
+        this.ganglios_linfaticos = raw.ganglios_linfaticos || data.constantes?.ganglios_linfaticos || '';
+        this.mucosas = raw.mucosas || data.constantes?.mucosas || '';
+
+        this.hallazgos_examen = raw.hallazgos_examen || data.descripcion_hallazgos || data.diagnostico_diferencial || '';
+        this.descripcionHallazgos = this.hallazgos_examen;
+
+        const sistemasParseados = this.parsearJsonSeguro<Record<string, any>>(
+          raw.evaluacion_sistemas || data.organos_sistemas,
+          {}
+        );
+        if (sistemasParseados && typeof sistemasParseados === 'object') {
+          this.sistemas = { ...this.sistemas, ...sistemasParseados };
+          this.evaluacion_sistemas = this.sistemas;
         }
-        this.observacionesSistemas = data.observaciones_sistemas || data.organos_sistemas?.['observaciones'] || '';
-        this.descripcionHallazgos = (data as any).descripcion_hallazgos || (data as any).hallazgos_examen || data.diagnostico_diferencial || '';
-        this.examenesSolicitados = Array.isArray(data.examenes_solicitados)
-          ? data.examenes_solicitados.map((ex: any) => ({
-              id_examen: ex.id_examen || ex.id,
-              nombre: ex.nombre || ex.nombre_examen || 'Examen Clínico',
-              tipo: ex.tipo || 'General',
-              descripcion: ex.descripcion || '',
-              estado: ex.estado || 'solicitado',
-              resultado: ex.resultado || '',
-              ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
-            }))
-          : [];
 
-        // 3. Población Paso 3: Diagnóstico y Lista de Problemas
-        this.planProcedimientos = data.plan_tratamiento || '';
+        this.observaciones_examen =
+          raw.observaciones_examen ||
+          data.observaciones_sistemas ||
+          sistemasParseados?.['observaciones'] ||
+          '';
+        this.observacionesSistemas = this.observaciones_examen;
+
+        const examenesRaw = this.parsearJsonSeguro<any>(
+          raw.examenes_complementarios || data.examenes_solicitados,
+          []
+        );
+        const listaExamenes = Array.isArray(examenesRaw)
+          ? examenesRaw
+          : Object.keys(examenesRaw || {}).map(k => ({
+              id_examen: null,
+              nombre: k,
+              estado: examenesRaw[k] ? 'solicitado' : 'pendiente',
+              resultado: ''
+            }));
+
+        this.examenesSolicitados = listaExamenes.map((ex: any) => ({
+          id_examen: ex.id_examen || ex.id || null,
+          nombre: ex.nombre || ex.nombre_examen || 'Examen Clínico',
+          tipo: ex.tipo || 'General',
+          descripcion: ex.descripcion || '',
+          estado: ex.estado || 'solicitado',
+          resultado: ex.resultado || '',
+          ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+        }));
+        this.examenes_complementarios = this.examenesSolicitados;
+
+        // =====================================================================
+        // 3. APARTADO 3: DIAGNÓSTICO (Patología y Plan de Acción)
+        // =====================================================================
+        this.pronostico = raw.pronostico || 'Favorable';
+        this.plan_procedimientos = raw.plan_procedimientos || data.plan_tratamiento || '';
+        this.planProcedimientos = this.plan_procedimientos;
+
         if (data.lista_problemas) {
           const lineas = data.lista_problemas
             .split(/[\n;]/)
@@ -345,7 +440,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           });
         }
 
-        // 4. Población Paso 4: Tratamientos, Insumos, CBA y Firmas
+        // =====================================================================
+        // 4. APARTADO 4: TRATAMIENTOS (Fármacos, Insumos, CBA y Firmas)
+        // =====================================================================
         if (Array.isArray(data.tratamientos) && data.tratamientos.length > 0) {
           this.medicamentosSeleccionados = data.tratamientos.map((t: any) => ({
             id: t.id_medicamento || t.id,
@@ -367,17 +464,76 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           }));
         }
 
-        this.materialesUtilizados = data.materiales_utilizados || '';
-        this.ingresaCBA = String(data.ingresa_cba || 'NO').toUpperCase() === 'SI' || (data.ingresa_cba as any) === true ? 'SI' : 'NO';
-        this.motivoIngresoNoIngreso = data.motivo_ingreso_no_ingreso || (data as any).motivo_ingreso_cba || '';
-        this.canilAsignado = data.canil_asignado || '';
-        this.funcionarioRecibeCBA = data.funcionario_recibe_cba || '';
+        this.materiales_utilizados = raw.materiales_utilizados || '';
+        this.materialesUtilizados = this.materiales_utilizados;
+
+        const ingresaBool =
+          raw.ingresa_cba === true ||
+          String(raw.ingresa_cba || '').toUpperCase() === 'SI' ||
+          String(raw.ingresa_cba || '').toLowerCase() === 'true';
+
+        this.ingresa_cba = ingresaBool;
+        this.ingresaCBA = ingresaBool ? 'SI' : 'NO';
+        this.motivo_ingreso_cba = raw.motivo_ingreso_cba || data.motivo_ingreso_no_ingreso || '';
+        this.motivoIngresoNoIngreso = this.motivo_ingreso_cba;
+        this.canil_asignado = raw.canil_asignado || '';
+        this.canilAsignado = this.canil_asignado;
+        this.funcionario_recibe_cba = raw.funcionario_recibe_cba || '';
+        this.funcionarioRecibeCBA = this.funcionario_recibe_cba;
 
         const sesionActual = this.authService.currentUser();
         this.nombreVeterinario = data.nombre_veterinario || (sesionActual ? `${sesionActual.nombre} ${sesionActual.apellido}`.trim() : 'Médico Veterinario Oficial CBA');
         this.tarjetaProfesional = data.tarjeta_profesional || sesionActual?.tarjeta_profesional || 'COMVEZCOL-CBA-001';
         this.nombreAcudiente = data.nombre_acudiente || data.paciente?.tenedor_nombre || '';
         this.cedulaAcudiente = data.cedula_acudiente || data.paciente?.tenedor_documento || '';
+
+        // =====================================================================
+        // PARCHEO DEL FORMULARIO REACTIVO PRINCIPAL (patchValue)
+        // =====================================================================
+        this.formHistoria.patchValue({
+          // Paso 1: Consulta
+          motivo_consulta: this.motivo_consulta,
+          prioridad: this.prioridad,
+          anamnesis: this.anamnesis,
+          actitud_temperamento: this.actitud_temperamento,
+          actitudTemperamento: this.actitud_temperamento,
+          resultado_estado: this.resultado_estado,
+          resultadoEstado: this.resultado_estado,
+
+          // Paso 2: Exámenes y Signos Vitales
+          frecuencia_respiratoria: this.frecuencia_respiratoria,
+          frecuenciaRespiratoria: this.frecuencia_respiratoria,
+          frecuencia_cardiaca: this.frecuencia_cardiaca,
+          frecuenciaCardiaca: this.frecuencia_cardiaca,
+          temperatura: this.temperatura,
+          peso: data.paciente?.peso ?? null,
+          pulso: this.pulso,
+          tllc: this.tllc,
+          tiempoLlenadoCapilar: this.tllc,
+          ganglios_linfaticos: this.ganglios_linfaticos,
+          gangliosLinfaticos: this.ganglios_linfaticos,
+          mucosas: this.mucosas,
+          hallazgos_examen: this.hallazgos_examen,
+          observaciones_examen: this.observaciones_examen,
+          observacionesExamen: this.observaciones_examen,
+
+          // Paso 3: Diagnóstico y Plan
+          diagnosticoPrincipal: data.diagnostico_principal || '',
+          diagnosticoDiferencial: data.diagnostico_diferencial || this.hallazgos_examen || '',
+          listaProblemas: data.lista_problemas || '',
+          evolucion: data.evolucion || this.anamnesis || '',
+          pronostico: this.pronostico,
+          plan_procedimientos: this.plan_procedimientos,
+          planTratamiento: this.plan_procedimientos,
+
+          // Paso 4: Tratamientos y CBA
+          materiales_utilizados: this.materiales_utilizados,
+          ingresa_cba: this.ingresa_cba,
+          motivo_ingreso_cba: this.motivo_ingreso_cba,
+          canil_asignado: this.canil_asignado,
+          funcionario_recibe_cba: this.funcionario_recibe_cba,
+          motivoModificacion: ''
+        });
 
         // Bloqueo estricto si está anulada (Jira HE06-HU013 Escenario 3.0)
         const estadoGen = String(data.estado_general || '').trim().toLowerCase();
@@ -1032,7 +1188,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       motivo_modificacion: formVal.motivoModificacion,
       organos_sistemas: {
         ...this.sistemas,
-        observaciones: this.observacionesSistemas
+        observaciones: this.observacionesSistemas || formVal.observacionesExamen || ''
       },
       examenes_solicitados: this.examenesSolicitados.map(ex => ({
         id_examen: ex.id_examen || ex.id,

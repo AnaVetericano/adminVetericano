@@ -101,14 +101,77 @@
       <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <span class="text-xs text-[#4141a5] font-bold"> · TURNOS POR ATENDER</span>
-            <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] mt-1">Animales Listos para Iniciar Historia Clínica</h2>
-            <p class="text-xs text-slate-500">Seleccione el animal en espera para sincronizar sus datos con la consulta médica oficial.</p>
+            <span class="text-xs text-[#4141a5] font-bold">
+              {{ filtroEstadoAtencion === 'pendientes' ? '· TURNOS PENDIENTES' : '· HISTORIAS CLÍNICAS COMPLETADAS' }}
+            </span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] mt-1">
+              {{ filtroEstadoAtencion === 'pendientes' ? 'Animales Pendientes de Historia Clínica' : 'Animales Atendidos (Completados)' }}
+            </h2>
+            <p class="text-xs text-slate-500">
+              {{
+                filtroEstadoAtencion === 'pendientes'
+                  ? 'Seleccione un animal en espera para registrar su historia clínica y consulta médica oficial.'
+                  : 'Animales que ya cuentan con su historia clínica finalizada en el sistema.'
+              }}
+            </p>
           </div>
           <button
             class="bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer uppercase tracking-wider">
             <span>+</span> Nuevo Animal en Espera
           </button>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- SISTEMA DE FILTROS VISUALES (PESTAÑAS / BOTONES): PENDIENTES vs COMPLETADOS -->
+        <!-- ========================================================================= -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-3 border-b border-slate-100">
+          <div class="inline-flex p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <!-- PESTAÑA: PENDIENTES (COLOR AMARILLO OFICIAL #F1C63C) -->
+            <button
+              type="button"
+              (click)="cambiarFiltroEstadoAtencion('pendientes')"
+              [ngClass]="filtroEstadoAtencion === 'pendientes'
+                ? 'bg-[#F1C63C] text-[#170B3D] shadow-md font-black border border-[#e5ba34]'
+                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/60'"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer">
+              <span class="flex items-center justify-center w-5 h-5 rounded-lg text-xs"
+                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#170B3D]/15 text-[#170B3D]' : 'bg-slate-200/70 text-slate-500'">
+                ⏳
+              </span>
+              <span>Pendientes</span>
+              <span
+                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#170B3D] text-white' : 'bg-slate-200 text-slate-600'"
+                class="px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
+                {{ totalPendientes }}
+              </span>
+            </button>
+
+            <!-- PESTAÑA: COMPLETADOS -->
+            <button
+              type="button"
+              (click)="cambiarFiltroEstadoAtencion('atendidos')"
+              [ngClass]="filtroEstadoAtencion === 'atendidos'
+                ? 'bg-[#4141a5] text-white shadow-md font-black border border-[#33338b]'
+                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/60'"
+              class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer">
+              <span class="flex items-center justify-center w-5 h-5 rounded-lg text-xs"
+                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-500'">
+                ✓
+              </span>
+              <span>Completados</span>
+              <span
+                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-white text-[#4141a5]' : 'bg-slate-200 text-slate-600'"
+                class="px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
+                {{ totalAtendidos }}
+              </span>
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-500 font-medium flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full"
+              [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]' : 'bg-[#F1C63C] animate-pulse'"></span>
+            <span>Mostrando: <strong class="text-slate-800">{{ seguimientosFiltrados.length }}</strong> {{ seguimientosFiltrados.length === 1 ? 'animal' : 'animales' }}</span>
+          </div>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
@@ -184,14 +247,33 @@
             {{ error }}
           </div>
 
-          <!-- SIN DATOS -->
-          <div *ngIf="!cargando && !error && seguimientos.length === 0"
-            class="col-span-full text-center py-10 text-slate-500 text-sm">
-            No hay animales en espera.
+          <!-- SIN DATOS / ESTADO VACÍO -->
+          <div *ngIf="!cargando && !error && seguimientosFiltrados.length === 0"
+            class="col-span-full text-center py-12 px-4 text-slate-500 text-sm bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-xl shadow-2xs"
+              [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]/10 text-[#4141a5]' : (filtroEstadoAtencion === 'pendientes' ? 'bg-[#F1C63C]/25 text-[#170B3D]' : 'bg-slate-100 text-slate-500')">
+              {{ filtroEstadoAtencion === 'atendidos' ? '✓' : (filtroEstadoAtencion === 'pendientes' ? '⏳' : '🐾') }}
+            </div>
+            <p class="font-bold text-slate-700 text-sm">
+              {{
+                filtroEstadoAtencion === 'atendidos'
+                  ? 'No hay animales con historia clínica completada'
+                  : (filtroEstadoAtencion === 'pendientes'
+                      ? 'No hay animales pendientes por atender'
+                      : 'No se encontraron animales')
+              }}
+            </p>
+            <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              {{ textoBusqueda || filtroEspecie !== 'Todos'
+                ? 'Prueba cambiando el término de búsqueda o seleccionando otra especie.'
+                : (filtroEstadoAtencion === 'pendientes'
+                    ? 'Todos los animales actuales ya han sido atendidos.'
+                    : 'Los animales que atiendas aparecerán en esta sección.') }}
+            </p>
           </div>
 
           <!-- TARJETAS -->
-          <div *ngFor="let seguimiento of seguimientosFiltrados" (click)="seleccionarSeguimiento(seguimiento)"
+          <div *ngFor="let seguimiento of seguimientosFiltrados; trackBy: trackBySeguimiento" (click)="seleccionarSeguimiento(seguimiento)"
             class="border border-slate-200 bg-white rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative cursor-pointer hover:border-[#4141a5] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group active:scale-[0.99]">
             <div class="flex items-center gap-3.5 flex-1 min-w-0">
               <div
@@ -214,8 +296,13 @@
                     || 'Sin nombre'
                     }}
                   </h4>
-                  <span class="text-[#4141a5] bg-[#4141a5]/10 border border-[#4141a5]/20 font-bold text-xs px-2.5 py-0.5 rounded-full shrink-0">
-                    ✓ Listo
+
+                  <!-- BADGE SOLO PARA COMPLETADOS -->
+                  <span *ngIf="esAnimalAtendido(seguimiento)"
+                    class="text-emerald-700 bg-emerald-50 border border-emerald-200 font-bold text-xs px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1 shadow-2xs"
+                    title="Historia clínica completada">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>✓ Listo</span>
                   </span>
                 </div>
 
@@ -403,6 +490,39 @@
               <textarea rows="3" name="motivoConsulta" maxlength="255" [(ngModel)]="motivoConsulta"
                 placeholder="Describe el motivo de consulta clínica o hallazgos iniciales del animal..."
                 class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-700 text-xs focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-2 focus:ring-[#4141a5]/20 transition-all resize-none leading-snug"></textarea>
+            </div>
+
+            <!-- FILA 6: PRIORIDAD, ESTADO, ACTITUD/TEMPERAMENTO Y ANAMNESIS (PASO 1 CONSULTA) -->
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">PRIORIDAD / TRIAGE</label>
+              <select [(ngModel)]="prioridad"
+                class="w-full h-9 border border-slate-200 rounded-xl px-3 py-1 bg-slate-50 text-slate-800 text-xs font-bold focus:bg-white focus:border-[#4141a5] focus:outline-none">
+                <option *ngFor="let p of opcionesPrioridad" [value]="p">{{ p }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">RESULTADO / ESTADO</label>
+              <select [(ngModel)]="resultadoEstado"
+                class="w-full h-9 border border-slate-200 rounded-xl px-3 py-1 bg-slate-50 text-slate-800 text-xs font-bold focus:bg-white focus:border-[#4141a5] focus:outline-none">
+                <option *ngFor="let e of opcionesResultadoEstado" [value]="e">{{ e }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">ACTITUD / TEMPERAMENTO</label>
+              <select [(ngModel)]="signosVitales.actitudTemperamento"
+                class="w-full h-9 border border-slate-200 rounded-xl px-3 py-1 bg-slate-50 text-slate-800 text-xs font-semibold focus:bg-white focus:border-[#4141a5] focus:outline-none">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let a of opcionesActitud" [value]="a">{{ a }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="font-bold text-slate-700 block mb-1 text-[11px] uppercase tracking-wide">ANAMNESIS</label>
+              <textarea rows="2" [(ngModel)]="anamnesis" (ngModelChange)="anamnesicos.evolucion = $event"
+                placeholder="Antecedentes y relato anamnésico de la consulta..."
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 text-slate-700 text-xs focus:bg-white focus:border-[#4141a5] focus:outline-none resize-none leading-snug"></textarea>
             </div>
 
           </div>
@@ -819,8 +939,58 @@
         </div>
       </div>
 
-      <!-- HOJA 4: Evaluación Física de Órganos y Sistemas con Botones Interactivos -->
+      <!-- HOJA 4: Signos Vitales, Examen Físico y Evaluación Física de Órganos y Sistemas -->
       <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="space-y-3 pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-lg font-black text-slate-900 mt-0.5">Signos Vitales y Examen Físico General</h2>
+            <p class="text-[11px] text-slate-500">Constantes fisiológicas registradas en la consulta.</p>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Frec. Respiratoria (RPM)</label>
+              <input type="number" [(ngModel)]="signosVitales.frecuenciaRespiratoria" placeholder="Ej. 26"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Frec. Cardíaca (LPM)</label>
+              <input type="number" [(ngModel)]="signosVitales.frecuenciaCardiaca" placeholder="Ej. 110"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Temperatura (°C)</label>
+              <input type="number" step="0.1" [(ngModel)]="signosVitales.temperatura" placeholder="Ej. 38.5"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Pulso</label>
+              <input type="text" [(ngModel)]="signosVitales.pulso" placeholder="Fuerte, lleno y regular"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">TLLC (Seg)</label>
+              <input type="text" [(ngModel)]="signosVitales.tiempoLlenadoCapilar" placeholder="2 seg"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ganglios Linfáticos</label>
+              <select [(ngModel)]="signosVitales.gangliosLinfaticos"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-semibold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let g of opcionesGanglios" [value]="g">{{ g }}</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Mucosas</label>
+              <select [(ngModel)]="signosVitales.mucosas"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 font-semibold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+                <option value="">-- Seleccionar --</option>
+                <option *ngFor="let m of opcionesMucosas" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
             <h2 class="text-lg font-black text-slate-900 mt-0.5">Evaluación Física de Órganos y Sistemas</h2>

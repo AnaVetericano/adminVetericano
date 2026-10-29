@@ -15,7 +15,9 @@ export interface UserSession {
   direccion?: string;
   tarjeta_profesional?: string;
   matricula?: string;
+  matricula_profesional?: string;
   foto?: string;
+  foto_perfil?: string;
   id_rol?: number;
   rol: UserRole;
   [key: string]: any;
@@ -59,6 +61,7 @@ export interface RespuestaLogin {
   direccion?: string;
   tarjeta_profesional?: string;
   matricula?: string;
+  matricula_profesional?: string;
   foto?: string;
   foto_perfil?: string;
   id_rol?: number;
@@ -166,15 +169,36 @@ export interface PostulacionVoluntariado {
   fecha_postulacion?: string;
 }
 
+export interface Medicamento {
+  id?: number;
+  id_medicamento?: number;
+  nombre: string;
+  descripcion?: string;
+  cantidad_ml?: number | string | null;
+  tipo?: string;
+  via_administracion?: string;
+  via?: string;
+  activo?: boolean;
+  estado?: boolean;
+}
+
 export interface CrearMedicamento {
   nombre: string;
   descripcion?: string;
+  cantidad_ml?: number | string | null;
+  tipo?: string;
+  via_administracion?: string;
+  via?: string;
   activo: boolean;
 }
 
 export interface ActualizarMedicamento {
   nombre: string;
   descripcion?: string;
+  cantidad_ml?: number | string | null;
+  tipo?: string;
+  via_administracion?: string;
+  via?: string;
   activo: boolean;
 }
 
@@ -202,7 +226,7 @@ export class AuthService {
     return rol.includes('vet');
   });
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Extrae el payload en base64 de un token JWT
@@ -277,7 +301,7 @@ export class AuthService {
           sesion.rol = this.normalizarRol(sesion.rol);
           return sesion;
         }
-      } catch {}
+      } catch { }
     }
 
     // Si hay token pero no user_session, recuperar desde el token
@@ -299,7 +323,7 @@ export class AuthService {
     };
     try {
       localStorage.setItem('user_session', JSON.stringify(sesion));
-    } catch {}
+    } catch { }
     return sesion;
   }
 
@@ -326,6 +350,25 @@ export class AuthService {
   actualizarPerfilUsuario(idUsuario: number | string, datos: any): Observable<any> {
     const urlBase = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
     return this.http.patch<any>(`${urlBase}/usuarios/${idUsuario}/`, datos);
+  }
+
+  /**
+   * Sube una imagen directamente a Cloudinary mediante su API REST pública sin firmar
+   */
+  subirImagenCloudinary(archivo: File | string): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', archivo);
+    formData.append('upload_preset', 'preset_android');
+
+    return this.http.post<any>('https://api.cloudinary.com/v1_1/aefeig5y/image/upload', formData).pipe(
+      map((res: any) => {
+        const secureUrl = res.secure_url || res.url;
+        if (!secureUrl) {
+          throw new Error('Cloudinary no devolvió una URL válida');
+        }
+        return secureUrl as string;
+      })
+    );
   }
 
   /**
@@ -361,15 +404,15 @@ export class AuthService {
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
     return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
   }
-  
 
-getMedicamentosCatalogo() {
-  const apiUrl = environment.apiUrl
-    .replace(/\/usuarios\/?$/, '')
-    .replace(/\/$/, '');
 
-  return this.http.get(`${apiUrl}/medicamentos-catalogo/`);
-}
+  getMedicamentosCatalogo() {
+    const apiUrl = environment.apiUrl
+      .replace(/\/usuarios\/?$/, '')
+      .replace(/\/$/, '');
+
+    return this.http.get(`${apiUrl}/medicamentos-catalogo/`);
+  }
 
 
 
@@ -420,6 +463,7 @@ getMedicamentosCatalogo() {
           decoded?.user_id ??
           decoded?.id;
 
+        const fotoFinal = res.foto || res.usuario?.foto || res.foto_perfil || res.usuario?.foto_perfil || decoded?.foto || decoded?.foto_perfil || '';
         const sessionData: UserSession = {
           id_usuario: idUsuarioRaw ? Number(idUsuarioRaw) : undefined,
           email: res.email || res.usuario?.email || res['user']?.email || decoded?.email || credenciales.email,
@@ -430,7 +474,9 @@ getMedicamentosCatalogo() {
           direccion: res.direccion || res.usuario?.direccion || res['user']?.direccion || decoded?.direccion || '',
           tarjeta_profesional: res.tarjeta_profesional || res.usuario?.tarjeta_profesional || res['user']?.tarjeta_profesional || decoded?.tarjeta_profesional || '',
           matricula: res.matricula || res.usuario?.matricula || res['user']?.matricula || decoded?.matricula || '',
-          foto: res.foto || res.usuario?.foto || res.foto_perfil || res.usuario?.foto_perfil || decoded?.foto || '',
+          matricula_profesional: res.matricula_profesional || res.usuario?.matricula_profesional || res['user']?.matricula_profesional || decoded?.matricula_profesional || '',
+          foto: fotoFinal,
+          foto_perfil: fotoFinal,
           id_rol: idRolRaw ? Number(idRolRaw) : (rolFinal === 'Veterinario' ? 2 : 1),
           rol: rolFinal
         };
@@ -579,17 +625,17 @@ getMedicamentosCatalogo() {
   }
   listarSeguimientos(): Observable<any> {
 
-  const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
-  const headers = {
-    Authorization: `Bearer ${token}`
-  };
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
 
-  return this.http.get<any>(
-    'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/listar/',
-    { headers }
-  );
-}
+    return this.http.get<any>(
+      'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/listar/',
+      { headers }
+    );
+  }
 
   obtenerSeguimientoPorId(idSeguimiento: number): Observable<any> {
     const token = localStorage.getItem('token');

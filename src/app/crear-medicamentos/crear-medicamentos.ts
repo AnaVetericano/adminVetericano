@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
-import { AuthService } from '../services/auth';
+import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
 
 @Component({
   selector: 'app-medicamentos',
@@ -27,6 +27,7 @@ export class Medicamentos implements OnInit {
     descripcion: '',
     cantidad_ml: null as number | null,
     tipo: '',
+    via_administracion: '',
     activo: true
   };
 
@@ -70,9 +71,11 @@ export class Medicamentos implements OnInit {
       return;
     }
     this.medicamentos = this.medicamentosOriginales.filter(m =>
-      m.nombre?.toLowerCase().includes(termino) ||
-      m.descripcion?.toLowerCase().includes(termino) ||
-      m.tipo?.toLowerCase().includes(termino)
+      m?.nombre?.toLowerCase().includes(termino) ||
+      m?.descripcion?.toLowerCase().includes(termino) ||
+      m?.tipo?.toLowerCase().includes(termino) ||
+      m?.via_administracion?.toLowerCase().includes(termino) ||
+      m?.via?.toLowerCase().includes(termino)
     );
   }
 
@@ -91,18 +94,26 @@ export class Medicamentos implements OnInit {
 
   abrirModalCrear(): void {
     this.editandoId = null;
-    this.medicamento = { nombre: '', descripcion: '', cantidad_ml: null, tipo: '', activo: true };
+    this.medicamento = {
+      nombre: '',
+      descripcion: '',
+      cantidad_ml: null,
+      tipo: '',
+      via_administracion: '',
+      activo: true
+    };
     this.modalAbierto = true;
   }
 
   abrirModalEditar(m: any): void {
-    this.editandoId = m.id || m.id_medicamento || null;
+    this.editandoId = m?.id || m?.id_medicamento || null;
     this.medicamento = {
-      nombre: m.nombre || '',
-      descripcion: m.descripcion || '',
-      cantidad_ml: m.cantidad_ml ?? null,
-      tipo: m.tipo || '',
-      activo: m.activo !== undefined ? m.activo : true
+      nombre: m?.nombre || '',
+      descripcion: m?.descripcion || '',
+      cantidad_ml: m?.cantidad_ml ?? null,
+      tipo: m?.tipo || '',
+      via_administracion: m?.via_administracion || m?.via || '',
+      activo: m?.activo !== undefined ? m.activo : true
     };
     this.modalAbierto = true;
   }
@@ -143,12 +154,15 @@ export class Medicamentos implements OnInit {
       return;
     }
 
-    const payload = {
+    const viaFinal = this.medicamento.via_administracion?.trim() || '';
+
+    const payload: CrearMedicamento = {
       nombre: this.medicamento.nombre.trim(),
       descripcion: this.medicamento.descripcion ? this.medicamento.descripcion.trim() : '',
       cantidad_ml: Number(this.medicamento.cantidad_ml),
       tipo: this.medicamento.tipo.trim(),
-      activo: this.medicamento.activo
+      activo: this.medicamento.activo,
+      ...(viaFinal ? { via_administracion: viaFinal } : {})
     };
 
     if (this.editandoId !== null) {
@@ -191,7 +205,7 @@ export class Medicamentos implements OnInit {
           });
           this.cerrarModal();
           this.obtenerMedicamentos();
-          this.medicamento = { nombre: '', descripcion: '', cantidad_ml: null, tipo: '', activo: true };
+          this.medicamento = { nombre: '', descripcion: '', cantidad_ml: null, tipo: '', via_administracion: '', activo: true };
         },
         error: (err: any) => {
           console.error('Error al crear:', err);

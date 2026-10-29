@@ -204,10 +204,41 @@
             <!-- Motivo de consulta inicial -->
             <div class="space-y-3 bg-slate-50/70 p-5 rounded-2xl border border-slate-200 text-xs">
               <h4 class="font-bold text-[#170B3D] uppercase tracking-wider text-[11px]">Motivo de la Atención</h4>
-              <p class="text-slate-700 leading-relaxed italic">"{{ historiaOriginal?.motivo_consulta || 'Sin motivo
-                inicial registrado.' }}"</p>
-              <p class="text-slate-400 text-[11px]">Fecha Apertura: {{ historiaOriginal?.fecha_apertura |
-                date:'dd/MM/yyyy' }}</p>
+              <p class="text-slate-700 leading-relaxed italic">"{{ formHistoria.get('motivo_consulta')?.value || historiaOriginal?.motivo_consulta || 'Sin motivo inicial registrado.' }}"</p>
+              <p class="text-slate-400 text-[11px]">Fecha Apertura: {{ historiaOriginal?.fecha_apertura | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+
+          <!-- Campos de la Consulta (Paso 1: motivo_consulta, prioridad, anamnesis, actitud_temperamento, resultado_estado) -->
+          <div [formGroup]="formHistoria" class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-xs">
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Motivo de Consulta</label>
+              <textarea rows="2" formControlName="motivo_consulta"
+                class="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none"></textarea>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Prioridad / Triage</label>
+              <select formControlName="prioridad"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+                <option *ngFor="let opt of opcionesPrioridad" [value]="opt">{{ opt }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Resultado / Estado del Paciente</label>
+              <select formControlName="resultadoEstado"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none">
+                <option *ngFor="let opt of opcionesResultadoEstado" [value]="opt">{{ opt }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Actitud y Temperamento</label>
+              <input type="text" formControlName="actitudTemperamento" placeholder="Ej. Alerta / Responsivo"
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Anamnesis</label>
+              <textarea rows="2" formControlName="anamnesis" placeholder="Antecedentes y relato anamnésico de la consulta..."
+                class="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 text-slate-800 focus:bg-white focus:border-[#4141a5] outline-none"></textarea>
             </div>
           </div>
 
@@ -443,7 +474,8 @@
                       </span>
                       <div class="min-w-0">
                         <p class="text-sm font-extrabold text-slate-800 truncate">{{ examen.nombre }}</p>
-                        <span *ngIf="examen.tipo" class="text-[10px] text-[#4141a5] font-semibold bg-[#4141a5]/10 px-2 py-0.5 rounded-md">
+                        <span *ngIf="examen.tipo"
+                          class="text-[10px] text-[#4141a5] font-semibold bg-[#4141a5]/10 px-2 py-0.5 rounded-md">
                           {{ examen.tipo }}
                         </span>
                       </div>
@@ -476,8 +508,8 @@
                       <label class="text-[10px] font-bold text-slate-600 uppercase block mb-1">
                         Ruta o Enlace del Archivo / Soporte
                       </label>
-                      <input type="text" [(ngModel)]="examen.ruta_archivo_resultado" (ngModelChange)="formHistoria.markAsDirty()"
-                        placeholder="Ej. /media/examenes/hemograma_01.pdf"
+                      <input type="text" [(ngModel)]="examen.ruta_archivo_resultado"
+                        (ngModelChange)="formHistoria.markAsDirty()" placeholder="Ej. /media/examenes/hemograma_01.pdf"
                         class="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:bg-white focus:border-[#4141a5] focus:outline-none focus:ring-1 focus:ring-[#4141a5]">
                     </div>
                   </div>
@@ -496,8 +528,53 @@
             </div>
           </div>
 
-          <!-- HOJA 4: Evaluación Física de los 12 Sistemas Orgánicos -->
-          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+          <!-- HOJA 4: Signos Vitales, Examen Físico y 12 Sistemas Orgánicos -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-5">
+            <!-- Signos Vitales y Exploración Física (Paso 2) -->
+            <div [formGroup]="formHistoria" class="space-y-3 pb-4 border-b border-slate-100">
+              <div>
+                <span class="text-xs text-[#4141a5] font-bold uppercase tracking-wider">Paso 2 · Signos Vitales y Examen Físico</span>
+                <h2 class="text-lg font-black text-slate-900 mt-0.5">Constantes Fisiológicas</h2>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">F. Respiratoria (RPM)</label>
+                  <input type="number" formControlName="frecuenciaRespiratoria" placeholder="Ej. 24"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">F. Cardíaca (LPM)</label>
+                  <input type="number" formControlName="frecuenciaCardiaca" placeholder="Ej. 110"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Temperatura (°C)</label>
+                  <input type="number" step="0.1" formControlName="temperatura" placeholder="Ej. 38.5"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pulso</label>
+                  <input type="text" formControlName="pulso" placeholder="Fuerte y simétrico"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">TLLC</label>
+                  <input type="text" formControlName="tiempoLlenadoCapilar" placeholder="1 - 2 seg"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ganglios Linfáticos</label>
+                  <input type="text" formControlName="gangliosLinfaticos" placeholder="Normales / Reactivos"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mucosas</label>
+                  <input type="text" formControlName="mucosas" placeholder="Rosadas y húmedas"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:border-[#4141a5] outline-none">
+                </div>
+              </div>
+            </div>
+
             <div
               class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
               <div>
@@ -1293,20 +1370,25 @@
                 <!-- Campos adicionales del modelo Tratamiento (Backend) -->
                 <div class="space-y-2 pt-1 border-t border-slate-100">
                   <div>
-                    <label class="text-[9px] text-slate-400 font-bold block uppercase">Posología / Indicaciones de Uso</label>
-                    <input type="text" [(ngModel)]="medicamento.descripcion" placeholder="Ej. Administrar junto con alimento húmedo..."
+                    <label class="text-[9px] text-slate-400 font-bold block uppercase">Posología / Indicaciones de
+                      Uso</label>
+                    <input type="text" [(ngModel)]="medicamento.descripcion"
+                      placeholder="Ej. Administrar junto con alimento húmedo..."
                       class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
                   </div>
 
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="text-[9px] text-slate-400 font-bold block uppercase">Responsable Administración</label>
-                      <input type="text" [(ngModel)]="medicamento.responsable_admin" placeholder="Ej. Dr(a). Veterinario CBA"
+                      <label class="text-[9px] text-slate-400 font-bold block uppercase">Responsable
+                        Administración</label>
+                      <input type="text" [(ngModel)]="medicamento.responsable_admin"
+                        placeholder="Ej. Dr(a). Veterinario CBA"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
                     </div>
                     <div>
                       <label class="text-[9px] text-slate-400 font-bold block uppercase">Tolerancia / Reacciones</label>
-                      <input type="text" [(ngModel)]="medicamento.reaccion_comentarios" placeholder="Ej. Buena tolerancia / Sin vómitos"
+                      <input type="text" [(ngModel)]="medicamento.reaccion_comentarios"
+                        placeholder="Ej. Buena tolerancia / Sin vómitos"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs">
                     </div>
                   </div>
