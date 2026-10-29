@@ -24,7 +24,7 @@ export const loginGuard: CanActivateFn = () => {
   const token = localStorage.getItem('token');
   if (token) {
     if (authService.isJuridico()) {
-      router.navigate(['/inicio-admin/peticion']);
+      router.navigate(['/inicio-admin/dashboard-juridico']);
     } else if (authService.isVeterinario()) {
       router.navigate(['/inicio-admin/acta-seres-sintientes']);
     } else {
@@ -73,7 +73,7 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
   // Redirección inteligente al módulo principal según su rol
   if (authService.isJuridico()) {
-    router.navigate(['/inicio-admin/peticion']);
+    router.navigate(['/inicio-admin/dashboard-juridico']);
   } else if (authService.isVeterinario()) {
     router.navigate(['/inicio-admin/acta-seres-sintientes']);
   } else {
@@ -82,5 +82,3 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
   return false;
 };
-
-

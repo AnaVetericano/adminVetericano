@@ -1,3 +1,4 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 
 import { Medicamentos } from './crear-medicamentos/crear-medicamentos';
@@ -25,6 +26,8 @@ import { Compra } from './compra/compra';
 import { Inventario } from './inventario/inventario';
 import { PerfilComponent } from './perfil/perfil';
 import { VeterinaryInventoryComponent } from './veterinary-inventory/veterinary-inventory.component';
+import { DashboardJuridicoComponent } from './dashboard-juridico/dashboard-juridico';
+import { AuthService } from './services/auth';
 
 export const routes: Routes = [
   { path: '', component: Landepage },
@@ -37,8 +40,23 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canActivateChild: [authGuard],
     children: [
+      // Redirección inteligente por rol en la raíz del panel
+      {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: () => {
+          const auth = inject(AuthService);
+          if (auth.isJuridico()) {
+            return '/inicio-admin/dashboard-juridico';
+          }
+          if (auth.isVeterinario()) {
+            return '/inicio-admin/acta-seres-sintientes';
+          }
+          return '/inicio-admin/graficas';
+        }
+      },
+
       // Módulo Administrador / Entrada general
-      { path: '', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } },
       { path: 'graficas', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'usuarios-roles', component: UsuariosRoles, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'voluntarios', component: Voluntarios, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
@@ -47,6 +65,9 @@ export const routes: Routes = [
       { path: 'proveedores', component: Proveedores, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'compras', component: Compra, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'inventario', component: Inventario, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+
+      // Módulo Jurídico
+      { path: 'dashboard-juridico', component: DashboardJuridicoComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Jurídico'] } },
 
       // Módulo Veterinario (y Administrador con acceso de supervisión)
       { path: 'inventario-veterinario', component: VeterinaryInventoryComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
@@ -68,4 +89,3 @@ export const routes: Routes = [
     ]
   }
 ];
-

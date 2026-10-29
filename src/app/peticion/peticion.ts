@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
+import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
 
 @Component({
   selector: 'app-peticion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, DashboardJuridicoComponent],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'
 })
@@ -28,6 +29,23 @@ export class Peticion implements OnInit {
   private apiFuncionariosUrl = 'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/funcionarios/';
 
   peticionesLista: any[] = [];
+  vistaJuridica: 'peticiones' | 'dashboard' = 'peticiones';
+
+  alternarVistaDashboard(): void {
+    this.vistaJuridica = this.vistaJuridica === 'dashboard' ? 'peticiones' : 'dashboard';
+    if (this.vistaJuridica === 'peticiones') {
+      this.mostrarLista = true;
+    }
+    this.cdr.detectChanges();
+  }
+
+  setVistaJuridica(vista: 'peticiones' | 'dashboard'): void {
+    this.vistaJuridica = vista;
+    if (vista === 'peticiones') {
+      this.mostrarLista = true;
+    }
+    this.cdr.detectChanges();
+  }
   cargandoPeticiones = false;
   mostrarLista = true; // Por defecto mostramos la lista para Jurídico
 
@@ -485,6 +503,9 @@ export class Peticion implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
+      this.vistaJuridica = 'dashboard';
+    }
     this.reporteForm = this.fb.group({
       tipoPeticion: ['maltrato', Validators.required],
       otroEspecificacion: [''],

@@ -1,0 +1,5 @@
+/* Estilos complementarios para Dashboard Jurídico */
+:host {
+  display: block;
+  width: 100%;
+}
