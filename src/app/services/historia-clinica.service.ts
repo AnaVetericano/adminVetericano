@@ -42,12 +42,16 @@ export interface RegistroAuditoria {
   id_auditoria: number;
   id_historia: number;
   id_consulta?: number;
-  usuario: string;
-  rol: string;
-  fecha_hora: string;
-  tipo_accion: string;
-  motivo_cambio: string;
-  campos_cambiados: ModificacionCampo[];
+  usuario?: string;
+  usuario_nombre?: string;
+  rol?: string;
+  fecha_hora?: string;
+  fecha_modificacion?: string;
+  tipo_accion?: string;
+  motivo_cambio?: string;
+  motivo_modificacion?: string;
+  campos_cambiados?: ModificacionCampo[];
+  campos_modificados?: any;
 }
 
 export interface HistoriaClinicaEdicion {
@@ -98,6 +102,7 @@ export interface HistoriaClinicaEdicion {
   tarjeta_profesional?: string;
   nombre_acudiente?: string;
   cedula_acudiente?: string;
+  consultas_anteriores?: any[];
 }
 
 export interface ActualizarHistoriaDto {
@@ -865,6 +870,7 @@ export class HistoriaClinicaService {
       tarjeta_profesional: orgObj._tarjeta_profesional || raw.tarjeta_profesional || '',
       nombre_acudiente: orgObj._acudiente_nombre || tenedor.nombres || tenedor.nombre || raw.nombre_acudiente || '',
       cedula_acudiente: orgObj._acudiente_cedula || tenedor.documentoIdentidad || tenedor.documento || raw.cedula_acudiente || '',
+      consultas_anteriores: consultasPrevias,
       historial_modificaciones: Array.isArray(raw.historial_modificaciones)
         ? raw.historial_modificaciones
         : (Array.isArray(orgObj._historial_modificaciones) ? orgObj._historial_modificaciones : [])

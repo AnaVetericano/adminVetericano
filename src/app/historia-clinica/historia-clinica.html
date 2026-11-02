@@ -5,7 +5,7 @@
   <!-- 1. ENCABEZADO INSTITUCIONAL OFICIAL                                       -->
   <!-- ========================================================================= -->
   <header
-    class="bg-white shrink-0 py-3 sm:py-3.5 px-4 sm:px-8 shadow-xs border-b border-slate-200/80 w-full transition-all duration-300">
+    class="bg-white shrink-0 py-3 sm:py-3.5 px-4 sm:px-8 shadow-xs border-b border-slate-200/80 w-full transition-all duration-300 print:hidden">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
 
       <!-- Marca y Escudo Institucional -->
@@ -104,7 +104,7 @@
 
       <!-- BANNER DE HISTORIA ANULADA -->
       <div *ngIf="historiaAnulada"
-        class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in">
+        class="bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-fade-in print:hidden">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none"
           viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round"
@@ -117,6 +117,214 @@
             anuladas.</p>
         </div>
       </div>
+
+      <!-- ========================================================================= -->
+      <!-- BANNER 360° DEL PACIENTE Y TUTOR (ESTILO CP-VET INSTITUCIONAL)           -->
+      <!-- ========================================================================= -->
+      <div class="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-sm relative overflow-hidden print:hidden">
+        <!-- Barra decorativa superior institucional -->
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#170B3D] via-[#4141a5] to-[#F1C63C]"></div>
+
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 pt-1">
+
+          <!-- Lado Izquierdo: Avatar + Info Paciente + Tutor -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 flex-1 min-w-0">
+
+            <!-- Avatar / Foto con Badges -->
+            <div class="relative shrink-0">
+              <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-slate-100 border-2 border-white shadow-md ring-2 ring-[#4141a5]/15">
+                <img *ngIf="paciente?.foto_url" [src]="paciente?.foto_url" [alt]="paciente?.nombre"
+                  class="w-full h-full object-cover" (error)="imagenNoDisponible($event)">
+                <div *ngIf="!paciente?.foto_url" [ngClass]="obtenerColorAvatar(paciente)"
+                  class="w-full h-full flex items-center justify-center font-black text-2xl text-white uppercase">
+                  {{ obtenerIniciales(paciente) }}
+                </div>
+              </div>
+              <!-- Badge Especie -->
+              <span class="absolute -bottom-1 -right-1 bg-[#170B3D] text-white text-[10px] font-black px-2 py-0.5 rounded-lg border border-white shadow-xs">
+                {{ paciente?.especie || 'Canino' }}
+              </span>
+            </div>
+
+            <!-- Datos Clave del Paciente -->
+            <div class="space-y-1.5 min-w-0 flex-1">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h2 class="text-xl sm:text-2xl font-black text-[#170B3D] tracking-tight truncate">
+                  {{ paciente?.nombre || 'Paciente' }}
+                </h2>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  {{ resultado_estado || 'Estable' }}
+                </span>
+                <span *ngIf="canil_asignado || canilAsignado"
+                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#170B3D] text-[#F1C63C] border border-[#F1C63C]/30">
+                  🏠 Canil CBA: #{{ canil_asignado || canilAsignado }}
+                </span>
+                <span *ngIf="historiaAnulada"
+                  class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800 border border-rose-200 uppercase">
+                  Anulada
+                </span>
+              </div>
+
+              <!-- Metadatos biométricos en Pills -->
+              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-600 font-semibold">
+                <span class="bg-slate-100 px-2.5 py-1 rounded-lg">
+                  🐾 {{ paciente?.raza || 'Mestizo' }}
+                </span>
+                <span class="bg-slate-100 px-2.5 py-1 rounded-lg">
+                  ⚧ {{ paciente?.sexo || 'Hembra' }}
+                </span>
+                <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-bold text-[#4141a5]">
+                  ⚖️ {{ paciente?.peso || '4.0' }} kg
+                </span>
+                <span class="bg-slate-100 px-2.5 py-1 rounded-lg font-mono text-[11px] text-slate-500">
+                  🆔 Animal: #{{ paciente?.id_animal || idAnimal || 'N/A' }}
+                </span>
+                <span class="bg-[#4141a5]/10 text-[#4141a5] px-2.5 py-1 rounded-lg font-mono text-[11px] font-black">
+                  📋 HC: {{ idHistoria || 'OFICIAL' }}
+                </span>
+              </div>
+
+              <!-- Tarjeta Compacta del Tutor / Acudiente con WhatsApp Directo -->
+              <div class="pt-1 flex items-center gap-3 flex-wrap text-xs">
+                <div class="flex items-center gap-1.5 text-slate-700 font-bold bg-amber-50/80 border border-amber-200/80 px-3 py-1 rounded-xl">
+                  <span class="text-amber-700">👤 Tutor:</span>
+                  <span class="text-slate-900">{{ paciente?.tenedor_nombre || nombreAcudiente || 'Sin acudiente' }}</span>
+                  <span *ngIf="paciente?.tenedor_documento && paciente?.tenedor_documento !== 'No registrado'" class="text-slate-400 font-normal">
+                    (CC: {{ paciente?.tenedor_documento }})
+                  </span>
+                </div>
+
+                <!-- WhatsApp Directo -->
+                <a *ngIf="paciente?.tenedor_telefono && paciente?.tenedor_telefono !== 'No disponible'"
+                  [href]="'https://wa.me/57' + paciente?.tenedor_telefono" target="_blank" rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-xs transition-all active:scale-95"
+                  title="Abrir chat de WhatsApp con el tutor">
+                  <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                  </svg>
+                  <span>{{ paciente?.tenedor_telefono }}</span>
+                </a>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Lado Derecho: Acciones Rápidas (Estilo CP-Vet) -->
+          <div class="flex sm:flex-col lg:flex-row items-center gap-2 w-full lg:w-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+            <button type="button" (click)="iniciarNuevaConsulta()"
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#4141a5] to-[#170B3D] hover:opacity-95 text-white rounded-xl text-xs font-black shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+              <svg class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ Nueva Consulta</span>
+            </button>
+
+            <button type="button" (click)="cambiarPestanaPrincipal('receta')"
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+              title="Ver o imprimir receta médica">
+              <svg class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Fórmula Médica</span>
+            </button>
+
+            <button type="button" (click)="cambiarPestanaPrincipal('historial')"
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+              title="Ver línea de tiempo de consultas">
+              <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Historial ({{ consultasAnteriores.length }})</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- BARRA DE MÓDULOS MAESTROS DEL EXPEDIENTE 360° (ESTILO CP-VET)             -->
+      <!-- ========================================================================= -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-1.5 sm:p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto print:hidden">
+        <!-- Tab 1: Atención Actual -->
+        <button type="button" (click)="cambiarPestanaPrincipal('atencion')"
+          [ngClass]="pestanaPrincipal === 'atencion'
+            ? 'bg-[#4141a5] text-white shadow-sm font-black'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
+          <svg class="w-4 h-4" [ngClass]="pestanaPrincipal === 'atencion' ? 'text-[#F1C63C]' : 'text-slate-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <span>Atención Actual</span>
+          <span *ngIf="pestanaPrincipal === 'atencion'" class="w-1.5 h-1.5 rounded-full bg-[#F1C63C] animate-pulse"></span>
+        </button>
+
+        <!-- Tab 2: Línea de Tiempo / Historial -->
+        <button type="button" (click)="cambiarPestanaPrincipal('historial')"
+          [ngClass]="pestanaPrincipal === 'historial'
+            ? 'bg-[#4141a5] text-white shadow-sm font-black'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
+          <svg class="w-4 h-4" [ngClass]="pestanaPrincipal === 'historial' ? 'text-[#F1C63C]' : 'text-slate-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Línea de Tiempo</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+            [ngClass]="pestanaPrincipal === 'historial' ? 'bg-white/20 text-[#F1C63C]' : 'bg-slate-200 text-slate-700'">
+            {{ consultasAnteriores.length }}
+          </span>
+        </button>
+
+        <!-- Tab 3: Plan Sanitario -->
+        <button type="button" (click)="cambiarPestanaPrincipal('plan_sanitario')"
+          [ngClass]="pestanaPrincipal === 'plan_sanitario'
+            ? 'bg-[#4141a5] text-white shadow-sm font-black'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
+          <svg class="w-4 h-4" [ngClass]="pestanaPrincipal === 'plan_sanitario' ? 'text-[#F1C63C]' : 'text-slate-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span>Plan Sanitario</span>
+        </button>
+
+        <!-- Tab 4: Fórmula Médica -->
+        <button type="button" (click)="cambiarPestanaPrincipal('receta')"
+          [ngClass]="pestanaPrincipal === 'receta'
+            ? 'bg-[#4141a5] text-white shadow-sm font-black'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
+          <svg class="w-4 h-4" [ngClass]="pestanaPrincipal === 'receta' ? 'text-[#F1C63C]' : 'text-slate-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-.732-1.768l-4.5-4.5A2.5 2.5 0 0015.5 2.5H5" />
+          </svg>
+          <span>Fórmula Médica</span>
+          <span *ngIf="medicamentosSeleccionados.length > 0" class="px-2 py-0.5 rounded-full text-[10px] font-black"
+            [ngClass]="pestanaPrincipal === 'receta' ? 'bg-white/20 text-[#F1C63C]' : 'bg-emerald-100 text-emerald-800'">
+            {{ medicamentosSeleccionados.length }}
+          </span>
+        </button>
+
+        <!-- Tab 5: Auditoría -->
+        <button type="button" (click)="cambiarPestanaPrincipal('auditoria')"
+          [ngClass]="pestanaPrincipal === 'auditoria'
+            ? 'bg-[#4141a5] text-white shadow-sm font-black'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
+          <svg class="w-4 h-4" [ngClass]="pestanaPrincipal === 'auditoria' ? 'text-[#F1C63C]' : 'text-slate-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Auditoría</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+            [ngClass]="pestanaPrincipal === 'auditoria' ? 'bg-white/20 text-[#F1C63C]' : 'bg-slate-200 text-slate-700'">
+            {{ historialModificaciones.length }}
+          </span>
+        </button>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA PRINCIPAL 1: ATENCIÓN ACTUAL / CONSULTA EVOLUTIVA             -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaPrincipal === 'atencion'" class="space-y-5">
 
       <!-- ===================================================================== -->
       <!-- BARRA DE PESTAÑAS (3 PASOS OFICIALES - EXACTO AL ACTA)                 -->
@@ -1675,6 +1883,581 @@
 
       </div>
 
+      </div>
+      <!-- FIN PESTAÑA PRINCIPAL 1: ATENCIÓN ACTUAL -->
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA PRINCIPAL 2: LÍNEA DE TIEMPO / HISTORIAL DE CONSULTAS         -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaPrincipal === 'historial'" class="space-y-6 max-w-7xl mx-auto animate-fade-in">
+        <!-- Encabezado de la Sección de Historial -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center font-black text-lg shrink-0 shadow-xs border border-white/10">
+              🕒
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base sm:text-lg font-black text-[#170B3D]">
+                  Línea de Tiempo y Evolución Clínica
+                </h3>
+                <span class="bg-[#4141a5]/10 text-[#4141a5] font-black text-xs px-2.5 py-0.5 rounded-full">
+                  {{ consultasAnteriores.length }} {{ consultasAnteriores.length === 1 ? 'consulta' : 'consultas' }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 font-medium">
+                Historial cronológico de atenciones médicas veterinarias registradas para {{ paciente?.nombre || 'este paciente' }}.
+              </p>
+            </div>
+          </div>
+
+          <button type="button" (click)="iniciarNuevaConsulta()"
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-black shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+            <svg class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>+ Registrar Nueva Evolución</span>
+          </button>
+        </div>
+
+        <!-- Estado Vacío -->
+        <div *ngIf="!consultasAnteriores || consultasAnteriores.length === 0"
+          class="bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-xs space-y-4">
+          <div class="w-16 h-16 rounded-3xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-3xl">
+            📅
+          </div>
+          <div class="max-w-md mx-auto space-y-1">
+            <h4 class="text-base font-black text-slate-800">No hay consultas históricas registradas</h4>
+            <p class="text-xs text-slate-500 font-medium leading-relaxed">
+              Actualmente estás diligenciando la primera atención para este animal. Una vez que guardes los cambios o registres nuevas evoluciones, la línea de tiempo cronológica se construirá automáticamente aquí.
+            </p>
+          </div>
+          <button type="button" (click)="cambiarPestanaPrincipal('atencion')"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+            <span>Volver a Diligenciar Atención Actual</span>
+          </button>
+        </div>
+
+        <!-- Línea de Tiempo Cronológica -->
+        <div *ngIf="consultasAnteriores && consultasAnteriores.length > 0" class="relative pl-6 sm:pl-10 space-y-8 before:content-[''] before:absolute before:left-3 sm:before:left-4.5 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-[#4141a5] before:via-slate-300 before:to-slate-200">
+          <div *ngFor="let c of consultasAnteriores; let i = index" class="relative group">
+            <!-- Marcador / Pin en la línea -->
+            <div class="absolute -left-6 sm:-left-10 top-3.5 w-7 h-7 sm:w-9 sm:h-9 rounded-2xl bg-[#170B3D] text-[#F1C63C] border-2 border-white flex items-center justify-center font-black text-xs shadow-md group-hover:scale-110 transition-transform">
+              {{ i + 1 }}
+            </div>
+
+            <!-- Tarjeta de Consulta Histórica -->
+            <div class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all space-y-4">
+              <!-- Encabezado de la Tarjeta -->
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <span class="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-xl">
+                    🗓️ {{ formatearFechaHora(c.fecha_hora || c.fechaHora) }}
+                  </span>
+                  <span class="text-xs font-black px-2.5 py-0.5 rounded-full uppercase"
+                    [ngClass]="c.prioridad === 'Urgente' || c.prioridad === 'Crítica' ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-blue-100 text-blue-800 border border-blue-200'">
+                    {{ c.prioridad || 'Normal' }}
+                  </span>
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    {{ c.resultado_estado || c.resultadoEstado || 'Estable' }}
+                  </span>
+                </div>
+
+                <button type="button" (click)="verDetalleConsultaPasada(c)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer">
+                  <span>Ver Ficha Completa</span>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Motivo y Anamnesis / Evolución -->
+              <div class="space-y-1">
+                <h4 class="text-sm font-extrabold text-[#170B3D]">
+                  {{ c.motivo_consulta || c.motivoConsulta || 'Consulta médica general' }}
+                </h4>
+                <p class="text-xs text-slate-600 line-clamp-3 font-medium leading-relaxed">
+                  {{ c.anamnesis || c.evolucion || 'Sin evolución descriptiva registrada.' }}
+                </p>
+              </div>
+
+              <!-- Constantes Vitales en Chips -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                <div class="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-center">
+                  <span class="text-[10px] text-slate-400 font-bold block uppercase">Temperatura</span>
+                  <span class="text-xs font-extrabold text-slate-800">{{ c.temperatura ? c.temperatura + ' °C' : 'No reg.' }}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-center">
+                  <span class="text-[10px] text-slate-400 font-bold block uppercase">Frec. Cardíaca</span>
+                  <span class="text-xs font-extrabold text-slate-800">{{ c.frecuencia_cardiaca || c.frecuenciaCardiaca ? (c.frecuencia_cardiaca || c.frecuenciaCardiaca) + ' lpm' : 'No reg.' }}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-center">
+                  <span class="text-[10px] text-slate-400 font-bold block uppercase">Frec. Respiratoria</span>
+                  <span class="text-xs font-extrabold text-slate-800">{{ c.frecuencia_respiratoria || c.frecuenciaRespiratoria ? (c.frecuencia_respiratoria || c.frecuenciaRespiratoria) + ' rpm' : 'No reg.' }}</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-center">
+                  <span class="text-[10px] text-slate-400 font-bold block uppercase">Peso</span>
+                  <span class="text-xs font-extrabold text-[#4141a5]">{{ c.peso ? c.peso + ' kg' : 'No reg.' }}</span>
+                </div>
+              </div>
+
+              <!-- Diagnóstico y Plan -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs">
+                <div class="bg-amber-50/70 border border-amber-200/80 p-3 rounded-xl">
+                  <span class="text-[10px] font-black text-amber-900 block uppercase">Diagnóstico Principal</span>
+                  <span class="font-extrabold text-amber-950">{{ c.diagnostico_principal || c.diagnosticoPrincipal || 'En estudio clínico' }}</span>
+                </div>
+                <div class="bg-blue-50/70 border border-blue-200/80 p-3 rounded-xl">
+                  <span class="text-[10px] font-black text-blue-900 block uppercase">Plan y Tratamiento</span>
+                  <span class="font-bold text-blue-950 line-clamp-2">{{ c.plan_tratamiento || c.planTratamiento || c.plan_procedimientos || 'Manejo sintomático y seguimiento' }}</span>
+                </div>
+              </div>
+
+              <!-- Destino CBA -->
+              <div *ngIf="c.ingresa_cba || c.canil_asignado" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl">
+                <span>🏢 Ingreso CBA:</span>
+                <span class="text-[#170B3D] font-extrabold">Canil #{{ c.canil_asignado || 'Asignado' }}</span>
+                <span *ngIf="c.funcionario_recibe_cba" class="text-slate-400">· Recibido por: {{ c.funcionario_recibe_cba }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA PRINCIPAL 3: PLAN SANITARIO INTEGRAL (ESTILO CP-VET)          -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaPrincipal === 'plan_sanitario'" class="space-y-6 max-w-7xl mx-auto animate-fade-in">
+        <!-- Encabezado del Plan Sanitario -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center font-black text-lg shrink-0 shadow-xs border border-white/10">
+              🛡️
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Plan Sanitario y Medicina Preventiva
+              </h3>
+              <p class="text-xs text-slate-500 font-medium">
+                Cronograma de vacunación, desparasitación, estado reproductivo y nutrición de {{ paciente?.nombre || 'el paciente' }}.
+              </p>
+            </div>
+          </div>
+          <span class="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full border border-emerald-200 uppercase">
+            Protocolo CBA Popayán
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+          <!-- TARJETA 1: ESQUEMA DE VACUNACIÓN -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">💉</span>
+                <h4 class="text-sm font-black text-[#170B3D] uppercase tracking-wide">Esquema de Vacunación</h4>
+              </div>
+              <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg">
+                {{ paciente?.especie || 'Canino' }}
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Vacuna 1: Rabia -->
+              <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-extrabold text-slate-800">Vacuna Antirrábica</span>
+                    <span class="text-[9px] bg-rose-100 text-rose-800 font-black px-1.5 py-0.2 rounded-md uppercase">Obligatoria</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500">Revacunación anual según directriz MinSalud.</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 shrink-0">
+                  Vigente / Aplicada
+                </span>
+              </div>
+
+              <!-- Vacuna 2: Polivalente / Triple -->
+              <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-extrabold text-slate-800">{{ paciente?.especie === 'Felino' ? 'Triple Felina (TCR)' : 'Polivalente Canina (DHPPi)' }}</span>
+                    <span class="text-[9px] bg-blue-100 text-blue-800 font-black px-1.5 py-0.2 rounded-md uppercase">Esencial</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500">{{ paciente?.especie === 'Felino' ? 'Panleucopenia, Rinotraqueítis, Calicivirus.' : 'Parvovirus, Distemper, Hepatitis, Parainfluenza.' }}</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-blue-100 text-blue-800 shrink-0">
+                  Al Día
+                </span>
+              </div>
+
+              <!-- Vacuna 3: Refuerzo / Tos o FeLV -->
+              <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-extrabold text-slate-800">{{ paciente?.especie === 'Felino' ? 'Leucemia Viral Felina (FeLV)' : 'Tos de las Perreras (Bordetella)' }}</span>
+                    <span class="text-[9px] bg-slate-200 text-slate-700 font-bold px-1.5 py-0.2 rounded-md uppercase">Refuerzo</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500">Sugerida para caniles y espacios de alta densidad.</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-100 text-amber-800 shrink-0">
+                  Programada
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TARJETA 2: CONTROL PARASITARIO -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">🪱</span>
+                <h4 class="text-sm font-black text-[#170B3D] uppercase tracking-wide">Control Antiparasitario</h4>
+              </div>
+              <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg">
+                Interno y Externo
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Desparasitación Interna -->
+              <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-slate-800">Desparasitación Interna (Gastrointestinal)</span>
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">Suministrada</span>
+                </div>
+                <p class="text-[11px] text-slate-600">
+                  Amplio espectro (Praziquantel + Pamoato de Pirantel + Febantel).
+                </p>
+                <div class="flex items-center gap-3 text-[10px] text-slate-500 pt-1">
+                  <span>📅 Última dosis: Reciente</span>
+                  <span>🔄 Próximo refuerzo: En 90 días</span>
+                </div>
+              </div>
+
+              <!-- Control Ectoparásitos -->
+              <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-slate-800">Control de Pulgas y Garrapatas</span>
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">Tratado</span>
+                </div>
+                <p class="text-[11px] text-slate-600">
+                  Pipeta tópica / Antiparasitario sistémico de protección contra pulgas y garrapatas.
+                </p>
+                <div class="flex items-center gap-3 text-[10px] text-slate-500 pt-1">
+                  <span>🛡️ Protección estimada: 30 a 90 días</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TARJETA 3: ESTADO REPRODUCTIVO Y QUIRÚRGICO -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">✂️</span>
+                <h4 class="text-sm font-black text-[#170B3D] uppercase tracking-wide">Estado Reproductivo</h4>
+              </div>
+              <span class="text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-lg border border-purple-200">
+                Bienestar Animal
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700">Condición Reproductiva:</span>
+                <span class="font-extrabold text-[#170B3D] px-2.5 py-1 bg-white rounded-lg border border-slate-200">
+                  {{ paciente?.sexo === 'Macho' ? 'Castrado / En evaluación' : 'Esterilizada (Ovariohisterectomía)' }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700">Programa Municipal de Esterilización:</span>
+                <span class="font-black text-emerald-700">Apto / Beneficiario CBA</span>
+              </div>
+              <p class="text-[11px] text-slate-500 leading-relaxed bg-amber-50/50 p-3 rounded-xl border border-amber-200/50">
+                📌 Conforme a la Ley 1774 de 2016 y la política municipal de Popayán para el control ético de poblaciones animales, se prioriza la esterilización quirúrgica temprana.
+              </p>
+            </div>
+          </div>
+
+          <!-- TARJETA 4: NUTRICIÓN Y BIENESTAR -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">🥗</span>
+                <h4 class="text-sm font-black text-[#170B3D] uppercase tracking-wide">Nutrición y Hábitat</h4>
+              </div>
+              <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg">
+                Manejo Diario
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700">Alimentación recomendada:</span>
+                <span class="font-extrabold text-slate-900">Concentrado seco balanceado</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700">Condición Corporal:</span>
+                <span class="font-extrabold text-emerald-700">3/5 (Ideal / Óptima)</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <span class="font-bold text-slate-700">Acceso a agua potable:</span>
+                <span class="font-extrabold text-slate-900">A voluntad (permanente)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA PRINCIPAL 4: FÓRMULA MÉDICA Y RECETA (ESTILO CP-VET)          -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaPrincipal === 'receta'" class="space-y-6 max-w-7xl mx-auto animate-fade-in">
+        <!-- Barra de Acciones de la Receta (No imprimible) -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center font-black text-lg shrink-0 shadow-xs border border-white/10">
+              📄
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Fórmula Médica y Prescripción Veterinaria Oficial
+              </h3>
+              <p class="text-xs text-slate-500 font-medium">
+                Generador de recetas con membrete oficial de la Alcaldía de Popayán y Centro de Bienestar Animal (CBA).
+              </p>
+            </div>
+          </div>
+
+          <button type="button" (click)="imprimirReceta()"
+            class="inline-flex items-center gap-2 px-5 py-3 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-black shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+            <svg class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>Imprimir Receta / Guardar en PDF</span>
+          </button>
+        </div>
+
+        <!-- HOJA DE RECETA OFICIAL IMPRIMIBLE -->
+        <div class="bg-white border border-slate-300 rounded-3xl p-6 sm:p-12 shadow-md max-w-4xl mx-auto space-y-6 text-slate-800 print:border-none print:shadow-none print:p-0 print:m-0">
+
+          <!-- Membrete Institucional Oficial -->
+          <div class="flex items-center justify-between gap-4 border-b-2 border-[#170B3D] pb-5">
+            <div class="flex items-center gap-3.5">
+              <div class="w-14 h-14 rounded-2xl bg-[#170B3D] text-white flex items-center justify-center shrink-0 overflow-hidden border border-slate-200">
+                <img [src]="popalog.logopop" alt="Escudo Popayán" class="w-10 h-12 object-contain" />
+              </div>
+              <div>
+                <h2 class="text-base sm:text-lg font-black text-[#170B3D] tracking-wide uppercase">
+                  Alcaldía de Popayán
+                </h2>
+                <p class="text-xs font-extrabold text-slate-600">
+                  Secretaría de Salud Municipal · Centro de Bienestar Animal (CBA)
+                </p>
+                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                  NIT 891.580.006-2 · Nit de Entidad Territorial
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="inline-block bg-[#170B3D] text-[#F1C63C] text-[10px] sm:text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                Fórmula Médica
+              </span>
+              <p class="text-xs font-mono font-bold text-slate-700 mt-1">
+                Expediente: HC-{{ idHistoria || 'OFICIAL' }}
+              </p>
+              <p class="text-[11px] text-slate-500 font-medium">
+                Fecha: {{ formatearFecha() }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Datos del Paciente y Tutor (2 Columnas Formales) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+            <!-- Datos del Paciente -->
+            <div class="space-y-1.5">
+              <span class="text-[10px] font-black uppercase tracking-wider text-[#4141a5] block">Información del Paciente</span>
+              <div class="grid grid-cols-2 gap-1 text-slate-700 font-semibold">
+                <div><span class="text-slate-400">Nombre:</span> <strong class="text-slate-900">{{ paciente?.nombre || 'Paciente' }}</strong></div>
+                <div><span class="text-slate-400">Especie:</span> {{ paciente?.especie || 'Canino' }}</div>
+                <div><span class="text-slate-400">Raza:</span> {{ paciente?.raza || 'Mestizo' }}</div>
+                <div><span class="text-slate-400">Sexo:</span> {{ paciente?.sexo || 'Hembra' }}</div>
+                <div><span class="text-slate-400">Peso:</span> <strong class="text-[#4141a5]">{{ paciente?.peso || '4.0' }} kg</strong></div>
+                <div><span class="text-slate-400">ID Animal:</span> #{{ paciente?.id_animal || idAnimal || 'N/A' }}</div>
+              </div>
+            </div>
+
+            <!-- Datos del Tutor / Responsable -->
+            <div class="space-y-1.5 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4">
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 block">Información del Tutor / Tenedor</span>
+              <div class="space-y-1 text-slate-700 font-semibold">
+                <div><span class="text-slate-400">Tutor:</span> <strong class="text-slate-900">{{ paciente?.tenedor_nombre || nombreAcudiente || 'Sin acudiente' }}</strong></div>
+                <div><span class="text-slate-400">Cédula:</span> {{ paciente?.tenedor_documento || cedulaAcudiente || 'No registrado' }}</div>
+                <div><span class="text-slate-400">Teléfono:</span> {{ paciente?.tenedor_telefono || telefonoAcudiente || 'No disponible' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prescripción Farmacológica (Tabla Detallada) -->
+          <div class="space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">💊</span>
+              <h4 class="text-xs font-black uppercase tracking-wider text-[#170B3D]">
+                Medicamentos y Tratamiento Prescrito (Rp/)
+              </h4>
+            </div>
+
+            <!-- Si hay medicamentos seleccionados -->
+            <div *ngIf="medicamentosSeleccionados && medicamentosSeleccionados.length > 0" class="overflow-x-auto">
+              <table class="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+                <thead class="bg-[#170B3D] text-white text-[10px] uppercase font-black">
+                  <tr>
+                    <th class="p-3">#</th>
+                    <th class="p-3">Medicamento / Principio Activo</th>
+                    <th class="p-3">Dosis</th>
+                    <th class="p-3">Vía</th>
+                    <th class="p-3">Frecuencia / Duración</th>
+                    <th class="p-3">Indicaciones Especiales</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  <tr *ngFor="let med of medicamentosSeleccionados; let idx = index" class="hover:bg-slate-50">
+                    <td class="p-3 font-bold text-slate-400">{{ idx + 1 }}</td>
+                    <td class="p-3">
+                      <strong class="text-slate-900 block">{{ med.nombre }}</strong>
+                      <span *ngIf="med.principio_activo" class="text-[10px] text-slate-500 font-normal">PA: {{ med.principio_activo }}</span>
+                    </td>
+                    <td class="p-3 font-bold text-[#4141a5]">{{ med.dosis || 'Según peso' }}</td>
+                    <td class="p-3 font-semibold">{{ med.via || 'Oral' }}</td>
+                    <td class="p-3">{{ med.frecuencia || 'Cada 12 horas por 5 días' }}</td>
+                    <td class="p-3 text-slate-600">{{ med.descripcion || 'Administrar con comida.' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Si no hay medicamentos aún -->
+            <div *ngIf="!medicamentosSeleccionados || medicamentosSeleccionados.length === 0"
+              class="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 text-center space-y-1">
+              <p class="text-xs font-bold text-amber-900">No se han cargado medicamentos específicos en la atención actual.</p>
+              <p class="text-[11px] text-amber-700">Puedes agregarlos desde el Paso 3 (Tratamientos) o registrarlos en la evolución médica.</p>
+            </div>
+          </div>
+
+          <!-- Indicaciones Generales y Cuidados -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-600 block">Indicaciones Generales y Recomendaciones</span>
+            <ul class="list-disc list-inside space-y-1 text-slate-700 font-medium text-[11px]">
+              <li>Mantener al paciente en un lugar seco, cómodo, tranquilo y protegido de corrientes de frío.</li>
+              <li>Suministrar agua limpia y potable de forma permanente. No suspender la medicación antes del tiempo indicado sin autorización médica.</li>
+              <li>En caso de notar vómito persistente, apatía extrema, dificultad para respirar o convulsiones, acudir de urgencia al CBA o clínica veterinaria más cercana.</li>
+            </ul>
+          </div>
+
+          <!-- Bloque de Firmas y Aval Institucional -->
+          <div class="pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 items-end text-xs">
+            <!-- Firma Médico Veterinario -->
+            <div class="text-center space-y-1">
+              <div class="h-14 border-b border-slate-400 mx-auto max-w-xs flex items-end justify-center pb-1">
+                <span class="text-slate-400 font-mono italic text-[11px]">{{ nombreVeterinario }}</span>
+              </div>
+              <strong class="text-slate-900 block font-black text-xs uppercase">{{ nombreVeterinario }}</strong>
+              <p class="text-[10px] text-slate-500 font-bold uppercase">Médico Veterinario · T.P. {{ tarjetaProfesional }}</p>
+              <p class="text-[10px] text-slate-400">Centro de Bienestar Animal (CBA) · Popayán</p>
+            </div>
+
+            <!-- Firma del Tutor / Recibido -->
+            <div class="text-center space-y-1">
+              <div class="h-14 border-b border-slate-400 mx-auto max-w-xs flex items-end justify-center pb-1">
+                <span class="text-slate-400 text-[10px] font-semibold">Firma de Recibido</span>
+              </div>
+              <strong class="text-slate-900 block font-bold text-xs">{{ paciente?.tenedor_nombre || nombreAcudiente || 'Tutor Responsable' }}</strong>
+              <p class="text-[10px] text-slate-500">C.C. {{ paciente?.tenedor_documento || cedulaAcudiente || '___________________' }}</p>
+              <p class="text-[10px] text-slate-400">Aceptación y Custodia del Paciente</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PESTAÑA PRINCIPAL 5: AUDITORÍA CLÍNICA Y TRAZABILIDAD (ESTILO CP-VET) -->
+      <!-- ===================================================================== -->
+      <div *ngIf="pestanaPrincipal === 'auditoria'" class="space-y-6 max-w-7xl mx-auto animate-fade-in">
+        <!-- Encabezado de Auditoría -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center font-black text-lg shrink-0 shadow-xs border border-white/10">
+              📋
+            </div>
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Registro Oficial de Auditoría de Historia Clínica
+              </h3>
+              <p class="text-xs text-slate-500 font-medium">
+                Trazabilidad inmutable de todas las modificaciones y evoluciones realizadas en este expediente.
+              </p>
+            </div>
+          </div>
+          <span class="bg-[#4141a5]/10 text-[#4141a5] font-black text-xs px-3 py-1 rounded-full">
+            {{ historialModificaciones.length }} modificaciones registradas
+          </span>
+        </div>
+
+        <!-- Estado Vacío -->
+        <div *ngIf="!historialModificaciones || historialModificaciones.length === 0"
+          class="bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-xs space-y-3">
+          <div class="w-16 h-16 rounded-3xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center text-3xl">
+            🔒
+          </div>
+          <h4 class="text-base font-black text-slate-800">No hay modificaciones auditadas previas</h4>
+          <p class="text-xs text-slate-500 font-medium max-w-md mx-auto">
+            Este expediente se encuentra en su versión inicial o no ha recibido modificaciones posteriores que requieran justificación de auditoría.
+          </p>
+        </div>
+
+        <!-- Tabla de Auditoría -->
+        <div *ngIf="historialModificaciones && historialModificaciones.length > 0"
+          class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#170B3D] text-white text-[10px] uppercase font-black">
+                <tr>
+                  <th class="p-3.5">Fecha y Hora</th>
+                  <th class="p-3.5">Veterinario / Responsable</th>
+                  <th class="p-3.5">Motivo de la Modificación</th>
+                  <th class="p-3.5">Campos Modificados</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                <tr *ngFor="let mod of historialModificaciones" class="hover:bg-slate-50">
+                  <td class="p-3.5 font-mono text-slate-600 font-bold whitespace-nowrap">
+                    {{ formatearFechaHora(mod.fecha_hora || mod.fecha_modificacion) }}
+                  </td>
+                  <td class="p-3.5 font-bold text-slate-800">
+                    {{ mod.usuario || mod.usuario_nombre || 'M.V. CBA Popayán' }}
+                    <span *ngIf="mod.rol" class="block text-[10px] text-slate-400 font-normal">{{ mod.rol }}</span>
+                  </td>
+                  <td class="p-3.5 text-amber-900 bg-amber-50/50 font-semibold">
+                    {{ mod.motivo_cambio || mod.motivo_modificacion || 'Modificación registrada' }}
+                  </td>
+                  <td class="p-3.5 text-slate-600">
+                    <span *ngIf="mod.tipo_accion" class="bg-slate-100 px-2 py-0.5 rounded text-[11px] font-mono">
+                      {{ mod.tipo_accion }}
+                    </span>
+                    <span *ngIf="!mod.tipo_accion" class="text-slate-400">Actualización general</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </main>
@@ -1702,6 +2485,98 @@
           Descartar y Salir
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE DETALLE DE CONSULTA PASADA (ESTILO CP-VET) -->
+  <div *ngIf="modalConsultaPasadaAbierto && consultaPasadaSeleccionada"
+    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 animate-scale-up max-h-[90vh] overflow-y-auto">
+
+      <!-- Encabezado Modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center font-bold text-sm shrink-0">
+            🔍
+          </div>
+          <div>
+            <h3 class="text-base font-black text-[#170B3D]">Detalle de Consulta Histórica</h3>
+            <p class="text-xs text-slate-500 font-medium">
+              {{ formatearFechaHora(consultaPasadaSeleccionada?.fecha_hora || consultaPasadaSeleccionada?.fechaHora) }}
+            </p>
+          </div>
+        </div>
+
+        <button type="button" (click)="cerrarModalConsultaPasada()"
+          class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm cursor-pointer transition-all">
+          ✕
+        </button>
+      </div>
+
+      <!-- Resumen Motivo y Prioridad -->
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-black uppercase text-slate-400">Motivo de Consulta</span>
+          <span class="text-xs font-black px-2 py-0.5 rounded-full uppercase"
+            [ngClass]="consultaPasadaSeleccionada?.prioridad === 'Urgente' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'">
+            {{ consultaPasadaSeleccionada?.prioridad || 'Normal' }}
+          </span>
+        </div>
+        <h4 class="text-sm font-extrabold text-[#170B3D]">
+          {{ consultaPasadaSeleccionada?.motivo_consulta || consultaPasadaSeleccionada?.motivoConsulta || 'Consulta médica general' }}
+        </h4>
+        <p class="text-slate-600 font-medium pt-1">
+          {{ consultaPasadaSeleccionada?.anamnesis || consultaPasadaSeleccionada?.evolucion || 'Sin evolución detallada registrada.' }}
+        </p>
+      </div>
+
+      <!-- Constantes Vitales -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <span class="text-[10px] text-slate-400 font-bold block uppercase">Temperatura</span>
+          <span class="font-black text-slate-800">{{ consultaPasadaSeleccionada?.temperatura ? consultaPasadaSeleccionada?.temperatura + ' °C' : 'N/R' }}</span>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <span class="text-[10px] text-slate-400 font-bold block uppercase">Frec. Cardíaca</span>
+          <span class="font-black text-slate-800">{{ consultaPasadaSeleccionada?.frecuencia_cardiaca || consultaPasadaSeleccionada?.frecuenciaCardiaca || 'N/R' }} lpm</span>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <span class="text-[10px] text-slate-400 font-bold block uppercase">Frec. Respiratoria</span>
+          <span class="font-black text-slate-800">{{ consultaPasadaSeleccionada?.frecuencia_respiratoria || consultaPasadaSeleccionada?.frecuenciaRespiratoria || 'N/R' }} rpm</span>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <span class="text-[10px] text-slate-400 font-bold block uppercase">Peso</span>
+          <span class="font-black text-[#4141a5]">{{ consultaPasadaSeleccionada?.peso ? consultaPasadaSeleccionada?.peso + ' kg' : 'N/R' }}</span>
+        </div>
+      </div>
+
+      <!-- Diagnósticos -->
+      <div class="space-y-2 text-xs">
+        <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-200">
+          <span class="text-[10px] font-black uppercase text-amber-900 block">Diagnóstico Principal</span>
+          <p class="font-bold text-amber-950 mt-0.5">{{ consultaPasadaSeleccionada?.diagnostico_principal || consultaPasadaSeleccionada?.diagnosticoPrincipal || 'No especificado' }}</p>
+        </div>
+        <div *ngIf="consultaPasadaSeleccionada?.diagnostico_diferencial || consultaPasadaSeleccionada?.diagnosticoDiferencial"
+          class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="text-[10px] font-black uppercase text-slate-500 block">Diagnóstico Diferencial</span>
+          <p class="font-medium text-slate-800 mt-0.5">{{ consultaPasadaSeleccionada?.diagnostico_diferencial || consultaPasadaSeleccionada?.diagnosticoDiferencial }}</p>
+        </div>
+      </div>
+
+      <!-- Plan y Tratamiento -->
+      <div class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs space-y-1">
+        <span class="text-[10px] font-black uppercase text-blue-900 block">Plan de Tratamiento y Procedimientos</span>
+        <p class="font-medium text-blue-950 leading-relaxed">{{ consultaPasadaSeleccionada?.plan_tratamiento || consultaPasadaSeleccionada?.planTratamiento || consultaPasadaSeleccionada?.plan_procedimientos || 'Sin prescripción anotada.' }}</p>
+      </div>
+
+      <!-- Botón de Cerrar -->
+      <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <button type="button" (click)="cerrarModalConsultaPasada()"
+          class="px-5 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+          Cerrar Detalle
+        </button>
+      </div>
+
     </div>
   </div>
 

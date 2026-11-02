@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment } from '../../environments/environment';
 
@@ -58,6 +59,31 @@ export class HistoriaClinicaListComponent implements OnInit {
   // Modal de detalle
   modalDetalleAbierto: boolean = false;
   historiaSeleccionada: HistoriaClinicaItem | null = null;
+
+  // Modal Rápido de Nuevo Paciente + Tutor (Estilo CP-Vet)
+  modalNuevoPacienteAbierto: boolean = false;
+  guardandoNuevoPaciente: boolean = false;
+  nuevoPaciente = {
+    // Tutor
+    tutorDocumento: '',
+    tutorNombre: '',
+    tutorTelefono: '',
+    tutorDireccion: '',
+    tutorCorreo: '',
+    // Mascota
+    nombre: '',
+    especie: 'Canino',
+    raza: 'Mestizo',
+    sexo: 'Macho',
+    peso: null as number | null,
+    color: '',
+    microchip: '',
+    estadoReproductivo: 'Entero',
+    fotoUrl: '',
+    // Consulta Inicial
+    motivoConsulta: 'Apertura de expediente y consulta médica general',
+    estadoGeneral: 'Estable'
+  };
 
   // Diccionario auxiliar de animales por id_animal
   private mapaAnimales: Map<number, any> = new Map();
@@ -289,6 +315,141 @@ export class HistoriaClinicaListComponent implements OnInit {
 
   irANuevaConsulta(): void {
     this.router.navigate(['/inicio-admin/acta-seres-sintientes']);
+  }
+
+  // Métodos del Modal Nuevo Paciente (CP-Vet fast onboarding)
+  abrirModalNuevoPaciente(): void {
+    this.nuevoPaciente = {
+      tutorDocumento: '',
+      tutorNombre: '',
+      tutorTelefono: '',
+      tutorDireccion: '',
+      tutorCorreo: '',
+      nombre: '',
+      especie: 'Canino',
+      raza: 'Mestizo',
+      sexo: 'Macho',
+      peso: null,
+      color: '',
+      microchip: '',
+      estadoReproductivo: 'Entero',
+      fotoUrl: '',
+      motivoConsulta: 'Apertura de expediente y consulta médica general',
+      estadoGeneral: 'Estable'
+    };
+    this.modalNuevoPacienteAbierto = true;
+  }
+
+  cerrarModalNuevoPaciente(): void {
+    this.modalNuevoPacienteAbierto = false;
+    this.guardandoNuevoPaciente = false;
+  }
+
+  guardarNuevoPaciente(): void {
+    if (!this.nuevoPaciente.nombre.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor ingresa el nombre de la mascota o paciente.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    if (!this.nuevoPaciente.tutorNombre.trim() || !this.nuevoPaciente.tutorDocumento.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Datos del tutor requeridos',
+        text: 'Ingresa al menos el nombre y documento de identidad del tutor o acudiente.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.guardandoNuevoPaciente = true;
+
+    const payload = {
+      animal: {
+        nombre: this.nuevoPaciente.nombre.trim(),
+        especie: this.nuevoPaciente.especie,
+        raza: this.nuevoPaciente.raza.trim() || 'Mestizo',
+        sexo: this.nuevoPaciente.sexo,
+        peso: this.nuevoPaciente.peso ? Number(this.nuevoPaciente.peso) : null,
+        color: this.nuevoPaciente.color || '',
+        microchip: this.nuevoPaciente.microchip || null,
+        estado_reproductivo: this.nuevoPaciente.estadoReproductivo,
+        fotoUrl: this.nuevoPaciente.fotoUrl || null
+      },
+      tenedor: {
+        documento: this.nuevoPaciente.tutorDocumento.trim(),
+        documento_identidad: this.nuevoPaciente.tutorDocumento.trim(),
+        nombre: this.nuevoPaciente.tutorNombre.trim(),
+        nombre_completo: this.nuevoPaciente.tutorNombre.trim(),
+        telefono: this.nuevoPaciente.tutorTelefono.trim(),
+        direccion: this.nuevoPaciente.tutorDireccion.trim(),
+        correo: this.nuevoPaciente.tutorCorreo.trim(),
+        parentesco: 'Tenedor / Propietario'
+      },
+      anamnesicos: {
+        estadoReproductivo: this.nuevoPaciente.estadoReproductivo
+      },
+      motivoConsulta: this.nuevoPaciente.motivoConsulta.trim() || 'Apertura de expediente clínico',
+      examenClinico: {
+        condicionCorporal: this.nuevoPaciente.estadoGeneral
+      },
+      hoja2: {
+        diagnosticoPresuntivo: 'Consulta médica general inicial',
+        pronostico: 'Favorable'
+      },
+      hoja3: {
+        ingresaCBA: 'NO'
+      }
+    };
+
+    this.historiaService.crearExpedienteCompleto(payload).subscribe({
+      next: (resp) => {
+        this.guardandoNuevoPaciente = false;
+        this.cerrarModalNuevoPaciente();
+        this.cargarHistorias();
+
+        const idTarget = resp?.id_consulta || resp?.id_animal || resp?.animal_id || resp?.historia_id;
+        const idAnimal = resp?.id_animal || resp?.animal_id || '';
+        const idHistoria = resp?.id_historia || resp?.historia_id || '';
+        const idConsulta = resp?.id_consulta || resp?.consulta_id || '';
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Paciente registrado!',
+          text: `El expediente de ${this.nuevoPaciente.nombre} fue creado con éxito en la base de datos.`,
+          confirmButtonColor: '#4141a5',
+          showCancelButton: true,
+          confirmButtonText: 'Abrir Historia Clínica',
+          cancelButtonText: 'Seguir en el listado'
+        }).then((res) => {
+          if (res.isConfirmed && idTarget) {
+            this.router.navigate(['/inicio-admin/historia-clinica/editar', idTarget], {
+              queryParams: {
+                id_animal: idAnimal,
+                id_consulta: idConsulta,
+                id_historia: idHistoria,
+                nombre: this.nuevoPaciente.nombre,
+                foto: this.nuevoPaciente.fotoUrl || ''
+              }
+            });
+          }
+        });
+      },
+      error: (err) => {
+        this.guardandoNuevoPaciente = false;
+        console.error('Error al registrar paciente:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al registrar',
+          text: err?.error?.detail || err?.message || 'No fue posible registrar el paciente. Verifique su conexión al servidor.',
+          confirmButtonColor: '#4141a5'
+        });
+      }
+    });
   }
 
   // Estilos de badge para estado general

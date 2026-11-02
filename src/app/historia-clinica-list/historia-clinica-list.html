@@ -43,15 +43,27 @@
           <span class="hidden sm:inline">Actualizar</span>
         </button>
 
-        <!-- Botón Nueva Consulta / Atención -->
+        <!-- Botón Rápido: + Registrar Paciente (Estilo CP-Vet) -->
+        <button
+          type="button"
+          (click)="abrirModalNuevoPaciente()"
+          class="flex items-center justify-center gap-1.5 bg-[#4141a5] hover:bg-[#33338b] text-white font-extrabold px-3.5 py-2.5 rounded-xl shadow-md transition-all text-xs tracking-wider uppercase whitespace-nowrap active:scale-95 cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>+ Registrar Paciente</span>
+        </button>
+
+        <!-- Botón Atención de Campo (Acta) -->
         <button
           type="button"
           (click)="irANuevaConsulta()"
-          class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-all text-xs tracking-wider uppercase whitespace-nowrap active:scale-95 cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          class="flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold px-3 py-2.5 rounded-xl shadow-xs transition-all text-xs tracking-wider uppercase whitespace-nowrap active:scale-95 cursor-pointer"
+          title="Atención y rescate en campo con geolocalización">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
           </svg>
-          <span>Nueva Atención</span>
+          <span class="hidden md:inline">Acta de Campo</span>
         </button>
       </div>
 
@@ -580,6 +592,309 @@
           class="px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
           Ir a Edición Clínica
         </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. MODAL RÁPIDO DE REGISTRO PACIENTE + TUTOR (ESTILO CP-VET)              -->
+  <!-- ========================================================================= -->
+  <div
+    *ngIf="modalNuevoPacienteAbierto"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in overflow-y-auto">
+
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden my-auto">
+
+      <!-- Encabezado del Modal -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-slate-50">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black shadow-md">
+            🐾
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Registro Rápido de Paciente y Tutor
+              </h2>
+              <span class="bg-[#F1C63C]/20 text-[#170B3D] text-[10px] font-black px-2 py-0.5 rounded-full border border-[#F1C63C]/40 uppercase tracking-wider">
+                Nuevo Expediente
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 font-medium">
+              Apertura directa de historia clínica con vinculación automática de propietario
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="cerrarModalNuevoPaciente()"
+          class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold transition cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Cuerpo del Modal (Formulario de 2 Columnas) -->
+      <div class="p-6 overflow-y-auto space-y-6 text-xs flex-1">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- COLUMNA 1: DATOS DEL TUTOR / ACUDIENTE -->
+          <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5]"></span>
+                <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                  1. Datos del Tutor / Propietario
+                </h3>
+              </div>
+              <span class="text-[10px] text-gray-400 font-bold uppercase">Contacto</span>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Documento de Identidad -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Documento / Cédula <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPaciente.tutorDocumento"
+                  placeholder="Ej. 1061789456"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Nombre Completo del Tutor -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Nombres y Apellidos del Tutor <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPaciente.tutorNombre"
+                  placeholder="Ej. Carlos Alberto Gómez"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Teléfono / WhatsApp -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Teléfono / WhatsApp <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPaciente.tutorTelefono"
+                  placeholder="Ej. 3124567890"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Dirección de Residencia -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Dirección / Barrio
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPaciente.tutorDireccion"
+                  placeholder="Ej. Cra 8 # 12-40, Barrio Bolívar"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Correo Electrónico -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Correo Electrónico (Opcional)
+                </label>
+                <input
+                  type="email"
+                  [(ngModel)]="nuevoPaciente.tutorCorreo"
+                  placeholder="tutor@ejemplo.com"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUMNA 2: DATOS DEL PACIENTE / MASCOTA -->
+          <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#170B3D]"></span>
+                <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                  2. Datos del Paciente (Mascota)
+                </h3>
+              </div>
+              <span class="text-[10px] text-gray-400 font-bold uppercase">Biometría</span>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Nombre de la Mascota -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Nombre del Paciente <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPaciente.nombre"
+                  placeholder="Ej. Rorito, Luna, Toby..."
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-slate-800 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Fila Especie y Raza -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                    Especie <span class="text-rose-500">*</span>
+                  </label>
+                  <select
+                    [(ngModel)]="nuevoPaciente.especie"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                    <option value="Canino">Canino</option>
+                    <option value="Felino">Felino</option>
+                    <option value="Equino">Equino</option>
+                    <option value="Bovino">Bovino</option>
+                    <option value="Porcino">Porcino</option>
+                    <option value="Aves">Aves</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                    Raza
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPaciente.raza"
+                    placeholder="Ej. Mestizo, Labrador..."
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Fila Sexo y Peso -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                    Sexo
+                  </label>
+                  <select
+                    [(ngModel)]="nuevoPaciente.sexo"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                    Peso (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    [(ngModel)]="nuevoPaciente.peso"
+                    placeholder="Ej. 12.5"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Fila Color y Microchip -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                    Color / Pelaje
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPaciente.color"
+                    placeholder="Ej. Café con blanco"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                    Estado Reproductivo
+                  </label>
+                  <select
+                    [(ngModel)]="nuevoPaciente.estadoReproductivo"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                    <option value="Entero">Entero</option>
+                    <option value="Castrado / Esterilizado">Castrado / Esterilizado</option>
+                    <option value="Gestante">Gestante</option>
+                    <option value="En celo">En celo</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Microchip / Identificador -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">
+                  Microchip / Tatuaje (Opcional)
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPaciente.microchip"
+                  placeholder="Número de 15 dígitos o código"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-mono focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECCIÓN 3: MOTIVO DE CONSULTA INICIAL -->
+        <div class="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-[11px] font-bold text-blue-900 mb-1">
+              Motivo de Atención / Apertura de Expediente
+            </label>
+            <input
+              type="text"
+              [(ngModel)]="nuevoPaciente.motivoConsulta"
+              placeholder="Ej. Vacunación y control preventivo, desparasitación, decaimiento..."
+              class="w-full h-10 px-3 rounded-xl border border-blue-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-blue-900 mb-1">
+              Estado General Inicial
+            </label>
+            <select
+              [(ngModel)]="nuevoPaciente.estadoGeneral"
+              class="w-full h-10 px-3 rounded-xl border border-blue-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+              <option value="Estable">Estable</option>
+              <option value="En observación">En observación</option>
+              <option value="Delicado">Delicado</option>
+              <option value="Crítico">Crítico</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Pie del Modal con Acciones -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3">
+        <p class="text-[11px] text-gray-500 hidden sm:block">
+          Se creará el expediente clínico y se guardará automáticamente en PostgreSQL en la nube.
+        </p>
+
+        <div class="flex items-center gap-2.5 ml-auto">
+          <button
+            type="button"
+            (click)="cerrarModalNuevoPaciente()"
+            [disabled]="guardandoNuevoPaciente"
+            class="px-4 py-2.5 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer disabled:opacity-50">
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            (click)="guardarNuevoPaciente()"
+            [disabled]="guardandoNuevoPaciente"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-extrabold transition shadow-md active:scale-95 cursor-pointer disabled:opacity-50">
+            <span *ngIf="guardandoNuevoPaciente" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <svg *ngIf="!guardandoNuevoPaciente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{{ guardandoNuevoPaciente ? 'Guardando en Base de Datos...' : 'Guardar y Abrir Expediente' }}</span>
+          </button>
+        </div>
       </div>
 
     </div>

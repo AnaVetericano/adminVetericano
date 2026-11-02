@@ -230,6 +230,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   paciente: PacienteHistoria | null = null;
   historialModificaciones: RegistroAuditoria[] = [];
 
+  // Navegación Maestra del Expediente 360° (Estilo CP-Vet)
+  pestanaPrincipal: 'atencion' | 'historial' | 'plan_sanitario' | 'receta' | 'auditoria' = 'atencion';
+  consultasAnteriores: any[] = [];
+  consultaPasadaSeleccionada: any = null;
+  modalConsultaPasadaAbierto: boolean = false;
+
   cargando: boolean = true;
   guardando: boolean = false;
   formularioEnviado: boolean = false;
@@ -346,6 +352,152 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     }
 
     this.cdr.detectChanges();
+  }
+
+  cambiarPestanaPrincipal(p: 'atencion' | 'historial' | 'plan_sanitario' | 'receta' | 'auditoria'): void {
+    this.pestanaPrincipal = p;
+    this.cdr.detectChanges();
+  }
+
+  iniciarNuevaConsulta(): void {
+    Swal.fire({
+      icon: 'question',
+      title: '¿Nueva Consulta Médica?',
+      text: `Se iniciará un nuevo registro de atención para ${this.paciente?.nombre || 'el paciente'}, conservando todos sus antecedentes y datos base.`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, iniciar nueva consulta',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4141a5'
+    }).then((res) => {
+      if (res.isConfirmed) {
+        this.motivo_consulta = 'Consulta y seguimiento médico';
+        this.prioridad = 'Normal';
+        this.anamnesis = '';
+        this.actitud_temperamento = 'Alerta / Responsivo';
+        this.resultado_estado = 'Estable';
+        this.temperatura = null;
+        this.frecuencia_cardiaca = null;
+        this.frecuencia_respiratoria = null;
+        this.pulso = '';
+        this.tllc = '';
+        this.ganglios_linfaticos = '';
+        this.mucosas = '';
+        this.descripcionHallazgos = '';
+        this.observaciones_examen = '';
+        this.medicamentosSeleccionados = [];
+        this.examenesSolicitados = [];
+        this.pronostico = 'Favorable';
+        this.planProcedimientos = '';
+        this.plan_procedimientos = '';
+        this.materialesUtilizados = '';
+        this.materiales_utilizados = '';
+        this.ingresa_cba = false;
+        this.ingresaCBA = 'NO';
+        this.canilAsignado = '';
+        this.canil_asignado = '';
+
+        this.sistemas = {
+          general: 'NE',
+          hidratacion: 'NE',
+          tegumentario: 'NE',
+          ojos: 'NE',
+          oidos: 'NE',
+          nariz: 'NE',
+          digestivo: 'NE',
+          respiratorio: 'NE',
+          nervioso: 'NE',
+          musculoesqueletico: 'NE',
+          cardiovascular: 'NE',
+          genitourinario: 'NE'
+        };
+        this.evaluacion_sistemas = this.sistemas;
+
+        if (this.formHistoria) {
+          this.formHistoria.patchValue({
+            motivo_consulta: 'Consulta y seguimiento médico',
+            prioridad: 'Normal',
+            anamnesis: '',
+            actitud_temperamento: 'Alerta / Responsivo',
+            resultado_estado: 'Estable',
+            temperatura: null,
+            frecuencia_cardiaca: null,
+            frecuencia_respiratoria: null,
+            pulso: '',
+            tllc: '',
+            ganglios_linfaticos: '',
+            mucosas: '',
+            hallazgos_examen: '',
+            observaciones_examen: '',
+            diagnosticoPrincipal: '',
+            diagnosticoDiferencial: '',
+            listaProblemas: '',
+            evolucion: '',
+            pronostico: 'Favorable',
+            planTratamiento: '',
+            materiales_utilizados: '',
+            motivoModificacion: 'Nueva evolución clínica registrada.'
+          });
+        }
+
+        this.pestanaPrincipal = 'atencion';
+        this.pestanaActiva = 'consulta';
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Formulario Listo',
+          text: 'Puedes diligenciar la nueva evolución médica.',
+          timer: 1700,
+          showConfirmButton: false
+        });
+      }
+    });
+  }
+
+  verDetalleConsultaPasada(consulta: any): void {
+    this.consultaPasadaSeleccionada = consulta;
+    this.modalConsultaPasadaAbierto = true;
+  }
+
+  cerrarModalConsultaPasada(): void {
+    this.modalConsultaPasadaAbierto = false;
+    this.consultaPasadaSeleccionada = null;
+  }
+
+  imprimirReceta(): void {
+    window.print();
+  }
+
+  formatearFecha(fechaStr?: string | null): string {
+    if (!fechaStr) return 'No registrada';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+    } catch {
+      return fechaStr;
+    }
+  }
+
+  formatearFechaHora(fechaStr?: string | null): string {
+    if (!fechaStr) return 'No registrada';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return fechaStr;
+    }
   }
 
   /**
@@ -949,6 +1101,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         const raw = data as any;
         this.historiaOriginal = { ...(this.historiaOriginal || {}), ...data };
         this.historialModificaciones = data.historial_modificaciones || this.historialModificaciones || [];
+        this.consultasAnteriores = data.consultas_anteriores || raw.consultas_anteriores || [];
 
         if (!this.tieneDatosDesdeActa && data.paciente) {
           this.paciente = {
