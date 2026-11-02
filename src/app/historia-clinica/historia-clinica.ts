@@ -220,6 +220,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   nombreAcudiente: string = '';
   cedulaAcudiente: string = '';
   telefonoAcudiente: string = '';
+  idAnimal: number | null = null;
 
   // =========================================================================
   // FORMULARIO REACTIVO Y ESTADOS GLOBALES
@@ -281,10 +282,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       } catch (e) {}
     }
 
-    if (datosActa) {
-      this.aplicarDatosDesdeActa(datosActa);
-    }
-
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       const idQuery = this.route.snapshot.queryParamMap.get('id');
@@ -294,6 +291,35 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       const idSeguimientoQuery = this.route.snapshot.queryParamMap.get('id_seguimiento');
       const nombreQuery = this.route.snapshot.queryParamMap.get('nombre') || '';
       const fotoQuery = this.route.snapshot.queryParamMap.get('foto') || '';
+
+      // Validación de coherencia: Si hay datos en sessionStorage pero venimos a consultar
+      // una historia guardada o un animal diferente, descartamos datosActa residuales.
+      if (datosActa) {
+        const idAnimalActa = Number(datosActa.id_animal || datosActa.paciente?.id_animal);
+        const nombreActa = String(datosActa.paciente?.nombre || '').toLowerCase().trim();
+        const idAnimalEsperado = idAnimalQuery ? Number(idAnimalQuery) : null;
+        const nombreEsperado = nombreQuery ? nombreQuery.toLowerCase().trim() : '';
+
+        const conflictoAnimal = (idAnimalEsperado && idAnimalActa && idAnimalEsperado !== idAnimalActa) ||
+                                (nombreEsperado && nombreActa && nombreEsperado !== nombreActa);
+        const vieneDeEdicionDirecta = !!idHistoriaQuery || (!history?.state?.datosActa && !!idAnimalQuery);
+
+        if (conflictoAnimal || vieneDeEdicionDirecta) {
+          datosActa = null;
+          try {
+            sessionStorage.removeItem('acta_edicion_temporal');
+          } catch (e) {}
+          this.tieneDatosDesdeActa = false;
+        } else {
+          this.aplicarDatosDesdeActa(datosActa);
+        }
+      }
+
+      if (idAnimalQuery && !isNaN(Number(idAnimalQuery))) {
+        this.idAnimal = Number(idAnimalQuery);
+      } else if (idParam && !isNaN(Number(idParam))) {
+        this.idAnimal = Number(idParam);
+      }
 
       this.idHistoria = idParam || idConsultaQuery || idHistoriaQuery || idQuery || '';
 
@@ -453,7 +479,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const consts = datosActa.constantes || {};
 
     this.paciente = {
-      id_animal: datosActa.id_animal || pac.id_animal || 1,
+      id_animal: datosActa.id_animal || pac.id_animal || this.idAnimal || 1,
       nombre: pac.nombre || 'Paciente',
       especie: pac.especie || 'Canino',
       raza: pac.raza || 'Mestizo',
@@ -464,6 +490,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       tenedor_documento: pac.tenedor_documento || ten.cedula || 'No registrado',
       tenedor_telefono: pac.tenedor_telefono || ten.telefono || 'No disponible'
     };
+
+    if (this.paciente.id_animal) {
+      this.idAnimal = Number(this.paciente.id_animal);
+    }
 
     this.nombreAcudiente = ten.nombre || pac.tenedor_nombre || '';
     this.cedulaAcudiente = ten.cedula || pac.tenedor_documento || '';
@@ -534,7 +564,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         estado_general: this.resultado_estado,
         motivo_consulta: this.motivo_consulta,
         paciente: this.paciente,
-        diagnostico_principal: datosActa.diagnostico_principal || 'Prueba 8',
+        diagnostico_principal: datosActa.diagnostico_principal || 'Consulta médica general',
         diagnostico_diferencial: datosActa.diagnostico_diferencial || '',
         lista_problemas: datosActa.lista_problemas || '',
         evolucion: this.anamnesis || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico.',
@@ -574,7 +604,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       ganglios_linfaticos: this.ganglios_linfaticos,
       gangliosLinfaticos: this.ganglios_linfaticos,
       mucosas: this.mucosas,
-      diagnosticoPrincipal: datosActa.diagnostico_principal || 'Prueba 8',
+      diagnosticoPrincipal: datosActa.diagnostico_principal || 'Consulta médica general',
       diagnosticoDiferencial: datosActa.diagnostico_diferencial || '',
       listaProblemas: datosActa.lista_problemas || '',
       evolucion: this.anamnesis || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico.',
@@ -920,7 +950,20 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.historiaOriginal = { ...(this.historiaOriginal || {}), ...data };
         this.historialModificaciones = data.historial_modificaciones || this.historialModificaciones || [];
 
-        if (this.paciente) {
+        if (!this.tieneDatosDesdeActa && data.paciente) {
+          this.paciente = {
+            id_animal: data.paciente.id_animal || this.idAnimal || 1,
+            nombre: data.paciente.nombre && data.paciente.nombre !== 'Paciente' ? data.paciente.nombre : (nombre || 'Paciente'),
+            especie: data.paciente.especie || 'Canino',
+            raza: data.paciente.raza || 'Mestizo',
+            sexo: data.paciente.sexo || 'Hembra',
+            peso: data.paciente.peso ?? 4.0,
+            tenedor_nombre: data.paciente.tenedor_nombre || this.nombreAcudiente || 'Sin acudiente',
+            tenedor_documento: data.paciente.tenedor_documento || this.cedulaAcudiente || 'No registrado',
+            tenedor_telefono: data.paciente.tenedor_telefono || this.telefonoAcudiente || 'No disponible',
+            foto_url: data.paciente.foto_url ? this.normalizarUrlFoto(data.paciente.foto_url) : ''
+          };
+        } else if (this.paciente) {
           this.paciente = {
             ...this.paciente,
             nombre: this.paciente.nombre && this.paciente.nombre !== 'Paciente' ? this.paciente.nombre : (data.paciente?.nombre || nombre || 'Paciente'),
@@ -1756,17 +1799,58 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       }
     };
 
-    this.historiaService.actualizarHistoria(this.idHistoria, dto, this.historiaOriginal!).subscribe({
+    const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
+    const idAnimalEfectivo = Number(
+      idAnimalQuery ||
+      this.idAnimal ||
+      this.paciente?.id_animal ||
+      this.historiaOriginal?.id_animal ||
+      (this.idHistoria && !isNaN(Number(this.idHistoria)) ? Number(this.idHistoria) : null) ||
+      1
+    );
+    (dto as any).id_animal = idAnimalEfectivo;
+    (dto as any).animal = this.paciente || { id_animal: idAnimalEfectivo, nombre: 'Paciente' };
+
+    const historiaBase = this.historiaOriginal || ({
+      id_historia: Number(this.idHistoria) || 0,
+      id_animal: idAnimalEfectivo,
+      paciente: this.paciente
+    } as any);
+
+    this.historiaService.actualizarHistoria(this.idHistoria, dto, historiaBase).subscribe({
       next: (resp) => {
         this.guardando = false;
         this.formularioEnviado = false;
         this.mensajeExito = resp.mensaje || 'Historia clínica actualizada con éxito.';
 
+        // Limpieza de memoria temporal para evitar que el navegador recargue datos antiguos desactualizados
+        try {
+          sessionStorage.removeItem('acta_edicion_temporal');
+          sessionStorage.removeItem('historia_edicion_temporal');
+        } catch (e) {}
+
+        if (resp.historia_id) {
+          this.idHistoria = resp.historia_id;
+        }
+
         if (resp.auditoria) {
           this.historialModificaciones = [resp.auditoria, ...this.historialModificaciones];
         }
 
+        if (!this.historiaOriginal) {
+          this.historiaOriginal = {
+            id_historia: resp.historia_id || this.idHistoria,
+            id_consulta: resp.consulta_id || 1,
+            id_animal: idAnimalEfectivo,
+            numero_historia: `HC-${idAnimalEfectivo}`,
+            fecha_apertura: new Date().toISOString(),
+            paciente: this.paciente
+          } as any;
+        }
+
         if (this.historiaOriginal) {
+          this.historiaOriginal.id_historia = resp.historia_id || this.historiaOriginal.id_historia;
+          this.historiaOriginal.id_consulta = resp.consulta_id || this.historiaOriginal.id_consulta;
           this.historiaOriginal.diagnostico_principal = dto.diagnostico_principal;
           this.historiaOriginal.diagnostico_diferencial = dto.diagnostico_diferencial;
           this.historiaOriginal.lista_problemas = dto.lista_problemas;

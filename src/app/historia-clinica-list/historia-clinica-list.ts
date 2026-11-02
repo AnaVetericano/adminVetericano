@@ -269,7 +269,13 @@ export class HistoriaClinicaListComponent implements OnInit {
 
   // Navegación
   irAEditar(historia: HistoriaClinicaItem): void {
-    const id = historia.id_consulta || historia.id_historia || historia.id_animal;
+    try {
+      sessionStorage.removeItem('acta_edicion_temporal');
+      sessionStorage.removeItem('historia_edicion_temporal');
+    } catch (e) {}
+
+    // Si tiene id_consulta se usa; si no, preferimos id_animal para que el expediente cargue directamente dicho animal
+    const id = historia.id_consulta || historia.id_animal || historia.id_historia;
     this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
       queryParams: {
         id_consulta: historia.id_consulta || '',

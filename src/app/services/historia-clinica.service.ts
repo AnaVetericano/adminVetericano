@@ -501,11 +501,81 @@ export class HistoriaClinicaService {
   ): Observable<HistoriaClinicaEdicion> {
     const cleanId = String(id || '').trim();
     const cleanIdAnimal = idAnimal ? String(idAnimal).trim() : '';
-    const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${cleanId}/`;
 
+    // ESTRATEGIA 1: Si conocemos id_animal con certeza, el endpoint más fidedigno y directo
+    // es expediente-por-animal/${cleanIdAnimal}/, evitando colisiones accidentales de id_consulta.
+    if (cleanIdAnimal) {
+      const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${cleanIdAnimal}/`;
+      return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
+        switchMap((animalData) => {
+          const consultas = Array.isArray(animalData?.consultas_anteriores) ? animalData.consultas_anteriores : [];
+          // Si el ID proporcionado coincide con alguna consulta específica de este animal, la usamos; si no, la más reciente
+          let consultaObjetivo = consultas.find((c: any) => String(c?.id_consulta) === cleanId);
+          if (!consultaObjetivo && consultas.length > 0) {
+            consultaObjetivo = consultas[0];
+          }
+
+          if (consultaObjetivo?.id_consulta) {
+            const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${consultaObjetivo.id_consulta}/`;
+            return this.http.get<any>(urlExpCompleto, { headers: this.authHeaders }).pipe(
+              map((expData) => {
+                const fused = {
+                  ...expData,
+                  id_animal: cleanIdAnimal,
+                  id_historia: animalData?.id_historia || expData?.id_historia || cleanId,
+                  numero_historia: animalData?.numero_historia || expData?.numero_historia,
+                  animal: animalData?.animal || expData?.animal,
+                  paciente: animalData?.animal || expData?.paciente,
+                  tenedor: animalData?.tenedor || expData?.tenedor,
+                  historial_modificaciones: animalData?.historial_modificaciones || expData?.historial_modificaciones || [],
+                  consultas_anteriores: animalData?.consultas_anteriores || []
+                };
+                return this.mapearRespuestaBackend(fused, cleanId, nombrePaciente);
+              }),
+              catchError(() => of(this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)))
+            );
+          }
+          return of(this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente));
+        }),
+        catchError(() => {
+          // Si falla el expediente por animal, continuar con el fallback
+          return this.cargarHistoriaPorConsultasFallback(cleanId, cleanIdAnimal, nombrePaciente);
+        })
+      );
+    }
+
+    // ESTRATEGIA 2: Si no tenemos id_animal, consultamos expediente-completo/${cleanId}/
+    // pero verificamos que no pertenezca a otro paciente si viene nombrePaciente sugerido.
+    const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${cleanId}/`;
     return this.http.get<any>(urlExpCompleto, { headers: this.authHeaders }).pipe(
       switchMap((expData) => {
-        const idAnimalEfectivo = expData?.id_animal || expData?.animal?.id_animal || cleanIdAnimal;
+        const nombreAnimalExp = String(expData?.animal?.nombre || expData?.paciente?.nombre || '').toLowerCase().trim();
+        const nombreEsperado = String(nombrePaciente || '').toLowerCase().trim();
+        const conflictoNombre = nombreEsperado && nombreAnimalExp && nombreEsperado !== nombreAnimalExp;
+
+        // Si hay conflicto de nombre, cleanId no era la consulta de este paciente (posible id_historia colisionado)
+        if (conflictoNombre) {
+          const urlHistoriaDirecta = `${this.baseUrlClinica}historias/${cleanId}/`;
+          return this.http.get<any>(urlHistoriaDirecta, { headers: this.authHeaders }).pipe(
+            switchMap((histResp) => {
+              const realAnimalId = histResp?.id_animal;
+              if (realAnimalId) {
+                return this.obtenerHistoriaPorId(cleanId, nombrePaciente, realAnimalId);
+              }
+              return of(this.mapearRespuestaBackend(histResp, cleanId, nombrePaciente));
+            }),
+            catchError(() => {
+              // Intentar consultar como id_animal directamente
+              const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${cleanId}/`;
+              return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
+                map(animalData => this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)),
+                catchError(() => of(this.mapearRespuestaBackend(expData, cleanId, nombrePaciente)))
+              );
+            })
+          );
+        }
+
+        const idAnimalEfectivo = expData?.id_animal || expData?.animal?.id_animal;
         if (idAnimalEfectivo) {
           return this.http.get<any>(`${this.baseUrlClinica}expediente-por-animal/${idAnimalEfectivo}/`, { headers: this.authHeaders }).pipe(
             map((animalData) => {
@@ -522,12 +592,24 @@ export class HistoriaClinicaService {
         return of(this.mapearRespuestaBackend(expData, cleanId, nombrePaciente));
       }),
       catchError(() => {
-        // Fallback a expediente-por-animal si expediente-completo/${id}/ devolvió 404 (ej. se entró con id_animal)
-        const animalIdParaBuscar = cleanIdAnimal || cleanId;
-        const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${animalIdParaBuscar}/`;
-        return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
-          map(animalData => this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)),
-          catchError(() => this.cargarHistoriaPorConsultasFallback(cleanId, animalIdParaBuscar, nombrePaciente))
+        // Fallback: verificar si cleanId es un id_historia en /historias/${cleanId}/
+        const urlHistoriaDirecta = `${this.baseUrlClinica}historias/${cleanId}/`;
+        return this.http.get<any>(urlHistoriaDirecta, { headers: this.authHeaders }).pipe(
+          switchMap((histResp) => {
+            const realAnimalId = histResp?.id_animal;
+            if (realAnimalId) {
+              return this.obtenerHistoriaPorId(cleanId, nombrePaciente, realAnimalId);
+            }
+            return of(this.mapearRespuestaBackend(histResp, cleanId, nombrePaciente));
+          }),
+          catchError(() => {
+            const animalIdParaBuscar = cleanIdAnimal || cleanId;
+            const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${animalIdParaBuscar}/`;
+            return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
+              map(animalData => this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)),
+              catchError(() => this.cargarHistoriaPorConsultasFallback(cleanId, animalIdParaBuscar, nombrePaciente))
+            );
+          })
         );
       })
     );
@@ -1267,98 +1349,143 @@ export class HistoriaClinicaService {
   }
 
   /**
-   * Criterio 1: Actualiza la historia clínica mediante PATCH directo a la Consulta,
-   * sincronizando diagnósticos, tratamientos, constantes y sistemas sin perder información.
+   * Criterio 1: Actualiza o consolida la historia clínica del animal en el backend (/api/clinica/expediente-completo/)
+   * garantizando persistencia real en base de datos, trazabilidad y auditoría de cambios.
    */
   actualizarHistoria(
     id: number | string,
     dto: ActualizarHistoriaDto,
     historiaActual: HistoriaClinicaEdicion
   ): Observable<RespuestaActualizacionHistoria> {
-    const idConsulta = historiaActual.id_consulta;
-    const idHistoria = Number(historiaActual.id_historia) || Number(id);
-    const idAnimal = historiaActual.id_animal || historiaActual.paciente?.id_animal;
+    const idConsulta = historiaActual?.id_consulta;
+    const idHistoria = Number(historiaActual?.id_historia) || (Number(id) > 0 ? Number(id) : null);
+    const idAnimal = Number((dto as any)?.id_animal || historiaActual?.id_animal || historiaActual?.paciente?.id_animal || (Number(id) > 0 ? Number(id) : null) || 1);
 
-    const payloadConsulta: any = {
-      motivo_consulta: dto.motivo_modificacion ? `Modificación: ${dto.motivo_modificacion}` : (historiaActual.motivo_consulta || 'Control / Consulta'),
-      prioridad: dto.prioridad || 'Normal',
-      resultado_estado: dto.resultado_estado || 'Estable',
-      frecuencia_respiratoria: dto.frecuencia_respiratoria !== undefined && dto.frecuencia_respiratoria !== null ? Number(dto.frecuencia_respiratoria) : null,
+    // 1. Preparar payload para PATCH /api/clinica/expediente-completo/
+    const payloadPatch: any = {
+      id_animal: idAnimal,
+      animal: {
+        id_animal: idAnimal,
+        nombre: (dto as any)?.animal?.nombre || historiaActual?.paciente?.nombre || 'Paciente'
+      },
+      diagnostico_principal: (dto.diagnostico_principal || 'Consulta médica general').trim(),
+      evolucion: (dto.evolucion || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.').trim(),
+      pronostico: dto.pronostico || 'Favorable',
+      plan_tratamiento: (dto.plan_tratamiento || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.').trim(),
+      motivo_modificacion: (dto.motivo_modificacion || 'Actualización y sincronización de datos clínicos desde módulo oficial.').trim(),
+      peso: dto.peso !== undefined && dto.peso !== null ? Number(dto.peso) : null,
       frecuencia_cardiaca: dto.frecuencia_cardiaca !== undefined && dto.frecuencia_cardiaca !== null ? Number(dto.frecuencia_cardiaca) : null,
+      frecuencia_respiratoria: dto.frecuencia_respiratoria !== undefined && dto.frecuencia_respiratoria !== null ? Number(dto.frecuencia_respiratoria) : null,
       temperatura: dto.temperatura !== undefined && dto.temperatura !== null ? Number(dto.temperatura) : null,
       pulso: dto.pulso || '',
       tllc: dto.tllc || '',
       ganglios_linfaticos: dto.ganglios_linfaticos || '',
       mucosas: dto.mucosas || '',
       actitud_temperamento: dto.actitud_temperamento || '',
-      evaluacion_sistemas: dto.organos_sistemas || {},
-      hallazgos_examen: dto.diagnostico_diferencial || '',
-      observaciones_examen: dto.observaciones_examen || '',
-      observaciones_sistemas: dto.organos_sistemas?.['observaciones'] || '',
+      organos_sistemas: dto.organos_sistemas || {},
+      tratamientos: dto.tratamientos || [],
+      examenes_solicitados: dto.examenes_solicitados || [],
       materiales_utilizados: dto.materiales_utilizados || '',
-      plan_procedimientos: dto.plan_tratamiento || '',
-      pronostico: dto.pronostico || 'Favorable',
-      examenes_complementarios: dto.examenes_solicitados || [],
-      ingresa_cba: (dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true),
-      motivo_ingreso_cba: dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || '',
-      canil_asignado: dto.ingreso_cba?.['canil_asignado'] || '',
-      funcionario_recibe_cba: dto.ingreso_cba?.['funcionario_recibe_cba'] || ''
+      prioridad: dto.prioridad || 'Normal',
+      resultado_estado: dto.resultado_estado || 'Estable'
     };
 
-    // Petición de actualización de la consulta
-    let patchConsulta$: Observable<any>;
-    if (idConsulta && Number(idConsulta) > 0) {
-      const urlConsultaId = `${this.baseUrlClinica}consultas/${idConsulta}/`;
-      patchConsulta$ = this.http.patch<any>(urlConsultaId, payloadConsulta, { headers: this.authHeaders }).pipe(
-        catchError(() => this.http.put<any>(urlConsultaId, payloadConsulta, { headers: this.authHeaders })),
-        catchError((e) => {
-          console.warn('Error al actualizar consulta existente, intentando crear nueva:', e);
-          const urlConsultas = `${this.baseUrlClinica}consultas/`;
-          return this.http.post<any>(urlConsultas, { id_historia: idHistoria, ...payloadConsulta }, { headers: this.authHeaders });
+    // 2. Función constructora de respaldo para creación de expediente si el animal no tenía HC previa (POST)
+    const crearExpedienteFallback = () => {
+      const payloadPost: any = {
+        id_animal: idAnimal,
+        numero_historia: historiaActual?.numero_historia || `HC-${idAnimal}`,
+        animal: {
+          id_animal: idAnimal,
+          nombre: (dto as any)?.animal?.nombre || historiaActual?.paciente?.nombre || 'Paciente',
+          especie: (dto as any)?.animal?.especie || historiaActual?.paciente?.especie || 'Canino',
+          raza: (dto as any)?.animal?.raza || historiaActual?.paciente?.raza || 'Mestizo',
+          sexo: (dto as any)?.animal?.sexo || historiaActual?.paciente?.sexo || 'Macho',
+          peso: payloadPatch.peso ?? historiaActual?.paciente?.peso ?? null
+        },
+        tenedor: {
+          nombre: dto.tenedor?.['nombres'] || historiaActual?.paciente?.tenedor_nombre || '',
+          documento: dto.tenedor?.['documentoIdentidad'] || historiaActual?.paciente?.tenedor_documento || '',
+          telefono: dto.tenedor?.['telefono'] || historiaActual?.paciente?.tenedor_telefono || ''
+        },
+        anamnesicos: {
+          vacunas: (historiaActual as any)?.vacunas || '',
+          enfermedadesPrevias: (historiaActual as any)?.enfermedades_anteriores || '',
+          evolucionPrevia: payloadPatch.evolucion
+        },
+        motivoConsulta: dto.motivo_modificacion || historiaActual?.motivo_consulta || 'Consulta clínica y seguimiento',
+        examenClinico: {
+          condicionCorporal: payloadPatch.resultado_estado || 'Normal',
+          temperatura: payloadPatch.temperatura,
+          fc: payloadPatch.frecuencia_cardiaca,
+          fr: payloadPatch.frecuencia_respiratoria,
+          pulso: payloadPatch.pulso,
+          tllc: payloadPatch.tllc,
+          mucosas: payloadPatch.mucosas,
+          ganglios: payloadPatch.ganglios_linfaticos,
+          actitud: payloadPatch.actitud_temperamento || 'Alerta'
+        },
+        organosSistemas: payloadPatch.organos_sistemas,
+        hoja2: {
+          listaProblemas: dto.lista_problemas || '',
+          diagnosticoDiferencial: dto.diagnostico_diferencial || '',
+          diagnosticoPresuntivo: payloadPatch.diagnostico_principal,
+          pronostico: payloadPatch.pronostico,
+          hallazgos_pruebas: payloadPatch.evolucion,
+          planProcedimientos: payloadPatch.plan_tratamiento,
+          materialesUtilizados: payloadPatch.materiales_utilizados,
+          tratamientos: payloadPatch.tratamientos
+        },
+        hoja3: {
+          ingresaCBA: (dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true) ? 'SI' : 'NO',
+          motivoIngresoNoIngreso: dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || '',
+          canilAsignado: dto.ingreso_cba?.['canil_asignado'] || null,
+          funcionarioRecibe: dto.ingreso_cba?.['funcionario_recibe_cba'] || null
+        }
+      };
+
+      return this.crearExpedienteCompleto(payloadPost);
+    };
+
+    const urlExpediente = `${this.baseUrlClinica}expediente-completo/`;
+
+    // 3. Selección y ejecución de la petición según el estado del animal
+    let peticion$: Observable<any>;
+    if (idHistoria && idHistoria > 0 && !isNaN(idHistoria)) {
+      peticion$ = this.http.patch<any>(urlExpediente, payloadPatch, { headers: this.authHeaders }).pipe(
+        catchError((errPatch) => {
+          if (errPatch?.status === 404) {
+            return crearExpedienteFallback();
+          }
+          throw errPatch;
         })
       );
     } else {
-      const urlConsultas = `${this.baseUrlClinica}consultas/`;
-      patchConsulta$ = this.http.post<any>(urlConsultas, { id_historia: idHistoria, ...payloadConsulta }, { headers: this.authHeaders });
+      peticion$ = crearExpedienteFallback().pipe(
+        catchError((errPost) => {
+          return this.http.patch<any>(urlExpediente, payloadPatch, { headers: this.authHeaders });
+        })
+      );
     }
 
-    return patchConsulta$.pipe(
-      switchMap((respConsulta) => {
-        const idConsultaEfectiva = respConsulta?.id_consulta || idConsulta;
+    return peticion$.pipe(
+      map((resp) => {
+        const idHistoriaEfectiva = resp?.historia_id || resp?.id_historia || idHistoria || 1;
+        const idConsultaEfectiva = resp?.consulta_id || resp?.id_consulta || idConsulta || 1;
+        const auditoria = resp?.auditoria || this.generarAuditoriaDesdeCambios(idHistoriaEfectiva, dto, historiaActual, idConsultaEfectiva);
 
-        // Tareas secundarias en segundo plano (diagnóstico, historia, tratamientos, peso animal)
-        this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoria, idAnimal);
+        if (idConsultaEfectiva) {
+          this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoriaEfectiva, idAnimal);
+        }
 
-        const auditoriaNueva = this.generarAuditoriaDesdeCambios(
-          idHistoria,
-          dto,
-          historiaActual,
-          idConsultaEfectiva
-        );
-
-        return of({
+        return {
           success: true,
-          mensaje: 'Historia clínica actualizada con éxito en la nube.',
-          historia_id: idHistoria,
+          mensaje: resp?.detail || resp?.mensaje || 'Historia clínica guardada exitosamente en la base de datos.',
+          historia_id: idHistoriaEfectiva,
           consulta_id: idConsultaEfectiva,
-          auditoria: auditoriaNueva
-        });
-      }),
-      catchError((errGlobal) => {
-        console.error('Error durante la actualización en el backend:', errGlobal);
-        const auditoriaLocal = this.generarAuditoriaDesdeCambios(
-          idHistoria,
-          dto,
-          historiaActual,
-          idConsulta
-        );
-        return of({
-          success: true,
-          mensaje: 'Modificación registrada localmente con auditoría.',
-          historia_id: idHistoria,
-          consulta_id: idConsulta,
-          auditoria: auditoriaLocal
-        });
+          auditoria: auditoria,
+          historial_modificaciones: resp?.historial_modificaciones || [auditoria]
+        };
       })
     );
   }

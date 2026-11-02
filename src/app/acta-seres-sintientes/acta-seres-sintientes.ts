@@ -2685,6 +2685,183 @@ export class ActaSeresSintientes implements OnInit {
   };
 
   /**
+   * Opción 2: Guarda y formaliza directamente la Historia Clínica en base de datos con los datos recopilados de la app móvil.
+   * Pasa al animal inmediatamente de 'Pendientes' a 'Completados' con un solo clic.
+   */
+  generarHistoriaClinicaDirecta(seguimiento: any, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!seguimiento) return;
+    if (this.guardandoExpediente) return;
+
+    const idAnimal = Number(this.obtenerIdAnimal(seguimiento) || this.resolverIdAnimal(seguimiento));
+    const nombre = this.obtenerNombrePaciente(seguimiento) || 'Paciente';
+
+    Swal.fire({
+      title: '¿Generar Historia Clínica Directa?',
+      html: `Se formalizará la historia clínica oficial de <b>${this.escaparHtml(nombre)}</b> en la base de datos con todos los datos registrados en esta visita.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, generar historia',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#059669',
+      cancelButtonColor: '#64748b',
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'rounded-xl px-5 py-2.5 font-bold',
+        cancelButton: 'rounded-xl px-5 py-2.5 font-bold'
+      }
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+
+      this.guardandoExpediente = true;
+      this.cdr.detectChanges();
+
+      const pesoFinal = this.pesoPaciente ?? seguimiento?.peso_paciente ?? seguimiento?.peso ?? (this as any).paciente?.peso ?? 4.0;
+      const especieFinal = seguimiento?.paciente_especie || seguimiento?.especie || (this as any).paciente?.especie || 'Canino';
+      const razaFinal = seguimiento?.paciente_raza || seguimiento?.raza || (this as any).paciente?.raza || 'Mestizo';
+      const sexoFinal = seguimiento?.paciente_sexo || seguimiento?.sexo || (this as any).paciente?.sexo || 'Hembra';
+      const foto = this.obtenerFotoPaciente(seguimiento) || '';
+
+      const tutorNombre = this.datosPropietario?.nombre ||
+        this.tenedor?.nombres ||
+        this.nombreAcudiente ||
+        seguimiento?.propietario_nombre ||
+        seguimiento?.notificado_nombre ||
+        seguimiento?.nombre_acudiente ||
+        'Sin acudiente';
+
+      const tutorDoc = this.datosPropietario?.cedula ||
+        this.tenedor?.documentoIdentidad ||
+        this.cedulaAcudiente ||
+        seguimiento?.propietario_cedula ||
+        'No registrada';
+
+      const tutorTel = this.datosPropietario?.telefono ||
+        this.tenedor?.telefono ||
+        seguimiento?.propietario_telefono ||
+        'No disponible';
+
+      const tutorDir = this.datosPropietario?.direccion || this.lugarAtencion?.direccion || 'Popayán';
+
+      const motivoFinal = this.motivo_consulta ||
+        this.motivoConsulta ||
+        this.evaluacionCampo?.descripcionQueja ||
+        this.anamnesis ||
+        (seguimiento?.observacion ? String(seguimiento.observacion) : '') ||
+        'Consulta médica y seguimiento en campo';
+
+      const anamnesisFinal = this.anamnesis ||
+        this.evaluacionCampo?.descripcionQueja ||
+        this.evaluacionCampo?.anamnesisLimpia ||
+        'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.';
+
+      const diagnosticoFinal = this.diagnosticoFinal ||
+        (this.diagnosticosDiferenciales || []).filter(d => d && d.trim()).join('; ') ||
+        'Consulta y valoración médica en campo';
+
+      const payload = {
+        id_animal: idAnimal || null,
+        numero_historia: this.numeroRadicadoActual || `HC-${idAnimal || '01'}`,
+        animal: {
+          id_animal: idAnimal || null,
+          nombre: nombre,
+          especie: especieFinal,
+          raza: razaFinal,
+          sexo: sexoFinal,
+          peso: Number(pesoFinal) || 4.0,
+          foto_url: foto
+        },
+        tenedor: {
+          nombre: tutorNombre,
+          documento: tutorDoc,
+          telefono: tutorTel,
+          direccion: tutorDir
+        },
+        anamnesicos: {
+          vacunas: this.anamnesicos?.vacunas || '',
+          enfermedadesPrevias: this.anamnesicos?.enfermedadesAnteriores || '',
+          evolucionPrevia: anamnesisFinal
+        },
+        motivoConsulta: motivoFinal,
+        examenClinico: {
+          condicionCorporal: this.resultado_estado || this.resultadoEstado || 'Estable',
+          temperatura: null,
+          fc: Number(this.signosVitales?.frecuenciaCardiaca || this.evaluacionCampo?.frecuenciaCardiaca) || null,
+          fr: Number(this.signosVitales?.frecuenciaRespiratoria || this.evaluacionCampo?.frecuenciaRespiratoria) || null,
+          pulso: this.signosVitales?.pulso || 'Fuerte y lleno',
+          tllc: this.signosVitales?.tiempoLlenadoCapilar || '1-2 seg',
+          mucosas: this.evaluacionCampo?.mucosas || this.signosVitales?.mucosas || 'Rosadas / Normales',
+          ganglios: this.signosVitales?.gangliosLinfaticos || 'Normales',
+          actitud: this.signosVitales?.actitudTemperamento || 'Alerta'
+        },
+        organosSistemas: this.triajeSistemasCampo || this.sistemas || {},
+        hoja2: {
+          listaProblemas: (this.problemasClinicos || []).filter((p: string) => p && p.trim()).join('; '),
+          diagnosticoDiferencial: (this.diagnosticosDiferenciales || []).filter(d => d && d.trim()).join('; ') || '',
+          diagnosticoPresuntivo: diagnosticoFinal,
+          pronostico: this.pronostico || 'Favorable',
+          hallazgos_pruebas: anamnesisFinal,
+          planProcedimientos: this.plan_procedimientos || this.materiales_utilizados || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.',
+          materialesUtilizados: this.materiales_utilizados || '',
+          tratamientos: []
+        },
+        hoja3: {
+          ingresaCBA: (this.ingresaCBA === 'SI' || this.ingresa_cba === true) ? 'SI' : 'NO',
+          motivoIngresoNoIngreso: this.motivoIngresoNoIngreso || this.motivo_ingreso_cba || '',
+          canilAsignado: this.canilAsignado || null,
+          funcionarioRecibe: this.funcionarioRecibeCBA || null
+        }
+      };
+
+      this.historiaClinicaService.crearExpedienteCompleto(payload).subscribe({
+        next: (resp) => {
+          this.guardandoExpediente = false;
+          const idCreado = resp?.id_animal || idAnimal;
+          const numHc = resp?.numero_historia || resp?.historia_id || `HC-${idCreado}`;
+
+          if (idCreado) {
+            this.animalesConHistoriaIds.add(Number(idCreado));
+          }
+          if (seguimiento) {
+            seguimiento.atendido = true;
+            seguimiento.completado = true;
+            seguimiento.tiene_historia = true;
+            seguimiento.peticion_estado = 'Atendida';
+          }
+
+          Swal.fire({
+            title: '¡Historia Clínica Generada!',
+            html: `Se formalizó la historia clínica de <b>${this.escaparHtml(nombre)}</b> (${this.escaparHtml(String(numHc))}).<br><span class="text-xs text-emerald-600 font-bold block mt-2">✓ El paciente ha pasado automáticamente a la pestaña de Completados.</span>`,
+            icon: 'success',
+            confirmButtonColor: '#059669',
+            confirmButtonText: 'Aceptar',
+            customClass: {
+              popup: 'rounded-2xl',
+              confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+            }
+          });
+
+          this.aplicarFiltros();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.guardandoExpediente = false;
+          this.cdr.detectChanges();
+          const msg = err?.error?.detail || err?.error?.mensaje || 'No fue posible generar la historia clínica directa. Intente abriendo Editar Historia.';
+          Swal.fire({
+            title: 'Error al Generar Historia',
+            text: msg,
+            icon: 'error',
+            confirmButtonColor: '#4141a5'
+          });
+        }
+      });
+    });
+  }
+
+  /**
    * Redirige a la vista de edición de historia clínica garantizando el ID y nombre del paciente específico,
    * empaquetando y sincronizando todas las constantes, sistemas, diagnóstico y tutor diligenciados en el Acta.
    */
