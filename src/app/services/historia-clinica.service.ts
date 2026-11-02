@@ -218,6 +218,7 @@ export interface RespuestaActualizacionHistoria {
   historia_id: number;
   consulta_id?: number;
   auditoria?: RegistroAuditoria;
+  historial_modificaciones?: RegistroAuditoria[];
 }
 
 @Injectable({
