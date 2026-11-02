@@ -29,6 +29,7 @@ import { ComponenteConCambiosPendientes } from '../services/pending-changes.guar
 export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPendientes {
   // Identificador de la historia clínica en edición
   idHistoria: string | number = '';
+  esNuevaConsulta: boolean = false;
 
   // Control de pasos del Stepper (Paso 1: Consulta, Paso 2: Exámenes, Paso 3: Tratamientos)
   // Se inicia en 'consulta' para revisar la información desde el inicio del expediente
@@ -247,6 +248,152 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   mostrarModalCancelar: boolean = false;
   mostrarDetalleAuditoria: boolean = true;
 
+  // =========================================================================
+  // VISTA DE CONSULTA CP-VET: NAVEGACIÓN Y CONTADORES DINÁMICOS
+  // =========================================================================
+  seccionConsultaActiva: string = 'info_basica';
+  alimento_marca: string = '';
+  esterilizado_opcion: 'Sí' | 'No' = 'No';
+  proxima_visita_fecha: string = '';
+  proxima_visita_notas: string = '';
+  condicion_corporal: string = '3/5 (Ideal)';
+  modoTextoEnriquecido: boolean = false;
+
+  listaSistemasOrganicos = [
+    { clave: 'general', nombre: '1. Estado General / Actitud', icono: '⚡' },
+    { clave: 'hidratacion', nombre: '2. Estado de Hidratación', icono: '💧' },
+    { clave: 'tegumentario', nombre: '3. Sistema Tegumentario (Piel y Pelo)', icono: '🐾' },
+    { clave: 'ojos', nombre: '4. Ojos y Anexos Oculares', icono: '👁️' },
+    { clave: 'oidos', nombre: '5. Oídos y Conducto Auditivo', icono: '👂' },
+    { clave: 'nariz', nombre: '6. Nariz y Cavidad Nasal', icono: '👃' },
+    { clave: 'digestivo', nombre: '7. Sistema Digestivo', icono: '🥣' },
+    { clave: 'respiratorio', nombre: '8. Sistema Respiratorio', icono: '🫁' },
+    { clave: 'nervioso', nombre: '9. Sistema Nervioso', icono: '🧠' },
+    { clave: 'musculoesqueletico', nombre: '10. Músculo-Esquelético', icono: '🦴' },
+    { clave: 'cardiovascular', nombre: '11. Sistema Cardiovascular', icono: '❤️' },
+    { clave: 'genitourinario', nombre: '12. Sistema Genitourinario', icono: '🚻' }
+  ];
+
+  get conteoInfoBasica(): string {
+    let count = 0;
+    const motivo = (this.formHistoria?.get('motivo_consulta')?.value || this.motivo_consulta || '').trim();
+    if (motivo) count++;
+    if ((this.alimento_marca || '').trim()) count++;
+    if (this.esterilizado_opcion) count++;
+    return `${count}/3`;
+  }
+
+  get conteoAnamnesis(): string {
+    let count = 0;
+    const form = this.formHistoria?.value || {};
+    if ((form.anamnesis || this.anamnesis || '').trim()) count++;
+    if ((form.actitudTemperamento || form.actitud_temperamento || this.actitud_temperamento || '').trim()) count++;
+    if ((form.prioridad || this.prioridad || '').trim()) count++;
+    if ((form.resultadoEstado || form.resultado_estado || this.resultado_estado || '').trim()) count++;
+    if ((form.evolucion || '').trim()) count++;
+    if ((this.evaluacionCampo?.descripcionQueja || '').trim()) count++;
+    if (this.triajeSistemasCampo?.totalAlertas !== undefined) count++;
+    return `${count}/7`;
+  }
+
+  get conteoSignosVitales(): string {
+    let count = 0;
+    const form = this.formHistoria?.value || {};
+    const peso = form.peso ?? this.paciente?.peso;
+    const temp = form.temperatura ?? this.temperatura;
+    const fc = form.frecuenciaCardiaca ?? form.frecuencia_cardiaca ?? this.frecuencia_cardiaca;
+    const fr = form.frecuenciaRespiratoria ?? form.frecuencia_respiratoria ?? this.frecuencia_respiratoria;
+    const pulso = (form.pulso || this.pulso || '').trim();
+    const tllc = (form.tiempoLlenadoCapilar || form.tllc || this.tllc || '').trim();
+    const mucosas = (form.mucosas || this.mucosas || '').trim();
+    const ganglios = (form.gangliosLinfaticos || form.ganglios_linfaticos || this.ganglios_linfaticos || '').trim();
+
+    if (peso && Number(peso) > 0) count++;
+    if (temp && Number(temp) > 0) count++;
+    if (fc && Number(fc) > 0) count++;
+    if (fr && Number(fr) > 0) count++;
+    if (pulso) count++;
+    if (tllc) count++;
+    if (mucosas) count++;
+    if (ganglios) count++;
+    if (this.condicion_corporal || form.resultadoEstado || this.resultado_estado) count++;
+    return `${count}/9`;
+  }
+
+  get conteoExamenes(): string {
+    let count = 0;
+    if (this.examenesSolicitados && this.examenesSolicitados.length > 0) count++;
+    const hallazgos = (this.descripcionHallazgos || this.formHistoria?.get('hallazgos_examen')?.value || '').trim();
+    if (hallazgos) count++;
+    return `${count}/2`;
+  }
+
+  get conteoValoracion(): string {
+    const total = 12;
+    if (!this.sistemas) return `0/${total}`;
+    const evaluados = Object.values(this.sistemas).filter(v => v === 'N' || v === 'AN').length;
+    return `${evaluados}/${total}`;
+  }
+
+  get conteoDiagnostico(): string {
+    let count = 0;
+    const form = this.formHistoria?.value || {};
+    const diag = (form.diagnosticoPrincipal || this.diagnosticoFinal || '').trim();
+    const diagDif = (form.diagnosticoDiferencial || '').trim();
+    const probs = this.problemasClinicos.filter(p => p && p.trim().length > 0);
+    const pron = (form.pronostico || this.pronostico || '').trim();
+    if (diag) count++;
+    if (diagDif) count++;
+    if (probs.length > 0 || (form.listaProblemas || '').trim()) count++;
+    if (pron) count++;
+    if (this.idPatologiaSeleccionada || this.patologiaSeleccionada) count++;
+    return `${count}/5`;
+  }
+
+  get conteoTratamiento(): string {
+    let count = 0;
+    if (this.medicamentosSeleccionados && this.medicamentosSeleccionados.length > 0) count++;
+    const plan = (this.formHistoria?.get('planTratamiento')?.value || this.planProcedimientos || '').trim();
+    if (plan) count++;
+    const mat = (this.materialesUtilizados || this.formHistoria?.get('materiales_utilizados')?.value || '').trim();
+    if (mat) count++;
+    return `${count}/3`;
+  }
+
+  get conteoRemisiones(): string {
+    const ing = this.ingresaCBA || (this.ingresa_cba ? 'SÍ' : 'NO');
+    const canil = (this.canilAsignado || this.canil_asignado || '').trim();
+    return (ing === 'SÍ' || canil || ing === 'NO') ? '1/1' : '0/1';
+  }
+
+  get conteoAdjuntos(): string {
+    return (this.paciente?.foto_url || this.route.snapshot.queryParamMap.get('foto')) ? '1/1' : '0/1';
+  }
+
+  get conteoProximaVisita(): string {
+    return (this.proxima_visita_fecha && this.proxima_visita_fecha.trim()) ? '1/1' : '0/1';
+  }
+
+  irASeccionConsulta(seccionId: string): void {
+    this.seccionConsultaActiva = seccionId;
+    const el = document.getElementById('seccion-' + seccionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  setEsterilizado(opcion: 'Sí' | 'No'): void {
+    this.esterilizado_opcion = opcion;
+    this.cdr.detectChanges();
+  }
+
+  setEstadoSistema(clave: string, estado: string): void {
+    this.sistemas[clave] = estado;
+    this.evaluacion_sistemas = { ...this.sistemas };
+    this.formHistoria?.markAsDirty();
+    this.cdr.detectChanges();
+  }
+
   popalog = {
     logopop: 'images/Escudo_Popayan.svg'
   };
@@ -370,6 +517,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       confirmButtonColor: '#4141a5'
     }).then((res) => {
       if (res.isConfirmed) {
+        this.esNuevaConsulta = true;
         this.motivo_consulta = 'Consulta y seguimiento médico';
         this.prioridad = 'Normal';
         this.anamnesis = '';
@@ -1253,6 +1401,49 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.formHistoria.enable();
         }
 
+        const esNuevaConsulta = this.route.snapshot.queryParamMap.get('nueva_consulta') === 'true';
+        this.esNuevaConsulta = esNuevaConsulta;
+        if (esNuevaConsulta) {
+          this.motivo_consulta = 'Consulta General';
+          this.prioridad = 'Normal';
+          this.anamnesis = '';
+          this.temperatura = null;
+          this.frecuencia_cardiaca = null;
+          this.frecuencia_respiratoria = null;
+          this.pulso = '';
+          this.tllc = '';
+          this.ganglios_linfaticos = '';
+          this.mucosas = '';
+          this.medicamentosSeleccionados = [];
+          this.examenesSolicitados = [];
+          this.pronostico = 'Favorable';
+          this.planProcedimientos = '';
+          this.materialesUtilizados = '';
+          this.marcarTodosSistemas('NE');
+          this.formHistoria.patchValue({
+            motivo_consulta: 'Consulta General',
+            prioridad: 'Normal',
+            anamnesis: '',
+            temperatura: null,
+            frecuencia_cardiaca: null,
+            frecuencia_respiratoria: null,
+            pulso: '',
+            tllc: '',
+            ganglios_linfaticos: '',
+            mucosas: '',
+            diagnosticoPrincipal: '',
+            diagnosticoDiferencial: '',
+            listaProblemas: '',
+            evolucion: '',
+            pronostico: 'Favorable',
+            planTratamiento: '',
+            materiales_utilizados: '',
+            motivoModificacion: 'Nueva consulta clínica registrada.'
+          });
+          this.pestanaPrincipal = 'atencion';
+          this.seccionConsultaActiva = 'info_basica';
+        }
+
         this.formHistoria.markAsPristine();
         this.formHistoria.markAsUntouched();
         this.cargando = false;
@@ -1893,6 +2084,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       : (formVal.listaProblemas || '');
 
     const dto: ActualizarHistoriaDto = {
+      motivo_consulta: (this.formHistoria.get('motivo_consulta')?.value || this.motivo_consulta || 'Consulta General').trim(),
       diagnostico_principal: formVal.diagnosticoPrincipal,
       diagnostico_diferencial: formVal.diagnosticoDiferencial || this.descripcionHallazgos,
       lista_problemas: listaProblemasFinal,
@@ -1970,11 +2162,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       paciente: this.paciente
     } as any);
 
-    this.historiaService.actualizarHistoria(this.idHistoria, dto, historiaBase).subscribe({
+    const eraNuevaConsulta = this.esNuevaConsulta;
+
+    this.historiaService.actualizarHistoria(this.idHistoria, dto, historiaBase, this.esNuevaConsulta).subscribe({
       next: (resp) => {
         this.guardando = false;
         this.formularioEnviado = false;
-        this.mensajeExito = resp.mensaje || 'Historia clínica actualizada con éxito.';
+        this.esNuevaConsulta = false;
+        this.mensajeExito = resp.mensaje || (eraNuevaConsulta ? 'Nueva consulta clínica guardada exitosamente.' : 'Historia clínica actualizada con éxito.');
 
         // Limpieza de memoria temporal para evitar que el navegador recargue datos antiguos desactualizados
         try {
@@ -2004,6 +2199,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         if (this.historiaOriginal) {
           this.historiaOriginal.id_historia = resp.historia_id || this.historiaOriginal.id_historia;
           this.historiaOriginal.id_consulta = resp.consulta_id || this.historiaOriginal.id_consulta;
+          this.historiaOriginal.motivo_consulta = dto.motivo_consulta || this.historiaOriginal.motivo_consulta;
           this.historiaOriginal.diagnostico_principal = dto.diagnostico_principal;
           this.historiaOriginal.diagnostico_diferencial = dto.diagnostico_diferencial;
           this.historiaOriginal.lista_problemas = dto.lista_problemas;
@@ -2030,9 +2226,23 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.formHistoria.markAsPristine();
         this.formHistoria.get('motivoModificacion')?.reset('');
 
+        // Limpiar query param 'nueva_consulta' de la URL si se guardó exitosamente
+        if (eraNuevaConsulta) {
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: this.idHistoria, id_consulta: resp.consulta_id || '' },
+            queryParamsHandling: 'merge'
+          });
+        }
+
+        const tituloAlerta = eraNuevaConsulta ? '¡Consulta Guardada!' : '¡Actualización Exitosa!';
+        const textoAlerta = eraNuevaConsulta
+          ? 'Se ha registrado la nueva consulta clínica en la base de datos con éxito.'
+          : 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.';
+
         Swal.fire({
-          title: '¡Actualización Exitosa!',
-          text: 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.',
+          title: tituloAlerta,
+          text: textoAlerta,
           icon: 'success',
           confirmButtonColor: '#4141a5',
           confirmButtonText: 'Aceptar',
