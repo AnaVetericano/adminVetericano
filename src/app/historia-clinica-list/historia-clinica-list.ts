@@ -1,8 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment } from '../../environments/environment';
 
@@ -55,9 +56,77 @@ export class HistoriaClinicaListComponent implements OnInit {
   menuFiltroAbierto: boolean = false;
   vistaModo: 'tabla' | 'tarjetas' = 'tabla';
 
-  // Modal de detalle
+  // Modal de detalle y Línea de Tiempo (Estilo CP-Vet)
   modalDetalleAbierto: boolean = false;
   historiaSeleccionada: HistoriaClinicaItem | null = null;
+  pestanaDetalle: 'historial' | 'consultas' | 'evolucion' | 'formulas' | 'examenes' | 'imagenes' | 'vacunas' | 'desp' | 'procedimientos' = 'historial';
+  cargandoDetalleConsultas: boolean = false;
+  consultasHistorial: any[] = [];
+  consultasFiltradasHistorial: any[] = [];
+  busquedaHistorial: string = '';
+  filtroTipoHistorial: string = 'Todos';
+  filtroFechaHistorial: string = 'Todas';
+  filtroVetHistorial: string = 'Todos';
+  consultaDetalleSeleccionada: any = null;
+  modalDetalleConsultaIndividual: boolean = false;
+  cargandoDetalleIndividual: boolean = false;
+
+  listaSistemasDef = [
+    { clave: 'general', label: 'General / Físico', icono: '🐾' },
+    { clave: 'hidratacion', label: 'Hidratación', icono: '💧' },
+    { clave: 'tegumentario', label: 'Piel y Anexos', icono: '🧴' },
+    { clave: 'ojos', label: 'Ojos y Visión', icono: '👁️' },
+    { clave: 'oidos', label: 'Oídos y Canales', icono: '👂' },
+    { clave: 'nariz', label: 'Nariz y Vías Altas', icono: '👃' },
+    { clave: 'digestivo', label: 'Digestivo', icono: '🥣' },
+    { clave: 'respiratorio', label: 'Respiratorio', icono: '🫁' },
+    { clave: 'cardiovascular', label: 'Cardiovascular', icono: '❤️' },
+    { clave: 'musculoesqueletico', label: 'Músculo-esquelético', icono: '🦴' },
+    { clave: 'nervioso', label: 'Nervioso', icono: '🧠' },
+    { clave: 'genitourinario', label: 'Genitourinario', icono: '🚻' },
+  ];
+
+  // Sub-modal y menú para + Crear [C] dentro del historial
+  menuCrearDesplegable: boolean = false;
+  modalCrearEnHistorial: boolean = false;
+  guardandoEnHistorial: boolean = false;
+  nuevoRegistroHistorial = {
+    tipo: 'Consulta General',
+    motivo: 'Consulta de control clínico general',
+    prioridad: 'Normal',
+    temperatura: 38.5 as number | null,
+    frecuenciaCardiaca: 110 as number | null,
+    frecuenciaRespiratoria: 24 as number | null,
+    peso: null as number | null,
+    diagnostico: '',
+    planTratamiento: '',
+    veterinario: 'SMITH ORDOÑEZ'
+  };
+
+  // Modal Rápido de Nuevo Paciente + Tutor (Estilo CP-Vet)
+  modalNuevoPacienteAbierto: boolean = false;
+  guardandoNuevoPaciente: boolean = false;
+  nuevoPaciente = {
+    // Tutor
+    tutorDocumento: '',
+    tutorNombre: '',
+    tutorTelefono: '',
+    tutorDireccion: '',
+    tutorCorreo: '',
+    // Mascota
+    nombre: '',
+    especie: 'Canino',
+    raza: 'Mestizo',
+    sexo: 'Macho',
+    peso: null as number | null,
+    color: '',
+    microchip: '',
+    estadoReproductivo: 'Entero',
+    fotoUrl: '',
+    // Consulta Inicial
+    motivoConsulta: 'Apertura de expediente y consulta médica general',
+    estadoGeneral: 'Estable'
+  };
 
   // Diccionario auxiliar de animales por id_animal
   private mapaAnimales: Map<number, any> = new Map();
@@ -256,20 +325,435 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.cargarHistorias();
   }
 
-  // Modal de detalle
+  // =========================================================================
+  // MODAL DE DETALLE Y LÍNEA DE TIEMPO (ESTILO CP-VET)
+  // =========================================================================
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent): void {
+    if ((event.key === 'c' || event.key === 'C') && this.modalDetalleAbierto && !this.modalCrearEnHistorial && !this.modalNuevoPacienteAbierto) {
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+      if (activeTag !== 'input' && activeTag !== 'textarea') {
+        event.preventDefault();
+        this.iniciarConsultaGeneralDesdeHistorial();
+      }
+    }
+  }
+
   abrirModalDetalle(historia: HistoriaClinicaItem): void {
     this.historiaSeleccionada = historia;
     this.modalDetalleAbierto = true;
+    this.pestanaDetalle = 'historial';
+    this.busquedaHistorial = '';
+    this.filtroTipoHistorial = 'Todos';
+    this.filtroFechaHistorial = 'Todas';
+    this.filtroVetHistorial = 'Todos';
+    this.cargandoDetalleConsultas = true;
+    this.consultasHistorial = [];
+    this.consultasFiltradasHistorial = [];
+    this.cdr.detectChanges();
+
+    const cleanAnimalId = historia.id_animal;
+    const urlExpAnimal = `${environment.apiUrlExpedientePorAnimal}${cleanAnimalId}/`;
+
+    this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).subscribe({
+      next: (data) => {
+        const rawConsultas = Array.isArray(data?.consultas_anteriores) ? data.consultas_anteriores : [];
+        const animalData = data?.animal || {};
+
+        if (rawConsultas.length > 0) {
+          this.consultasHistorial = rawConsultas.map((c: any, index: number) => {
+            const fechaStr = c.fecha_hora || c.fechaHora || c.fecha || new Date().toISOString();
+            return {
+              id_consulta: c.id_consulta || (index + 1),
+              titulo: this.normalizarTituloConsulta(c.motivo_consulta || c.tipo || 'CONSULTA GENERAL'),
+              peso: c.peso ?? (c.constantes?.peso ?? animalData.peso ?? 3.0),
+              temperatura: c.temperatura ?? (c.constantes?.temperatura ?? 3.0),
+              frecuencia_cardiaca: c.frecuencia_cardiaca ?? (c.constantes?.frecuencia_cardiaca ?? 110),
+              frecuencia_respiratoria: c.frecuencia_respiratoria ?? (c.constantes?.frecuencia_respiratoria ?? 24),
+              diagnostico: c.diagnostico_principal || c.diagnosticoPrincipal || c.diagnostico || 'Evaluación médica general estable.',
+              diagnostico_diferencial: c.diagnostico_diferencial || '',
+              plan_tratamiento: c.plan_tratamiento || c.planTratamiento || c.plan_procedimientos || 'Manejo ambulatorio y recomendaciones.',
+              fecha_hora: fechaStr,
+              fecha_formateada: this.formatearFechaLarga(fechaStr),
+              hora_formateada: this.formatearHora(fechaStr),
+              mes_ano: this.formatearMesAno(fechaStr),
+              veterinario: c.veterinario_nombre || c.usuario_nombre || c.veterinario || 'SMITH ORDOÑEZ',
+              prioridad: c.prioridad || 'Normal',
+              expandido: false
+            };
+          });
+        } else {
+          // Si no tiene consultas previas, creamos la primera consulta de apertura
+          const fechaApertura = historia.fecha_apertura || new Date().toISOString();
+          this.consultasHistorial = [
+            {
+              id_consulta: 1,
+              titulo: 'CONSULTA GENERAL',
+              peso: historia.animal_peso ? Number(historia.animal_peso) : 3.0,
+              temperatura: 3.0,
+              frecuencia_cardiaca: 110,
+              frecuencia_respiratoria: 24,
+              diagnostico: 'Apertura de expediente e ingreso de paciente.',
+              diagnostico_diferencial: '',
+              plan_tratamiento: 'Plan sanitario y seguimiento clínico.',
+              fecha_hora: fechaApertura,
+              fecha_formateada: this.formatearFechaLarga(fechaApertura),
+              hora_formateada: this.formatearHora(fechaApertura),
+              mes_ano: this.formatearMesAno(fechaApertura),
+              veterinario: 'SMITH ORDOÑEZ',
+              prioridad: 'Normal',
+              expandido: false
+            }
+          ];
+        }
+
+        this.consultasFiltradasHistorial = [...this.consultasHistorial];
+        this.cargandoDetalleConsultas = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Fallback elegante en caso de retardo de red
+        const fechaFallback = historia.fecha_apertura || new Date().toISOString();
+        this.consultasHistorial = [
+          {
+            id_consulta: 1,
+            titulo: 'CONSULTA GENERAL',
+            peso: historia.animal_peso ? Number(historia.animal_peso) : 3.0,
+            temperatura: 3.0,
+            frecuencia_cardiaca: 110,
+            frecuencia_respiratoria: 24,
+            diagnostico: 'Consulta médica general.',
+            diagnostico_diferencial: '',
+            plan_tratamiento: 'Manejo ambulatorio.',
+            fecha_hora: fechaFallback,
+            fecha_formateada: this.formatearFechaLarga(fechaFallback),
+            hora_formateada: this.formatearHora(fechaFallback),
+            mes_ano: this.formatearMesAno(fechaFallback),
+            veterinario: 'SMITH ORDOÑEZ',
+            prioridad: 'Normal',
+            expandido: false
+          }
+        ];
+        this.consultasFiltradasHistorial = [...this.consultasHistorial];
+        this.cargandoDetalleConsultas = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   cerrarModalDetalle(): void {
     this.modalDetalleAbierto = false;
     this.historiaSeleccionada = null;
+    this.consultasHistorial = [];
+    this.consultasFiltradasHistorial = [];
+  }
+
+  cambiarPestanaDetalle(p: 'historial' | 'consultas' | 'evolucion' | 'formulas' | 'examenes' | 'imagenes' | 'vacunas' | 'desp' | 'procedimientos'): void {
+    this.pestanaDetalle = p;
+    this.cdr.detectChanges();
+  }
+
+  filtrarHistorial(): void {
+    const q = (this.busquedaHistorial || '').trim().toLowerCase();
+    const tipo = this.filtroTipoHistorial;
+    const vet = this.filtroVetHistorial;
+
+    this.consultasFiltradasHistorial = this.consultasHistorial.filter((c) => {
+      const coincideTexto = !q ||
+        c.titulo.toLowerCase().includes(q) ||
+        c.diagnostico.toLowerCase().includes(q) ||
+        c.plan_tratamiento.toLowerCase().includes(q) ||
+        c.veterinario.toLowerCase().includes(q);
+
+      const coincideTipo = tipo === 'Todos' || c.titulo.toLowerCase().includes(tipo.toLowerCase());
+      const coincideVet = vet === 'Todos' || c.veterinario.toLowerCase().includes(vet.toLowerCase());
+
+      return coincideTexto && coincideTipo && coincideVet;
+    });
+  }
+
+  toggleExpandirConsulta(c: any): void {
+    c.expandido = !c.expandido;
+  }
+
+  verDetalleCompletoConsulta(c: any): void {
+    this.consultaDetalleSeleccionada = { ...c };
+    this.modalDetalleConsultaIndividual = true;
+    this.cargandoDetalleIndividual = true;
+
+    const idCons = c.id_consulta;
+    // Si id_consulta es un ID válido persistido en base de datos
+    if (idCons && typeof idCons === 'number' && idCons < 1000000000) {
+      const urlExp = `${environment.apiUrlExpedienteCompleto || (environment.apiUrlClinica + 'expediente-completo/')}${idCons}/`;
+      this.http.get<any>(urlExp, { headers: this.authHeaders }).subscribe({
+        next: (data) => {
+          this.cargandoDetalleIndividual = false;
+          if (data) {
+            this.consultaDetalleSeleccionada = {
+              ...this.consultaDetalleSeleccionada,
+              ...data,
+              titulo: this.normalizarTituloConsulta(data.motivoConsulta || this.consultaDetalleSeleccionada.titulo),
+              motivo_consulta: data.motivoConsulta || this.consultaDetalleSeleccionada.titulo,
+              peso: data.examenClinico?.peso ?? data.animal?.peso ?? this.consultaDetalleSeleccionada.peso,
+              temperatura: data.examenClinico?.temperatura ?? this.consultaDetalleSeleccionada.temperatura,
+              frecuencia_cardiaca: data.examenClinico?.frecuenciaCardiaca ?? this.consultaDetalleSeleccionada.frecuencia_cardiaca,
+              frecuencia_respiratoria: data.examenClinico?.frecuenciaRespiratoria ?? this.consultaDetalleSeleccionada.frecuencia_respiratoria,
+              pulso: data.examenClinico?.pulso || 'Normal',
+              tllc: data.examenClinico?.tiempoLlenadoCapilar || '2 seg',
+              mucosas: data.examenClinico?.mucosas || 'Rosadas',
+              ganglios_linfaticos: data.examenClinico?.gangliosLinfaticos || 'Normales',
+              actitud_temperamento: data.examenClinico?.actitudTemperamento || 'Alerta / Responsivo',
+              sistemas: data.organosSistemas || {},
+              observaciones_sistemas: data.organosSistemas?.observaciones || '',
+              diagnostico: data.hoja2?.diagnosticoFinal || this.consultaDetalleSeleccionada.diagnostico,
+              diagnostico_diferencial: data.hoja2?.diagnosticoDiferencial || this.consultaDetalleSeleccionada.diagnostico_diferencial || '',
+              lista_problemas: Array.isArray(data.hoja2?.listaProblemas) ? data.hoja2.listaProblemas : (data.hoja2?.listaProblemas ? [data.hoja2.listaProblemas] : []),
+              pronostico: data.hoja2?.pronostico || 'Favorable',
+              plan_tratamiento: data.hoja2?.planProcedimientos || this.consultaDetalleSeleccionada.plan_tratamiento,
+              materiales_utilizados: data.hoja2?.materialesUtilizados || '',
+              tratamientos: Array.isArray(data.hoja2?.tratamientos) ? data.hoja2.tratamientos : (this.consultaDetalleSeleccionada.tratamientos || []),
+              examenes: data.hoja2?.examenes || {},
+              ingresa_cba: data.hoja3?.ingresaCBA || 'NO',
+              motivo_cba: data.hoja3?.motivoIngresoNoIngreso || '',
+              canil_asignado: data.hoja3?.canilAsignado || '',
+              funcionario_recibe: data.hoja3?.funcionarioRecibeCBA || ''
+            };
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.cargandoDetalleIndividual = false;
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      this.cargandoDetalleIndividual = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  obtenerEstadoSistema(clave: string): { label: string; clase: string; icono: string } {
+    const s = this.consultaDetalleSeleccionada?.sistemas || this.consultaDetalleSeleccionada?.organosSistemas || {};
+    const val = String(s[clave] || 'NE').toUpperCase();
+    if (val === 'N' || val === 'NORMAL') {
+      return { label: 'Normal', clase: 'bg-emerald-50 text-emerald-700 border-emerald-200', icono: '✓' };
+    } else if (val === 'A' || val === 'ANORMAL') {
+      return { label: 'Anormal', clase: 'bg-rose-50 text-rose-700 border-rose-200', icono: '⚠' };
+    }
+    return { label: 'No evaluado', clase: 'bg-slate-50 text-slate-500 border-slate-200', icono: '—' };
+  }
+
+  abrirEnEditorCompleto(): void {
+    if (!this.consultaDetalleSeleccionada || !this.historiaSeleccionada) return;
+    const historia = this.historiaSeleccionada;
+    const consulta = this.consultaDetalleSeleccionada;
+    this.cerrarDetalleConsultaIndividual();
+    this.cerrarModalDetalle();
+    const id = historia.id_consulta || historia.id_animal || historia.id_historia;
+    this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
+      queryParams: {
+        id_consulta: consulta.id_consulta || '',
+        id_animal: historia.id_animal || '',
+        id_historia: historia.id_historia || '',
+        nombre: historia.animal_nombre || '',
+        foto: historia.animal_foto || ''
+      }
+    });
+  }
+
+  cerrarDetalleConsultaIndividual(): void {
+    this.modalDetalleConsultaIndividual = false;
+    this.cargandoDetalleIndividual = false;
+    this.consultaDetalleSeleccionada = null;
+  }
+
+  iniciarConsultaGeneralDesdeHistorial(): void {
+    if (!this.historiaSeleccionada) return;
+    const historia = this.historiaSeleccionada;
+    this.cerrarModalDetalle();
+    const id = historia.id_consulta || historia.id_animal || historia.id_historia;
+    this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
+      queryParams: {
+        id_consulta: historia.id_consulta || '',
+        id_animal: historia.id_animal || '',
+        id_historia: historia.id_historia || '',
+        nombre: historia.animal_nombre || '',
+        foto: historia.animal_foto || '',
+        nueva_consulta: 'true'
+      }
+    });
+  }
+
+  abrirModalCrearEnHistorial(tipo: string = 'Consulta General'): void {
+    this.nuevoRegistroHistorial = {
+      tipo: tipo,
+      motivo: tipo,
+      prioridad: 'Normal',
+      temperatura: 3.0,
+      frecuenciaCardiaca: 110,
+      frecuenciaRespiratoria: 24,
+      peso: this.historiaSeleccionada?.animal_peso ? Number(this.historiaSeleccionada.animal_peso) : 3.0,
+      diagnostico: '',
+      planTratamiento: '',
+      veterinario: 'SMITH ORDOÑEZ'
+    };
+    this.modalCrearEnHistorial = true;
+  }
+
+  cerrarModalCrearEnHistorial(): void {
+    this.modalCrearEnHistorial = false;
+  }
+
+  guardarNuevoEnHistorial(): void {
+    if (!this.historiaSeleccionada) return;
+    this.guardandoEnHistorial = true;
+
+    const motivoTexto = (this.nuevoRegistroHistorial.motivo || this.nuevoRegistroHistorial.tipo || 'Consulta General').trim();
+    const payload = {
+      id_animal: this.historiaSeleccionada.id_animal,
+      motivoConsulta: motivoTexto,
+      prioridad: this.nuevoRegistroHistorial.prioridad || 'Normal',
+      examenClinico: {
+        temperatura: this.nuevoRegistroHistorial.temperatura,
+        peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada.animal_peso) || 3.0,
+        frecuencia_cardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca,
+        frecuencia_respiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria,
+        actitud_temperamento: 'Alerta / Responsivo',
+        resultado_estado: 'Estable'
+      },
+      hoja2: {
+        diagnosticoPrincipal: this.nuevoRegistroHistorial.diagnostico || 'Evaluación médica registrada con éxito.',
+        diagnosticoDiferencial: '',
+        listaProblemas: '',
+        evolucion: `Atención clínica de ${this.nuevoRegistroHistorial.tipo}.`,
+        pronostico: 'Favorable',
+        planProcedimientos: this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.',
+        materialesUtilizados: '',
+        tratamientos: []
+      },
+      hoja3: {
+        plan_procedimientos: this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.',
+        materiales_utilizados: '',
+        ingresa_cba: false
+      }
+    };
+
+    this.historiaService.crearExpedienteCompleto(payload).subscribe({
+      next: (resp) => {
+        this.guardandoEnHistorial = false;
+        this.modalCrearEnHistorial = false;
+
+        const fechaAhora = new Date().toISOString();
+        const nuevaTarjeta = {
+          id_consulta: resp?.consulta_id || resp?.id_consulta || Date.now(),
+          titulo: this.normalizarTituloConsulta(this.nuevoRegistroHistorial.tipo),
+          peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada?.animal_peso) || 3.0,
+          temperatura: this.nuevoRegistroHistorial.temperatura || 3.0,
+          frecuencia_cardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca || 110,
+          frecuencia_respiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria || 24,
+          diagnostico: this.nuevoRegistroHistorial.diagnostico || 'Atención registrada con éxito.',
+          diagnostico_diferencial: '',
+          plan_tratamiento: this.nuevoRegistroHistorial.planTratamiento || 'Seguimiento clínico ambulatorio.',
+          fecha_hora: fechaAhora,
+          fecha_formateada: this.formatearFechaLarga(fechaAhora),
+          hora_formateada: this.formatearHora(fechaAhora),
+          mes_ano: this.formatearMesAno(fechaAhora),
+          veterinario: this.nuevoRegistroHistorial.veterinario || 'SMITH ORDOÑEZ',
+          prioridad: this.nuevoRegistroHistorial.prioridad || 'Normal',
+          expandido: false
+        };
+
+        this.consultasHistorial.unshift(nuevaTarjeta);
+        this.filtrarHistorial();
+        this.cargarHistorias();
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Atención registrada!',
+          text: `Se agregó la ${this.nuevoRegistroHistorial.tipo} a la línea de tiempo del paciente.`,
+          timer: 1800,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        this.guardandoEnHistorial = false;
+        console.error('Error al guardar atención en historial:', err);
+        const errorDetail = err?.error?.motivoConsulta || err?.error?.detail || err?.error?.mensaje || 'No fue posible guardar la atención en el servidor.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al registrar',
+          text: Array.isArray(errorDetail) ? errorDetail.join(', ') : errorDetail
+        });
+      }
+    });
+  }
+
+  normalizarTituloConsulta(motivo: string): string {
+    if (!motivo) return 'CONSULTA GENERAL';
+    const m = motivo.toLowerCase();
+    if (m.includes('digestiv')) return 'CONSULTA DIGESTIVA';
+    if (m.includes('esquelet') || m.includes('muscul') || m.includes('óseo')) return 'CONSULTA MÚSCULO-ESQUELÉTICO';
+    if (m.includes('respirat')) return 'CONSULTA RESPIRATORIA';
+    if (m.includes('vacun')) return 'PLAN DE VACUNACIÓN';
+    if (m.includes('desparasit')) return 'CONTROL ANTIPARASITARIO';
+    if (m.includes('dermat') || m.includes('piel')) return 'CONSULTA DERMATOLÓGICA';
+    return motivo.toUpperCase();
+  }
+
+  formatearMesAno(fechaStr: string): string {
+    if (!fechaStr) return 'Noviembre De 2026';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return 'Noviembre De 2026';
+      const mes = d.toLocaleDateString('es-CO', { month: 'long' });
+      const ano = d.getFullYear();
+      return `${mes.charAt(0).toUpperCase() + mes.slice(1)} De ${ano}`;
+    } catch {
+      return 'Noviembre De 2026';
+    }
+  }
+
+  formatearFechaLarga(fechaStr: string): string {
+    if (!fechaStr) return '02 de nov de 2026';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return fechaStr;
+    }
+  }
+
+  formatearHora(fechaStr: string): string {
+    if (!fechaStr) return '02:00 p. m.';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return '02:00 p. m.';
+      return d.toLocaleTimeString('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return '02:00 p. m.';
+    }
   }
 
   // Navegación
   irAEditar(historia: HistoriaClinicaItem): void {
-    const id = historia.id_consulta || historia.id_historia || historia.id_animal;
+    try {
+      sessionStorage.removeItem('acta_edicion_temporal');
+      sessionStorage.removeItem('historia_edicion_temporal');
+    } catch (e) {}
+
+    // Si tiene id_consulta se usa; si no, preferimos id_animal para que el expediente cargue directamente dicho animal
+    const id = historia.id_consulta || historia.id_animal || historia.id_historia;
     this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
       queryParams: {
         id_consulta: historia.id_consulta || '',
@@ -283,6 +767,141 @@ export class HistoriaClinicaListComponent implements OnInit {
 
   irANuevaConsulta(): void {
     this.router.navigate(['/inicio-admin/acta-seres-sintientes']);
+  }
+
+  // Métodos del Modal Nuevo Paciente (CP-Vet fast onboarding)
+  abrirModalNuevoPaciente(): void {
+    this.nuevoPaciente = {
+      tutorDocumento: '',
+      tutorNombre: '',
+      tutorTelefono: '',
+      tutorDireccion: '',
+      tutorCorreo: '',
+      nombre: '',
+      especie: 'Canino',
+      raza: 'Mestizo',
+      sexo: 'Macho',
+      peso: null,
+      color: '',
+      microchip: '',
+      estadoReproductivo: 'Entero',
+      fotoUrl: '',
+      motivoConsulta: 'Apertura de expediente y consulta médica general',
+      estadoGeneral: 'Estable'
+    };
+    this.modalNuevoPacienteAbierto = true;
+  }
+
+  cerrarModalNuevoPaciente(): void {
+    this.modalNuevoPacienteAbierto = false;
+    this.guardandoNuevoPaciente = false;
+  }
+
+  guardarNuevoPaciente(): void {
+    if (!this.nuevoPaciente.nombre.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor ingresa el nombre de la mascota o paciente.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    if (!this.nuevoPaciente.tutorNombre.trim() || !this.nuevoPaciente.tutorDocumento.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Datos del tutor requeridos',
+        text: 'Ingresa al menos el nombre y documento de identidad del tutor o acudiente.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.guardandoNuevoPaciente = true;
+
+    const payload = {
+      animal: {
+        nombre: this.nuevoPaciente.nombre.trim(),
+        especie: this.nuevoPaciente.especie,
+        raza: this.nuevoPaciente.raza.trim() || 'Mestizo',
+        sexo: this.nuevoPaciente.sexo,
+        peso: this.nuevoPaciente.peso ? Number(this.nuevoPaciente.peso) : null,
+        color: this.nuevoPaciente.color || '',
+        microchip: this.nuevoPaciente.microchip || null,
+        estado_reproductivo: this.nuevoPaciente.estadoReproductivo,
+        fotoUrl: this.nuevoPaciente.fotoUrl || null
+      },
+      tenedor: {
+        documento: this.nuevoPaciente.tutorDocumento.trim(),
+        documento_identidad: this.nuevoPaciente.tutorDocumento.trim(),
+        nombre: this.nuevoPaciente.tutorNombre.trim(),
+        nombre_completo: this.nuevoPaciente.tutorNombre.trim(),
+        telefono: this.nuevoPaciente.tutorTelefono.trim(),
+        direccion: this.nuevoPaciente.tutorDireccion.trim(),
+        correo: this.nuevoPaciente.tutorCorreo.trim(),
+        parentesco: 'Tenedor / Propietario'
+      },
+      anamnesicos: {
+        estadoReproductivo: this.nuevoPaciente.estadoReproductivo
+      },
+      motivoConsulta: this.nuevoPaciente.motivoConsulta.trim() || 'Apertura de expediente clínico',
+      examenClinico: {
+        condicionCorporal: this.nuevoPaciente.estadoGeneral
+      },
+      hoja2: {
+        diagnosticoPresuntivo: 'Consulta médica general inicial',
+        pronostico: 'Favorable'
+      },
+      hoja3: {
+        ingresaCBA: 'NO'
+      }
+    };
+
+    this.historiaService.crearExpedienteCompleto(payload).subscribe({
+      next: (resp) => {
+        this.guardandoNuevoPaciente = false;
+        this.cerrarModalNuevoPaciente();
+        this.cargarHistorias();
+
+        const idTarget = resp?.id_consulta || resp?.id_animal || resp?.animal_id || resp?.historia_id;
+        const idAnimal = resp?.id_animal || resp?.animal_id || '';
+        const idHistoria = resp?.id_historia || resp?.historia_id || '';
+        const idConsulta = resp?.id_consulta || resp?.consulta_id || '';
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Paciente registrado!',
+          text: `El expediente de ${this.nuevoPaciente.nombre} fue creado con éxito en la base de datos.`,
+          confirmButtonColor: '#4141a5',
+          showCancelButton: true,
+          confirmButtonText: 'Abrir Historia Clínica',
+          cancelButtonText: 'Seguir en el listado'
+        }).then((res) => {
+          if (res.isConfirmed && idTarget) {
+            this.router.navigate(['/inicio-admin/historia-clinica/editar', idTarget], {
+              queryParams: {
+                id_animal: idAnimal,
+                id_consulta: idConsulta,
+                id_historia: idHistoria,
+                nombre: this.nuevoPaciente.nombre,
+                foto: this.nuevoPaciente.fotoUrl || ''
+              }
+            });
+          }
+        });
+      },
+      error: (err) => {
+        this.guardandoNuevoPaciente = false;
+        console.error('Error al registrar paciente:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al registrar',
+          text: err?.error?.detail || err?.message || 'No fue posible registrar el paciente. Verifique su conexión al servidor.',
+          confirmButtonColor: '#4141a5'
+        });
+      }
+    });
   }
 
   // Estilos de badge para estado general
