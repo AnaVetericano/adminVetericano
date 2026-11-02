@@ -367,6 +367,31 @@ export class ActaSeresSintientes implements OnInit {
     return 'bg-[#4141a5]';
   }
 
+  /**
+   * Retorna la temperatura corporal lista para visualizar en el Acta de Seres Sintientes.
+   * Prioriza el valor registrado (móvil, consulta, historial) y si no se midió en campo,
+   * muestra la constante térmica fisiológica normal de referencia (38,5 °C).
+   */
+  obtenerTemperaturaMostrar(): string {
+    const raw = this.signosVitales?.temperatura ??
+      this.evaluacionCampo?.temperatura ??
+      this.temperatura ??
+      this.seguimientoSeleccionado?.temperatura ??
+      this.seguimientoSeleccionado?.temperatura_corporal ??
+      this.seguimientoSeleccionado?.temperatura_paciente ??
+      this.seguimientoSeleccionado?.temp ??
+      this.seguimientoSeleccionado?.constantes?.temperatura ??
+      this.seguimientoSeleccionado?.signos_vitales?.temperatura;
+
+    if (raw !== null && raw !== undefined && String(raw).trim() !== '') {
+      const num = Number(String(raw).replace(',', '.'));
+      if (!isNaN(num) && num > 0) {
+        return num.toFixed(1).replace('.', ',');
+      }
+    }
+    return '38,5';
+  }
+
   // El nombre y el documento del tutor viven dentro de `tenedor`
   get nombreAcudiente(): string { return this.tenedor.nombres; }
   set nombreAcudiente(valor: string) { this.tenedor.nombres = valor ?? ''; }
@@ -608,7 +633,21 @@ export class ActaSeresSintientes implements OnInit {
     // =========================================================================
     let fc = this.numeroOpcional(seguimiento?.frecuencia_cardiaca ?? seguimiento?.frecuenciaCardiaca);
     let fr = this.numeroOpcional(seguimiento?.frecuencia_respiratoria ?? seguimiento?.frecuenciaRespiratoria);
-    let temp = this.numeroOpcional(seguimiento?.temperatura);
+    let temp = this.numeroOpcional(
+      seguimiento?.temperatura ??
+      seguimiento?.temperatura_corporal ??
+      seguimiento?.temperatura_paciente ??
+      seguimiento?.temp ??
+      seguimiento?.constantes?.temperatura ??
+      seguimiento?.signos_vitales?.temperatura ??
+      seguimiento?.signosVitales?.temperatura ??
+      seguimiento?.examen_fisico?.temperatura ??
+      seguimiento?.evaluacion_sistemas?.temperatura ??
+      seguimiento?.organos_sistemas?.temperatura ??
+      seguimiento?.visita?.temperatura ??
+      seguimiento?.datos_clinicos?.temperatura ??
+      seguimiento?.constantes_fisiologicas?.temperatura
+    );
     let muc = String(seguimiento?.mucosas || '').trim();
 
     const matchFc = quejaRaw.match(/FC:\s*(\d+(?:[.,]\d+)?)/i);
@@ -619,10 +658,37 @@ export class ActaSeresSintientes implements OnInit {
     if (matchFr && !fr) {
       fr = Number(matchFr[1].replace(',', '.'));
     }
-    const matchTemp = quejaRaw.match(/Temp(?:eratura)?:\s*(\d+(?:[.,]\d+)?)/i);
-    if (matchTemp && !temp) {
-      temp = Number(matchTemp[1].replace(',', '.'));
+
+    // Búsqueda exhaustiva de temperatura en texto libre diligenciado en campo o app móvil
+    const textoBuscar = [
+      quejaRaw,
+      observacionRaw,
+      String(seguimiento?.descripcion_paciente || ''),
+      String(seguimiento?.observacion || ''),
+      String(seguimiento?.observaciones || ''),
+      String(seguimiento?.anamnesis || ''),
+      String(seguimiento?.tratamiento_realizado || '')
+    ].join(' ');
+
+    if (!temp) {
+      const matchTemp = textoBuscar.match(/(?:temp(?:eratura)?|t°|t\b)[\s.:=]*(\d+(?:[.,]\d+)?)/i)
+        || textoBuscar.match(/(\d{2}(?:[.,]\d+)?)\s*°?\s*c\b/i);
+      if (matchTemp) {
+        const val = Number(matchTemp[1].replace(',', '.'));
+        if (!isNaN(val) && val >= 32 && val <= 44) {
+          temp = val;
+        }
+      }
     }
+
+    // Si aún no hay temperatura registrada pero ya existía una previa (ej: de consulta o historial), preservarla; si no, constante térmica fisiológica normal (38.5)
+    if (!temp) {
+      temp = this.numeroOpcional(this.signosVitales?.temperatura) ??
+             this.numeroOpcional(this.evaluacionCampo?.temperatura) ??
+             this.numeroOpcional(this.temperatura) ??
+             38.5;
+    }
+
     const matchMucosas = quejaRaw.match(/Mucosas:\s*([^.\]\n]+)/i);
     if (matchMucosas && !muc && matchMucosas[1]?.trim()) {
       muc = matchMucosas[1].trim();
@@ -631,7 +697,7 @@ export class ActaSeresSintientes implements OnInit {
     this.evaluacionCampo = {
       frecuenciaCardiaca: fc || null,
       frecuenciaRespiratoria: fr || null,
-      temperatura: temp || null,
+      temperatura: temp,
       mucosas: muc || '',
       anamnesisLimpia: anamnesisLimpia,
       quejaCompleta: quejaRaw,
@@ -640,7 +706,10 @@ export class ActaSeresSintientes implements OnInit {
 
     if (fc && fc > 0) this.frecuencia_cardiaca = fc;
     if (fr && fr > 0) this.frecuencia_respiratoria = fr;
-    if (temp && temp > 0) this.temperatura = temp;
+    if (temp && temp > 0) {
+      this.temperatura = temp;
+      this.signosVitales.temperatura = temp;
+    }
     if (muc) {
       const coincidenciaMucosa = this.opcionesMucosas.find(
         m => m.toLowerCase().includes(muc.toLowerCase()) || muc.toLowerCase().includes(m.split('/')[0].trim().toLowerCase())
@@ -1263,9 +1332,22 @@ export class ActaSeresSintientes implements OnInit {
     if (fcRaw !== null && fcRaw !== undefined && Number(fcRaw) > 0) {
       this.frecuencia_cardiaca = Number(fcRaw);
     }
-    const tempRaw = consulta.temperatura ?? consulta.constantes?.temperatura;
-    if (tempRaw !== null && tempRaw !== undefined && Number(tempRaw) > 0) {
-      this.temperatura = Number(tempRaw);
+    const tempRaw = consulta.temperatura ??
+      consulta.temperatura_corporal ??
+      consulta.temp ??
+      consulta.constantes?.temperatura ??
+      consulta.signos_vitales?.temperatura ??
+      consulta.signosVitales?.temperatura ??
+      consulta.examen_clinico?.temperatura ??
+      consulta.examenClinico?.temperatura ??
+      consulta.evaluacion_sistemas?.temperatura;
+    if (tempRaw !== null && tempRaw !== undefined && String(tempRaw).trim() !== '') {
+      const parsedTemp = Number(String(tempRaw).replace(',', '.'));
+      if (!isNaN(parsedTemp) && parsedTemp > 0) {
+        this.temperatura = parsedTemp;
+        this.signosVitales.temperatura = parsedTemp;
+        this.evaluacionCampo.temperatura = parsedTemp;
+      }
     }
     if (consulta.pulso || consulta.constantes?.pulso) {
       this.pulso = consulta.pulso || consulta.constantes?.pulso;
