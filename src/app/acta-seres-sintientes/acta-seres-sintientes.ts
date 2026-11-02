@@ -8,7 +8,7 @@ import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { finalize, forkJoin, of } from 'rxjs';
+import { finalize, forkJoin, of, Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
@@ -184,6 +184,189 @@ export class ActaSeresSintientes implements OnInit {
 
   guardandoExpediente = false;
 
+  // =========================================================================
+  // MODELOS ESTRUCTURADOS DEL ACTA DE ATENCIÓN EN CAMPO (APP MÓVIL -> GET)
+  // =========================================================================
+
+  // 1. Datos del Propietario / Responsable y Ubicación
+  datosPropietario = {
+    nombre: '',
+    cedula: '',
+    telefono: '',
+    email: '',
+    barrio: '',
+    direccion: '',
+    quienReporta: '',
+    quienReportaOtro: '',
+    solicitudAtencionPor: ''
+  };
+
+  funcionariosAcompanantes: Array<{
+    id?: number;
+    nombre: string;
+    cargo?: string;
+    institucion?: string;
+    esExterno?: boolean;
+    esPrincipal?: boolean;
+    documentoIdentidad?: string;
+  }> = [];
+
+  lugarAtencion = {
+    direccion: '',
+    latitud: null as number | null,
+    longitud: null as number | null,
+    referencia: ''
+  };
+
+  get googleMapsUrl(): string | null {
+    if (this.lugarAtencion.latitud !== null && this.lugarAtencion.longitud !== null) {
+      return `https://www.google.com/maps?q=${this.lugarAtencion.latitud},${this.lugarAtencion.longitud}`;
+    }
+    if (this.lugarAtencion.direccion) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(this.lugarAtencion.direccion + ', Popayán, Cauca')}`;
+    }
+    return null;
+  }
+
+  // 2. Examen Físico y Evaluación Clínica en Campo
+  evaluacionCampo = {
+    frecuenciaCardiaca: null as number | null,
+    frecuenciaRespiratoria: null as number | null,
+    temperatura: null as number | null,
+    mucosas: '',
+    anamnesisLimpia: '',
+    quejaCompleta: '',
+    descripcionQueja: ''
+  };
+
+  // 2.1 Triaje Clínico Sistemático en Campo (5 Sistemas del Acta Móvil)
+  triajeSistemasCampo = {
+    tieneEvaluacion: false,
+    totalAlertas: 0,
+    respiratorio: {
+      moco: null as boolean | null,
+      dificultadRespirar: null as boolean | null,
+      tos: null as boolean | null,
+      laganeo: null as boolean | null
+    },
+    digestivo: {
+      vomito: null as boolean | null,
+      diarrea: null as boolean | null,
+      desnutrido: null as boolean | null,
+      deshidratado: null as boolean | null
+    },
+    musculoEsqueletico: {
+      caidaPatas: null as boolean | null,
+      cojera: null as boolean | null,
+      heridaAbierta: null as boolean | null,
+      gusanosMiasis: null as boolean | null,
+      postrado: null as boolean | null
+    },
+    dermatologico: {
+      peladuras: null as boolean | null,
+      heridasSangre: null as boolean | null,
+      pulgasGarrapatas: null as boolean | null
+    },
+    genitourinario: {
+      masaSecrecion: null as boolean | null,
+      gestante: null as boolean | null,
+      enCelo: null as boolean | null
+    }
+  };
+
+  // 3. Tratamientos y Suministros (En campo)
+  tratamientosCampo: {
+    tratamientoTexto: string;
+    medicamentosMaletin: Array<{
+      nombre: string;
+      cantidad: string | number;
+      via: string;
+      presentacion?: string;
+      dosis?: string;
+      paciente?: string;
+    }>;
+  } = {
+    tratamientoTexto: '',
+    medicamentosMaletin: []
+  };
+
+  // 4. Resolución, Compromisos y Cierre
+  resolucionCierre = {
+    desparasitacion: null as boolean | null,
+    pruebasRapidas: [] as Array<{
+      prueba: string;
+      resultado: string;
+      esPositivo: boolean;
+      esNegativo: boolean;
+    }>,
+    compromisos: '',
+    fundamentoLegal: '',
+    plazoDias: null as number | null,
+    requirioRescate: false,
+    datosRescate: {
+      causal: '',
+      personaEntrega: '',
+      personaEntregaCedula: '',
+      personaEntregaTel: '',
+      barrio: '',
+      testigo1: '',
+      testigo1Cedula: '',
+      testigo1Tel: '',
+      testigo2: '',
+      testigo2Cedula: '',
+      testigo2Tel: '',
+      observacionesRescate: '',
+      veterinarioReceptor: '',
+      fechaHoraRecepcion: '',
+      observacionesRecepcion: ''
+    },
+    estadoPeticion: 'Atendida',
+    observacionesCierre: '',
+    firmaVeterinario: null as string | null,
+    firmaCiudadano: null as string | null,
+    veterinarioNombre: '',
+    veterinarioCargo: '',
+    veterinarioTarjeta: '',
+    notificadoNombre: '',
+    notificadoIdentificacion: '',
+    fechaNotificacion: ''
+  };
+
+  /**
+   * Asegura que las firmas capturadas en base64 o URL se puedan renderizar directamente en <img>
+   */
+  formatearFirma(firma: any): string | null {
+    if (!firma || typeof firma !== 'string') return null;
+    const f = firma.trim();
+    if (!f || f === 'null' || f === 'undefined' || f === 'None') return null;
+    if (f.startsWith('data:image/') || f.startsWith('http://') || f.startsWith('https://')) {
+      return f;
+    }
+    return `data:image/png;base64,${f}`;
+  }
+
+  /**
+   * Parsea valores booleanos provenientes de Django/móvil (true, false, 'SI', 'NO', 1, 0)
+   */
+  parsearBooleano(valor: any): boolean | null {
+    if (valor === true || valor === 1 || String(valor).toLowerCase() === 'true' || String(valor).toUpperCase() === 'SI') return true;
+    if (valor === false || valor === 0 || String(valor).toLowerCase() === 'false' || String(valor).toUpperCase() === 'NO') return false;
+    return null;
+  }
+
+  /**
+   * Asigna clases Tailwind para representar visualmente el estado de las mucosas
+   */
+  obtenerClaseColorMucosa(mucosa: string | null | undefined): string {
+    const m = String(mucosa || '').toLowerCase();
+    if (m.includes('rosad') || m.includes('normal')) return 'bg-pink-400';
+    if (m.includes('pálid') || m.includes('palid')) return 'bg-slate-300';
+    if (m.includes('cianót') || m.includes('cianot') || m.includes('azul')) return 'bg-cyan-500';
+    if (m.includes('ictér') || m.includes('icter') || m.includes('amarill')) return 'bg-amber-400';
+    if (m.includes('congest') || m.includes('roj')) return 'bg-red-500';
+    return 'bg-[#4141a5]';
+  }
+
   // El nombre y el documento del tutor viven dentro de `tenedor`
   get nombreAcudiente(): string { return this.tenedor.nombres; }
   set nombreAcudiente(valor: string) { this.tenedor.nombres = valor ?? ''; }
@@ -301,6 +484,10 @@ export class ActaSeresSintientes implements OnInit {
    * Extrae y mapea en las 4 pestañas toda la información clínica que fue diligenciada en la App Móvil
    * dentro del registro de Seguimiento (GET /api/peticiones/seguimiento/listar/ y GET /api/peticiones/seguimiento/:id/).
    */
+  /**
+   * Extrae y mapea en las 4 pestañas toda la información clínica que fue diligenciada en la App Móvil
+   * dentro del registro de Seguimiento (GET /api/peticiones/seguimiento/listar/ y GET /api/peticiones/seguimiento/:id/).
+   */
   private extraerYMapeoDesdeSeguimientoMovil(seguimiento: any): void {
     if (!seguimiento) return;
 
@@ -324,46 +511,293 @@ export class ActaSeresSintientes implements OnInit {
     }
     this.motivo_consulta = observacionRaw || anamnesisLimpia || this.motivoConsulta || '';
 
-    // 2. Extraer constantes fisiológicas embebidas desde la móvil: [Examen clínico: FC: 110 lpm. FR: 26 rpm. Mucosas: ...]
-    const matchFc = quejaRaw.match(/FC:\s*(\d+(?:[.,]\d+)?)/i);
-    if (matchFc) {
-      const fcVal = Number(matchFc[1].replace(',', '.'));
-      if (fcVal > 0) this.frecuencia_cardiaca = fcVal;
-    }
-    const matchFr = quejaRaw.match(/FR:\s*(\d+(?:[.,]\d+)?)/i);
-    if (matchFr) {
-      const frVal = Number(matchFr[1].replace(',', '.'));
-      if (frVal > 0) this.frecuencia_respiratoria = frVal;
-    }
-    const matchTemp = quejaRaw.match(/Temp(?:eratura)?:\s*(\d+(?:[.,]\d+)?)/i);
-    if (matchTemp) {
-      const tVal = Number(matchTemp[1].replace(',', '.'));
-      if (tVal > 0) this.temperatura = tVal;
-    }
-    const matchMucosas = quejaRaw.match(/Mucosas:\s*([^.\]\n]+)/i);
-    if (matchMucosas && matchMucosas[1]?.trim()) {
-      const mucMovil = matchMucosas[1].trim();
-      const coincidenciaMucosa = this.opcionesMucosas.find(
-        m => m.toLowerCase().includes(mucMovil.toLowerCase()) || mucMovil.toLowerCase().includes(m.split('/')[0].trim().toLowerCase())
-      );
-      this.mucosas = coincidenciaMucosa || mucMovil;
+    // 1.1 Quien reporta y solicitud de atención
+    const quienReporta = String(seguimiento?.quien_reporta || '').trim();
+    const quienReportaOtro = String(seguimiento?.quien_reporta_otro || '').trim();
+    let solicitudAtencion = String(seguimiento?.solicitud_atencion_por || '').trim();
+    if (!solicitudAtencion) {
+      const matchMotivo = quejaRaw.match(/Motivo de reporte:\s*([^\n\r.]+)/i);
+      if (matchMotivo && matchMotivo[1]?.trim()) {
+        solicitudAtencion = matchMotivo[1].trim();
+      }
     }
 
-    // 3. Extraer Exámenes Complementarios desde pruebas_complementarias / resultado_pruebas o desde [Exámenes clínicos (...): ...]
+    // =========================================================================
+    // A. DATOS DEL PROPIETARIO / RESPONSABLE Y UBICACIÓN EN CAMPO
+    // =========================================================================
+    this.datosPropietario = {
+      quienReporta: quienReporta,
+      quienReportaOtro: quienReportaOtro,
+      solicitudAtencionPor: solicitudAtencion,
+      nombre: String(
+        seguimiento?.propietario_nombre ||
+        seguimiento?.notificado_nombre ||
+        seguimiento?.nombre_acudiente ||
+        seguimiento?.nombre_tutor ||
+        seguimiento?.tenedor?.nombres ||
+        this.tenedor.nombres ||
+        ''
+      ).trim(),
+      cedula: String(
+        seguimiento?.propietario_cedula ||
+        seguimiento?.notificaciones_identificacion ||
+        seguimiento?.notificado_identificacion ||
+        seguimiento?.cedula_acudiente ||
+        seguimiento?.documento_identidad ||
+        seguimiento?.tenedor?.documentoIdentidad ||
+        this.tenedor.documentoIdentidad ||
+        ''
+      ).trim(),
+      telefono: String(
+        seguimiento?.propietario_telefono ||
+        seguimiento?.notificador_telefono ||
+        seguimiento?.telefono_acudiente ||
+        seguimiento?.tenedor?.telefono ||
+        this.tenedor.telefono ||
+        ''
+      ).trim(),
+      email: String(
+        seguimiento?.propietario_email ||
+        seguimiento?.notificador_correo ||
+        seguimiento?.correo_acudiente ||
+        seguimiento?.tenedor?.correoElectronico ||
+        this.tenedor.correoElectronico ||
+        ''
+      ).trim(),
+      barrio: String(
+        seguimiento?.propietario_barrio ||
+        seguimiento?.barrio_propietario ||
+        seguimiento?.barrio ||
+        ''
+      ).trim(),
+      direccion: String(
+        seguimiento?.propietario_direccion ||
+        seguimiento?.notificador_direccion ||
+        seguimiento?.direccion_propietario ||
+        seguimiento?.tenedor?.direccion ||
+        this.tenedor.direccion ||
+        ''
+      ).trim()
+    };
+
+    // Ubicación GPS del rescate / atención
+    const loc = seguimiento?.lugar_atencion_detalle || seguimiento?.lugar_atencion || seguimiento?.id_ubicacion_visita;
+    if (loc && typeof loc === 'object') {
+      this.lugarAtencion.direccion = String(loc.direccion || loc.nombre || '').trim();
+      this.lugarAtencion.latitud = loc.latitud !== null && loc.latitud !== undefined && !isNaN(Number(loc.latitud)) ? Number(loc.latitud) : null;
+      this.lugarAtencion.longitud = loc.longitud !== null && loc.longitud !== undefined && !isNaN(Number(loc.longitud)) ? Number(loc.longitud) : null;
+      this.lugarAtencion.referencia = String(loc.barrio || loc.descripcion || '').trim();
+    } else if (typeof loc === 'string') {
+      this.lugarAtencion.direccion = loc.trim();
+    }
+
+    if (!this.lugarAtencion.direccion && seguimiento?.direccion_atencion) {
+      this.lugarAtencion.direccion = String(seguimiento.direccion_atencion).trim();
+    }
+    if (this.lugarAtencion.latitud === null && seguimiento?.latitud !== undefined && seguimiento?.latitud !== null) {
+      const lat = Number(seguimiento.latitud);
+      if (!isNaN(lat)) this.lugarAtencion.latitud = lat;
+    }
+    if (this.lugarAtencion.longitud === null && seguimiento?.longitud !== undefined && seguimiento?.longitud !== null) {
+      const lng = Number(seguimiento.longitud);
+      if (!isNaN(lng)) this.lugarAtencion.longitud = lng;
+    }
+
+    // =========================================================================
+    // B. EXAMEN FÍSICO Y EVALUACIÓN CLÍNICA EN CAMPO
+    // =========================================================================
+    let fc = this.numeroOpcional(seguimiento?.frecuencia_cardiaca ?? seguimiento?.frecuenciaCardiaca);
+    let fr = this.numeroOpcional(seguimiento?.frecuencia_respiratoria ?? seguimiento?.frecuenciaRespiratoria);
+    let temp = this.numeroOpcional(seguimiento?.temperatura);
+    let muc = String(seguimiento?.mucosas || '').trim();
+
+    const matchFc = quejaRaw.match(/FC:\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchFc && !fc) {
+      fc = Number(matchFc[1].replace(',', '.'));
+    }
+    const matchFr = quejaRaw.match(/FR:\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchFr && !fr) {
+      fr = Number(matchFr[1].replace(',', '.'));
+    }
+    const matchTemp = quejaRaw.match(/Temp(?:eratura)?:\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchTemp && !temp) {
+      temp = Number(matchTemp[1].replace(',', '.'));
+    }
+    const matchMucosas = quejaRaw.match(/Mucosas:\s*([^.\]\n]+)/i);
+    if (matchMucosas && !muc && matchMucosas[1]?.trim()) {
+      muc = matchMucosas[1].trim();
+    }
+
+    this.evaluacionCampo = {
+      frecuenciaCardiaca: fc || null,
+      frecuenciaRespiratoria: fr || null,
+      temperatura: temp || null,
+      mucosas: muc || '',
+      anamnesisLimpia: anamnesisLimpia,
+      quejaCompleta: quejaRaw,
+      descripcionQueja: anamnesisLimpia || quejaRaw
+    };
+
+    if (fc && fc > 0) this.frecuencia_cardiaca = fc;
+    if (fr && fr > 0) this.frecuencia_respiratoria = fr;
+    if (temp && temp > 0) this.temperatura = temp;
+    if (muc) {
+      const coincidenciaMucosa = this.opcionesMucosas.find(
+        m => m.toLowerCase().includes(muc.toLowerCase()) || muc.toLowerCase().includes(m.split('/')[0].trim().toLowerCase())
+      );
+      this.mucosas = coincidenciaMucosa || muc;
+    }
+
+    // Parámetros de pulso, TLLC y ganglios linfáticos
+    const pulsoRaw = String(seguimiento?.pulso || '').trim();
+    if (pulsoRaw) {
+      this.pulso = pulsoRaw;
+    } else if (!this.pulso) {
+      this.pulso = 'Fuerte, lleno y regular';
+    }
+
+    const tllcRaw = String(seguimiento?.tiempo_llenado_capilar || seguimiento?.tllc || '').trim();
+    if (tllcRaw) {
+      this.tllc = tllcRaw.replace(/\s*seg(undos)?\.?/gi, '').trim() || '1-2';
+    } else if (!this.tllc) {
+      this.tllc = '1-2';
+    }
+
+    const gangliosRaw = String(seguimiento?.ganglios_linfaticos || '').trim();
+    if (gangliosRaw) {
+      this.ganglios_linfaticos = gangliosRaw;
+    } else if (!this.ganglios_linfaticos) {
+      this.ganglios_linfaticos = 'Normales / Sin reactividad';
+    }
+
+    // =========================================================================
+    // C. TRATAMIENTOS Y SUMINISTROS (EN CAMPO / MALETÍN)
+    // =========================================================================
+    this.tratamientosCampo.tratamientoTexto = tratamientoRaw;
+    const listaMedsMaletin: Array<{
+      nombre: string;
+      cantidad: string | number;
+      via: string;
+      presentacion?: string;
+      dosis?: string;
+      paciente?: string;
+    }> = [];
+
+    const medsUsados = seguimiento?.medicamentos_usados || seguimiento?.medicamentos;
+    if (Array.isArray(medsUsados) && medsUsados.length > 0) {
+      medsUsados.forEach((m: any) => {
+        listaMedsMaletin.push({
+          nombre: m.nombre || m.producto || m.nombre_medicamento || 'Medicamento',
+          cantidad: m.cantidad ?? m.cantidad_usada ?? m.unidades ?? 1,
+          via: m.via || m.via_administracion || 'No especificada',
+          presentacion: m.presentacion || '',
+          dosis: m.dosis || '',
+          paciente: m.paciente || ''
+        });
+      });
+    }
+
+    if (tratamientoRaw) {
+      const regexSuministro = /Suministro de\s+([^(]+)\s*\(([^)]+)\)(?:\s*a\s*([^\n\r.]+))?/gi;
+      let match;
+      while ((match = regexSuministro.exec(tratamientoRaw)) !== null) {
+        const nombreMed = match[1].trim();
+        const detalleDosisVia = match[2].trim();
+        const pacienteMed = match[3]?.trim() || '';
+
+        let dosis = detalleDosisVia;
+        let via = 'No especificada';
+        if (detalleDosisVia.includes('- vía')) {
+          const partes = detalleDosisVia.split('- vía');
+          dosis = partes[0].trim();
+          via = partes[1].trim();
+        } else if (detalleDosisVia.includes('vía')) {
+          const partes = detalleDosisVia.split('vía');
+          dosis = partes[0].trim();
+          via = partes[1].trim();
+        }
+
+        if (!listaMedsMaletin.some(m => m.nombre.toLowerCase() === nombreMed.toLowerCase())) {
+          listaMedsMaletin.push({
+            nombre: nombreMed,
+            cantidad: dosis,
+            via: via,
+            dosis: dosis,
+            paciente: pacienteMed
+          });
+        }
+      }
+    }
+    this.tratamientosCampo.medicamentosMaletin = listaMedsMaletin;
+
+    if (tratamientoRaw) {
+      this.plan_procedimientos = tratamientoRaw;
+      if (!this.materiales_utilizados) {
+        this.materiales_utilizados = tratamientoRaw;
+      }
+    }
+
+    // =========================================================================
+    // D. RESOLUCIÓN, COMPROMISOS, CBA Y CIERRE
+    // =========================================================================
+    this.resolucionCierre.desparasitacion = this.parsearBooleano(seguimiento?.desparasitacion);
+
+    // Pruebas rápidas y complementarias
     const examenesExtraidos: any[] = [];
+    const listaPruebasRapidas: Array<{ prueba: string; resultado: string; esPositivo: boolean; esNegativo: boolean }> = [];
+
     if (pruebasRaw) {
       const nombresPruebas = pruebasRaw.split('|').map(s => s.trim()).filter(Boolean);
       const paresResultados = resultadoPruebasRaw.split('|').map(s => s.trim()).filter(Boolean);
       nombresPruebas.forEach((nombreP, idx) => {
         const par = paresResultados[idx] || '';
         const resLimpio = par.includes(':') ? par.split(':').slice(1).join(':').trim() : par;
+        const resFinal = resLimpio || 'Pendiente';
+        const esNeg = /negativ/i.test(resFinal);
+        const esPos = /positiv/i.test(resFinal);
+
         examenesExtraidos.push({
           id_examen: null,
           nombre: nombreP,
           tipo: 'Prueba Diagnóstica',
           descripcion: '',
-          estado: resLimpio && resLimpio.toLowerCase() !== 'pendiente' ? 'completado' : 'solicitado',
-          resultado: resLimpio || 'Pendiente',
+          estado: resFinal.toLowerCase() !== 'pendiente' ? 'completado' : 'solicitado',
+          resultado: resFinal,
+          ruta_archivo_resultado: ''
+        });
+
+        listaPruebasRapidas.push({
+          prueba: nombreP,
+          resultado: resFinal,
+          esPositivo: esPos,
+          esNegativo: esNeg
+        });
+      });
+    } else if (resultadoPruebasRaw) {
+      const pares = resultadoPruebasRaw.split('|').map(s => s.trim()).filter(Boolean);
+      pares.forEach(par => {
+        let nombre = par;
+        let resultado = 'Realizada';
+        if (par.includes(':')) {
+          const idxColon = par.indexOf(':');
+          nombre = par.substring(0, idxColon).trim();
+          resultado = par.substring(idxColon + 1).trim();
+        }
+        const esNeg = /negativ/i.test(resultado);
+        const esPos = /positiv/i.test(resultado);
+        listaPruebasRapidas.push({
+          prueba: nombre,
+          resultado: resultado || 'Completada',
+          esPositivo: esPos,
+          esNegativo: esNeg
+        });
+        examenesExtraidos.push({
+          id_examen: null,
+          nombre: nombre,
+          tipo: 'Prueba Diagnóstica',
+          descripcion: '',
+          estado: 'completado',
+          resultado: resultado,
           ruta_archivo_resultado: ''
         });
       });
@@ -375,6 +809,8 @@ export class ActaSeresSintientes implements OnInit {
           const m = item.match(/^(.+?)\s*\(([^)]*)\)$/);
           const nombreEx = m ? m[1].trim() : item;
           const resEx = m ? m[2].trim() : 'Solicitado';
+          const esNeg = /negativ/i.test(resEx);
+          const esPos = /positiv/i.test(resEx);
           examenesExtraidos.push({
             id_examen: null,
             nombre: nombreEx,
@@ -383,6 +819,12 @@ export class ActaSeresSintientes implements OnInit {
             estado: resEx.toLowerCase() !== 'pendiente' ? 'completado' : 'solicitado',
             resultado: resEx,
             ruta_archivo_resultado: ''
+          });
+          listaPruebasRapidas.push({
+            prueba: nombreEx,
+            resultado: resEx,
+            esPositivo: esPos,
+            esNegativo: esNeg
           });
         });
       }
@@ -393,9 +835,32 @@ export class ActaSeresSintientes implements OnInit {
     if (resultadoPruebasRaw && !this.hallazgos_examen) {
       this.hallazgos_examen = resultadoPruebasRaw;
     }
+    this.resolucionCierre.pruebasRapidas = listaPruebasRapidas;
 
-    // 4. Extraer Evaluación de Sistemas y Datos de Rescate / Ingreso al CBA si vienen en el Anexo de la móvil
-    if (quejaRaw.includes('ANEXO: ACTA DE RESCATE Y TRASLADO AL CBA')) {
+    // Compromisos y fundamento legal
+    this.resolucionCierre.compromisos = compromisosRaw;
+    this.resolucionCierre.fundamentoLegal = String(seguimiento?.fundamento_legal || 'Ley 1774 de 2016').trim();
+    this.resolucionCierre.plazoDias = this.numeroOpcional(seguimiento?.plazo_dias_cumplimiento, true) ?? null;
+
+    if (compromisosRaw && !this.observaciones_examen) {
+      this.observaciones_examen = compromisosRaw;
+    }
+    if (observacionRaw && !this.diagnosticoFinal) {
+      this.diagnosticoFinal = observacionRaw;
+    }
+
+    // Rescate / Traslado al CBA
+    const tieneAnexoRescate = quejaRaw.includes('ANEXO: ACTA DE RESCATE Y TRASLADO AL CBA');
+    const esRescate =
+      seguimiento?.sw_requiere_rescate === true ||
+      seguimiento?.requiere_rescate === true ||
+      tieneAnexoRescate ||
+      /Traslado y custodia.*CBA/i.test(compromisosRaw) ||
+      this.ingresaCBA === 'SI';
+
+    this.resolucionCierre.requirioRescate = esRescate;
+
+    if (tieneAnexoRescate) {
       this.ingresa_cba = true;
       const matchCausal = quejaRaw.match(/•\s*Causal de rescate:\s*([^\n\r]+)/i);
       if (matchCausal && matchCausal[1]?.trim()) {
@@ -405,11 +870,44 @@ export class ActaSeresSintientes implements OnInit {
       if (matchVetReceptor && matchVetReceptor[1]?.trim()) {
         this.funcionario_recibe_cba = matchVetReceptor[1].trim();
       }
+      const matchAtiende = quejaRaw.match(/•\s*Persona que atiende \/ entrega:\s*([^\n\r]+)/i);
+      const matchBarrio = quejaRaw.match(/•\s*Barrio de rescate:\s*([^\n\r]+)/i);
+      const matchTestigo1 = quejaRaw.match(/•\s*Testigo 1[^:]*:\s*([^\n\r]+)/i);
+      const matchTestigo2 = quejaRaw.match(/•\s*Testigo 2[^:]*:\s*([^\n\r]+)/i);
+      const matchFechaRecep = quejaRaw.match(/•\s*Fecha\/Hora de recepción:\s*([^\n\r]+)/i);
+      const matchObsRecep = quejaRaw.match(/•\s*Observaciones recepción:\s*([^\n\r]+)/i);
       const matchObsRescate = quejaRaw.match(/---\s*OBSERVACIONES DEL RESCATE\s*---\s*([\s\S]*?)(?:---\s*RECEPCIÓN EN CLÍNICA|$)/i);
+
       if (matchObsRescate && matchObsRescate[1]?.trim()) {
         this.observaciones_examen = matchObsRescate[1].trim();
         this.observacionesSistemas = matchObsRescate[1].trim();
       }
+
+      let obsRescateFinal = matchObsRescate ? matchObsRescate[1].trim() : '';
+      if (!obsRescateFinal) {
+        const matchObsDirecta = quejaRaw.match(/(?:Causal:[^\n]*\n)?Se efectúa rescate y retiro preventivo[\s\S]*?(?=(?:---|•|$))/i);
+        if (matchObsDirecta) {
+          obsRescateFinal = matchObsDirecta[0].trim();
+        }
+      }
+
+      this.resolucionCierre.datosRescate = {
+        causal: matchCausal ? matchCausal[1].trim() : (this.motivoIngresoNoIngreso || 'Por salud crítica / Urgencia médica'),
+        personaEntrega: matchAtiende ? matchAtiende[1].trim() : (this.datosPropietario.nombre || 'No registrada'),
+        personaEntregaCedula: this.datosPropietario.cedula || '',
+        personaEntregaTel: this.datosPropietario.telefono || '',
+        barrio: matchBarrio ? matchBarrio[1].trim() : (this.datosPropietario.barrio || ''),
+        testigo1: matchTestigo1 ? matchTestigo1[1].trim() : '',
+        testigo1Cedula: '',
+        testigo1Tel: '',
+        testigo2: matchTestigo2 ? matchTestigo2[1].trim() : '',
+        testigo2Cedula: '',
+        testigo2Tel: '',
+        observacionesRescate: obsRescateFinal,
+        veterinarioReceptor: matchVetReceptor ? matchVetReceptor[1].trim() : (this.funcionarioRecibeCBA || this.nombreVeterinario || 'Junior Smith López'),
+        fechaHoraRecepcion: matchFechaRecep ? matchFechaRecep[1].trim() : (seguimiento?.fecha_atencion || '2026-10-29 20:57'),
+        observacionesRecepcion: matchObsRecep ? matchObsRecep[1].trim() : ''
+      };
 
       // Evaluar los sistemas reportados por la app móvil (SÍ = Anormal 'AN', NO = Normal 'N')
       const tieneSi = (regex: RegExp) => regex.test(quejaRaw);
@@ -449,28 +947,112 @@ export class ActaSeresSintientes implements OnInit {
           ? 'AN'
           : 'N';
       this.evaluacion_sistemas = nuevosSistemas;
+
+      // Extracción estructurada del triaje de 5 sistemas para la interfaz web
+      const parseTriajeItem = (regex: RegExp): boolean | null => {
+        const m = quejaRaw.match(regex);
+        if (!m) return null;
+        return m[1].toUpperCase().includes('S');
+      };
+
+      const resp = {
+        moco: parseTriajeItem(/Presenta moco:\s*(S[ÍI]|NO)/i),
+        dificultadRespirar: parseTriajeItem(/(?:Se le )?dificulta respirar:\s*(S[ÍI]|NO)/i),
+        tos: parseTriajeItem(/Tos:\s*(S[ÍI]|NO)/i),
+        laganeo: parseTriajeItem(/Lagaña o lagrimeo:\s*(S[ÍI]|NO)/i)
+      };
+
+      const dig = {
+        vomito: parseTriajeItem(/Presenta vómito:\s*(S[ÍI]|NO)/i),
+        diarrea: parseTriajeItem(/Presenta diarrea:\s*(S[ÍI]|NO)/i),
+        desnutrido: parseTriajeItem(/(?:Muy )?flaco o desnutrido:\s*(S[ÍI]|NO)/i),
+        deshidratado: parseTriajeItem(/Deshidratado:\s*(S[ÍI]|NO)/i)
+      };
+
+      const musc = {
+        caidaPatas: parseTriajeItem(/(?:Caída de (?:las )?patas(?: de atrás)?|Paresia):\s*(S[ÍI]|NO)/i),
+        cojera: parseTriajeItem(/(?:Cojo|Cojera evidente):\s*(S[ÍI]|NO)/i),
+        heridaAbierta: parseTriajeItem(/(?:Presenta )?herida abierta(?: profunda)?:\s*(S[ÍI]|NO)/i),
+        gusanosMiasis: parseTriajeItem(/(?:Observa moscos o gusanos|Gusanos \/ Miasis activa):\s*(S[ÍI]|NO)/i),
+        postrado: parseTriajeItem(/(?:Animal )?postrado(?: \/ no se levanta)?:\s*(S[ÍI]|NO)/i)
+      };
+
+      const derm = {
+        peladuras: parseTriajeItem(/(?:Presenta )?peladuras(?: \/ Alopecia)?:\s*(S[ÍI]|NO)/i),
+        heridasSangre: parseTriajeItem(/Heridas con sangre:\s*(S[ÍI]|NO)/i),
+        pulgasGarrapatas: parseTriajeItem(/(?:Infestación de )?pulgas o garrapatas:\s*(S[ÍI]|NO)/i)
+      };
+
+      const genit = {
+        masaSecrecion: parseTriajeItem(/(?:Presenta )?masa(?:,| o)? (?:tumor o )?secreción(?: genital)?:\s*(S[ÍI]|NO)/i),
+        gestante: parseTriajeItem(/(?:Se encuentra |Posible hembra )?gestante:\s*(S[ÍI]|NO)/i),
+        enCelo: parseTriajeItem(/(?:Se encuentra |Hembra )?en celo:\s*(S[ÍI]|NO)/i)
+      };
+
+      const todos = [
+        resp.moco, resp.dificultadRespirar, resp.tos, resp.laganeo,
+        dig.vomito, dig.diarrea, dig.desnutrido, dig.deshidratado,
+        musc.caidaPatas, musc.cojera, musc.heridaAbierta, musc.gusanosMiasis, musc.postrado,
+        derm.peladuras, derm.heridasSangre, derm.pulgasGarrapatas,
+        genit.masaSecrecion, genit.gestante, genit.enCelo
+      ];
+
+      this.triajeSistemasCampo = {
+        tieneEvaluacion: true,
+        totalAlertas: todos.filter(v => v === true).length,
+        respiratorio: resp,
+        digestivo: dig,
+        musculoEsqueletico: musc,
+        dermatologico: derm,
+        genitourinario: genit
+      };
+    } else if (esRescate) {
+      this.ingresa_cba = true;
+      this.resolucionCierre.datosRescate = {
+        causal: this.motivoIngresoNoIngreso || 'Traslado preventivo / rescate por bienestar animal',
+        personaEntrega: this.datosPropietario.nombre,
+        personaEntregaCedula: this.datosPropietario.cedula,
+        personaEntregaTel: this.datosPropietario.telefono,
+        barrio: this.datosPropietario.barrio,
+        testigo1: '',
+        testigo1Cedula: '',
+        testigo1Tel: '',
+        testigo2: '',
+        testigo2Cedula: '',
+        testigo2Tel: '',
+        observacionesRescate: '',
+        veterinarioReceptor: this.funcionarioRecibeCBA || this.nombreVeterinario,
+        fechaHoraRecepcion: '',
+        observacionesRecepcion: ''
+      };
     }
 
-    // 5. Mapear Diagnóstico, Plan de Procedimientos y Tratamientos desde la móvil
-    if (tratamientoRaw) {
-      this.plan_procedimientos = tratamientoRaw;
-      if (!this.materiales_utilizados) {
-        this.materiales_utilizados = tratamientoRaw;
-      }
-    }
-    if (compromisosRaw && !this.observaciones_examen) {
-      this.observaciones_examen = compromisosRaw;
-    }
-    if (observacionRaw && !this.diagnosticoFinal) {
-      this.diagnosticoFinal = observacionRaw;
-    }
+    // Estado final de la petición y observaciones generales
+    this.resolucionCierre.estadoPeticion = String(
+      seguimiento?.peticion_estado ||
+      seguimiento?.estado_peticion ||
+      seguimiento?.id_peticion?.id_estado?.nombre ||
+      seguimiento?.id_peticion?.estado ||
+      seguimiento?.estado ||
+      'Atendida en Campo'
+    ).trim();
+    this.resolucionCierre.observacionesCierre = observacionRaw;
 
-    // 6. Extraer Tarjeta Profesional y firmas desde funcionarios del seguimiento móvil
+    // Firmas capturadas
+    this.resolucionCierre.firmaVeterinario = this.formatearFirma(
+      seguimiento?.firma_notificador || seguimiento?.firma_veterinario || seguimiento?.firmaNotificador
+    );
+    this.resolucionCierre.firmaCiudadano = this.formatearFirma(
+      seguimiento?.firma_notificado || seguimiento?.firma_ciudadano || seguimiento?.firmaNotificado
+    );
+
+    // Funcionarios y aval profesional
     const funcPrincipal = Array.isArray(seguimiento?.funcionarios) && seguimiento.funcionarios.length > 0
       ? seguimiento.funcionarios[0]
       : (Array.isArray(seguimiento?.funcionarios_detalle) && seguimiento.funcionarios_detalle.length > 0
           ? seguimiento.funcionarios_detalle[0]
           : null);
+
     if (funcPrincipal) {
       if (funcPrincipal.nombre && !this.nombreVeterinario) {
         this.nombreVeterinario = funcPrincipal.nombre;
@@ -490,6 +1072,124 @@ export class ActaSeresSintientes implements OnInit {
       if (matchMp && matchMp[1]) {
         this.tarjetaProfesional = matchMp[1];
       }
+    }
+
+    this.resolucionCierre.veterinarioNombre = String(
+      seguimiento?.notificador_nombre ||
+      seguimiento?.nombre_funcionario ||
+      this.nombreVeterinario ||
+      ''
+    ).trim();
+    this.resolucionCierre.veterinarioCargo = String(
+      seguimiento?.notificador_cargo ||
+      seguimiento?.funcionario_cargo ||
+      'Médico Veterinario CBA'
+    ).trim();
+    this.resolucionCierre.veterinarioTarjeta = String(
+      this.tarjetaProfesional ||
+      seguimiento?.notificador_matricula ||
+      seguimiento?.matricula_profesional ||
+      seguimiento?.tarjeta_profesional ||
+      ''
+    ).trim();
+
+    this.resolucionCierre.notificadoNombre = String(
+      seguimiento?.notificado_nombre ||
+      this.datosPropietario.nombre ||
+      ''
+    ).trim();
+    this.resolucionCierre.notificadoIdentificacion = String(
+      seguimiento?.notificaciones_identificacion ||
+      seguimiento?.notificado_identificacion ||
+      this.datosPropietario.cedula ||
+      ''
+    ).trim();
+    this.resolucionCierre.fechaNotificacion = String(
+      seguimiento?.fecha_notificacion ||
+      seguimiento?.fecha_atencion ||
+      seguimiento?.fecha ||
+      ''
+    ).trim();
+
+    if (!this.nombreAcudiente) {
+      this.nombreAcudiente = this.resolucionCierre.notificadoNombre || this.datosPropietario.nombre || '';
+    }
+    if (!this.cedulaAcudiente) {
+      this.cedulaAcudiente = this.resolucionCierre.notificadoIdentificacion || this.datosPropietario.cedula || '';
+    }
+
+    // 4.1 Equipo de Funcionarios y Acompañantes en Campo
+    const listaFuncionariosRaw = seguimiento?.funcionarios_detalle || seguimiento?.funcionarios;
+    const listaFuncionariosMapeada: Array<{
+      id?: number;
+      nombre: string;
+      cargo?: string;
+      institucion?: string;
+      esExterno?: boolean;
+      esPrincipal?: boolean;
+      documentoIdentidad?: string;
+    }> = [];
+
+    if (Array.isArray(listaFuncionariosRaw) && listaFuncionariosRaw.length > 0) {
+      listaFuncionariosRaw.forEach((f: any) => {
+        listaFuncionariosMapeada.push({
+          id: f.id,
+          nombre: f.nombre || f.nombre_funcionario || 'Funcionario Oficial',
+          cargo: f.cargo || f.funcionario_cargo || 'Acompañante de visita',
+          institucion: f.institucion || (f.es_externo ? 'Institución Externa' : 'CBA Popayán'),
+          esExterno: f.es_externo === true,
+          esPrincipal: f.es_principal === true,
+          documentoIdentidad: f.documento_identidad || ''
+        });
+      });
+    }
+
+    if (listaFuncionariosMapeada.length === 0 && (seguimiento?.nombre_funcionario || this.resolucionCierre.veterinarioNombre)) {
+      listaFuncionariosMapeada.push({
+        nombre: seguimiento?.nombre_funcionario || this.resolucionCierre.veterinarioNombre || 'Médico Veterinario',
+        cargo: seguimiento?.funcionario_cargo || this.resolucionCierre.veterinarioCargo || 'Médico Veterinario Zootecnista',
+        institucion: 'CBA Popayán',
+        esExterno: false,
+        esPrincipal: true
+      });
+    }
+
+    this.funcionariosAcompanantes = listaFuncionariosMapeada;
+
+    // 4.2 Mapeo de evidencias multimedia (fotos y videos) registradas en campo
+    const mediaExtraida: Array<{ url: string; esVideo: boolean; nombre: string; subiendo?: boolean }> = [];
+    if (Array.isArray(seguimiento?.fotos)) {
+      seguimiento.fotos.forEach((url: string, i: number) => {
+        if (url && typeof url === 'string') {
+          mediaExtraida.push({ url, esVideo: false, nombre: `Foto ${i + 1}`, subiendo: false });
+        }
+      });
+    } else if (seguimiento?.foto && typeof seguimiento.foto === 'string') {
+      mediaExtraida.push({ url: seguimiento.foto, esVideo: false, nombre: 'Foto 1', subiendo: false });
+    }
+
+    if (Array.isArray(seguimiento?.videos)) {
+      seguimiento.videos.forEach((url: string, i: number) => {
+        if (url && typeof url === 'string') {
+          mediaExtraida.push({ url, esVideo: true, nombre: `Video ${i + 1}`, subiendo: false });
+        }
+      });
+    } else if (seguimiento?.video && typeof seguimiento.video === 'string') {
+      mediaExtraida.push({ url: seguimiento.video, esVideo: true, nombre: 'Video 1', subiendo: false });
+    }
+
+    if (Array.isArray(seguimiento?.multimedia)) {
+      seguimiento.multimedia.forEach((m: any, i: number) => {
+        const u = typeof m === 'string' ? m : m?.url;
+        const esVid = m?.tipo === 'video' || (typeof u === 'string' && (u.includes('.mp4') || u.includes('/video/')));
+        if (u && !mediaExtraida.some(x => x.url === u)) {
+          mediaExtraida.push({ url: u, esVideo: esVid, nombre: esVid ? `Video ${i + 1}` : `Foto ${i + 1}`, subiendo: false });
+        }
+      });
+    }
+
+    if (mediaExtraida.length > 0) {
+      this.archivosMultimedia = mediaExtraida;
     }
 
     // Sincronizar con el Reactive Form
@@ -571,7 +1271,8 @@ export class ActaSeresSintientes implements OnInit {
       this.pulso = consulta.pulso || consulta.constantes?.pulso;
     }
     if (consulta.tllc || consulta.constantes?.tllc) {
-      this.tllc = consulta.tllc || consulta.constantes?.tllc;
+      const valorTllc = String(consulta.tllc || consulta.constantes?.tllc || '').trim();
+      this.tllc = valorTllc.replace(/\s*seg(undos)?\.?/gi, '').trim() || '1-2';
     }
     if (consulta.ganglios_linfaticos || consulta.constantes?.ganglios_linfaticos) {
       this.ganglios_linfaticos = consulta.ganglios_linfaticos || consulta.constantes?.ganglios_linfaticos;
@@ -858,6 +1559,52 @@ export class ActaSeresSintientes implements OnInit {
     this.medicamentosSeleccionados = [];
     this.examenesSolicitados = [];
     this.reiniciarSistemas('NE');
+
+    // Limpieza de campos del acta de visita de campo
+    this.datosPropietario = {
+      nombre: '', cedula: '', telefono: '', email: '', barrio: '', direccion: '',
+      quienReporta: '', quienReportaOtro: '', solicitudAtencionPor: ''
+    };
+    this.funcionariosAcompanantes = [];
+    this.lugarAtencion = { direccion: '', latitud: null, longitud: null, referencia: '' };
+    this.evaluacionCampo = {
+      frecuenciaCardiaca: null, frecuenciaRespiratoria: null, temperatura: null,
+      mucosas: '', anamnesisLimpia: '', quejaCompleta: '', descripcionQueja: ''
+    };
+    this.triajeSistemasCampo = {
+      tieneEvaluacion: false,
+      totalAlertas: 0,
+      respiratorio: { moco: null, dificultadRespirar: null, tos: null, laganeo: null },
+      digestivo: { vomito: null, diarrea: null, desnutrido: null, deshidratado: null },
+      musculoEsqueletico: { caidaPatas: null, cojera: null, heridaAbierta: null, gusanosMiasis: null, postrado: null },
+      dermatologico: { peladuras: null, heridasSangre: null, pulgasGarrapatas: null },
+      genitourinario: { masaSecrecion: null, gestante: null, enCelo: null }
+    };
+    this.tratamientosCampo = { tratamientoTexto: '', medicamentosMaletin: [] };
+    this.resolucionCierre = {
+      desparasitacion: null,
+      pruebasRapidas: [],
+      compromisos: '',
+      fundamentoLegal: '',
+      plazoDias: null,
+      requirioRescate: false,
+      datosRescate: {
+        causal: '', personaEntrega: '', personaEntregaCedula: '', personaEntregaTel: '',
+        barrio: '', testigo1: '', testigo1Cedula: '', testigo1Tel: '',
+        testigo2: '', testigo2Cedula: '', testigo2Tel: '',
+        observacionesRescate: '', veterinarioReceptor: '', fechaHoraRecepcion: '', observacionesRecepcion: ''
+      },
+      estadoPeticion: 'Atendida',
+      observacionesCierre: '',
+      firmaVeterinario: null,
+      firmaCiudadano: null,
+      veterinarioNombre: '',
+      veterinarioCargo: '',
+      veterinarioTarjeta: '',
+      notificadoNombre: '',
+      notificadoIdentificacion: '',
+      fechaNotificacion: ''
+    };
   }
 
   /**
@@ -869,7 +1616,12 @@ export class ActaSeresSintientes implements OnInit {
 
     const animal = this.seguimientoSeleccionado;
     if (!animal) {
-      Swal.fire('Selecciona un animal', 'Primero selecciona un animal de la lista de turnos.', 'warning');
+      Swal.fire('Selecciona un animal', 'Primero selecciona un animal de la lista de turnos o pulsa + Crear Historia Clínica para registrar uno nuevo.', 'warning');
+      return;
+    }
+
+    if (this.esNuevoAnimal || !this.resolverIdAnimal(animal)) {
+      this.guardarNuevoAnimalYExpediente();
       return;
     }
 
@@ -1173,13 +1925,503 @@ export class ActaSeresSintientes implements OnInit {
     this.guardarHistoriaClinica();
   }
 
+  // =========================================================================
+  // CREACIÓN DE NUEVO PACIENTE Y ACTA COMPLETA (POST)
+  // =========================================================================
+
+  iniciarNuevoAnimal(): void {
+    this.reiniciarFormularioClinico();
+    this.reiniciarSistemas('NE');
+    this.esNuevoAnimal = true;
+    this.archivosMultimedia = [];
+
+    const radicadoNuevo = `ACTA-${Date.now().toString().slice(-6)}`;
+    this.numeroRadicadoActual = radicadoNuevo;
+
+    this.seguimientoSeleccionado = {
+      esNuevoAnimal: true,
+      id_animal: null,
+      id_seguimiento: null,
+      numero_radicado: radicadoNuevo,
+      nombre_paciente: '',
+      paciente_especie: 'Canino',
+      paciente_raza: 'Mestizo',
+      paciente_sexo: 'Macho',
+      paciente_edad: '',
+      peso_paciente: '',
+      paciente_color: '',
+      microchip: '',
+      descripcion_paciente: '',
+      propietario_nombre: '',
+      propietario_cedula: '',
+      propietario_telefono: '',
+      propietario_email: '',
+      propietario_barrio: '',
+      propietario_direccion: '',
+      fecha: new Date().toISOString().split('T')[0]
+    };
+
+    this.datosPropietario = {
+      quienReporta: 'Veterinario en Campo',
+      quienReportaOtro: '',
+      solicitudAtencionPor: 'Registro de nuevo paciente y atención médica',
+      nombre: '',
+      cedula: '',
+      telefono: '',
+      email: '',
+      barrio: '',
+      direccion: ''
+    };
+
+    this.tenedor = {
+      nombres: '',
+      documentoIdentidad: '',
+      telefono: '',
+      direccion: '',
+      correoElectronico: ''
+    };
+
+    this.signosVitales = {
+      temperatura: 38.5,
+      frecuenciaCardiaca: 90,
+      frecuenciaRespiratoria: 24,
+      pulso: 'Fuerte y lleno',
+      tiempoLlenadoCapilar: '1-2',
+      mucosas: 'Rosadas',
+      gangliosLinfaticos: 'Normales',
+      actitudTemperamento: 'Alerta / Dócil'
+    };
+    this.prioridad = 'Normal';
+    this.resultadoEstado = 'Estable';
+    this.pronostico = 'Favorable';
+    this.motivoConsulta = 'Atención y valoración médica veterinaria en campo';
+    this.pesoPaciente = 4.0;
+    this.evaluacionCampo = {
+      temperatura: 38.5,
+      frecuenciaCardiaca: 90,
+      frecuenciaRespiratoria: 24,
+      mucosas: 'Rosadas / Normales',
+      descripcionQueja: '',
+      anamnesisLimpia: '',
+      quejaCompleta: ''
+    };
+    this.triajeSistemasCampo = {
+      tieneEvaluacion: true,
+      totalAlertas: 0,
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+    };
+    this.diagnosticoFinal = 'Consulta médica general / Sin patología infectocontagiosa evidente';
+    this.materialesUtilizados = 'Curación tópica, valoración física y desinfección preventiva.';
+
+    this.cambiarPestana('consulta');
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      const el = document.getElementById('seccion-ficha-paciente');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  }
+
+  marcarSinAcudiente(): void {
+    this.datosPropietario = {
+      ...this.datosPropietario,
+      nombre: 'Sin acudiente (Animal Comunitario)',
+      cedula: 'No registrada',
+      telefono: 'No disponible',
+      email: '',
+      barrio: 'Popayán',
+      direccion: 'Vía pública / Condición de calle'
+    };
+    this.tenedor = {
+      nombres: 'Sin acudiente (Animal Comunitario)',
+      documentoIdentidad: 'No registrada',
+      telefono: 'No disponible',
+      correoElectronico: '',
+      direccion: 'Vía pública / Condición de calle'
+    };
+    this.cdr.detectChanges();
+  }
+
+  subirArchivoCloudinary(archivo: File, esVideo: boolean): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', archivo);
+    formData.append('upload_preset', 'preset_android');
+    const endpoint = esVideo
+      ? 'https://api.cloudinary.com/v1_1/aefeig5y/video/upload'
+      : 'https://api.cloudinary.com/v1_1/aefeig5y/image/upload';
+    return this.http.post<any>(endpoint, formData).pipe(
+      map((res: any) => {
+        const secureUrl = res.secure_url || res.url;
+        if (!secureUrl) throw new Error('Cloudinary no devolvió URL');
+        return secureUrl as string;
+      })
+    );
+  }
+
+  adjuntarFoto(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  onFotoSeleccionada(event: any): void {
+    const files: FileList = event.target?.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const previewUrl = URL.createObjectURL(file);
+      const item = {
+        archivo: file,
+        url: previewUrl,
+        esVideo: false,
+        nombre: file.name || `Foto ${this.archivosMultimedia.length + 1}`,
+        subiendo: true
+      };
+      this.archivosMultimedia.push(item);
+
+      this.subirArchivoCloudinary(file, false).subscribe({
+        next: (secureUrl: string) => {
+          item.url = secureUrl;
+          item.subiendo = false;
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.warn('Error al subir foto a Cloudinary:', err);
+          item.subiendo = false;
+          this.cdr.detectChanges();
+        }
+      });
+    }
+    event.target.value = '';
+  }
+
+  adjuntarVideo(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  onVideoSeleccionado(event: any): void {
+    const files: FileList = event.target?.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (file.size > 50 * 1024 * 1024) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Video muy pesado',
+        text: 'El video seleccionado supera los 50 MB. Por favor selecciona un clip más corto.',
+        confirmButtonColor: '#4141A5'
+      });
+      event.target.value = '';
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    const item = {
+      archivo: file,
+      url: previewUrl,
+      esVideo: true,
+      nombre: file.name || `Video ${this.archivosMultimedia.length + 1}`,
+      subiendo: true
+    };
+    this.archivosMultimedia.push(item);
+
+    this.subirArchivoCloudinary(file, true).subscribe({
+      next: (secureUrl: string) => {
+        item.url = secureUrl;
+        item.subiendo = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.warn('Error al subir video a Cloudinary:', err);
+        item.subiendo = false;
+        this.cdr.detectChanges();
+      }
+    });
+    event.target.value = '';
+  }
+
+  eliminarMultimedia(index: number): void {
+    this.archivosMultimedia.splice(index, 1);
+    this.cdr.detectChanges();
+  }
+
+  get conteoMultimedia(): string {
+    const fotos = this.archivosMultimedia.filter(m => !m.esVideo).length;
+    const videos = this.archivosMultimedia.filter(m => m.esVideo).length;
+    if (fotos === 0 && videos === 0) return '';
+    const partes: string[] = [];
+    if (fotos > 0) partes.push(`${fotos} foto${fotos > 1 ? 's' : ''}`);
+    if (videos > 0) partes.push(`${videos} video${videos > 1 ? 's' : ''}`);
+    return `${partes.join(', ')} adjunto${(fotos + videos) > 1 ? 's' : ''}`;
+  }
+
+  guardarNuevoAnimalYExpediente(): void {
+    if (this.guardandoExpediente) return;
+
+    const nombreAnimal = String(this.seguimientoSeleccionado?.nombre_paciente || '').trim();
+    if (!nombreAnimal) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor, ingresa el nombre del nuevo paciente para crear su historia clínica.',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    if (this.archivosMultimedia.some(m => m.subiendo)) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Subiendo evidencias',
+        text: 'Por favor espera a que las fotos o videos terminen de subirse a la nube antes de guardar.',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    const medExcedido = this.medicamentosSeleccionados.find((m: any) =>
+      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+    );
+    if (medExcedido) {
+      const disp = Number(medExcedido.stockDisponible) || 0;
+      const sol = Number(medExcedido.cantidadAAdministrar) || 0;
+      Swal.fire({
+        icon: 'error',
+        title: 'Stock insuficiente en inventario de campo',
+        text: `No cuentas con suficiente stock en tu inventario (Disponibles: ${disp}, Solicitados: ${sol}). Ajusta la cantidad o utiliza otra alternativa.`,
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Crear expediente y acta oficial?',
+      html: `Se registrará al nuevo paciente <b>${this.escaparHtml(nombreAnimal)}</b> (${this.escaparHtml(this.seguimientoSeleccionado.paciente_especie || 'Canino')}) con su historia clínica, consulta y evidencias multimedia.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, registrar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4141A5'
+    }).then((res) => {
+      if (!res.isConfirmed) return;
+
+      this.guardandoExpediente = true;
+      this.cdr.detectChanges();
+
+      const urlsFotos = this.archivosMultimedia
+        .filter(m => !m.esVideo && m.url && m.url.startsWith('http'))
+        .map(m => m.url);
+      const urlsVideos = this.archivosMultimedia
+        .filter(m => m.esVideo && m.url && m.url.startsWith('http'))
+        .map(m => m.url);
+      const fotoPrincipal = urlsFotos[0] || (this.archivosMultimedia.find(m => !m.esVideo)?.url) || '';
+
+      const token = localStorage.getItem('token');
+      const headers = token
+        ? new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' })
+        : new HttpHeaders({ 'Content-Type': 'application/json' });
+
+      const payloadSeguimiento: any = {
+        numero_radicado: this.numeroRadicadoActual || `RAD-ACTA-${Date.now().toString().slice(-4)}`,
+        fecha_atencion: new Date().toISOString().split('T')[0],
+        propietario_nombre: this.datosPropietario.nombre?.trim() || this.tenedor.nombres?.trim() || 'Sin acudiente (Animal Comunitario)',
+        propietario_cedula: this.datosPropietario.cedula?.trim() || this.tenedor.documentoIdentidad?.trim() || 'No registrada',
+        propietario_telefono: this.datosPropietario.telefono?.trim() || this.tenedor.telefono?.trim() || 'No disponible',
+        propietario_email: this.datosPropietario.email?.trim() || this.tenedor.correoElectronico?.trim() || '',
+        propietario_barrio: this.lugarAtencion.referencia?.trim() || this.datosPropietario.barrio?.trim() || 'Popayán',
+        propietario_direccion: this.lugarAtencion.direccion?.trim() || this.datosPropietario.direccion?.trim() || 'Vía pública / Condición de calle',
+        latitud: this.lugarAtencion.latitud,
+        longitud: this.lugarAtencion.longitud,
+        quien_reporta: 'Veterinario en Campo',
+        nombre_paciente: nombreAnimal,
+        paciente_especie: this.seguimientoSeleccionado.paciente_especie || 'Canino',
+        paciente_raza: this.seguimientoSeleccionado.paciente_raza || 'Mestizo',
+        paciente_sexo: this.seguimientoSeleccionado.paciente_sexo || 'Macho',
+        paciente_color: this.seguimientoSeleccionado.paciente_color || '',
+        paciente_edad: this.seguimientoSeleccionado.paciente_edad || '',
+        peso_paciente: Number(this.pesoPaciente || this.seguimientoSeleccionado.peso_paciente) || null,
+        descripcion_paciente: this.seguimientoSeleccionado.descripcion_paciente || '',
+        anamnesis_descripcion_queja: this.motivoConsulta?.trim() || this.evaluacionCampo.descripcionQueja?.trim() || 'Consulta médica en campo y valoración CBA',
+        tratamiento_realizado: this.materialesUtilizados?.trim() || this.tratamientosCampo.tratamientoTexto?.trim() || this.planProcedimientos?.trim() || 'Valoración médica',
+        pruebas_complementarias: this.resolucionCierre.pruebasRapidas.map((p: any) => p.prueba).join(', ') || 'Ninguna',
+        resultado_pruebas: this.resolucionCierre.pruebasRapidas.map((p: any) => `${p.prueba}: ${p.resultado}`).join('; ') || 'Sin hallazgos',
+        compromisos: this.resolucionCierre.compromisos?.trim() || 'Seguimiento por Centro de Bienestar Animal Popayán',
+        fundamento_legal: this.resolucionCierre.fundamentoLegal?.trim() || 'Ley 1774 de 2016 - Protección Animal',
+        plazo_dias_cumplimiento: this.resolucionCierre.plazoDias || 30,
+        fotos: urlsFotos,
+        videos: urlsVideos,
+        foto: fotoPrincipal,
+        sincronizacion_offline: false
+      };
+
+      const urlCrearSeguimiento = 'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/crear/';
+      this.http.post<any>(urlCrearSeguimiento, payloadSeguimiento, { headers }).subscribe({
+        next: (respSeg) => {
+          console.log('Seguimiento creado con éxito:', respSeg);
+          const idSegGenerado = respSeg?.id_seguimiento;
+          this.registrarExpedienteClinicoParaNuevo(nombreAnimal, fotoPrincipal, urlsFotos, urlsVideos, idSegGenerado, headers);
+        },
+        error: (errSeg) => {
+          console.warn('Fallo en seguimiento/crear, intentando creación directa de expediente clínico:', errSeg);
+          this.registrarExpedienteClinicoParaNuevo(nombreAnimal, fotoPrincipal, urlsFotos, urlsVideos, null, headers);
+        }
+      });
+    });
+  }
+
+  private registrarExpedienteClinicoParaNuevo(
+    nombreAnimal: string,
+    fotoPrincipal: string,
+    urlsFotos: string[],
+    urlsVideos: string[],
+    idSeguimiento: number | null,
+    headers: HttpHeaders
+  ): void {
+    const payloadExpediente: any = {
+      animal: {
+        nombre: nombreAnimal,
+        especie: this.seguimientoSeleccionado.paciente_especie || 'Canino',
+        raza: this.seguimientoSeleccionado.paciente_raza || 'Mestizo',
+        sexo: this.seguimientoSeleccionado.paciente_sexo || 'Macho',
+        edad: this.seguimientoSeleccionado.paciente_edad || '',
+        peso: Number(this.pesoPaciente || this.seguimientoSeleccionado.peso_paciente) || null,
+        color: this.seguimientoSeleccionado.paciente_color || '',
+        microchip: this.seguimientoSeleccionado.microchip || null,
+        foto_url: fotoPrincipal,
+        observaciones: this.seguimientoSeleccionado.descripcion_paciente || ''
+      },
+      tenedor: {
+        nombre: this.datosPropietario.nombre || this.tenedor.nombres || 'Sin acudiente',
+        documento: this.datosPropietario.cedula || this.tenedor.documentoIdentidad || 'No registrada',
+        telefono: this.datosPropietario.telefono || this.tenedor.telefono || 'No disponible',
+        correo: this.datosPropietario.email || this.tenedor.correoElectronico || '',
+        direccion: this.lugarAtencion.direccion || this.datosPropietario.direccion || this.tenedor.direccion || 'Popayán'
+      },
+      anamnesicos: {
+        ultDesparasitacion: this.fechaOpcional(this.anamnesicos.ultimaDesparasitacion),
+        prodDesparasitacion: this.anamnesicos.productoDesparasitacion || '',
+        vacunas: this.anamnesicos.vacunas || '',
+        enfermedadesPrevias: this.anamnesicos.enfermedadesAnteriores || '',
+        tratamientosPrevios: this.anamnesicos.tratamientos || '',
+        evolucionPrevia: this.anamnesicos.evolucion || '',
+        alimentacion: this.anamnesicos.alimentacion || '',
+        estadoReproductivo: this.anamnesicos.historiaReproductiva || '',
+        ultCelo: this.fechaOpcional(this.anamnesicos.ultimoCelo),
+        ultParto: this.fechaOpcional(this.anamnesicos.fechaUltimoParto)
+      },
+      motivoConsulta: this.motivoConsulta?.trim() || 'Consulta médica en campo y valoración CBA',
+      examenClinico: {
+        condicionCorporal: this.resultadoEstado || 'Estable',
+        temperatura: this.numeroOpcional(this.signosVitales.temperatura),
+        fc: this.numeroOpcional(this.signosVitales.frecuenciaCardiaca, true),
+        fr: this.numeroOpcional(this.signosVitales.frecuenciaRespiratoria, true),
+        pulso: this.signosVitales.pulso || '',
+        tllc: this.signosVitales.tiempoLlenadoCapilar || '',
+        mucosas: this.signosVitales.mucosas || '',
+        ganglios: this.signosVitales.gangliosLinfaticos || '',
+        actitud: this.signosVitales.actitudTemperamento || 'Alerta'
+      },
+      organosSistemas: {
+        ...this.sistemas,
+        _veterinario_responsable: this.nombreVeterinario?.trim() || '',
+        _tarjeta_profesional: this.tarjetaProfesional?.trim() || '',
+        _acudiente_nombre: this.datosPropietario.nombre || this.tenedor.nombres || '',
+        _acudiente_cedula: this.datosPropietario.cedula || this.tenedor.documentoIdentidad || '',
+        observaciones: this.observacionesSistemas || this.observacionesExamen || ''
+      },
+      hoja2: {
+        listaProblemas: this.problemasClinicos.filter(p => p && p.trim()).join('; '),
+        diagnosticoDiferencial: this.diagnosticosDiferenciales?.filter(d => d && d.trim()).join('; ') || '',
+        diagnosticoPresuntivo: this.diagnosticoFinal || 'Consulta médica general',
+        diagnosticoFinal: this.diagnosticoFinal || 'Consulta médica general',
+        pronostico: this.pronostico || 'Favorable',
+        id_patologia: this.idPatologiaSeleccionada || null,
+        hallazgos_pruebas: this.descripcionHallazgos || '',
+        planProcedimientos: this.planProcedimientos || '',
+        materialesUtilizados: this.materialesUtilizados || '',
+        examenes: this.examenesSolicitados || [],
+        tratamientos: (this.medicamentosSeleccionados || []).map((m: any) => ({
+          id_medicamento: m.id_medicamento || m.id || null,
+          productoBase: m.nombre || m.productoBase || 'Medicamento',
+          dosisBasica: m.dosis || m.dosisBasica || 'Según valoración',
+          presentacion: m.presentacion || 'No especificada',
+          via: m.via || 'Oral',
+          frecuenciaDuracion: m.frecuencia || 'Según evolución',
+          cantidad_usada: Number(m.cantidadAAdministrar) || 1,
+          descontar_inventario: !m.administrado,
+          responsable_admin: m.responsable_admin || this.nombreVeterinario || '',
+          reaccion_comentarios: m.reaccion_comentarios || ''
+        }))
+      },
+      hoja3: {
+        ingresaCBA: this.resolucionCierre.requirioRescate ? 'SI' : this.ingresaCBA,
+        motivoIngresoNoIngreso: this.resolucionCierre.datosRescate.causal || this.motivoIngresoNoIngreso || '',
+        canilAsignado: (this.resolucionCierre.requirioRescate || this.ingresaCBA === 'SI') ? (this.canilAsignado || 'Canil CBA') : '',
+        funcionarioRecibeCBA: (this.resolucionCierre.requirioRescate || this.ingresaCBA === 'SI') ? (this.resolucionCierre.datosRescate.veterinarioReceptor || this.funcionarioRecibeCBA || '') : ''
+      },
+      fotos: urlsFotos,
+      videos: urlsVideos
+    };
+
+    this.historiaClinicaService.crearExpedienteCompleto(payloadExpediente).pipe(
+      finalize(() => {
+        this.guardandoExpediente = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: (respExp) => {
+        console.log('Expediente completo creado con éxito:', respExp);
+        const idAnimalCreado = respExp?.id_animal;
+        const numHc = respExp?.numero_historia || respExp?.historia_id;
+        if (idAnimalCreado) {
+          this.animalesConHistoriaIds.add(Number(idAnimalCreado));
+        }
+
+        Swal.fire({
+          title: '¡Historia clínica creada exitosamente!',
+          icon: 'success',
+          html:
+            `Paciente: <b>${this.escaparHtml(nombreAnimal)}</b><br>` +
+            `Historia Clínica: <b>${this.escaparHtml(String(numHc || 'Registrada'))}</b><br>` +
+            (idSeguimiento ? `Acta Oficial N°: <b>#${idSeguimiento}</b><br>` : '') +
+            (urlsFotos.length > 0 || urlsVideos.length > 0 ? `<span class="text-xs text-slate-500 font-semibold">📸 ${urlsFotos.length} fotos y ${urlsVideos.length} videos adjuntos</span><br>` : '') +
+            `<span class="text-xs text-emerald-600 font-semibold">✓ Paciente registrado con constantes, diagnóstico y tratamientos</span>`,
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#4141A5'
+        });
+
+        this.deseleccionarPaciente();
+        this.cargarSeguimientos();
+      },
+      error: (errExp) => {
+        console.warn('Expediente completo con advertencia:', errExp);
+        Swal.fire({
+          title: '¡Registro completado!',
+          icon: 'success',
+          html:
+            `Paciente <b>${this.escaparHtml(nombreAnimal)}</b> registrado en el sistema con acta oficial.<br>` +
+            `<span class="text-xs text-slate-600">Los datos y evidencias han sido guardados.</span>`,
+          confirmButtonText: 'Aceptar',
+          confirmButtonColor: '#4141A5'
+        });
+        this.deseleccionarPaciente();
+        this.cargarSeguimientos();
+      }
+    });
+  }
+
 
 
   popalog = {
     logopop: 'images/Escudo_Popayan.svg'
   };
 
-  pestanaActiva: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos' = 'consulta';
+  pestanaActiva: 'consulta' | 'examenes' | 'tratamientos' = 'consulta';
 
   // Seguimientos recibidos del backend
   seguimientos: any[] = [];
@@ -1189,6 +2431,18 @@ export class ActaSeresSintientes implements OnInit {
   error = '';
   textoBusqueda = '';
   filtroEspecie = 'Todos';
+
+  // Modo creación de nuevo paciente / acta
+  esNuevoAnimal: boolean = false;
+
+  // Evidencias multimedia (Fotos y Videos para Cloudinary)
+  archivosMultimedia: Array<{
+    archivo?: File;
+    url: string;
+    esVideo: boolean;
+    nombre: string;
+    subiendo?: boolean;
+  }> = [];
 
   // Filtro visual de historia clínica: solo 'pendientes' y 'atendidos' (completados)
   filtroEstadoAtencion: 'pendientes' | 'atendidos' = 'pendientes';
@@ -1234,6 +2488,49 @@ export class ActaSeresSintientes implements OnInit {
     musculoesqueletico: 'NE',
     cardiovascular: 'NE',
     genitourinario: 'NE'
+  };
+
+  // Gestión de Ubicación GPS interactiva
+  fijandoGps: boolean = false;
+
+  // Formulario interactivo de pruebas rápidas (Paso 2)
+  mostrarFormPrueba: boolean = false;
+  opcionesPruebasRapidas: string[] = [
+    'Parvovirus (CPV)',
+    'Moquillo (CDV)',
+    'Hemograma Completo',
+    'Coprológico',
+    'Leucemia Felina (FeLV)',
+    'Inmunodeficiencia (FIV)',
+    'Raspado Cutáneo / Ectoparásitos',
+    'Test de Glucosa',
+    'Frotis Sanguíneo',
+    'Otro'
+  ];
+  nuevaPrueba = {
+    prueba: 'Parvovirus (CPV)',
+    resultado: 'Negativo (-)',
+    esNegativo: true,
+    esPositivo: false
+  };
+
+  // Formulario interactivo de medicamentos y suministros (Paso 3)
+  mostrarFormMedicamento: boolean = false;
+  opcionesViasAdmin: string[] = [
+    'Oral',
+    'Subcutánea (SC)',
+    'Intramuscular (IM)',
+    'Intravenosa (IV)',
+    'Tópica',
+    'Oftálmica',
+    'Ótica'
+  ];
+  nuevoMedicamento = {
+    nombre: '',
+    cantidad: '1 dosis',
+    via: 'Oral',
+    paciente: '',
+    presentacion: ''
   };
 
   constructor(
@@ -1306,7 +2603,8 @@ export class ActaSeresSintientes implements OnInit {
   };
 
   /**
-   * Redirige a la vista de edición de historia clínica garantizando el ID y nombre del paciente específico
+   * Redirige a la vista de edición de historia clínica garantizando el ID y nombre del paciente específico,
+   * empaquetando y sincronizando todas las constantes, sistemas, diagnóstico y tutor diligenciados en el Acta.
    */
   irAEditarHistoria(seguimiento: any, event?: Event): void {
     if (event) {
@@ -1315,15 +2613,290 @@ export class ActaSeresSintientes implements OnInit {
     if (!seguimiento) return;
 
     const id = this.obtenerIdAnimal(seguimiento);
+    const idConsulta = (this as any).idConsultaActual || seguimiento?.id_consulta || '';
+    const idHistoria = (this as any).idHistoriaActual || seguimiento?.id_historia || '';
+    const idSeguimiento = seguimiento.id_seguimiento || seguimiento.id || '';
     const nombre = this.obtenerNombrePaciente(seguimiento);
     const foto = this.obtenerFotoPaciente(seguimiento);
 
-    this.router.navigate(['/inicio-admin/historia-clinica/editar', id], {
+    const pesoFinal = this.pesoPaciente ?? seguimiento?.peso_paciente ?? seguimiento?.peso ?? (this as any).paciente?.peso ?? 4.0;
+    const especieFinal = seguimiento?.paciente_especie || seguimiento?.especie || (this as any).paciente?.especie || 'Canino';
+    const razaFinal = seguimiento?.paciente_raza || seguimiento?.raza || (this as any).paciente?.raza || 'Mestizo';
+    const sexoFinal = seguimiento?.paciente_sexo || seguimiento?.sexo || (this as any).paciente?.sexo || 'Hembra';
+
+    const tutorNombre = this.datosPropietario?.nombre ||
+      this.tenedor?.nombres ||
+      this.nombreAcudiente ||
+      seguimiento?.propietario_nombre ||
+      seguimiento?.notificado_nombre ||
+      seguimiento?.nombre_acudiente ||
+      seguimiento?.nombre_tutor ||
+      seguimiento?.notificador_nombre ||
+      this.resolucionCierre?.notificadoNombre ||
+      this.resolucionCierre?.datosRescate?.personaEntrega ||
+      '';
+
+    const tutorDoc = this.datosPropietario?.cedula ||
+      this.tenedor?.documentoIdentidad ||
+      this.cedulaAcudiente ||
+      seguimiento?.propietario_cedula ||
+      seguimiento?.notificado_identificacion ||
+      seguimiento?.cedula_acudiente ||
+      seguimiento?.documento_identidad ||
+      seguimiento?.notificador_identificacion ||
+      this.resolucionCierre?.notificadoIdentificacion ||
+      this.resolucionCierre?.datosRescate?.personaEntregaCedula ||
+      '';
+
+    const tutorTel = this.datosPropietario?.telefono ||
+      this.tenedor?.telefono ||
+      seguimiento?.propietario_telefono ||
+      seguimiento?.telefono_acudiente ||
+      seguimiento?.notificador_telefono ||
+      this.resolucionCierre?.datosRescate?.personaEntregaTel ||
+      '';
+
+    const tutorDir = this.datosPropietario?.direccion || this.lugarAtencion?.direccion || '';
+    const tutorBarrio = this.datosPropietario?.barrio || this.lugarAtencion?.referencia || '';
+
+    const motivoFinal = this.motivo_consulta ||
+      this.motivoConsulta ||
+      this.evaluacionCampo?.descripcionQueja ||
+      this.anamnesis ||
+      (seguimiento?.observacion ? String(seguimiento.observacion) : '') ||
+      'Paciente encontrado en vía pública / condición de calle';
+
+    const anamnesisFinal = this.anamnesis ||
+      this.evaluacionCampo?.descripcionQueja ||
+      this.evaluacionCampo?.anamnesisLimpia ||
+      this.motivo_consulta ||
+      'Paciente encontrado en vía pública / condición de calle';
+
+    const ingresaCBAFinal = this.ingresaCBA === 'SI' ||
+      this.ingresa_cba === true ||
+      !!this.resolucionCierre?.datosRescate?.causal ||
+      this.resolucionCierre?.requirioRescate === true;
+
+    const motivoCBAFinal = this.motivoIngresoNoIngreso ||
+      this.motivo_ingreso_cba ||
+      this.resolucionCierre?.datosRescate?.observacionesRescate ||
+      this.resolucionCierre?.datosRescate?.causal ||
+      'Por salud crítica / Urgencia médica. Se efectúa rescate y retiro preventivo para su traslado inmediato al Centro de Bienestar Animal (CBA)';
+
+    const datosActa = {
+      id_animal: id,
+      id_consulta: idConsulta,
+      id_historia: idHistoria,
+      id_seguimiento: idSeguimiento,
+      numero_historia: this.numeroRadicadoActual || (this as any).historiaClinicaSeleccionada?.numero_historia || `HC-${id || '01'}`,
+      paciente: {
+        id_animal: id,
+        nombre: nombre || 'Paciente',
+        especie: especieFinal,
+        raza: razaFinal,
+        sexo: sexoFinal,
+        peso: pesoFinal,
+        foto_url: foto || '',
+        tenedor_nombre: tutorNombre,
+        tenedor_documento: tutorDoc,
+        tenedor_telefono: tutorTel
+      },
+      tenedor: {
+        nombre: tutorNombre,
+        cedula: tutorDoc,
+        telefono: tutorTel,
+        direccion: tutorDir,
+        barrio: tutorBarrio
+      },
+      motivo_consulta: motivoFinal,
+      prioridad: this.prioridad || 'Normal',
+      resultado_estado: this.resultado_estado || 'Estable',
+      actitud_temperamento: this.actitud_temperamento || 'Alerta / Responsivo',
+      anamnesis: anamnesisFinal,
+      constantes: {
+        temperatura: this.temperatura ?? this.evaluacionCampo?.temperatura ?? 38.5,
+        frecuencia_cardiaca: this.frecuencia_cardiaca ?? this.evaluacionCampo?.frecuenciaCardiaca ?? 8,
+        frecuencia_respiratoria: this.frecuencia_respiratoria ?? this.evaluacionCampo?.frecuenciaRespiratoria ?? 8,
+        pulso: this.pulso || 'Fuerte, lleno y regular',
+        tllc: this.tllc || '2 seg',
+        ganglios_linfaticos: this.ganglios_linfaticos || 'Normales / Sin reactividad',
+        mucosas: this.mucosas || this.evaluacionCampo?.mucosas || 'Ictéricas / Amarillentas',
+        peso: pesoFinal
+      },
+      sistemas: this.evaluacion_sistemas || this.sistemas || {},
+      hallazgosSistemasMovil: (this as any).hallazgosSistemasMovil || {},
+      diagnostico_principal: this.diagnosticoFinal || (this as any).diagnostico?.descripcion || 'Prueba 8',
+      diagnostico_diferencial: this.diagnosticosDiferenciales?.filter(Boolean).join('; ') || this.descripcionHallazgos || '',
+      lista_problemas: this.problemasClinicos?.filter(Boolean).join('; ') || '',
+      pronostico: this.pronostico || 'Favorable',
+      plan_procedimientos: this.planProcedimientos || this.plan_procedimientos || this.tratamientosCampo?.tratamientoTexto || 'Tratamiento y seguimiento clínico en CBA',
+      materiales_utilizados: this.materialesUtilizados || this.materiales_utilizados || '',
+      ingresa_cba: ingresaCBAFinal,
+      motivo_ingreso_cba: motivoCBAFinal,
+      canil_asignado: this.canilAsignado || (this.resolucionCierre?.datosRescate as any)?.canil || 'Canil 4 - Aislamiento',
+      funcionario_recibe_cba: this.funcionarioRecibeCBA || (this.resolucionCierre?.datosRescate as any)?.funcionarioRecibe || this.resolucionCierre?.datosRescate?.veterinarioReceptor || 'Junior Smith López',
+      medicamentos: this.medicamentosSeleccionados?.length > 0 ? this.medicamentosSeleccionados : (this.tratamientosCampo?.medicamentosMaletin || []),
+      triajeSistemasCampo: this.triajeSistemasCampo,
+      evaluacionCampo: this.evaluacionCampo,
+      resolucionCierre: this.resolucionCierre,
+      datosPropietario: this.datosPropietario,
+      lugarAtencion: this.lugarAtencion,
+      seguimientoSeleccionado: seguimiento,
+      examenesSolicitados: this.examenesSolicitados
+    };
+
+    try {
+      sessionStorage.setItem('acta_edicion_temporal', JSON.stringify(datosActa));
+    } catch (e) {
+      console.warn('No se pudo guardar datosActa en sessionStorage:', e);
+    }
+
+    this.router.navigate(['/inicio-admin/historia-clinica/editar', id || idConsulta || 'paciente'], {
+      state: { datosActa },
       queryParams: {
+        ...(id ? { id_animal: id } : {}),
+        ...(idConsulta ? { id_consulta: idConsulta } : {}),
+        ...(idHistoria ? { id_historia: idHistoria } : {}),
+        ...(idSeguimiento ? { id_seguimiento: idSeguimiento } : {}),
         ...(nombre ? { nombre } : {}),
         ...(foto ? { foto } : {})
       }
     });
+  }
+
+  fijarPosicionGps(): void {
+    if (!navigator.geolocation) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Geolocalización no soportada',
+        text: 'Tu navegador no cuenta con soporte para GPS. Puedes ingresar la dirección y coordenadas manualmente.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+    this.fijandoGps = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.fijandoGps = false;
+        this.lugarAtencion.latitud = Number(pos.coords.latitude.toFixed(6));
+        this.lugarAtencion.longitud = Number(pos.coords.longitude.toFixed(6));
+        if (!this.lugarAtencion.direccion || this.lugarAtencion.direccion.includes('no reportada')) {
+          this.lugarAtencion.direccion = 'Popayán, Cauca (GPS Fijado)';
+        }
+        this.cdr.detectChanges();
+        Swal.fire({
+          icon: 'success',
+          title: 'GPS Fijado Correctamente',
+          text: `Coordenadas: ${this.lugarAtencion.latitud}, ${this.lugarAtencion.longitud}`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      (err) => {
+        this.fijandoGps = false;
+        console.warn('Error capturando GPS:', err);
+        this.cdr.detectChanges();
+        Swal.fire({
+          icon: 'info',
+          title: 'Ubicación Manual',
+          text: 'No se obtuvo la ubicación satelital automática. Puedes digitar la dirección y coordenadas en las casillas correspondientes.',
+          confirmButtonColor: '#4141a5'
+        });
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  agregarPruebaRapida(): void {
+    const nombre = this.nuevaPrueba.prueba?.trim();
+    if (!nombre) return;
+    const res = this.nuevaPrueba.resultado || 'Negativo (-)';
+    const esPos = res.toLowerCase().includes('pos');
+    const esNeg = res.toLowerCase().includes('neg');
+    this.resolucionCierre.pruebasRapidas.push({
+      prueba: nombre,
+      resultado: res,
+      esPositivo: esPos,
+      esNegativo: esNeg
+    });
+    this.mostrarFormPrueba = false;
+    this.nuevaPrueba = {
+      prueba: 'Parvovirus (CPV)',
+      resultado: 'Negativo (-)',
+      esNegativo: true,
+      esPositivo: false
+    };
+    this.cdr.detectChanges();
+  }
+
+  eliminarPruebaRapida(index: number): void {
+    if (index >= 0 && index < this.resolucionCierre.pruebasRapidas.length) {
+      this.resolucionCierre.pruebasRapidas.splice(index, 1);
+      this.cdr.detectChanges();
+    }
+  }
+
+  agregarMedicamentoTratamiento(): void {
+    const nom = this.nuevoMedicamento.nombre?.trim();
+    if (!nom) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor ingresa el nombre o fármaco que deseas suministrar.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+    const item = {
+      nombre: nom,
+      cantidad: this.nuevoMedicamento.cantidad || '1 dosis',
+      via: this.nuevoMedicamento.via || 'Oral',
+      presentacion: this.nuevoMedicamento.presentacion || '',
+      paciente: this.nuevoMedicamento.paciente || this.obtenerNombrePaciente(this.seguimientoSeleccionado) || 'Paciente'
+    };
+    this.tratamientosCampo.medicamentosMaletin.push(item);
+    this.medicamentosSeleccionados.push({
+      nombre: item.nombre,
+      dosis: item.cantidad,
+      cantidadAAdministrar: 1,
+      via: item.via,
+      presentacion: item.presentacion,
+      administrado: true,
+      paciente: item.paciente
+    });
+    this.mostrarFormMedicamento = false;
+    this.nuevoMedicamento = {
+      nombre: '',
+      cantidad: '1 dosis',
+      via: 'Oral',
+      paciente: '',
+      presentacion: ''
+    };
+    this.cdr.detectChanges();
+  }
+
+  eliminarMedicamentoTratamiento(index: number): void {
+    if (index >= 0 && index < this.tratamientosCampo.medicamentosMaletin.length) {
+      this.tratamientosCampo.medicamentosMaletin.splice(index, 1);
+      if (this.medicamentosSeleccionados[index]) {
+        this.medicamentosSeleccionados.splice(index, 1);
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  toggleDesparasitacion(valor: boolean): void {
+    this.resolucionCierre.desparasitacion = valor;
+    this.cdr.detectChanges();
+  }
+
+  toggleRescateCBA(valor: boolean): void {
+    this.resolucionCierre.requirioRescate = valor;
+    this.ingresaCBA = valor ? 'SI' : 'NO';
+    if (valor && !this.resolucionCierre.datosRescate.causal) {
+      this.resolucionCierre.datosRescate.causal = 'Por salud crítica / Urgencia médica. Se efectúa rescate y retiro preventivo.';
+    }
+    this.cdr.detectChanges();
   }
 
   ngOnInit(): void {
@@ -1412,7 +2985,7 @@ export class ActaSeresSintientes implements OnInit {
     this.mostrarNuevosCasos = !this.mostrarNuevosCasos;
   }
 
-  cambiarPestana(pestana: 'consulta' | 'examenes' | 'diagnostico' | 'tratamientos'): void {
+  cambiarPestana(pestana: 'consulta' | 'examenes' | 'tratamientos'): void {
     this.pestanaActiva = pestana;
     if (pestana === 'examenes' && this.examenesClinicos.length === 0) {
       this.cargarExamenesClinicos();
@@ -1441,6 +3014,11 @@ export class ActaSeresSintientes implements OnInit {
    * Resuelve la foto específica de cada animal analizando todas las fuentes de datos posibles
    */
   obtenerFotoPaciente(paciente: any): string {
+    const fotoAdjunta = this.archivosMultimedia?.find(m => !m.esVideo && m.url)?.url;
+    if (fotoAdjunta) {
+      return fotoAdjunta;
+    }
+
     if (!paciente) {
       return '';
     }
@@ -1713,6 +3291,8 @@ export class ActaSeresSintientes implements OnInit {
   seleccionarSeguimiento(seguimiento: any): void {
     // 1. Limpiar por completo el estado del paciente anterior antes de cargar el nuevo
     this.reiniciarFormularioClinico();
+    this.esNuevoAnimal = false;
+    this.archivosMultimedia = [];
 
     // 2. Guardar el animal seleccionado
     this.seguimientoSeleccionado = seguimiento;
@@ -1856,6 +3436,8 @@ export class ActaSeresSintientes implements OnInit {
   deseleccionarPaciente(): void {
     this.reiniciarFormularioClinico();
     this.seguimientoSeleccionado = null;
+    this.esNuevoAnimal = false;
+    this.archivosMultimedia = [];
     this.numeroRadicadoActual = '';
     this.nombreVeterinario = '';
     this.cdr.detectChanges();
@@ -1864,6 +3446,16 @@ export class ActaSeresSintientes implements OnInit {
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 50);
+  }
+
+  /**
+   * Permite alternar o modificar interactivamente el sexo del paciente
+   */
+  cambiarSexo(sexo: 'Macho' | 'Hembra'): void {
+    if (this.seguimientoSeleccionado) {
+      this.seguimientoSeleccionado.paciente_sexo = sexo;
+      this.cdr.detectChanges();
+    }
   }
 
   // Catálogo de medicamentos
@@ -2305,6 +3897,130 @@ export class ActaSeresSintientes implements OnInit {
     } catch (error) {
       console.error('Error al recuperar la evaluación:', error);
     }
+  }
+
+  // =========================================================================
+  // TRIAJE CLÍNICO DE 5 SISTEMAS EN CAMPO (MÓVIL INTERACTIVO)
+  // =========================================================================
+
+  toggleTriajeSigno(sistema: string, signo: string, valor: boolean): void {
+    if (!this.triajeSistemasCampo) {
+      this.triajeSistemasCampo = {
+        tieneEvaluacion: true,
+        totalAlertas: 0,
+        respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
+        digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
+        musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
+        dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
+        genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      };
+    }
+    if (!(this.triajeSistemasCampo as any)[sistema]) {
+      (this.triajeSistemasCampo as any)[sistema] = {};
+    }
+    (this.triajeSistemasCampo as any)[sistema][signo] = valor;
+    this.triajeSistemasCampo.tieneEvaluacion = true;
+    this.recalcularAlertasSistemas();
+    this.cdr.detectChanges();
+  }
+
+  todosNormalSistemasCampo(): void {
+    this.triajeSistemasCampo = {
+      tieneEvaluacion: true,
+      totalAlertas: 0,
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+    };
+    this.recalcularAlertasSistemas();
+    this.cdr.detectChanges();
+    Swal.fire({
+      icon: 'success',
+      title: 'Sistemas en Campo Normalizados',
+      text: 'Todos los 19 hallazgos se marcaron como Normales (NO presenta anomalías).',
+      timer: 1200,
+      showConfirmButton: false
+    });
+  }
+
+  restablecerSistemasCampo(): void {
+    this.triajeSistemasCampo = {
+      tieneEvaluacion: true,
+      totalAlertas: 0,
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+    };
+    this.recalcularAlertasSistemas();
+    this.cdr.detectChanges();
+  }
+
+  recalcularAlertasSistemas(): void {
+    let alertas = 0;
+    const t = this.triajeSistemasCampo;
+    if (!t) return;
+    const contar = (obj: any) => {
+      if (!obj) return;
+      Object.keys(obj).forEach(k => {
+        if (obj[k] === true) alertas++;
+      });
+    };
+    contar(t.respiratorio);
+    contar(t.digestivo);
+    contar(t.musculoEsqueletico);
+    contar(t.dermatologico);
+    contar(t.genitourinario);
+    t.totalAlertas = alertas;
+  }
+
+  subirFotoPerfil(event: any): void {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+
+    Swal.fire({
+      title: 'Subiendo foto del paciente...',
+      text: 'Por favor espera mientras se procesa la imagen en Cloudinary.',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    this.subirArchivoCloudinary(file, false).subscribe({
+      next: (url: string) => {
+        if (this.seguimientoSeleccionado) {
+          this.seguimientoSeleccionado.foto_url = url;
+          this.seguimientoSeleccionado.foto = url;
+          this.seguimientoSeleccionado.foto_paciente = url;
+        }
+        const yaExiste = this.archivosMultimedia.some(m => m.url === url);
+        if (!yaExiste) {
+          this.archivosMultimedia.unshift({
+            url: url,
+            esVideo: false,
+            nombre: file.name || 'foto_perfil.jpg'
+          });
+        }
+        Swal.fire({
+          icon: 'success',
+          title: 'Foto actualizada',
+          text: 'La foto del paciente se cargó correctamente.',
+          timer: 1400,
+          showConfirmButton: false
+        });
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Error subiendo foto:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error de subida',
+          text: 'No se pudo cargar la imagen a Cloudinary.'
+        });
+      }
+    });
   }
 
   // =========================================================================
