@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
-import { environment } from '../../environments/environment';
+import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 
 export interface HistoriaClinicaItem {
   id_historia: number;
@@ -100,7 +100,7 @@ export class HistoriaClinicaListComponent implements OnInit {
     peso: null as number | null,
     diagnostico: '',
     planTratamiento: '',
-    veterinario: 'SMITH ORDOÑEZ'
+    veterinario: 'Médico Veterinario CBA'
   };
 
   // Modal Rápido de Nuevo Paciente + Tutor (Estilo CP-Vet)
@@ -139,7 +139,26 @@ export class HistoriaClinicaListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.nuevoRegistroHistorial.veterinario = this.obtenerVeterinarioSesion();
     this.cargarHistorias();
+  }
+
+  obtenerVeterinarioSesion(): string {
+    try {
+      const rawUser = localStorage.getItem('user') || localStorage.getItem('usuario') || localStorage.getItem('currentUser');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        const nombre = parsed?.nombre || parsed?.nombres || parsed?.full_name || parsed?.username;
+        if (nombre && String(nombre).trim()) {
+          return String(nombre).trim();
+        }
+      }
+      const directName = localStorage.getItem('nombre_usuario') || localStorage.getItem('username');
+      if (directName && directName.trim()) {
+        return directName.trim();
+      }
+    } catch {}
+    return 'Médico Veterinario CBA';
   }
 
   /**
@@ -199,6 +218,15 @@ export class HistoriaClinicaListComponent implements OnInit {
     // Mapeo e hidratación con datos de animales si existen
     this.historias = items.map((h: any) => {
       const animalInfo = this.mapaAnimales.get(Number(h.id_animal)) || {};
+      const rawFoto = animalInfo.foto_url ||
+                      animalInfo.foto ||
+                      h.animal?.foto_url ||
+                      h.animal?.fotoUrl ||
+                      h.animal?.foto ||
+                      h.animal?.imagen ||
+                      h.animal_foto ||
+                      h.foto_url ||
+                      '';
       return {
         id_historia: h.id_historia,
         id_animal: h.id_animal,
@@ -220,7 +248,7 @@ export class HistoriaClinicaListComponent implements OnInit {
         animal_nombre: animalInfo.nombre || h.animal?.nombre || `Animal #${h.id_animal}`,
         animal_especie: animalInfo.especie || h.animal?.especie || 'Desconocida',
         animal_raza: animalInfo.raza || h.animal?.raza || 'Mestizo',
-        animal_foto: animalInfo.foto_url || animalInfo.foto || h.animal?.fotoUrl || '',
+        animal_foto: this.normalizarUrlFoto(rawFoto),
         animal_sexo: animalInfo.sexo || h.animal?.sexo || '',
         animal_peso: animalInfo.peso ?? h.animal?.peso ?? null
       };
@@ -240,20 +268,55 @@ export class HistoriaClinicaListComponent implements OnInit {
   }
 
   /**
+   * Normaliza URLs de fotos de animales (relativas de Django en la nube, Cloudinary, base64)
+   */
+  normalizarUrlFoto(url: any): string {
+    if (!url || typeof url !== 'string' || !url.trim()) return '';
+    const u = url.trim();
+    if (
+      u.startsWith('http://') ||
+      u.startsWith('https://') ||
+      u.startsWith('data:image/') ||
+      u.startsWith('blob:')
+    ) {
+      return u;
+    }
+    const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
+    if (u.startsWith('/media/')) {
+      return `${baseUrl}${u}`;
+    }
+    if (u.startsWith('media/')) {
+      return `${baseUrl}/${u}`;
+    }
+    if (u.startsWith('/')) {
+      return `${baseUrl}${u}`;
+    }
+    return `${baseUrl}/media/${u}`;
+  }
+
+  /**
    * Precarga mapa de animales para mostrar nombres y especies reales en la tabla
    */
   private precargarDatosAnimales(callback: () => void): void {
     const urlAnimales = environment.apiUrlAnimales || `${environment.apiBaseUrl}/animales/animales/`;
     this.http.get<any>(urlAnimales, { headers: this.authHeaders }).subscribe({
       next: (resp) => {
-        const lista = Array.isArray(resp) ? resp : (resp?.results || []);
+        let lista: any[] = [];
+        if (Array.isArray(resp)) {
+          lista = resp;
+        } else if (Array.isArray(resp?.results)) {
+          lista = resp.results;
+        } else if (Array.isArray(resp?.data)) {
+          lista = resp.data;
+        }
         lista.forEach((a: any) => {
           if (a?.id_animal) {
+            const rawFoto = a.foto_url || a.fotoUrl || a.foto || a.imagen || a.foto_paciente || '';
             this.mapaAnimales.set(Number(a.id_animal), {
               nombre: a.nombre,
               especie: a.raza_nombre ? a.raza_nombre : (a.id_raza?.id_especie?.nombre || 'Animal'),
               raza: a.raza_nombre || a.id_raza?.nombre || 'Mestizo',
-              foto_url: a.foto_url,
+              foto_url: this.normalizarUrlFoto(rawFoto),
               sexo: a.sexo,
               peso: a.peso
             });
@@ -361,6 +424,19 @@ export class HistoriaClinicaListComponent implements OnInit {
         const rawConsultas = Array.isArray(data?.consultas_anteriores) ? data.consultas_anteriores : [];
         const animalData = data?.animal || {};
 
+        // Hidratar o refrescar la foto y datos del animal en el modal si vienen del expediente
+        const fotoReal = this.normalizarUrlFoto(animalData.foto_url || animalData.fotoUrl || animalData.foto || animalData.imagen || '');
+        if (fotoReal && this.historiaSeleccionada) {
+          this.historiaSeleccionada.animal_foto = fotoReal;
+          historia.animal_foto = fotoReal;
+        }
+        if (animalData.nombre && this.historiaSeleccionada) {
+          if (!this.historiaSeleccionada.animal_nombre || this.historiaSeleccionada.animal_nombre.startsWith('Animal #')) {
+            this.historiaSeleccionada.animal_nombre = animalData.nombre;
+            historia.animal_nombre = animalData.nombre;
+          }
+        }
+
         if (rawConsultas.length > 0) {
           this.consultasHistorial = rawConsultas.map((c: any, index: number) => {
             const fechaStr = c.fecha_hora || c.fechaHora || c.fecha || new Date().toISOString();
@@ -368,7 +444,7 @@ export class HistoriaClinicaListComponent implements OnInit {
               id_consulta: c.id_consulta || (index + 1),
               titulo: this.normalizarTituloConsulta(c.motivo_consulta || c.tipo || 'CONSULTA GENERAL'),
               peso: c.peso ?? (c.constantes?.peso ?? animalData.peso ?? 3.0),
-              temperatura: c.temperatura ?? (c.constantes?.temperatura ?? 3.0),
+              temperatura: c.temperatura ?? (c.constantes?.temperatura ?? 38.5),
               frecuencia_cardiaca: c.frecuencia_cardiaca ?? (c.constantes?.frecuencia_cardiaca ?? 110),
               frecuencia_respiratoria: c.frecuencia_respiratoria ?? (c.constantes?.frecuencia_respiratoria ?? 24),
               diagnostico: c.diagnostico_principal || c.diagnosticoPrincipal || c.diagnostico || 'Evaluación médica general estable.',
@@ -378,7 +454,7 @@ export class HistoriaClinicaListComponent implements OnInit {
               fecha_formateada: this.formatearFechaLarga(fechaStr),
               hora_formateada: this.formatearHora(fechaStr),
               mes_ano: this.formatearMesAno(fechaStr),
-              veterinario: c.veterinario_nombre || c.usuario_nombre || c.veterinario || 'SMITH ORDOÑEZ',
+              veterinario: c.veterinario_nombre || c.usuario_nombre || c.veterinario || this.obtenerVeterinarioSesion(),
               prioridad: c.prioridad || 'Normal',
               expandido: false
             };
@@ -391,7 +467,7 @@ export class HistoriaClinicaListComponent implements OnInit {
               id_consulta: 1,
               titulo: 'CONSULTA GENERAL',
               peso: historia.animal_peso ? Number(historia.animal_peso) : 3.0,
-              temperatura: 3.0,
+              temperatura: 38.5,
               frecuencia_cardiaca: 110,
               frecuencia_respiratoria: 24,
               diagnostico: 'Apertura de expediente e ingreso de paciente.',
@@ -401,7 +477,7 @@ export class HistoriaClinicaListComponent implements OnInit {
               fecha_formateada: this.formatearFechaLarga(fechaApertura),
               hora_formateada: this.formatearHora(fechaApertura),
               mes_ano: this.formatearMesAno(fechaApertura),
-              veterinario: 'SMITH ORDOÑEZ',
+              veterinario: this.obtenerVeterinarioSesion(),
               prioridad: 'Normal',
               expandido: false
             }
@@ -420,7 +496,7 @@ export class HistoriaClinicaListComponent implements OnInit {
             id_consulta: 1,
             titulo: 'CONSULTA GENERAL',
             peso: historia.animal_peso ? Number(historia.animal_peso) : 3.0,
-            temperatura: 3.0,
+            temperatura: 38.5,
             frecuencia_cardiaca: 110,
             frecuencia_respiratoria: 24,
             diagnostico: 'Consulta médica general.',
@@ -430,7 +506,7 @@ export class HistoriaClinicaListComponent implements OnInit {
             fecha_formateada: this.formatearFechaLarga(fechaFallback),
             hora_formateada: this.formatearHora(fechaFallback),
             mes_ano: this.formatearMesAno(fechaFallback),
-            veterinario: 'SMITH ORDOÑEZ',
+            veterinario: this.obtenerVeterinarioSesion(),
             prioridad: 'Normal',
             expandido: false
           }
@@ -519,6 +595,14 @@ export class HistoriaClinicaListComponent implements OnInit {
               canil_asignado: data.hoja3?.canilAsignado || '',
               funcionario_recibe: data.hoja3?.funcionarioRecibeCBA || ''
             };
+
+            // Hidratar foto en historiaSeleccionada si data.animal la aporta
+            if (data.animal) {
+              const fotoDetalle = this.normalizarUrlFoto(data.animal.fotoUrl || data.animal.foto_url || data.animal.foto || data.animal.imagen || '');
+              if (fotoDetalle && this.historiaSeleccionada && !this.historiaSeleccionada.animal_foto) {
+                this.historiaSeleccionada.animal_foto = fotoDetalle;
+              }
+            }
           }
           this.cdr.detectChanges();
         },
@@ -590,13 +674,13 @@ export class HistoriaClinicaListComponent implements OnInit {
       tipo: tipo,
       motivo: tipo,
       prioridad: 'Normal',
-      temperatura: 3.0,
+      temperatura: 38.5,
       frecuenciaCardiaca: 110,
       frecuenciaRespiratoria: 24,
       peso: this.historiaSeleccionada?.animal_peso ? Number(this.historiaSeleccionada.animal_peso) : 3.0,
       diagnostico: '',
       planTratamiento: '',
-      veterinario: 'SMITH ORDOÑEZ'
+      veterinario: this.obtenerVeterinarioSesion()
     };
     this.modalCrearEnHistorial = true;
   }
@@ -649,7 +733,7 @@ export class HistoriaClinicaListComponent implements OnInit {
           id_consulta: resp?.consulta_id || resp?.id_consulta || Date.now(),
           titulo: this.normalizarTituloConsulta(this.nuevoRegistroHistorial.tipo),
           peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada?.animal_peso) || 3.0,
-          temperatura: this.nuevoRegistroHistorial.temperatura || 3.0,
+          temperatura: this.nuevoRegistroHistorial.temperatura || 38.5,
           frecuencia_cardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca || 110,
           frecuencia_respiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria || 24,
           diagnostico: this.nuevoRegistroHistorial.diagnostico || 'Atención registrada con éxito.',
@@ -659,7 +743,7 @@ export class HistoriaClinicaListComponent implements OnInit {
           fecha_formateada: this.formatearFechaLarga(fechaAhora),
           hora_formateada: this.formatearHora(fechaAhora),
           mes_ano: this.formatearMesAno(fechaAhora),
-          veterinario: this.nuevoRegistroHistorial.veterinario || 'SMITH ORDOÑEZ',
+          veterinario: this.nuevoRegistroHistorial.veterinario || this.obtenerVeterinarioSesion(),
           prioridad: this.nuevoRegistroHistorial.prioridad || 'Normal',
           expandido: false
         };
