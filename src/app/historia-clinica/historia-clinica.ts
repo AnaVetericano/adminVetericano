@@ -110,6 +110,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   mensajeMedicamentos: string = '';
   medicamentosCatalogo: any[] = [];
   medicamentosSeleccionados: any[] = [];
+  tratamientosEliminadosIds: number[] = [];
   mapaStockPorId: Map<number, number> = new Map();
   mapaStockPorNombre: Map<string, number> = new Map();
   materialesUtilizados: string = '';
@@ -129,62 +130,60 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   // MODELOS ESTRUCTURADOS DEL ACTA MÓVIL (TRIAJE EN CAMPO Y CIERRE CBA)
   // =========================================================================
   triajeSistemasCampo = {
-    tieneEvaluacion: true,
-    totalAlertas: 5,
+    tieneEvaluacion: false,
+    totalAlertas: 0,
     respiratorio: {
-      moco: true as boolean | null,
+      moco: false as boolean | null,
       dificultadRespirar: false as boolean | null,
       tos: false as boolean | null,
       laganeo: false as boolean | null
     },
     digestivo: {
       vomito: false as boolean | null,
-      diarrea: true as boolean | null,
+      diarrea: false as boolean | null,
       desnutrido: false as boolean | null,
       deshidratado: false as boolean | null
     },
     musculoEsqueletico: {
       caidaPatas: false as boolean | null,
-      cojera: true as boolean | null,
+      cojera: false as boolean | null,
       heridaAbierta: false as boolean | null,
       gusanosMiasis: false as boolean | null,
       postrado: false as boolean | null
     },
     dermatologico: {
-      peladuras: true as boolean | null,
+      peladuras: false as boolean | null,
       heridasSangre: false as boolean | null,
       pulgasGarrapatas: false as boolean | null
     },
     genitourinario: {
       masaSecrecion: false as boolean | null,
-      gestante: true as boolean | null,
+      gestante: false as boolean | null,
       enCelo: false as boolean | null
     }
   };
 
   evaluacionCampo = {
-    frecuenciaCardiaca: 8 as number | null,
-    frecuenciaRespiratoria: 8 as number | null,
-    temperatura: 38.5 as number | null,
-    mucosas: 'Ictéricas / Amarillentas',
-    anamnesisLimpia: 'Paciente encontrado en vía pública / condición de calle',
+    frecuenciaCardiaca: null as number | null,
+    frecuenciaRespiratoria: null as number | null,
+    temperatura: null as number | null,
+    mucosas: '',
+    anamnesisLimpia: '',
     quejaCompleta: '',
-    descripcionQueja: 'Paciente encontrado en vía pública / condición de calle'
+    descripcionQueja: ''
   };
 
   resolucionCierre = {
-    desparasitacion: true as boolean | null,
-    pruebasRapidas: [
-      { prueba: 'Viruela', resultado: 'Positivo (+)', esPositivo: true, esNegativo: false }
-    ] as Array<{ prueba: string; resultado: string; esPositivo: boolean; esNegativo: boolean }>,
-    requirioRescate: true,
+    desparasitacion: null as boolean | null,
+    pruebasRapidas: [] as Array<{ prueba: string; resultado: string; esPositivo: boolean; esNegativo: boolean }>,
+    requirioRescate: false,
     fundamentoLegal: 'Ley 1774 de 2016 / Ley 84 de 1989 / Formato de Rescate F-GS-C01-03-33',
     plazoDias: null as number | null,
-    compromisos: 'Garantizar suministro constante de agua potable y alimento balanceado. Custodia, tratamiento y recuperación médica en Centro de Bienestar Animal (CBA).',
-    observacionesCierre: 'Retiro preventivo ejecutado por salud crítica y vulnerabilidad en vía pública.',
+    compromisos: '',
+    observacionesCierre: '',
     datosRescate: {
-      causal: 'Por salud crítica / Urgencia médica',
-      personaEntrega: 'Sin acudiente / Rescate en vía pública',
+      causal: '',
+      personaEntrega: '',
       personaEntregaCedula: '',
       personaEntregaTel: '',
       barrio: '',
@@ -194,10 +193,23 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       testigo2: '',
       testigo2Cedula: '',
       testigo2Tel: '',
-      observacionesRescate: 'Por salud crítica / Urgencia médica. Se efectúa rescate y retiro preventivo de Rorito (Canino) para su traslado inmediato al Centro de Bienestar Animal (CBA).',
-      veterinarioReceptor: 'Junior Smith López',
-      fechaHoraRecepcion: '2026-10-31 10:30'
+      observacionesRescate: '',
+      veterinarioReceptor: '',
+      fechaHoraRecepcion: ''
     }
+  };
+
+  planSanitario = {
+    vacunas: '',
+    estadoRabia: 'Vigente / Aplicada',
+    estadoPolivalente: 'Al Día',
+    estadoRefuerzo: 'Programada',
+    ultimaDesparasitacion: '',
+    productoDesparasitacion: 'Praziquantel + Pamoato de Pirantel + Febantel',
+    estadoDesparasitacion: 'Suministrada',
+    estadoEctoparasitos: 'Tratado',
+    enfermedadesAnteriores: '',
+    historiaReproductiva: ''
   };
 
   datosPropietario = {
@@ -533,6 +545,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.descripcionHallazgos = '';
         this.observaciones_examen = '';
         this.medicamentosSeleccionados = [];
+        this.tratamientosEliminadosIds = [];
         this.examenesSolicitados = [];
         this.pronostico = 'Favorable';
         this.planProcedimientos = '';
@@ -1097,7 +1110,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   get diagnosticoFinal(): string {
-    return this.formHistoria?.get('diagnosticoPrincipal')?.value || this.historiaOriginal?.diagnostico_principal || 'Prueba 8';
+    return this.formHistoria?.get('diagnosticoPrincipal')?.value || this.historiaOriginal?.diagnostico_principal || '';
   }
   set diagnosticoFinal(val: string) {
     this.actualizarDiagnosticoFinal(val);
@@ -1179,9 +1192,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       numero_historia: seg?.numero_radicado || `HC-${seg?.id_animal || '103'}`,
       paciente: {
         id_animal: seg?.id_animal || 1,
-        nombre: seg?.nombre_paciente || seg?.nombre_animal || seg?.nombre || nombreSugerido || 'Rorito',
+        nombre: seg?.nombre_paciente || seg?.nombre_animal || seg?.nombre || nombreSugerido || 'Paciente',
         especie: seg?.paciente_especie || seg?.especie || 'Canino',
-        raza: seg?.paciente_raza || seg?.raza || 'Labrador',
+        raza: seg?.paciente_raza || seg?.raza || 'Mestizo',
         sexo: seg?.paciente_sexo || seg?.sexo || 'Hembra',
         peso: Number(seg?.peso_paciente ?? seg?.peso ?? 4.0),
         foto_url: seg?.foto_url || '',
@@ -1197,21 +1210,21 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       motivo_consulta: observacionRaw || quejaRaw.split('===')[0].trim() || 'Consulta y seguimiento en campo',
       prioridad: 'Normal',
       resultado_estado: 'Estable',
-      anamnesis: quejaRaw.split('===')[0].trim() || 'Paciente encontrado en vía pública / condición de calle',
+      anamnesis: quejaRaw.split('===')[0].trim() || 'Paciente evaluado en campo.',
       constantes: {
         temperatura: !isNaN(temp) && temp > 0 ? temp : 38.5,
-        frecuencia_cardiaca: !isNaN(fc) && fc > 0 ? fc : 8,
-        frecuencia_respiratoria: !isNaN(fr) && fr > 0 ? fr : 8,
+        frecuencia_cardiaca: !isNaN(fc) && fc > 0 ? fc : 110,
+        frecuencia_respiratoria: !isNaN(fr) && fr > 0 ? fr : 24,
         pulso: seg?.pulso || 'Fuerte, lleno y regular',
         tllc: seg?.tllc || '2 seg',
         ganglios_linfaticos: seg?.ganglios_linfaticos || 'Normales / Sin reactividad',
-        mucosas: muc || 'Ictéricas / Amarillentas',
+        mucosas: muc || 'Rosadas y húmedas',
         peso: Number(seg?.peso_paciente ?? seg?.peso ?? 4.0)
       },
-      diagnostico_principal: observacionRaw || 'Prueba 8',
+      diagnostico_principal: observacionRaw || 'Valoración clínica general',
       plan_procedimientos: tratamientoRaw || 'Tratamiento y seguimiento clínico en CBA',
       ingresa_cba: true,
-      motivo_ingreso_cba: matchCausal ? matchCausal[1].trim() : 'Por salud crítica / Urgencia médica. Se efectúa rescate y retiro preventivo para su traslado inmediato al CBA'
+      motivo_ingreso_cba: matchCausal ? matchCausal[1].trim() : 'Ingreso para valoración y custodia médica en CBA'
     };
 
     this.aplicarDatosDesdeActa(datos);
@@ -1314,8 +1327,13 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           if (raw.ganglios_linfaticos || data.constantes?.ganglios_linfaticos) this.ganglios_linfaticos = raw.ganglios_linfaticos || data.constantes?.ganglios_linfaticos;
           if (raw.mucosas || data.constantes?.mucosas) this.mucosas = raw.mucosas || data.constantes?.mucosas;
 
-          if (raw.hallazgos_examen || data.descripcion_hallazgos) {
-            this.descripcionHallazgos = raw.hallazgos_examen || data.descripcion_hallazgos;
+          if (raw.hallazgos_examen !== undefined || data.descripcion_hallazgos !== undefined) {
+            this.descripcionHallazgos = raw.hallazgos_examen ?? data.descripcion_hallazgos ?? '';
+          }
+
+          if (raw.observaciones_examen || data.observaciones_sistemas) {
+            this.observaciones_examen = raw.observaciones_examen || data.observaciones_sistemas || '';
+            this.observacionesSistemas = this.observaciones_examen;
           }
 
           const sistemasParseados = this.parsearJsonSeguro<Record<string, any>>(
@@ -1325,11 +1343,87 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           if (sistemasParseados && typeof sistemasParseados === 'object' && Object.keys(sistemasParseados).length > 0) {
             this.sistemas = { ...this.sistemas, ...sistemasParseados };
             this.evaluacion_sistemas = this.sistemas;
+            if (sistemasParseados['observaciones'] && !this.observacionesSistemas) {
+              this.observacionesSistemas = sistemasParseados['observaciones'];
+              this.observaciones_examen = this.observacionesSistemas;
+            }
           }
 
+          if (data.alimento_marca || sistemasParseados?.['_alimento_marca']) {
+            this.alimento_marca = data.alimento_marca || sistemasParseados['_alimento_marca'] || '';
+          }
+          if (data.esterilizado_opcion || sistemasParseados?.['_esterilizado_opcion']) {
+            const estVal = data.esterilizado_opcion || sistemasParseados['_esterilizado_opcion'];
+            this.esterilizado_opcion = estVal === 'Sí' ? 'Sí' : 'No';
+          }
+          if (data.condicion_corporal || sistemasParseados?.['_condicion_corporal']) {
+            this.condicion_corporal = data.condicion_corporal || sistemasParseados['_condicion_corporal'] || '3/5 (Ideal)';
+          }
+          if (data.proxima_visita_fecha !== undefined || sistemasParseados?.['_proxima_visita_fecha'] !== undefined) {
+            this.proxima_visita_fecha = data.proxima_visita_fecha ?? sistemasParseados?.['_proxima_visita_fecha'] ?? '';
+          }
+          if (data.proxima_visita_notas !== undefined || sistemasParseados?.['_proxima_visita_notas'] !== undefined) {
+            this.proxima_visita_notas = data.proxima_visita_notas ?? sistemasParseados?.['_proxima_visita_notas'] ?? '';
+          }
+
+          const anam = data.anamnesicos || raw.anamnesicos || {};
+          this.planSanitario = {
+            vacunas: anam.vacunas || sistemasParseados?.['_vacunas'] || '',
+            estadoRabia: sistemasParseados?.['_estado_rabia'] || (anam.vacunas ? 'Vigente / Aplicada' : 'Pendiente / En revisión'),
+            estadoPolivalente: sistemasParseados?.['_estado_polivalente'] || (anam.vacunas ? 'Al Día' : 'En evaluación'),
+            estadoRefuerzo: sistemasParseados?.['_estado_refuerzo'] || 'Programada',
+            ultimaDesparasitacion: anam.ultimaDesparasitacion || anam.ultDesparasitacion || sistemasParseados?.['_ultima_desparasitacion'] || '',
+            productoDesparasitacion: anam.productoDesparasitacion || anam.prodDesparasitacion || sistemasParseados?.['_producto_desparasitacion'] || '',
+            estadoDesparasitacion: sistemasParseados?.['_estado_desparasitacion'] || ((anam.productoDesparasitacion || anam.ultimaDesparasitacion) ? 'Suministrada' : 'En evaluación'),
+            estadoEctoparasitos: sistemasParseados?.['_estado_ectoparasitos'] || 'Tratado',
+            enfermedadesAnteriores: anam.enfermedadesAnteriores || anam.enfermedadesPrevias || sistemasParseados?.['_enfermedades_anteriores'] || '',
+            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || ''
+          };
+
+          if (Array.isArray(data.examenes_solicitados) && data.examenes_solicitados.length > 0) {
+            this.examenesSolicitados = data.examenes_solicitados.map((ex: any) => ({
+              id_examen: ex.id_examen || ex.id || null,
+              nombre: ex.nombre || 'Examen',
+              tipo: ex.tipo || 'Laboratorio',
+              estado: ex.estado || 'solicitado',
+              resultado: ex.resultado || '',
+              ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+            }));
+          }
+
+          if (data.materiales_utilizados !== undefined) {
+            this.materialesUtilizados = data.materiales_utilizados || '';
+            this.materiales_utilizados = this.materialesUtilizados;
+          }
+          if (data.plan_tratamiento || raw.plan_procedimientos) {
+            this.planProcedimientos = data.plan_tratamiento || raw.plan_procedimientos || '';
+            this.plan_procedimientos = this.planProcedimientos;
+          }
+          if (data.pronostico) {
+            this.pronostico = data.pronostico;
+          }
+          if (data.ingresa_cba !== undefined) {
+            this.ingresa_cba = data.ingresa_cba === true || String(data.ingresa_cba).toUpperCase() === 'SI';
+            this.ingresaCBA = this.ingresa_cba ? 'SI' : 'NO';
+          }
+          if (data.motivo_ingreso_no_ingreso !== undefined || data.motivo_ingreso_cba !== undefined) {
+            this.motivoIngresoNoIngreso = data.motivo_ingreso_no_ingreso || data.motivo_ingreso_cba || '';
+            this.motivo_ingreso_cba = this.motivoIngresoNoIngreso;
+          }
+          if (data.canil_asignado !== undefined) {
+            this.canilAsignado = data.canil_asignado || '';
+            this.canil_asignado = this.canilAsignado;
+          }
+          if (data.funcionario_recibe_cba !== undefined) {
+            this.funcionarioRecibeCBA = data.funcionario_recibe_cba || '';
+            this.funcionario_recibe_cba = this.funcionarioRecibeCBA;
+          }
+
+          this.tratamientosEliminadosIds = [];
           if (Array.isArray(data.tratamientos) && data.tratamientos.length > 0) {
             this.medicamentosSeleccionados = data.tratamientos.map((t: any) => ({
-              id: t.id_medicamento || t.id,
+              id: t.id_medicamento || t.id || null,
+              id_tratamiento: t.id_tratamiento || null,
               nombre: t.nombre || t.productoBase || t.producto_base || t.nombre_medicamento || 'Medicamento',
               principio_activo: t.principio_activo || '',
               concentracion: t.concentracion || '',
@@ -1377,13 +1471,15 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           hallazgos_examen: this.descripcionHallazgos,
           observaciones_examen: this.observaciones_examen,
           observacionesExamen: this.observaciones_examen,
-          diagnosticoPrincipal: this.formHistoria.get('diagnosticoPrincipal')?.value || data.diagnostico_principal || 'Prueba 8',
-          diagnosticoDiferencial: this.formHistoria.get('diagnosticoDiferencial')?.value || data.diagnostico_diferencial || this.descripcionHallazgos || '',
-          listaProblemas: this.formHistoria.get('listaProblemas')?.value || data.lista_problemas || '',
-          evolucion: this.formHistoria.get('evolucion')?.value || data.evolucion || this.anamnesis || 'Paciente evaluado bajo seguimiento clínico.',
+          diagnosticoPrincipal: data.diagnostico_principal || this.formHistoria.get('diagnosticoPrincipal')?.value || '',
+          diagnosticoDiferencial: data.diagnostico_diferencial !== undefined
+            ? data.diagnostico_diferencial
+            : (this.formHistoria.get('diagnosticoDiferencial')?.value || ''),
+          listaProblemas: data.lista_problemas || this.formHistoria.get('listaProblemas')?.value || '',
+          evolucion: data.evolucion || this.anamnesis || this.formHistoria.get('evolucion')?.value || '',
           pronostico: this.pronostico || data.pronostico || 'Favorable',
           plan_procedimientos: this.plan_procedimientos,
-          planTratamiento: this.formHistoria.get('planTratamiento')?.value || data.plan_tratamiento || this.plan_procedimientos || 'Tratamiento y seguimiento clínico en CBA.',
+          planTratamiento: data.plan_tratamiento || this.plan_procedimientos || this.formHistoria.get('planTratamiento')?.value || '',
           materiales_utilizados: this.materiales_utilizados,
           ingresa_cba: this.ingresa_cba,
           motivo_ingreso_cba: this.motivo_ingreso_cba,
@@ -1799,6 +1895,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     this.medicamentosSeleccionados.push({
       id,
+      id_tratamiento: null,
       nombre: nombre || 'Medicamento',
       principio_activo: medicamento?.principio_activo || '',
       concentracion: medicamento?.concentracion || '',
@@ -1838,6 +1935,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         cancelButtonColor: '#4141a5'
       }).then((res) => {
         if (res.isConfirmed) {
+          if (med.id_tratamiento && Number(med.id_tratamiento) > 0) {
+            this.tratamientosEliminadosIds.push(Number(med.id_tratamiento));
+          }
           this.medicamentosSeleccionados.splice(indice, 1);
           this.formHistoria.markAsDirty();
           this.cdr.detectChanges();
@@ -1846,6 +1946,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       return;
     }
 
+    if (med?.id_tratamiento && Number(med.id_tratamiento) > 0) {
+      this.tratamientosEliminadosIds.push(Number(med.id_tratamiento));
+    }
     this.medicamentosSeleccionados.splice(indice, 1);
     this.formHistoria.markAsDirty();
   }
@@ -1982,8 +2085,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   reemplazarMedicamento(indice: number, nuevoMed: any): void {
     const stock = Number(nuevoMed.stockDisponible) || 0;
     const nombre = nuevoMed.nombre || 'Medicamento sin nombre';
+    const idTratExistente = this.medicamentosSeleccionados[indice]?.id_tratamiento || null;
     this.medicamentosSeleccionados[indice] = {
       id: nuevoMed.id_medicamento ?? nuevoMed.id,
+      id_tratamiento: idTratExistente,
       nombre,
       principio_activo: nuevoMed.principio_activo || '',
       concentracion: nuevoMed.concentracion || '',
@@ -2086,7 +2191,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const dto: ActualizarHistoriaDto = {
       motivo_consulta: (this.formHistoria.get('motivo_consulta')?.value || this.motivo_consulta || 'Consulta General').trim(),
       diagnostico_principal: formVal.diagnosticoPrincipal,
-      diagnostico_diferencial: formVal.diagnosticoDiferencial || this.descripcionHallazgos,
+      diagnostico_diferencial: (formVal.diagnosticoDiferencial || '').trim(),
+      hallazgos_examen: (this.descripcionHallazgos || formVal.hallazgos_examen || '').trim(),
+      id_patologia: this.idPatologiaSeleccionada || null,
       lista_problemas: listaProblemasFinal,
       evolucion: formVal.evolucion,
       pronostico: formVal.pronostico,
@@ -2106,7 +2213,17 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       motivo_modificacion: formVal.motivoModificacion,
       organos_sistemas: {
         ...this.sistemas,
-        observaciones: this.observacionesSistemas || formVal.observacionesExamen || ''
+        observaciones: this.observacionesSistemas || formVal.observacionesExamen || '',
+        _vacunas: this.planSanitario.vacunas || '',
+        _estado_rabia: this.planSanitario.estadoRabia || 'Vigente / Aplicada',
+        _estado_polivalente: this.planSanitario.estadoPolivalente || 'Al Día',
+        _estado_refuerzo: this.planSanitario.estadoRefuerzo || 'Programada',
+        _ultima_desparasitacion: this.planSanitario.ultimaDesparasitacion || '',
+        _producto_desparasitacion: this.planSanitario.productoDesparasitacion || '',
+        _estado_desparasitacion: this.planSanitario.estadoDesparasitacion || 'Suministrada',
+        _estado_ectoparasitos: this.planSanitario.estadoEctoparasitos || 'Tratado',
+        _enfermedades_anteriores: this.planSanitario.enfermedadesAnteriores || '',
+        _historia_reproductiva: this.planSanitario.historiaReproductiva || ''
       },
       examenes_solicitados: this.examenesSolicitados.map(ex => ({
         id_examen: ex.id_examen || ex.id,
@@ -2117,6 +2234,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
       })),
       tratamientos: this.medicamentosSeleccionados.map(m => ({
+        id_tratamiento: m.id_tratamiento || null,
         id_medicamento: m.id,
         nombre: m.nombre,
         principio_activo: m.principio_activo,
@@ -2128,8 +2246,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         administrado: !!m.administrado,
         descripcion: m.descripcion || m.posologia || '',
         responsable_admin: m.responsable_admin || this.nombreVeterinario || '',
-        reaccion_comentarios: m.reaccion_comentarios || ''
+        reaccion_comentarios: m.reaccion_comentarios || '',
+        _ref: m
       })),
+      tratamientos_eliminados: [...this.tratamientosEliminadosIds],
       materiales_utilizados: this.materialesUtilizados,
       ingreso_cba: {
         ingresa_cba: this.ingresaCBA,
@@ -2141,7 +2261,20 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         nombres: this.nombreAcudiente,
         documentoIdentidad: this.cedulaAcudiente,
         telefono: this.paciente?.tenedor_telefono || ''
-      }
+      },
+      anamnesicos: {
+        vacunas: this.planSanitario.vacunas || '',
+        ultimaDesparasitacion: this.planSanitario.ultimaDesparasitacion || '',
+        productoDesparasitacion: this.planSanitario.productoDesparasitacion || '',
+        enfermedadesAnteriores: this.planSanitario.enfermedadesAnteriores || '',
+        alimentacion: this.alimento_marca || '',
+        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero')
+      },
+      alimento_marca: this.alimento_marca || '',
+      esterilizado_opcion: this.esterilizado_opcion || 'No',
+      condicion_corporal: this.condicion_corporal || '3/5 (Ideal)',
+      proxima_visita_fecha: this.proxima_visita_fecha || '',
+      proxima_visita_notas: this.proxima_visita_notas || ''
     };
 
     const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
@@ -2169,6 +2302,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.guardando = false;
         this.formularioEnviado = false;
         this.esNuevaConsulta = false;
+        this.tratamientosEliminadosIds = [];
         this.mensajeExito = resp.mensaje || (eraNuevaConsulta ? 'Nueva consulta clínica guardada exitosamente.' : 'Historia clínica actualizada con éxito.');
 
         // Limpieza de memoria temporal para evitar que el navegador recargue datos antiguos desactualizados

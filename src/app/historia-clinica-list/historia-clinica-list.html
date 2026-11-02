@@ -242,6 +242,7 @@
                       *ngIf="historia.animal_foto"
                       [src]="historia.animal_foto"
                       [alt]="historia.animal_nombre"
+                      (error)="historia.animal_foto = ''"
                       class="w-full h-full object-cover">
                     <span *ngIf="!historia.animal_foto" class="text-xs font-extrabold text-slate-500">
                       🐾
@@ -358,6 +359,7 @@
                   *ngIf="historia.animal_foto"
                   [src]="historia.animal_foto"
                   [alt]="historia.animal_nombre"
+                  (error)="historia.animal_foto = ''"
                   class="w-full h-full object-cover">
                 <span *ngIf="!historia.animal_foto" class="text-lg">🐾</span>
               </div>
@@ -455,7 +457,7 @@
         <div class="flex items-center gap-3.5 min-w-0">
           <!-- Avatar con iniciales o foto -->
           <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black text-lg shadow-xs overflow-hidden shrink-0 border border-white/20">
-            <img *ngIf="historiaSeleccionada.animal_foto" [src]="historiaSeleccionada.animal_foto" class="w-full h-full object-cover">
+            <img *ngIf="historiaSeleccionada.animal_foto" [src]="historiaSeleccionada.animal_foto" (error)="historiaSeleccionada.animal_foto = ''" class="w-full h-full object-cover">
             <span *ngIf="!historiaSeleccionada.animal_foto">{{ (historiaSeleccionada.animal_nombre || 'P').charAt(0).toUpperCase() }}</span>
           </div>
           <div class="min-w-0">
