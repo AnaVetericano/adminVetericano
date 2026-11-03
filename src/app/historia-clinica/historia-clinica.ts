@@ -386,11 +386,52 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     return (this.proxima_visita_fecha && this.proxima_visita_fecha.trim()) ? '1/1' : '0/1';
   }
 
+  readonly seccionesConsulta: string[] = [
+    'info_basica',
+    'anamnesis',
+    'signos_vitales',
+    'examenes',
+    'valoracion',
+    'diagnostico',
+    'tratamiento',
+    'remisiones',
+    'adjuntos',
+    'proxima_visita'
+  ];
+  private bloqueandoScrollSpy: boolean = false;
+
   irASeccionConsulta(seccionId: string): void {
     this.seccionConsultaActiva = seccionId;
+    this.bloqueandoScrollSpy = true;
     const el = document.getElementById('seccion-' + seccionId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setTimeout(() => {
+      this.bloqueandoScrollSpy = false;
+    }, 600);
+  }
+
+  alHacerScroll(event: Event): void {
+    if (this.bloqueandoScrollSpy) return;
+    const container = event.target as HTMLElement;
+    if (!container) return;
+    const containerTop = container.getBoundingClientRect().top;
+
+    let seccionVisible = this.seccionesConsulta[0];
+    for (const id of this.seccionesConsulta) {
+      const el = document.getElementById('seccion-' + id);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top - containerTop <= 160) {
+          seccionVisible = id;
+        }
+      }
+    }
+
+    if (seccionVisible !== this.seccionConsultaActiva) {
+      this.seccionConsultaActiva = seccionVisible;
+      this.cdr.detectChanges();
     }
   }
 
@@ -642,6 +683,30 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     } catch {
       return fechaStr;
     }
+  }
+
+  formatearFechaTexto(fechaStr?: string | null): string {
+    if (!fechaStr) return '02 de noviembre de 2026';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return fechaStr;
+    }
+  }
+
+  obtenerFechaUltimaVisita(): string {
+    if (this.consultasAnteriores && this.consultasAnteriores.length > 0) {
+      const primera = this.consultasAnteriores[0];
+      const f = primera.fecha_hora || primera.fechaHora || primera.fecha;
+      if (f) return this.formatearFechaTexto(f);
+    }
+    return this.formatearFechaTexto(this.historiaOriginal?.fecha_apertura);
   }
 
   formatearFechaHora(fechaStr?: string | null): string {

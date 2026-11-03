@@ -62,9 +62,9 @@
   </header>
 
   <!-- ========================================================================= -->
-  <!-- 2. CONTENIDO PRINCIPAL (SCROLLABLE)                                       -->
+  <!-- 2. CONTENIDO PRINCIPAL (SCROLLABLE CON SCROLLSPY AUTOMÁTICO)              -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 overflow-y-auto space-y-5">
+  <main (scroll)="alHacerScroll($event)" class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 overflow-y-auto space-y-5">
 
     <!-- SPINNER DE CARGA INICIAL -->
     <div *ngIf="cargando"
@@ -335,18 +335,18 @@
           <div class="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs space-y-1.5">
             <div class="px-2 pb-2 border-b border-slate-100 flex items-center justify-between">
               <span class="text-[11px] font-black tracking-wider text-slate-400 uppercase">Navegación</span>
-              <span class="text-[10px] font-bold text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-md">CP-Vet</span>
+              <span class="text-[10px] font-bold text-[#4141a5] bg-[#4141a5]/10 border border-[#4141a5]/20 px-2 py-0.5 rounded-md">CP-Vet</span>
             </div>
 
             <!-- 1. Info Básica -->
             <button type="button" (click)="irASeccionConsulta('info_basica')"
-              [ngClass]="seccionConsultaActiva === 'info_basica' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'info_basica' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'info_basica' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span>Info Básica</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'info_basica' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'info_basica' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoInfoBasica }}
               </span>
@@ -354,13 +354,13 @@
 
             <!-- 2. Anamnesis -->
             <button type="button" (click)="irASeccionConsulta('anamnesis')"
-              [ngClass]="seccionConsultaActiva === 'anamnesis' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'anamnesis' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'anamnesis' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 <span>Anamnesis</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'anamnesis' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'anamnesis' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoAnamnesis }}
               </span>
@@ -368,13 +368,13 @@
 
             <!-- 3. Signos Vitales -->
             <button type="button" (click)="irASeccionConsulta('signos_vitales')"
-              [ngClass]="seccionConsultaActiva === 'signos_vitales' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'signos_vitales' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'signos_vitales' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                 <span>Signos Vitales</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'signos_vitales' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'signos_vitales' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoSignosVitales }}
               </span>
@@ -382,13 +382,13 @@
 
             <!-- 4. Exámenes -->
             <button type="button" (click)="irASeccionConsulta('examenes')"
-              [ngClass]="seccionConsultaActiva === 'examenes' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'examenes' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'examenes' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span>Exámenes</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'examenes' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'examenes' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoExamenes }}
               </span>
@@ -396,13 +396,13 @@
 
             <!-- 5. Valoración -->
             <button type="button" (click)="irASeccionConsulta('valoracion')"
-              [ngClass]="seccionConsultaActiva === 'valoracion' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'valoracion' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'valoracion' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                 <span>Valoración</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'valoracion' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'valoracion' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoValoracion }}
               </span>
@@ -410,13 +410,13 @@
 
             <!-- 6. Diagnóstico -->
             <button type="button" (click)="irASeccionConsulta('diagnostico')"
-              [ngClass]="seccionConsultaActiva === 'diagnostico' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'diagnostico' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'diagnostico' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span>Diagnóstico</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'diagnostico' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'diagnostico' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoDiagnostico }}
               </span>
@@ -424,13 +424,13 @@
 
             <!-- 7. Tratamiento -->
             <button type="button" (click)="irASeccionConsulta('tratamiento')"
-              [ngClass]="seccionConsultaActiva === 'tratamiento' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'tratamiento' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'tratamiento' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                 <span>Tratamiento</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'tratamiento' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'tratamiento' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoTratamiento }}
               </span>
@@ -438,13 +438,13 @@
 
             <!-- 8. Remisiones -->
             <button type="button" (click)="irASeccionConsulta('remisiones')"
-              [ngClass]="seccionConsultaActiva === 'remisiones' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'remisiones' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'remisiones' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 <span>Remisiones / CBA</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'remisiones' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'remisiones' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoRemisiones }}
               </span>
@@ -452,13 +452,13 @@
 
             <!-- 9. Adjuntos -->
             <button type="button" (click)="irASeccionConsulta('adjuntos')"
-              [ngClass]="seccionConsultaActiva === 'adjuntos' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'adjuntos' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'adjuntos' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                 <span>Adjuntos</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'adjuntos' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'adjuntos' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoAdjuntos }}
               </span>
@@ -466,13 +466,13 @@
 
             <!-- 10. Próxima visita -->
             <button type="button" (click)="irASeccionConsulta('proxima_visita')"
-              [ngClass]="seccionConsultaActiva === 'proxima_visita' ? 'bg-[#2563EB] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
+              [ngClass]="seccionConsultaActiva === 'proxima_visita' ? 'bg-[#4141a5] text-white shadow-sm font-black' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-bold'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition cursor-pointer">
               <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <svg class="w-4 h-4 shrink-0" [ngClass]="seccionConsultaActiva === 'proxima_visita' ? 'text-white' : 'text-[#4141a5]'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 <span>Próxima visita</span>
               </span>
-              <span [ngClass]="seccionConsultaActiva === 'proxima_visita' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'"
+              <span [ngClass]="seccionConsultaActiva === 'proxima_visita' ? 'bg-white/20 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'"
                 class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono">
                 {{ conteoProximaVisita }}
               </span>
@@ -501,18 +501,18 @@
         <!-- =================================================================== -->
         <div class="flex-1 min-w-0 space-y-6 w-full pb-12">
 
-          <!-- 1. INFORMACIÓN BÁSICA (BORDE AZUL CP-VET) -->
-          <div id="seccion-info_basica" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#2563EB] scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 1. INFORMACIÓN BÁSICA (BORDE MORADO OFICIAL) -->
+          <div id="seccion-info_basica" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center font-black text-xs">1</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">1</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">1. Información Básica</h3>
                   <p class="text-xs text-slate-500 font-medium">Motivo principal, alimentación y estado reproductivo</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-blue-50 text-[#2563EB]">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoInfoBasica }}
               </span>
             </div>
@@ -526,11 +526,11 @@
                     <span class="text-rose-500 font-black">*</span>
                   </label>
                   <button type="button" (click)="modoTextoEnriquecido = !modoTextoEnriquecido"
-                    class="text-[11px] font-bold text-slate-500 hover:text-[#2563EB] flex items-center gap-1 transition cursor-pointer">
+                    class="text-[11px] font-bold text-slate-500 hover:text-[#4141a5] flex items-center gap-1 transition cursor-pointer">
                     <span>Texto enriquecido</span>
                   </button>
                 </div>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#2563EB] focus-within:ring-1 focus-within:ring-[#2563EB] transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] focus-within:ring-1 focus-within:ring-[#4141a5]/20 transition-all">
                   <textarea rows="3" [ngModel]="formHistoria.get('motivo_consulta')?.value"
                     (ngModelChange)="formHistoria.patchValue({ motivo_consulta: $event }); motivo_consulta = $event"
                     placeholder="Descripción detallada del motivo de la visita..."
@@ -545,7 +545,7 @@
                 </label>
                 <input type="text" [(ngModel)]="alimento_marca"
                   placeholder="Ej. Dog Chow, Hill's, Royal Canin..."
-                  class="w-full bg-slate-50/60 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-semibold focus:bg-white focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] outline-none transition" />
+                  class="w-full bg-slate-50/60 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-semibold focus:bg-white focus:border-[#4141a5] focus:ring-1 focus:ring-[#4141a5]/20 outline-none transition" />
               </div>
 
               <!-- ¿Esterilizado? -->
@@ -556,12 +556,12 @@
                 <div class="grid grid-cols-2 gap-3">
                   <button type="button" (click)="setEsterilizado('Sí')"
                     class="py-2.5 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer"
-                    [ngClass]="esterilizado_opcion === 'Sí' ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'">
+                    [ngClass]="esterilizado_opcion === 'Sí' ? 'bg-[#4141a5] text-white border-[#4141a5] shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'">
                     Sí
                   </button>
                   <button type="button" (click)="setEsterilizado('No')"
                     class="py-2.5 px-4 rounded-xl text-xs font-black transition-all border cursor-pointer"
-                    [ngClass]="esterilizado_opcion === 'No' ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'">
+                    [ngClass]="esterilizado_opcion === 'No' ? 'bg-[#4141a5] text-white border-[#4141a5] shadow-xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'">
                     No
                   </button>
                 </div>
@@ -569,17 +569,17 @@
             </div>
           </div>
 
-          <!-- 2. ANAMNESIS (BORDE NARANJA/ÁMBAR CP-VET) -->
-          <div id="seccion-anamnesis" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-amber-500 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 2. ANAMNESIS (BORDE MORADO OFICIAL) -->
+          <div id="seccion-anamnesis" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xs">2</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">2</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">2. Anamnesis y Antecedentes Clínicos</h3>
                   <p class="text-xs text-slate-500 font-medium">Historial previo, actitud y estado general</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoAnamnesis }}
               </span>
             </div>
@@ -590,7 +590,7 @@
                 <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <span>Anamnesis y Síntomas Reportados</span>
                 </label>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-amber-500 focus-within:ring-1 focus-within:ring-amber-500 transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] focus-within:ring-1 focus-within:ring-[#4141a5]/20 transition-all">
                   <textarea rows="3" [ngModel]="formHistoria.get('anamnesis')?.value"
                     (ngModelChange)="formHistoria.patchValue({ anamnesis: $event }); anamnesis = $event"
                     placeholder="Descripción cronológica de los síntomas, vacunas previas, hábitos..."
@@ -604,7 +604,7 @@
                   <label class="text-[10px] font-bold text-slate-500 uppercase block">Actitud / Temperamento</label>
                   <select [ngModel]="formHistoria.get('actitudTemperamento')?.value || actitud_temperamento"
                     (ngModelChange)="formHistoria.patchValue({ actitudTemperamento: $event, actitud_temperamento: $event }); actitud_temperamento = $event"
-                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-amber-500">
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#4141a5]">
                     <option *ngFor="let opt of opcionesActitud" [value]="opt">{{ opt }}</option>
                   </select>
                 </div>
@@ -613,7 +613,7 @@
                   <label class="text-[10px] font-bold text-slate-500 uppercase block">Prioridad / Triage</label>
                   <select [ngModel]="formHistoria.get('prioridad')?.value || prioridad"
                     (ngModelChange)="formHistoria.patchValue({ prioridad: $event }); prioridad = $event"
-                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-amber-500">
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#4141a5]">
                     <option *ngFor="let opt of opcionesPrioridad" [value]="opt">{{ opt }}</option>
                   </select>
                 </div>
@@ -622,7 +622,7 @@
                   <label class="text-[10px] font-bold text-slate-500 uppercase block">Resultado / Estado</label>
                   <select [ngModel]="formHistoria.get('resultadoEstado')?.value || resultado_estado"
                     (ngModelChange)="formHistoria.patchValue({ resultadoEstado: $event, resultado_estado: $event }); resultado_estado = $event"
-                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-amber-500">
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#4141a5]">
                     <option *ngFor="let opt of opcionesResultadoEstado" [value]="opt">{{ opt }}</option>
                   </select>
                 </div>
@@ -631,10 +631,12 @@
               <!-- Evolución -->
               <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span>⏱️</span>
+                  <svg class="w-3.5 h-3.5 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   <span>Evolución previa</span>
                 </label>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-amber-500 transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="2" [ngModel]="formHistoria.get('evolucion')?.value"
                     (ngModelChange)="formHistoria.patchValue({ evolucion: $event })"
                     placeholder="Evolución reciente del paciente o comentarios de campo..."
@@ -644,17 +646,17 @@
             </div>
           </div>
 
-          <!-- 3. SIGNOS VITALES (BORDE ROJO CP-VET) -->
-          <div id="seccion-signos_vitales" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-rose-500 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 3. SIGNOS VITALES (BORDE MORADO OFICIAL) -->
+          <div id="seccion-signos_vitales" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-black text-xs">3</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">3</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">3. Signos Vitales y Constantes Fisiológicas</h3>
                   <p class="text-xs text-slate-500 font-medium">Registro cuantitativo y cualitativo de signos vitales</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoSignosVitales }}
               </span>
             </div>
@@ -750,17 +752,17 @@
             </div>
           </div>
 
-          <!-- 4. EXÁMENES CLÍNICOS (BORDE VERDE CP-VET) -->
-          <div id="seccion-examenes" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-emerald-500 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 4. EXÁMENES CLÍNICOS (BORDE MORADO OFICIAL) -->
+          <div id="seccion-examenes" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-black text-xs">4</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">4</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">4. Exámenes Clínicos y Complementarios</h3>
                   <p class="text-xs text-slate-500 font-medium">Pruebas diagnósticas, laboratorio e imágenes</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoExamenes }}
               </span>
             </div>
@@ -770,18 +772,18 @@
               <div class="flex flex-col sm:flex-row gap-2">
                 <input type="text" [(ngModel)]="busquedaExamen" (ngModelChange)="filtrarExamenes()"
                   placeholder="Buscar examen en catálogo (hemograma, coprológico, rx...)"
-                  class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-emerald-500" />
+                  class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-[#4141a5]" />
               </div>
 
               <!-- Lista rápida de exámenes del catálogo -->
               <div *ngIf="examenesFiltrados.length > 0" class="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-slate-50/70 border border-slate-200 rounded-xl">
-                <div *ngFor="let ex of examenesPaginados" class="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-100 text-xs hover:border-emerald-500 transition">
+                <div *ngFor="let ex of examenesPaginados" class="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-100 text-xs hover:border-[#4141a5] transition">
                   <div>
                     <span class="font-bold text-slate-800">{{ ex.nombre }}</span>
                     <span class="text-[10px] text-slate-400 block">{{ ex.tipo || 'Laboratorio' }}</span>
                   </div>
                   <button type="button" (click)="agregarExamen(ex)"
-                    class="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] rounded-lg shadow-2xs cursor-pointer">
+                    class="px-2.5 py-1 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold text-[10px] rounded-lg shadow-2xs cursor-pointer">
                     + Solicitar
                   </button>
                 </div>
@@ -802,13 +804,13 @@
                     <tr *ngFor="let sol of examenesSolicitados; let i = index">
                       <td class="py-2 px-3 font-bold text-slate-800">{{ sol.nombre }}</td>
                       <td class="py-2 px-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                           {{ sol.estado || 'Solicitado' }}
                         </span>
                       </td>
                       <td class="py-2 px-3">
                         <input type="text" [(ngModel)]="sol.resultado" placeholder="Observación / resultado"
-                          class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-full outline-none focus:border-emerald-500" />
+                          class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-full outline-none focus:border-[#4141a5]" />
                       </td>
                       <td class="py-2 px-3 text-right">
                         <button type="button" (click)="eliminarExamen(i)"
@@ -826,7 +828,7 @@
                 <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <span>Descripción de Hallazgos Clínicos y Paraclínicos</span>
                 </label>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-emerald-500 transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="2" [(ngModel)]="descripcionHallazgos"
                     (ngModelChange)="formHistoria.patchValue({ hallazgos_examen: $event })"
                     placeholder="Interpretación de pruebas rápidas, análisis microscópico o paraclínico..."
@@ -836,12 +838,12 @@
             </div>
           </div>
 
-          <!-- 5. VALORACIÓN POR SISTEMAS (12 SISTEMAS) (BORDE PÚRPURA CP-VET) -->
-          <div id="seccion-valoracion" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-purple-600 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 5. VALORACIÓN POR SISTEMAS (12 SISTEMAS) (BORDE MORADO OFICIAL) -->
+          <div id="seccion-valoracion" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-black text-sm">
-                  <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-sm">
+                  <svg class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
@@ -851,7 +853,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                   {{ conteoValoracion }}
                 </span>
                 <button type="button" (click)="marcarTodosSistemas('N')"
@@ -868,10 +870,10 @@
             <!-- Grilla de los 12 Sistemas -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div *ngFor="let sist of listaSistemasOrganicos"
-                class="p-3 bg-slate-50/70 border border-slate-200/80 rounded-xl space-y-2 hover:border-purple-300 transition">
+                class="p-3 bg-slate-50/70 border border-slate-200/80 rounded-xl space-y-2 hover:border-[#4141a5]/40 transition">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-extrabold text-[#170B3D] flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#4141a5] shrink-0"></span>
                     <span>{{ sist.nombre }}</span>
                   </span>
                 </div>
@@ -898,12 +900,12 @@
             <!-- Observaciones de Sistemas -->
             <div class="space-y-1.5 pt-2">
               <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-purple-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="w-3.5 h-3.5 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 <span>Observaciones de los Sistemas Orgánicos</span>
               </label>
-              <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-purple-600 transition-all">
+              <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                 <textarea rows="2" [(ngModel)]="observacionesSistemas"
                   (ngModelChange)="formHistoria.patchValue({ observacionesExamen: $event })"
                   placeholder="Detallar hallazgos de sistemas marcados como Anormal (AN)..."
@@ -912,17 +914,17 @@
             </div>
           </div>
 
-          <!-- 6. DIAGNÓSTICO Y PRONÓSTICO (BORDE DORADO CP-VET) -->
-          <div id="seccion-diagnostico" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-amber-400 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 6. DIAGNÓSTICO Y PRONÓSTICO (BORDE MORADO OFICIAL) -->
+          <div id="seccion-diagnostico" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-black text-xs">6</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">6</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">6. Diagnóstico, Lista de Problemas y Pronóstico</h3>
                   <p class="text-xs text-slate-500 font-medium">Diagnóstico definitivo o presuntivo, diagnósticos diferenciales</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoDiagnostico }}
               </span>
             </div>
@@ -936,11 +938,11 @@
                 <div class="flex gap-2">
                   <input type="text" [(ngModel)]="busquedaPatologia" (ngModelChange)="filtrarPatologias()"
                     placeholder="Filtrar patologías por nombre, sistema o CIE..."
-                    class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-amber-500" />
+                    class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:border-[#4141a5]" />
                 </div>
                 <div *ngIf="patologiasFiltradas.length > 0 && busquedaPatologia" class="max-h-36 overflow-y-auto space-y-1 p-2 bg-slate-50 border border-slate-200 rounded-xl">
                   <button type="button" *ngFor="let pat of patologiasFiltradas.slice(0, 8)" (click)="seleccionarPatologia(pat)"
-                    class="w-full text-left p-2 rounded-lg bg-white border border-slate-100 hover:border-amber-400 flex items-center justify-between text-xs cursor-pointer">
+                    class="w-full text-left p-2 rounded-lg bg-white border border-slate-100 hover:border-[#4141a5] flex items-center justify-between text-xs cursor-pointer">
                     <span class="font-bold text-slate-800">{{ pat.nombre }}</span>
                     <span class="text-[10px] text-slate-400 font-mono">{{ pat.descripcion || 'General' }}</span>
                   </button>
@@ -955,7 +957,7 @@
                 <input type="text" [ngModel]="formHistoria.get('diagnosticoPrincipal')?.value || diagnosticoFinal"
                   (ngModelChange)="formHistoria.patchValue({ diagnosticoPrincipal: $event }); diagnosticoFinal = $event"
                   placeholder="Ej. Gastroenteritis infecciosa canina / Dermatitis atópica"
-                  class="w-full p-3 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-black text-[#170B3D] outline-none focus:bg-white focus:border-amber-500" />
+                  class="w-full p-3 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-black text-[#170B3D] outline-none focus:bg-white focus:border-[#4141a5]" />
               </div>
 
               <!-- Diagnóstico Diferencial -->
@@ -963,7 +965,7 @@
                 <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <span>Diagnóstico Diferencial</span>
                 </label>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-amber-500 transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="2" [ngModel]="formHistoria.get('diagnosticoDiferencial')?.value"
                     (ngModelChange)="formHistoria.patchValue({ diagnosticoDiferencial: $event })"
                     placeholder="Patologías descartadas o en evaluación diferencial..."
@@ -978,29 +980,29 @@
                 </label>
                 <select [ngModel]="formHistoria.get('pronostico')?.value || pronostico"
                   (ngModelChange)="formHistoria.patchValue({ pronostico: $event }); pronostico = $event"
-                  class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 outline-none focus:border-amber-500">
+                  class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 outline-none focus:border-[#4141a5]">
                   <option *ngFor="let opt of opcionesPronostico" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
           </div>
 
-          <!-- 7. TRATAMIENTO Y FÁRMACOS (BORDE AZUL CP-VET) -->
-          <div id="seccion-tratamiento" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-blue-500 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 7. TRATAMIENTO Y FÁRMACOS (BORDE MORADO OFICIAL) -->
+          <div id="seccion-tratamiento" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs">7</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">7</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">7. Tratamiento, Fármacos y Procedimientos</h3>
                   <p class="text-xs text-slate-500 font-medium">Prescripción médica, posología e insumos de atención</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                   {{ conteoTratamiento }}
                 </span>
                 <button type="button" (click)="mostrarCatalogoMedicamentos = !mostrarCatalogoMedicamentos"
-                  class="px-3 py-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                  class="px-3 py-1 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
                   + Fármaco
                 </button>
               </div>
@@ -1011,7 +1013,7 @@
               <span class="text-[10px] font-bold text-slate-500 uppercase block">Seleccionar del Inventario Oficial:</span>
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 <button type="button" *ngFor="let med of medicamentosCatalogo.slice(0, 9)" (click)="agregarMedicamento(med)"
-                  class="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-blue-500 transition cursor-pointer">
+                  class="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-[#4141a5] transition cursor-pointer">
                   <span class="font-black text-xs text-[#170B3D] block truncate">{{ med.nombre }}</span>
                   <span class="text-[10px] text-slate-400 block truncate">Stock: {{ med.stockDisponible }} uds</span>
                 </button>
@@ -1035,15 +1037,15 @@
                     <td class="py-2 px-3 font-bold text-slate-800">{{ med.nombre }}</td>
                     <td class="py-2 px-3">
                       <input type="text" [(ngModel)]="med.dosis" placeholder="1 ml"
-                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-20 outline-none focus:border-blue-500" />
+                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-20 outline-none focus:border-[#4141a5]" />
                     </td>
                     <td class="py-2 px-3">
                       <input type="text" [(ngModel)]="med.via" placeholder="SC / Oral"
-                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-20 outline-none focus:border-blue-500" />
+                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-20 outline-none focus:border-[#4141a5]" />
                     </td>
                     <td class="py-2 px-3">
                       <input type="text" [(ngModel)]="med.frecuencia" placeholder="C/12h x 5d"
-                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-24 outline-none focus:border-blue-500" />
+                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-24 outline-none focus:border-[#4141a5]" />
                     </td>
                     <td class="py-2 px-3 text-right">
                       <button type="button" (click)="quitarMedicamento(i)"
@@ -1062,7 +1064,7 @@
                 <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <span>Plan de Tratamiento / Posología</span>
                 </label>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-blue-500 transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="3" [ngModel]="formHistoria.get('planTratamiento')?.value || planProcedimientos"
                     (ngModelChange)="formHistoria.patchValue({ planTratamiento: $event }); planProcedimientos = $event"
                     placeholder="Instrucciones al tutor, recomendaciones alimenticias, cuidados..."
@@ -1074,7 +1076,7 @@
                 <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <span>Materiales e Insumos Utilizados</span>
                 </label>
-                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-blue-500 transition-all">
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="3" [(ngModel)]="materialesUtilizados"
                     (ngModelChange)="formHistoria.patchValue({ materiales_utilizados: $event })"
                     placeholder="Jeringas, guantes, gasas, agujas, antisépticos..."
@@ -1084,17 +1086,17 @@
             </div>
           </div>
 
-          <!-- 8. REMISIONES Y DESTINO CBA (BORDE ÍNDIGO CP-VET) -->
-          <div id="seccion-remisiones" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-indigo-600 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 8. REMISIONES Y DESTINO CBA (BORDE MORADO OFICIAL) -->
+          <div id="seccion-remisiones" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-xs">8</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">8</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">8. Remisiones y Destino CBA</h3>
                   <p class="text-xs text-slate-500 font-medium">Asignación de canil en CBA o remisión a especialista</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoRemisiones }}
               </span>
             </div>
@@ -1125,37 +1127,37 @@
                   <input type="text" [(ngModel)]="canilAsignado"
                     (ngModelChange)="formHistoria.patchValue({ canil_asignado: $event })"
                     placeholder="Ej. Canil 4 - Aislamiento"
-                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600" />
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#4141a5]" />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-slate-500 uppercase block">Funcionario Receptor CBA</label>
                   <input type="text" [(ngModel)]="funcionarioRecibeCBA"
                     (ngModelChange)="formHistoria.patchValue({ funcionario_recibe_cba: $event })"
                     placeholder="Nombre del funcionario"
-                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600" />
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#4141a5]" />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-slate-500 uppercase block">Causal de Ingreso</label>
                   <input type="text" [(ngModel)]="motivoIngresoNoIngreso"
                     (ngModelChange)="formHistoria.patchValue({ motivo_ingreso_cba: $event })"
                     placeholder="Salud crítica / Rescate"
-                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-indigo-600" />
+                    class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-[#4141a5]" />
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- 9. ADJUNTOS (BORDE GRIS/PIZARRA CP-VET) -->
-          <div id="seccion-adjuntos" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-slate-400 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 9. ADJUNTOS (BORDE MORADO OFICIAL) -->
+          <div id="seccion-adjuntos" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs">9</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">9</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">9. Documentos Adjuntos y Registro Fotográfico</h3>
                   <p class="text-xs text-slate-500 font-medium">Soporte fotográfico del paciente y evidencia clínica</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoAdjuntos }}
               </span>
             </div>
@@ -1180,17 +1182,17 @@
             </div>
           </div>
 
-          <!-- 10. PRÓXIMA VISITA (BORDE CIAN CP-VET) -->
-          <div id="seccion-proxima_visita" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-cyan-600 scroll-mt-6 p-5 sm:p-6 space-y-5">
+          <!-- 10. PRÓXIMA VISITA (BORDE MORADO OFICIAL) -->
+          <div id="seccion-proxima_visita" class="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden border-l-4 border-l-[#4141a5] scroll-mt-6 p-5 sm:p-6 space-y-5">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center font-black text-xs">10</div>
+                <div class="w-8 h-8 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 flex items-center justify-center font-black text-xs">10</div>
                 <div>
                   <h3 class="text-base font-black text-[#170B3D]">10. Próxima Visita y Control Clínico</h3>
                   <p class="text-xs text-slate-500 font-medium">Fecha agendada para control, seguimiento o retiro de puntos</p>
                 </div>
               </div>
-              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800">
+              <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                 {{ conteoProximaVisita }}
               </span>
             </div>
@@ -1199,13 +1201,13 @@
               <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-700 block">Fecha de Próxima Cita / Control</label>
                 <input type="date" [(ngModel)]="proxima_visita_fecha"
-                  class="w-full p-2.5 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-cyan-600" />
+                  class="w-full p-2.5 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-[#4141a5]" />
               </div>
               <div class="space-y-1.5">
                 <label class="text-xs font-bold text-slate-700 block">Indicaciones para el Control</label>
                 <input type="text" [(ngModel)]="proxima_visita_notas"
                   placeholder="Ej. Traer en ayunas para control ecográfico"
-                  class="w-full p-2.5 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-cyan-600" />
+                  class="w-full p-2.5 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#4141a5]" />
               </div>
             </div>
           </div>
@@ -1385,6 +1387,39 @@
                 <span class="text-[#170B3D] font-extrabold">Canil #{{ c.canil_asignado || 'Asignado' }}</span>
                 <span *ngIf="c.funcionario_recibe_cba" class="text-slate-400">· Recibido por: {{ c.funcionario_recibe_cba }}</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA RESUMEN DE HISTORIA CLÍNICA (IDÉNTICA A LA IMAGEN) -->
+        <div class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+          <h4 class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+            Resumen de Historia Clínica
+          </h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs pt-1">
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Número de Historia</span>
+              <span class="font-black text-[#170B3D] text-xs sm:text-sm mt-1 block">
+                {{ idHistoria || 'HC-OFICIAL' }}
+              </span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Fecha de Ingreso</span>
+              <span class="font-bold text-slate-800 text-xs sm:text-sm mt-1 block">
+                {{ formatearFechaTexto(historiaOriginal?.fecha_apertura) }}
+              </span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Última Visita</span>
+              <span class="font-bold text-slate-800 text-xs sm:text-sm mt-1 block">
+                {{ obtenerFechaUltimaVisita() }}
+              </span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total de Registros</span>
+              <span class="font-black text-slate-900 text-sm sm:text-base mt-1 block">
+                {{ consultasAnteriores.length }}
+              </span>
             </div>
           </div>
         </div>

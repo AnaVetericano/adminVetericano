@@ -1105,6 +1105,31 @@ export class HistoriaClinicaListComponent implements OnInit {
     }
   }
 
+  formatearFechaTexto(fechaStr?: string | null): string {
+    if (!fechaStr) return '02 de noviembre de 2026';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return fechaStr;
+    }
+  }
+
+  obtenerFechaUltimaVisita(): string {
+    if (this.consultasHistorial && this.consultasHistorial.length > 0) {
+      const primera = this.consultasHistorial[0];
+      const f = primera.fecha_hora || primera.fechaHora || primera.fecha;
+      if (f) return this.formatearFechaTexto(f);
+      if (primera.fecha_formateada) return primera.fecha_formateada;
+    }
+    return this.formatearFechaTexto(this.historiaSeleccionada?.fecha_apertura);
+  }
+
   // Navegación
   irAEditar(historia: HistoriaClinicaItem): void {
     try {
