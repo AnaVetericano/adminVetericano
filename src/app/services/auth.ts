@@ -576,10 +576,15 @@ export class AuthService {
 
   listUsersActive() {
     return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(
-      map(usuarios => usuarios.map((u: any) => ({
-        activo: u.activo,
-        id_rol: u.id_rol
-      })))
+      map(usuarios => {
+        const lista = Array.isArray(usuarios) ? usuarios : (usuarios?.results || []);
+        return lista.map((u: any) => ({
+          ...u,
+          activo: u.activo,
+          id_rol: typeof u.id_rol === 'object' ? (u.id_rol?.id_rol || u.id_rol?.id) : u.id_rol,
+          nombre_rol: u.nombre_rol || (typeof u.id_rol === 'object' ? u.id_rol?.nombre_rol : '')
+        }));
+      })
     );
   }
 
