@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
@@ -72,18 +74,18 @@ export class HistoriaClinicaListComponent implements OnInit {
   cargandoDetalleIndividual: boolean = false;
 
   listaSistemasDef = [
-    { clave: 'general', label: 'General / Físico', icono: '🐾' },
-    { clave: 'hidratacion', label: 'Hidratación', icono: '💧' },
-    { clave: 'tegumentario', label: 'Piel y Anexos', icono: '🧴' },
-    { clave: 'ojos', label: 'Ojos y Visión', icono: '👁️' },
-    { clave: 'oidos', label: 'Oídos y Canales', icono: '👂' },
-    { clave: 'nariz', label: 'Nariz y Vías Altas', icono: '👃' },
-    { clave: 'digestivo', label: 'Digestivo', icono: '🥣' },
-    { clave: 'respiratorio', label: 'Respiratorio', icono: '🫁' },
-    { clave: 'cardiovascular', label: 'Cardiovascular', icono: '❤️' },
-    { clave: 'musculoesqueletico', label: 'Músculo-esquelético', icono: '🦴' },
-    { clave: 'nervioso', label: 'Nervioso', icono: '🧠' },
-    { clave: 'genitourinario', label: 'Genitourinario', icono: '🚻' },
+    { clave: 'general', label: 'General / Físico' },
+    { clave: 'hidratacion', label: 'Hidratación' },
+    { clave: 'tegumentario', label: 'Piel y Anexos' },
+    { clave: 'ojos', label: 'Ojos y Visión' },
+    { clave: 'oidos', label: 'Oídos y Canales' },
+    { clave: 'nariz', label: 'Nariz y Vías Altas' },
+    { clave: 'digestivo', label: 'Digestivo' },
+    { clave: 'respiratorio', label: 'Respiratorio' },
+    { clave: 'cardiovascular', label: 'Cardiovascular' },
+    { clave: 'musculoesqueletico', label: 'Músculo-esquelético' },
+    { clave: 'nervioso', label: 'Nervioso' },
+    { clave: 'genitourinario', label: 'Genitourinario' },
   ];
 
   // Sub-modal y menú para + Crear [C] dentro del historial
@@ -128,8 +130,10 @@ export class HistoriaClinicaListComponent implements OnInit {
     estadoGeneral: 'Estable'
   };
 
-  // Diccionario auxiliar de animales por id_animal
+  // Diccionarios auxiliares de animales y seguimientos (por id_animal, radicado y nombre)
   private mapaAnimales: Map<number, any> = new Map();
+  private mapaPorRadicado: Map<string, any> = new Map();
+  private mapaPorNombre: Map<string, any> = new Map();
 
   constructor(
     private http: HttpClient,
@@ -215,23 +219,59 @@ export class HistoriaClinicaListComponent implements OnInit {
       items = respuesta.data;
     }
 
-    // Mapeo e hidratación con datos de animales si existen
+    // Mapeo e hidratación con datos de animales y seguimientos si existen
     this.historias = items.map((h: any) => {
-      const animalInfo = this.mapaAnimales.get(Number(h.id_animal)) || {};
-      const rawFoto = animalInfo.foto_url ||
-                      animalInfo.foto ||
-                      h.animal?.foto_url ||
-                      h.animal?.fotoUrl ||
-                      h.animal?.foto ||
-                      h.animal?.imagen ||
-                      h.animal_foto ||
-                      h.foto_url ||
-                      '';
+      const idAnimNum = Number(h.id_animal);
+      const animalInfo = this.mapaAnimales.get(idAnimNum) || {};
+      const numHistStr = h.numero_historia || `HC-${h.id_historia}`;
+      const radKey = String(numHistStr).trim().toLowerCase();
+      const segPorRadicado = this.mapaPorRadicado.get(radKey) || null;
+
+      const nombreResuelto =
+        animalInfo.nombre ||
+        h.animal?.nombre ||
+        segPorRadicado?.nombre ||
+        `Animal #${h.id_animal}`;
+
+      const nomKey = String(nombreResuelto).trim().toLowerCase();
+      const segPorNombre = nomKey ? (this.mapaPorNombre.get(nomKey) || null) : null;
+
+      const rawFoto =
+        animalInfo.foto_url ||
+        animalInfo.foto ||
+        this.extraerFotoDeRegistro(h) ||
+        segPorRadicado?.foto_url ||
+        segPorNombre?.foto_url ||
+        '';
+
+      const razaResuelta =
+        animalInfo.raza ||
+        h.animal?.raza ||
+        segPorRadicado?.raza ||
+        segPorNombre?.raza ||
+        'Mestizo';
+
+      let especieResuelta =
+        animalInfo.especie ||
+        h.animal?.especie ||
+        segPorRadicado?.especie ||
+        segPorNombre?.especie ||
+        'Canino';
+
+      // Evitar que la raza se duplique como especie (ej. "Poodle · Poodle")
+      if (
+        especieResuelta &&
+        razaResuelta &&
+        especieResuelta.trim().toLowerCase() === razaResuelta.trim().toLowerCase()
+      ) {
+        especieResuelta = segPorRadicado?.especie || segPorNombre?.especie || 'Canino';
+      }
+
       return {
         id_historia: h.id_historia,
         id_animal: h.id_animal,
         id_consulta: h.id_consulta || h.ultima_consulta?.id_consulta || h.consulta?.id_consulta || null,
-        numero_historia: h.numero_historia || `HC-${h.id_historia}`,
+        numero_historia: numHistStr,
         fecha_apertura: h.fecha_apertura,
         estado_general: h.estado_general || 'Estable',
         fecha_ultima_desparasitacion: h.fecha_ultima_desparasitacion || null,
@@ -245,12 +285,12 @@ export class HistoriaClinicaListComponent implements OnInit {
         fecha_ultimo_celo: h.fecha_ultimo_celo || null,
         fecha_ultimo_parto: h.fecha_ultimo_parto || null,
         // Animal vinculado
-        animal_nombre: animalInfo.nombre || h.animal?.nombre || `Animal #${h.id_animal}`,
-        animal_especie: animalInfo.especie || h.animal?.especie || 'Desconocida',
-        animal_raza: animalInfo.raza || h.animal?.raza || 'Mestizo',
+        animal_nombre: nombreResuelto,
+        animal_especie: especieResuelta,
+        animal_raza: razaResuelta,
         animal_foto: this.normalizarUrlFoto(rawFoto),
-        animal_sexo: animalInfo.sexo || h.animal?.sexo || '',
-        animal_peso: animalInfo.peso ?? h.animal?.peso ?? null
+        animal_sexo: animalInfo.sexo || h.animal?.sexo || segPorRadicado?.sexo || segPorNombre?.sexo || '',
+        animal_peso: animalInfo.peso ?? h.animal?.peso ?? segPorRadicado?.peso ?? segPorNombre?.peso ?? null
       };
     });
 
@@ -265,6 +305,78 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.cargando = false;
     this.recargando = false;
     this.cdr.detectChanges();
+
+    // Hidratar en segundo plano cualquier historia a la que aún le falte foto
+    this.hidratarFotosFaltantes();
+  }
+
+  /**
+   * Extrae la URL de la foto de un registro de animal, historia o seguimiento móvil
+   */
+  private extraerFotoDeRegistro(item: any): string {
+    if (!item) return '';
+
+    const extraerPrimera = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed.startsWith('[')) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            return extraerPrimera(parsed);
+          } catch {
+            return '';
+          }
+        }
+        return trimmed;
+      }
+      if (Array.isArray(val) && val.length > 0) {
+        const primero = val[0];
+        if (typeof primero === 'string') return primero;
+        if (primero && typeof primero === 'object') {
+          return (
+            primero.foto ||
+            primero.url ||
+            primero.imagen ||
+            primero.ruta_archivo ||
+            primero.foto_url ||
+            primero.fotoUrl ||
+            primero.archivo ||
+            ''
+          );
+        }
+      }
+      return '';
+    };
+
+    const candidata =
+      item.foto_url ||
+      item.fotoUrl ||
+      item.foto ||
+      extraerPrimera(item.fotos) ||
+      extraerPrimera(item.multimedia) ||
+      extraerPrimera(item.evidencias) ||
+      item.imagen ||
+      item.foto_paciente ||
+      item.imagen_paciente ||
+      item.animal_foto ||
+      item.animales?.[0]?.foto_url ||
+      item.animales?.[0]?.fotoUrl ||
+      item.animales?.[0]?.foto ||
+      item.animales?.[0]?.imagen ||
+      extraerPrimera(item.animales?.[0]?.fotos) ||
+      item.animal?.foto_url ||
+      item.animal?.fotoUrl ||
+      item.animal?.foto ||
+      item.animal?.imagen ||
+      extraerPrimera(item.animal?.fotos) ||
+      item.peticion?.foto ||
+      item.peticion?.imagen ||
+      extraerPrimera(item.peticion?.fotos) ||
+      extraerPrimera(item.peticion?.evidencias) ||
+      '';
+
+    return this.normalizarUrlFoto(candidata);
   }
 
   /**
@@ -273,6 +385,7 @@ export class HistoriaClinicaListComponent implements OnInit {
   normalizarUrlFoto(url: any): string {
     if (!url || typeof url !== 'string' || !url.trim()) return '';
     const u = url.trim();
+    if (u === 'null' || u === 'undefined' || u === 'None') return '';
     if (
       u.startsWith('http://') ||
       u.startsWith('https://') ||
@@ -295,39 +408,202 @@ export class HistoriaClinicaListComponent implements OnInit {
   }
 
   /**
-   * Precarga mapa de animales para mostrar nombres y especies reales en la tabla
+   * Precarga mapa de animales y seguimientos (Actas) para mostrar fotos, nombres y especies reales en la tabla
    */
   private precargarDatosAnimales(callback: () => void): void {
     const urlAnimales = environment.apiUrlAnimales || `${environment.apiBaseUrl}/animales/animales/`;
-    this.http.get<any>(urlAnimales, { headers: this.authHeaders }).subscribe({
-      next: (resp) => {
-        let lista: any[] = [];
-        if (Array.isArray(resp)) {
-          lista = resp;
-        } else if (Array.isArray(resp?.results)) {
-          lista = resp.results;
-        } else if (Array.isArray(resp?.data)) {
-          lista = resp.data;
-        }
-        lista.forEach((a: any) => {
-          if (a?.id_animal) {
-            const rawFoto = a.foto_url || a.fotoUrl || a.foto || a.imagen || a.foto_paciente || '';
-            this.mapaAnimales.set(Number(a.id_animal), {
-              nombre: a.nombre,
-              especie: a.raza_nombre ? a.raza_nombre : (a.id_raza?.id_especie?.nombre || 'Animal'),
-              raza: a.raza_nombre || a.id_raza?.nombre || 'Mestizo',
-              foto_url: this.normalizarUrlFoto(rawFoto),
-              sexo: a.sexo,
-              peso: a.peso
+    const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
+    const urlSeguimientos = `${baseUrl}/api/peticiones/seguimiento/listar/`;
+
+    forkJoin({
+      animalesResp: this.http.get<any>(urlAnimales, { headers: this.authHeaders }).pipe(catchError(() => of(null))),
+      seguimientosResp: this.http.get<any>(urlSeguimientos, { headers: this.authHeaders }).pipe(catchError(() => of(null)))
+    }).subscribe({
+      next: ({ animalesResp, seguimientosResp }) => {
+        const extraerArray = (r: any): any[] => {
+          if (!r) return [];
+          if (Array.isArray(r)) return r;
+          if (Array.isArray(r.results)) return r.results;
+          if (Array.isArray(r.data)) return r.data;
+          return [];
+        };
+
+        const listaSeguimientos = extraerArray(seguimientosResp);
+        const listaAnimales = extraerArray(animalesResp);
+
+        // 1. Indexar seguimientos por id_animal, por número de radicado y por nombre de paciente
+        listaSeguimientos.forEach((s: any) => {
+          const fotoSeg = this.extraerFotoDeRegistro(s);
+          const nombreSeg = String(
+            s?.nombre_paciente ||
+            s?.nombre_animal ||
+            s?.nombre ||
+            s?.animal?.nombre ||
+            s?.animales?.[0]?.nombre ||
+            s?.paciente?.nombre ||
+            ''
+          ).trim();
+          const especieSeg = String(
+            s?.paciente_especie ||
+            s?.especie ||
+            s?.animal?.especie ||
+            s?.animales?.[0]?.especie ||
+            ''
+          ).trim();
+          const razaSeg = String(
+            s?.paciente_raza ||
+            s?.raza ||
+            s?.animal?.raza ||
+            s?.animales?.[0]?.raza ||
+            ''
+          ).trim();
+          const sexoSeg = String(s?.paciente_sexo || s?.sexo || s?.animal?.sexo || '').trim();
+          const pesoSeg = s?.peso_paciente ?? s?.peso ?? s?.animal?.peso ?? null;
+          const idSeg = s?.id_seguimiento || s?.id || null;
+
+          const infoSeg = {
+            id_seguimiento: idSeg,
+            nombre: nombreSeg,
+            especie: especieSeg || 'Canino',
+            raza: razaSeg || 'Mestizo',
+            foto_url: fotoSeg,
+            sexo: sexoSeg,
+            peso: pesoSeg
+          };
+
+          const idAnimCand = Number(
+            s?.id_animal ??
+            s?.id_animal_id ??
+            s?.animal?.id_animal ??
+            s?.animal?.id ??
+            s?.animales?.[0]?.id_animal ??
+            s?.animales?.[0]?.id ??
+            s?.paciente?.id_animal
+          );
+          if (!isNaN(idAnimCand) && idAnimCand > 0) {
+            const prev = this.mapaAnimales.get(idAnimCand);
+            this.mapaAnimales.set(idAnimCand, {
+              ...prev,
+              ...infoSeg,
+              foto_url: fotoSeg || prev?.foto_url || ''
+            });
+          }
+
+          const radicado = String(
+            s?.numero_radicado ||
+            s?.radicado ||
+            s?.codigo_radicado ||
+            s?.numeroRadicado ||
+            ''
+          ).trim().toLowerCase();
+          if (radicado) {
+            const prevRad = this.mapaPorRadicado.get(radicado);
+            this.mapaPorRadicado.set(radicado, {
+              ...prevRad,
+              ...infoSeg,
+              foto_url: fotoSeg || prevRad?.foto_url || ''
+            });
+          }
+
+          if (nombreSeg) {
+            const nomKey = nombreSeg.toLowerCase();
+            const prevNom = this.mapaPorNombre.get(nomKey);
+            this.mapaPorNombre.set(nomKey, {
+              ...prevNom,
+              ...infoSeg,
+              foto_url: fotoSeg || prevNom?.foto_url || ''
             });
           }
         });
+
+        // 2. Indexar animales de /api/animales/animales/ preservando la foto del seguimiento si el animal no la tiene
+        listaAnimales.forEach((a: any) => {
+          if (a?.id_animal) {
+            const idNum = Number(a.id_animal);
+            const existente = this.mapaAnimales.get(idNum) || {};
+            const nomKey = String(a.nombre || '').trim().toLowerCase();
+            const porNombre = nomKey ? (this.mapaPorNombre.get(nomKey) || {}) : {};
+
+            const fotoDirecta = this.extraerFotoDeRegistro(a);
+            const fotoFinal = fotoDirecta || existente.foto_url || porNombre.foto_url || '';
+
+            const razaAnimal = a.raza_nombre || a.id_raza?.nombre || a.raza || existente.raza || porNombre.raza || 'Mestizo';
+            let especieAnimal =
+              a.especie_nombre ||
+              a.especie ||
+              a.id_raza?.id_especie?.nombre ||
+              (typeof a.id_especie === 'object' ? a.id_especie?.nombre : '') ||
+              existente.especie ||
+              porNombre.especie ||
+              'Canino';
+
+            if (especieAnimal.trim().toLowerCase() === razaAnimal.trim().toLowerCase()) {
+              especieAnimal = existente.especie || porNombre.especie || 'Canino';
+            }
+
+            this.mapaAnimales.set(idNum, {
+              id_seguimiento: existente.id_seguimiento || porNombre.id_seguimiento || null,
+              nombre: a.nombre || existente.nombre,
+              especie: especieAnimal,
+              raza: razaAnimal,
+              foto_url: fotoFinal,
+              sexo: a.sexo || existente.sexo || porNombre.sexo || '',
+              peso: a.peso ?? existente.peso ?? porNombre.peso ?? null
+            });
+          }
+        });
+
         callback();
       },
       error: () => {
-        // Continuar de todos modos si el endpoint de animales no responde
         callback();
       }
+    });
+  }
+
+  /**
+   * Hidrata en segundo plano las fotos que no vinieron en el listado general consultando
+   * el detalle del seguimiento o el expediente individual del animal.
+   */
+  private hidratarFotosFaltantes(): void {
+    const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
+    const sinFoto = this.historias.filter(h => !h.animal_foto && h.id_animal);
+
+    sinFoto.forEach((historia) => {
+      const idAnimNum = Number(historia.id_animal);
+      const radKey = String(historia.numero_historia || '').trim().toLowerCase();
+      const nomKey = String(historia.animal_nombre || '').trim().toLowerCase();
+
+      const infoSeg =
+        this.mapaAnimales.get(idAnimNum) ||
+        this.mapaPorRadicado.get(radKey) ||
+        this.mapaPorNombre.get(nomKey);
+
+      const idSeg = infoSeg?.id_seguimiento;
+      if (idSeg) {
+        this.http.get<any>(`${baseUrl}/api/peticiones/seguimiento/${idSeg}/`, { headers: this.authHeaders }).subscribe({
+          next: (det) => {
+            const fotoDet = this.extraerFotoDeRegistro(det);
+            if (fotoDet) {
+              historia.animal_foto = fotoDet;
+              this.cdr.detectChanges();
+            }
+          },
+          error: () => {}
+        });
+      }
+
+      const urlExpAnimal = `${environment.apiUrlExpedientePorAnimal}${idAnimNum}/`;
+      this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).subscribe({
+        next: (data) => {
+          const fotoExp = this.extraerFotoDeRegistro(data?.animal || data);
+          if (fotoExp && !historia.animal_foto) {
+            historia.animal_foto = fotoExp;
+            this.cdr.detectChanges();
+          }
+        },
+        error: () => {}
+      });
     });
   }
 

@@ -291,6 +291,17 @@ export class HistoriaClinicaService {
       motivoStr = c.motivo_consulta || payload.motivo_consulta || 'Consulta clínica general';
     }
 
+    const fotoAnimal =
+      a.foto_url ||
+      a.fotoUrl ||
+      a.foto ||
+      a.imagen ||
+      payload.foto_url ||
+      payload.fotoUrl ||
+      payload.foto ||
+      (Array.isArray(payload.fotos) && payload.fotos.length > 0 ? payload.fotos[0] : null) ||
+      null;
+
     const payloadBackend = {
       ...payload,
       id_animal: payload.id_animal || a.id_animal || null,
@@ -309,7 +320,10 @@ export class HistoriaClinicaService {
         tamano: a.tamano || '',
         procedencia: a.origen || a.procedencia || 'Rescate callejero',
         microchip: a.microchip || null,
-        estado_reproductivo: a.estado_reproductivo || h.estado_reproductivo || 'No aplica'
+        estado_reproductivo: a.estado_reproductivo || h.estado_reproductivo || 'No aplica',
+        foto_url: fotoAnimal,
+        fotoUrl: fotoAnimal,
+        foto: fotoAnimal
       },
       tenedor: (p.tiene_propietario === false) ? {} : {
         documentoIdentidad: p.documentoIdentidad || p.documento_identidad || p.documento || '',
@@ -1488,7 +1502,9 @@ export class HistoriaClinicaService {
           especie: (dto as any)?.animal?.especie || historiaActual?.paciente?.especie || 'Canino',
           raza: (dto as any)?.animal?.raza || historiaActual?.paciente?.raza || 'Mestizo',
           sexo: (dto as any)?.animal?.sexo || historiaActual?.paciente?.sexo || 'Macho',
-          peso: payloadPatch.peso ?? historiaActual?.paciente?.peso ?? null
+          peso: payloadPatch.peso ?? historiaActual?.paciente?.peso ?? null,
+          foto_url: (dto as any)?.animal?.foto_url || historiaActual?.paciente?.foto_url || null,
+          fotoUrl: (dto as any)?.animal?.foto_url || historiaActual?.paciente?.foto_url || null
         },
         tenedor: {
           nombres: dto.tenedor?.['nombres'] || historiaActual?.paciente?.tenedor_nombre || '',

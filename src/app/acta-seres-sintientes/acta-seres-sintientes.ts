@@ -1940,15 +1940,24 @@ export class ActaSeresSintientes implements OnInit {
           });
         }
 
-        // 3. Actualizar peso del paciente si se especificó
+        // 3. Actualizar peso y foto del paciente si se especificó
         const idAnimalActual = this.resolverIdAnimal(this.seguimientoSeleccionado);
         if (idAnimalActual) {
           this.animalesConHistoriaIds.add(Number(idAnimalActual));
+          const fotoAnimal = this.obtenerFotoPaciente(this.seguimientoSeleccionado);
+          const payloadAnimalPatch: any = {};
           if (this.pesoPaciente) {
             const pesoVal = Number(this.pesoPaciente);
             if (!isNaN(pesoVal) && pesoVal > 0) {
-              this.http.patch<any>(`${environment.apiUrlAnimales}${idAnimalActual}/`, { peso: pesoVal }, { headers }).subscribe({ error: () => {} });
+              payloadAnimalPatch.peso = pesoVal;
             }
+          }
+          if (fotoAnimal) {
+            payloadAnimalPatch.foto_url = fotoAnimal;
+            payloadAnimalPatch.foto = fotoAnimal;
+          }
+          if (Object.keys(payloadAnimalPatch).length > 0) {
+            this.http.patch<any>(`${environment.apiUrlAnimales}${idAnimalActual}/`, payloadAnimalPatch, { headers }).subscribe({ error: () => {} });
           }
         }
 
