@@ -41,12 +41,20 @@ export class VeterinaryInventoryComponent implements OnInit {
   veterinariosDisponibles: any[] = [];
   veterinarioSeleccionadoId: number = 0;
 
-  // Modal / Formulario de Prescripción y Consumo
+  // Modal de Prescripción / Consumo
   modalConsumoAbierto = false;
   itemSeleccionadoParaConsumo: VeterinaryKitItem | null = null;
   cantidadConsumo: number = 1;
   observacionesConsumo = '';
   pacienteConsumo = '';
+
+  // Modal de Ajuste / Retiro de Stock del Kit
+  modalAjusteAbierto = false;
+  itemSeleccionadoParaAjuste: VeterinaryKitItem | null = null;
+  tipoOperacionAjuste: 'RETIRO' | 'ASIGNAR' = 'RETIRO';
+  cantidadAjuste: number = 1;
+  motivoAjuste: string = 'Devolución de stock a bodega general CBA';
+  guardandoAjuste = false;
 
   // Resultado de validación en tiempo real
   validacionConsumo: ConsumoValidationResult | null = null;
@@ -62,7 +70,7 @@ export class VeterinaryInventoryComponent implements OnInit {
     this.veterinarioSeleccionadoId = this.veterinarioId;
 
     // Limpiar claves locales residuales de pruebas anteriores, manteniendo aislado el id 41
-    this.inventoryService.limpiarDatosResidualesVeterinarios(41);
+    this.inventoryService.limpiarDatosResidualesVeterinarios();
 
     if (this.esAdmin) {
       this.inventoryService.obtenerVeterinarios().subscribe({
@@ -171,16 +179,18 @@ export class VeterinaryInventoryComponent implements OnInit {
     return this.itemsKit.length;
   }
 
-  get totalSaldoDisponible(): number {
-    return this.itemsKit.reduce((sum, item) => sum + item.saldoDisponible, 0);
-  }
-
   get totalEntregadas(): number {
-    return this.itemsKit.reduce((sum, item) => sum + item.cantidadEntregada, 0);
+    return this.itemsKit.reduce((sum, item) => sum + (Number(item.cantidadEntregada) || 0), 0);
   }
 
   get totalConsumidas(): number {
-    return this.itemsKit.reduce((sum, item) => sum + item.cantidadConsumida, 0);
+    return this.itemsKit.reduce((sum, item) => sum + (Number(item.cantidadConsumida) || 0), 0);
+  }
+
+  get totalSaldoDisponible(): number {
+    // TOTAL_DISPONIBLE = TOTAL_ENTREGADO - TOTAL_CONSUMIDO
+    // Garantiza que las tarjetas KPI y la suma individual coincidan al 100% matemáticamente
+    return Math.max(0, this.totalEntregadas - this.totalConsumidas);
   }
 
   get productosConStockBajo(): VeterinaryKitItem[] {
@@ -348,6 +358,96 @@ export class VeterinaryInventoryComponent implements OnInit {
           });
         }
       });
+    });
+  }
+
+  // --- Modal de Ajuste / Retiro directo de Kit ---
+  abrirModalAjuste(item: VeterinaryKitItem): void {
+    this.itemSeleccionadoParaAjuste = item;
+    this.tipoOperacionAjuste = 'RETIRO';
+    this.cantidadAjuste = 1;
+    this.motivoAjuste = 'Devolución de stock a bodega general CBA';
+    this.modalAjusteAbierto = true;
+  }
+
+  cerrarModalAjuste(): void {
+    this.modalAjusteAbierto = false;
+    this.itemSeleccionadoParaAjuste = null;
+    this.guardandoAjuste = false;
+  }
+
+  calcularSaldoAjuste(): number {
+    if (!this.itemSeleccionadoParaAjuste) return 0;
+    const cant = Number(this.cantidadAjuste) || 0;
+    if (this.tipoOperacionAjuste === 'RETIRO') {
+      return Math.max(0, this.itemSeleccionadoParaAjuste.saldoDisponible - cant);
+    } else {
+      return this.itemSeleccionadoParaAjuste.saldoDisponible + cant;
+    }
+  }
+
+  confirmarAjuste(): void {
+    if (!this.itemSeleccionadoParaAjuste) return;
+    const item = this.itemSeleccionadoParaAjuste;
+    const cant = Number(this.cantidadAjuste);
+
+    if (cant <= 0) {
+      Swal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0.', confirmButtonColor: '#4141A5' });
+      return;
+    }
+
+    if (this.tipoOperacionAjuste === 'RETIRO' && cant > item.saldoDisponible) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Cantidad superior al saldo',
+        text: `No puedes retirar ${cant} unidades porque solo tienes ${item.saldoDisponible} unidades disponibles en tu maletín.`,
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    const idVet = this.esAdmin && this.veterinarioSeleccionadoId ? Number(this.veterinarioSeleccionadoId) : this.veterinarioId;
+
+    this.guardandoAjuste = true;
+    this.inventoryService.ajustarStockKit(idVet, item.id_medicamento, cant, this.tipoOperacionAjuste, this.motivoAjuste).subscribe({
+      next: () => {
+        this.guardandoAjuste = false;
+        
+        // Actualización reactiva inmediata en memoria
+        if (this.tipoOperacionAjuste === 'RETIRO') {
+          item.cantidadEntregada = Math.max(0, (Number(item.cantidadEntregada) || 0) - cant);
+          item.saldoDisponible = Math.max(0, item.cantidadEntregada - (Number(item.cantidadConsumida) || 0));
+        } else {
+          item.cantidadEntregada = (Number(item.cantidadEntregada) || 0) + cant;
+          item.saldoDisponible = item.cantidadEntregada - (Number(item.cantidadConsumida) || 0);
+        }
+        item.umbralBajo = item.saldoDisponible <= 10;
+        this.aplicarFiltro();
+        this.cdr.detectChanges();
+
+        this.cerrarModalAjuste();
+        this.cargarDatos();
+
+        const accionTxt = this.tipoOperacionAjuste === 'RETIRO'
+          ? `Se retiraron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${Math.max(0, item.saldoDisponible - cant)} uds.`
+          : `Se agregaron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible + cant} uds.`;
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Ajuste Realizado con Éxito!',
+          text: accionTxt,
+          confirmButtonColor: '#4141A5'
+        });
+      },
+      error: (err) => {
+        this.guardandoAjuste = false;
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al ajustar',
+          text: err?.error?.detail || err?.message || 'No se pudo completar el ajuste.',
+          confirmButtonColor: '#4141A5'
+        });
+      }
     });
   }
 }

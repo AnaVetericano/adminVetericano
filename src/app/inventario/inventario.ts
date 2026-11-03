@@ -32,6 +32,7 @@ export class Inventario implements OnInit {
   cargandoVeterinarios = false;
   idVeterinarioSeleccionado: number | null = null;
   cantidadAAsignar: number = 1;
+  tipoOperacionAsignar: 'ASIGNAR' | 'RETIRO' = 'ASIGNAR';
   motivoAsignacion = 'Dotación para maletín de campo veterinario';
   guardandoAsignacion = false;
   errorAsignacion = '';
@@ -415,6 +416,61 @@ export class Inventario implements OnInit {
     const vet = this.veterinarios.find(v => Number(v.id_usuario) === Number(this.idVeterinarioSeleccionado));
     const nombreVet = vet ? vet.nombre : `Veterinario #${this.idVeterinarioSeleccionado}`;
     const idMed = Number(this.loteSeleccionado.idMed) || Number(this.loteSeleccionado.refInv?.id_medicamento) || 0;
+
+    // Si la operación es de RETIRO (devolución de kit a bodega general):
+    if (this.tipoOperacionAsignar === 'RETIRO') {
+      this.guardandoAsignacion = true;
+      this.vetInvSvc.ajustarStockKit(
+        Number(this.idVeterinarioSeleccionado),
+        idMed,
+        cant,
+        'RETIRO',
+        this.motivoAsignacion || 'Devolución de stock a bodega CBA'
+      ).subscribe({
+        next: () => {
+          const nuevoStockBodega = stockActual + cant;
+          const idInventarioReal = this.loteSeleccionado.refInv?.id_inventario ?? 
+            (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0 ? this.loteSeleccionado.idInvs[0] : null);
+
+          const reintegrar$ = idInventarioReal
+            ? this.svc.actualizarInventario(idInventarioReal, { cantidad_actual: nuevoStockBodega, estado: 'Disponible' })
+            : of(null);
+
+          reintegrar$.subscribe({
+            next: () => {
+              this.guardandoAsignacion = false;
+              this.cerrarModalAsignar();
+              Swal.fire({
+                icon: 'success',
+                title: '¡Stock Devuelto a Bodega!',
+                html: `
+                  <div class="text-left text-sm space-y-2">
+                    <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
+                    <p><strong>Veterinario origen:</strong> ${nombreVet}</p>
+                    <p><strong>Cantidad retirada:</strong> <span class="text-rose-600 font-extrabold">-${cant} unidades</span></p>
+                    <p><strong>Nuevo stock en Bodega CBA:</strong> <span class="text-[#4141a5] font-extrabold">${nuevoStockBodega} unidades</span></p>
+                  </div>
+                `,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#4141a5'
+              });
+              this.cargar();
+            },
+            error: () => {
+              this.guardandoAsignacion = false;
+              this.cerrarModalAsignar();
+              this.cargar();
+            }
+          });
+        },
+        error: (err) => {
+          this.guardandoAsignacion = false;
+          this.errorAsignacion = err?.error?.detail || err?.error?.error || 'No se pudo retirar el stock del veterinario.';
+          this.cdr.detectChanges();
+        }
+      });
+      return;
+    }
 
     this.guardandoAsignacion = true;
 
