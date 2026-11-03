@@ -1001,61 +1001,154 @@
                 <span class="text-[10px] font-black font-mono px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
                   {{ conteoTratamiento }}
                 </span>
-                <button type="button" (click)="mostrarCatalogoMedicamentos = !mostrarCatalogoMedicamentos"
-                  class="px-3 py-1 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
-                  + Fármaco
+                <button type="button" (click)="desplegarMedicamentos()"
+                  class="px-3.5 py-1.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5">
+                  <span>+ Fármaco</span>
+                  <span class="text-[10px]">{{ mostrarCatalogoMedicamentos ? '▲' : '▼' }}</span>
                 </button>
               </div>
             </div>
 
-            <!-- Catálogo Desplegable de Medicamentos -->
-            <div *ngIf="mostrarCatalogoMedicamentos" class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 animate-scale-up">
-              <span class="text-[10px] font-bold text-slate-500 uppercase block">Seleccionar del Inventario Oficial:</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                <button type="button" *ngFor="let med of medicamentosCatalogo.slice(0, 9)" (click)="agregarMedicamento(med)"
-                  class="p-2.5 bg-white border border-slate-200 rounded-xl text-left hover:border-[#4141a5] transition cursor-pointer">
-                  <span class="font-black text-xs text-[#170B3D] block truncate">{{ med.nombre }}</span>
-                  <span class="text-[10px] text-slate-400 block truncate">Stock: {{ med.stockDisponible }} uds</span>
+            <!-- Catálogo Desplegable de Medicamentos del Maletín / Inventario Veterinario -->
+            <div *ngIf="mostrarCatalogoMedicamentos" class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-scale-up">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-black text-[#170B3D] flex items-center gap-1.5">
+                    <span>🎒</span>
+                    <span>Inventario de Medicamentos Veterinarios</span>
+                  </span>
+                  <div class="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-slate-200 text-[11px] font-bold">
+                    <button type="button" (click)="cambiarVistaMedicamentos('maletin')"
+                      [class.bg-[#4141a5]]="vistaOrigenMedicamentos === 'maletin'"
+                      [class.text-white]="vistaOrigenMedicamentos === 'maletin'"
+                      [class.text-slate-600]="vistaOrigenMedicamentos !== 'maletin'"
+                      class="px-3 py-1 rounded-lg transition cursor-pointer">
+                      Mi Maletín ({{ medicamentosMaletin.length }})
+                    </button>
+                    <button type="button" (click)="cambiarVistaMedicamentos('todos')"
+                      [class.bg-[#4141a5]]="vistaOrigenMedicamentos === 'todos'"
+                      [class.text-white]="vistaOrigenMedicamentos === 'todos'"
+                      [class.text-slate-600]="vistaOrigenMedicamentos !== 'todos'"
+                      class="px-3 py-1 rounded-lg transition cursor-pointer">
+                      Todo el Catálogo CBA ({{ medicamentosCatalogo.length }})
+                    </button>
+                  </div>
+                </div>
+
+                <div class="w-full sm:w-72">
+                  <input type="text" [(ngModel)]="busquedaMedicamento" (ngModelChange)="filtrarMedicamentosCatalogo()"
+                    placeholder="🔍 Buscar medicamento por nombre..."
+                    class="w-full p-2 px-3 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-[#4141a5] font-semibold text-slate-700 shadow-2xs" />
+                </div>
+              </div>
+
+              <!-- Indicador de carga -->
+              <div *ngIf="cargandoMedicamentos" class="p-6 text-center text-xs text-slate-500 font-bold flex items-center justify-center gap-2">
+                <span class="animate-spin text-[#4141a5]">⏳</span>
+                <span>Cargando inventario de medicamentos del maletín...</span>
+              </div>
+
+              <!-- Grid de tarjetas de medicamentos -->
+              <div *ngIf="!cargandoMedicamentos && medicamentosFiltrados.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
+                <button type="button" *ngFor="let med of medicamentosFiltrados" (click)="agregarMedicamento(med)"
+                  class="p-3 bg-white border border-slate-200 hover:border-[#4141a5] hover:shadow-xs rounded-xl text-left transition cursor-pointer flex flex-col justify-between gap-1.5 group">
+                  <div class="flex items-start justify-between gap-1">
+                    <span class="font-black text-xs text-[#170B3D] group-hover:text-[#4141a5] transition-colors leading-tight line-clamp-2">
+                      {{ med.nombre }}
+                    </span>
+                    <span *ngIf="med.esMaletin" class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[#4141a5]/10 text-[#4141a5] shrink-0 border border-[#4141a5]/20">
+                      Maletín
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100">
+                    <span class="text-slate-400 font-medium truncate max-w-[130px]">{{ med.presentacion || med.tipo || 'Clínico' }}</span>
+                    <span class="font-extrabold px-2 py-0.5 rounded-full"
+                      [ngClass]="med.stockDisponible > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'">
+                      Stock: {{ med.stockDisponible }} uds
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Si no hay medicamentos en el filtro -->
+              <div *ngIf="!cargandoMedicamentos && medicamentosFiltrados.length === 0"
+                class="p-4 bg-white border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                <p class="font-bold text-[#170B3D]">No se encontraron medicamentos en esta vista.</p>
+                <button type="button" (click)="busquedaMedicamento = ''; cambiarVistaMedicamentos('todos')"
+                  class="mt-1 text-[11px] text-[#4141a5] font-bold hover:underline cursor-pointer">
+                  Ver todo el catálogo general CBA
                 </button>
               </div>
             </div>
 
             <!-- Tabla de Medicamentos Prescritos -->
             <div *ngIf="medicamentosSeleccionados.length > 0" class="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-100 text-[#170B3D] font-extrabold text-[10px] uppercase">
-                  <tr>
-                    <th class="py-2 px-3">Fármaco</th>
-                    <th class="py-2 px-3">Dosis</th>
-                    <th class="py-2 px-3">Vía</th>
-                    <th class="py-2 px-3">Frecuencia</th>
-                    <th class="py-2 px-3 text-right">Acción</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let med of medicamentosSeleccionados; let i = index">
-                    <td class="py-2 px-3 font-bold text-slate-800">{{ med.nombre }}</td>
-                    <td class="py-2 px-3">
-                      <input type="text" [(ngModel)]="med.dosis" placeholder="1 ml"
-                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-20 outline-none focus:border-[#4141a5]" />
-                    </td>
-                    <td class="py-2 px-3">
-                      <input type="text" [(ngModel)]="med.via" placeholder="SC / Oral"
-                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-20 outline-none focus:border-[#4141a5]" />
-                    </td>
-                    <td class="py-2 px-3">
-                      <input type="text" [(ngModel)]="med.frecuencia" placeholder="C/12h x 5d"
-                        class="p-1 bg-slate-50 border border-slate-200 rounded text-xs w-24 outline-none focus:border-[#4141a5]" />
-                    </td>
-                    <td class="py-2 px-3 text-right">
-                      <button type="button" (click)="quitarMedicamento(i)"
-                        class="text-rose-600 font-bold hover:text-rose-800 text-xs cursor-pointer">
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100 text-[#170B3D] font-extrabold text-[10px] uppercase">
+                    <tr>
+                      <th class="py-2.5 px-3">Fármaco</th>
+                      <th class="py-2.5 px-3 text-center">Stock Maletín</th>
+                      <th class="py-2.5 px-3 text-center">Cant. Descontar</th>
+                      <th class="py-2.5 px-3">Dosis</th>
+                      <th class="py-2.5 px-3">Vía</th>
+                      <th class="py-2.5 px-3">Frecuencia</th>
+                      <th class="py-2.5 px-3 text-center">Descuento de Maletín</th>
+                      <th class="py-2.5 px-3 text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    <tr *ngFor="let med of medicamentosSeleccionados; let i = index" class="hover:bg-slate-50/70 transition-colors">
+                      <td class="py-2.5 px-3">
+                        <span class="font-bold text-slate-800 block text-xs">{{ med.nombre }}</span>
+                        <span *ngIf="med.presentacion" class="text-[10px] text-slate-400 block font-medium">{{ med.presentacion }}</span>
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <span class="font-mono font-bold text-xs px-2 py-0.5 rounded-full"
+                          [ngClass]="med.stockDisponible > 0 ? 'bg-slate-100 text-slate-700' : 'bg-rose-50 text-rose-600'">
+                          {{ med.stockDisponible }} uds
+                        </span>
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <input type="number" [(ngModel)]="med.cantidadAAdministrar" min="1" [max]="med.stockDisponible || 999"
+                          [disabled]="med.administrado"
+                          class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-16 text-center font-bold text-[#170B3D] outline-none focus:border-[#4141a5] disabled:bg-slate-100" />
+                      </td>
+                      <td class="py-2.5 px-3">
+                        <input type="text" [(ngModel)]="med.dosis" placeholder="1 ml"
+                          class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-20 outline-none focus:border-[#4141a5]" />
+                      </td>
+                      <td class="py-2.5 px-3">
+                        <input type="text" [(ngModel)]="med.via" placeholder="SC / Oral"
+                          class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-20 outline-none focus:border-[#4141a5]" />
+                      </td>
+                      <td class="py-2.5 px-3">
+                        <input type="text" [(ngModel)]="med.frecuencia" placeholder="C/12h x 5d"
+                          class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-24 outline-none focus:border-[#4141a5]" />
+                      </td>
+                      <td class="py-2.5 px-3 text-center">
+                        <div *ngIf="med.administrado" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <span>✓</span>
+                          <span>Descontado ({{ med.cantidadEfectivaAdministrada }} uds)</span>
+                        </div>
+                        <button *ngIf="!med.administrado" type="button" (click)="registrarAdministracion(med, i)"
+                          [disabled]="med.administrando"
+                          class="px-2.5 py-1 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-lg text-[10px] font-extrabold uppercase shadow-2xs active:scale-95 transition cursor-pointer flex items-center justify-center gap-1 mx-auto whitespace-nowrap">
+                          <span *ngIf="med.administrando" class="animate-spin">⏳</span>
+                          <span>⚡ Descontar Ahora</span>
+                        </button>
+                      </td>
+                      <td class="py-2.5 px-3 text-right">
+                        <button type="button" (click)="quitarMedicamento(i)"
+                          class="text-rose-600 font-bold hover:text-rose-800 text-xs cursor-pointer p-1 rounded hover:bg-rose-50 transition" title="Quitar fármaco">
+                          ✕
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <!-- Plan de Tratamiento y Materiales -->

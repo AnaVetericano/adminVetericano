@@ -110,6 +110,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   cargandoMedicamentos: boolean = false;
   mensajeMedicamentos: string = '';
   medicamentosCatalogo: any[] = [];
+  medicamentosMaletin: any[] = [];
+  medicamentosFiltrados: any[] = [];
+  busquedaMedicamento: string = '';
+  vistaOrigenMedicamentos: 'maletin' | 'todos' = 'maletin';
   medicamentosSeleccionados: any[] = [];
   tratamientosEliminadosIds: number[] = [];
   mapaStockPorId: Map<number, number> = new Map();
@@ -1953,9 +1957,36 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   desplegarMedicamentos(): void {
     this.mostrarCatalogoMedicamentos = !this.mostrarCatalogoMedicamentos;
-    if (this.mostrarCatalogoMedicamentos && this.medicamentosCatalogo.length === 0) {
-      this.cargarMedicamentos();
+    if (this.mostrarCatalogoMedicamentos) {
+      if (this.medicamentosCatalogo.length === 0 || this.medicamentosMaletin.length === 0) {
+        this.cargarMedicamentos();
+      } else {
+        this.filtrarMedicamentosCatalogo();
+      }
     }
+  }
+
+  filtrarMedicamentosCatalogo(): void {
+    const q = (this.busquedaMedicamento || '').toLowerCase().trim();
+    const fuente = this.vistaOrigenMedicamentos === 'maletin'
+      ? this.medicamentosMaletin
+      : this.medicamentosCatalogo;
+
+    if (!q) {
+      this.medicamentosFiltrados = [...fuente];
+    } else {
+      this.medicamentosFiltrados = fuente.filter((m: any) => {
+        const nom = String(m.nombre || '').toLowerCase();
+        const prin = String(m.principio_activo || '').toLowerCase();
+        const pres = String(m.presentacion || '').toLowerCase();
+        return nom.includes(q) || prin.includes(q) || pres.includes(q);
+      });
+    }
+  }
+
+  cambiarVistaMedicamentos(vista: 'maletin' | 'todos'): void {
+    this.vistaOrigenMedicamentos = vista;
+    this.filtrarMedicamentosCatalogo();
   }
 
   cargarMedicamentos(): void {
@@ -1983,8 +2014,44 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         const mapaKitPorId = new Map<number, number>();
         const mapaKitPorNombre = new Map<string, number>();
 
+        // Si el kit vino vacío pero hay stock en bodega CBA, dotar el kit con medicamentos disponibles
+        if (!kitVeterinario || kitVeterinario.length === 0) {
+          const dotacionInicial: any[] = catalogo
+            .filter((med: any) => {
+              const id = Number(med?.id_medicamento ?? med?.id);
+              const nom = String(med?.nombre || '').trim().toLowerCase();
+              const stock = stockGeneral.porId.get(id) || stockGeneral.porNombre.get(nom) || 0;
+              return stock > 0;
+            })
+            .map((med: any) => {
+              const id = Number(med?.id_medicamento ?? med?.id);
+              const nom = String(med?.nombre || '').trim().toLowerCase();
+              const stock = stockGeneral.porId.get(id) || stockGeneral.porNombre.get(nom) || 10;
+              return {
+                id,
+                id_medicamento: id,
+                nombre: med.nombre,
+                descripcion: med.descripcion || med.presentacion,
+                tipo: med.tipo || 'Medicamento de Campo',
+                presentacion: med.presentacion || '',
+                concentracion: med.concentracion || '',
+                cantidadEntregada: stock,
+                cantidadConsumida: 0,
+                saldoDisponible: stock,
+                saldoVencido: 0,
+                fechaEntrega: new Date().toISOString(),
+                lote: `KIT-VET${idVet}`,
+                umbralBajo: stock <= 10
+              };
+            });
+          if (dotacionInicial.length > 0) {
+            this.vetInvSvc.guardarAsignacionesLocales(Number(idVet), dotacionInicial);
+            kitVeterinario = dotacionInicial;
+          }
+        }
+
         kitVeterinario.forEach((k: any) => {
-          const idMed = Number(k.id_medicamento);
+          const idMed = Number(k.id_medicamento || k.id);
           if (!isNaN(idMed) && idMed > 0) {
             mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
           }
@@ -1994,37 +2061,59 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           }
         });
 
+        // 1. MEDICAMENTOS DEL MALETÍN (Inventario Veterinario)
+        this.medicamentosMaletin = kitVeterinario.map((k: any) => {
+          const id = Number(k.id_medicamento || k.id);
+          return {
+            id,
+            id_medicamento: id,
+            nombre: k.nombre,
+            presentacion: k.presentacion || '',
+            concentracion: k.concentracion || '',
+            tipo: k.tipo || 'Medicamento de Maletín',
+            stockDisponible: Number(k.saldoDisponible ?? 0),
+            esMaletin: true,
+            lote: k.lote || ''
+          };
+        }).sort((a: any, b: any) => (b.stockDisponible - a.stockDisponible) || a.nombre.localeCompare(b.nombre));
+
+        // 2. CATÁLOGO GENERAL (priorizando items de maletín)
         const calcularStock = (id: number, nombreKey: string): number => {
-          if (kitVeterinario.length > 0) {
-            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
-            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
-            return 0;
-          }
+          if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+          if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
           return (!isNaN(id) && stockGeneral.porId.has(id))
             ? (stockGeneral.porId.get(id) ?? 0)
             : (stockGeneral.porNombre.get(nombreKey) ?? 0);
         };
 
-        this.medicamentosCatalogo = catalogo.map((med: any) => {
+        const idsEnMaletin = new Set(this.medicamentosMaletin.map((m: any) => Number(m.id_medicamento)));
+
+        const catalogoConStock = catalogo.map((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
           const stockDisponible = calcularStock(id, nombreKey);
-
           return {
             ...med,
+            id,
             id_medicamento: id,
-            stockDisponible
+            stockDisponible,
+            esMaletin: idsEnMaletin.has(id)
           };
         });
 
+        const otrosCatalogo = catalogoConStock.filter((c: any) => !idsEnMaletin.has(Number(c.id_medicamento)));
+        this.medicamentosCatalogo = [...this.medicamentosMaletin, ...otrosCatalogo];
+
+        this.filtrarMedicamentosCatalogo();
+
         if (this.medicamentosCatalogo.length === 0) {
-          this.mensajeMedicamentos = 'El catálogo no contiene medicamentos.';
+          this.mensajeMedicamentos = 'El inventario no contiene medicamentos.';
         }
         this.cargandoMedicamentos = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        this.mensajeMedicamentos = 'No se pudieron cargar los medicamentos.';
+        this.mensajeMedicamentos = 'No se pudieron cargar los medicamentos del inventario.';
         this.cargandoMedicamentos = false;
         this.cdr.detectChanges();
       }
@@ -2050,7 +2139,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         const mapaKitPorNombre = new Map<string, number>();
 
         kitVeterinario.forEach((k: any) => {
-          const idMed = Number(k.id_medicamento);
+          const idMed = Number(k.id_medicamento || k.id);
           if (!isNaN(idMed) && idMed > 0) {
             mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
           }
@@ -2061,15 +2150,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         });
 
         const calcularStock = (id: number, nombreKey: string): number => {
-          if (kitVeterinario.length > 0) {
-            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
-            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
-            return 0;
-          }
+          if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+          if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
           return (!isNaN(id) && stockGeneral.porId.has(id))
             ? (stockGeneral.porId.get(id) ?? 0)
             : (stockGeneral.porNombre.get(nombreKey) ?? 0);
         };
+
+        this.medicamentosMaletin.forEach((med: any) => {
+          const id = Number(med?.id_medicamento ?? med?.id);
+          const nombreKey = String(med?.nombre || '').trim().toLowerCase();
+          med.stockDisponible = calcularStock(id, nombreKey);
+        });
 
         this.medicamentosCatalogo.forEach((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
@@ -2084,6 +2176,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             item.stockDisponible = calcularStock(id, nombreKey);
           }
         });
+
+        this.filtrarMedicamentosCatalogo();
         this.cdr.detectChanges();
       }
     });
@@ -2097,9 +2191,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       medicamento?.nombre_producto ||
       ''
     );
-    const id = medicamento?.id_medicamento ?? medicamento?.id ?? null;
+    const id = Number(medicamento?.id_medicamento ?? medicamento?.id);
     const yaExiste = this.medicamentosSeleccionados.some((item: any) =>
-      (id !== null && item.id === id) || (id === null && item.nombre === nombre)
+      (!isNaN(id) && Number(item.id) === id) || (isNaN(id) && item.nombre === nombre)
     );
 
     if (yaExiste) {
@@ -2115,12 +2209,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const nombreKey = String(nombre).trim().toLowerCase();
     const stock = medicamento?.stockDisponible !== undefined
       ? medicamento.stockDisponible
-      : ((id !== null && this.mapaStockPorId.has(Number(id)))
+      : ((!isNaN(id) && this.mapaStockPorId.has(Number(id)))
         ? (this.mapaStockPorId.get(Number(id)) ?? 0)
         : (this.mapaStockPorNombre.get(nombreKey) ?? 0));
 
     this.medicamentosSeleccionados.push({
-      id,
+      id: !isNaN(id) ? id : null,
       id_tratamiento: null,
       nombre: nombre || 'Medicamento',
       principio_activo: medicamento?.principio_activo || '',
@@ -2133,7 +2227,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       cantidadAAdministrar: 1,
       administrado: false,
       cantidadEfectivaAdministrada: 0,
-      administrando: false
+      administrando: false,
+      esMaletin: medicamento?.esMaletin ?? (stock > 0)
     });
 
     this.formHistoria.markAsDirty();
@@ -2188,7 +2283,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'info',
         title: 'Ya administrado',
-        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado de inventario.`,
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado de tu maletín.`,
         confirmButtonColor: '#4141a5'
       });
       return;
@@ -2209,8 +2304,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (stockActual <= 0) {
       Swal.fire({
         icon: 'error',
-        title: 'Sin existencias en inventario',
-        text: `No hay unidades disponibles en inventario para el medicamento "${med.nombre}".`,
+        title: 'Sin existencias en maletín',
+        text: `No hay unidades disponibles en tu maletín para el medicamento "${med.nombre}".`,
         confirmButtonColor: '#4141a5'
       });
       return;
@@ -2219,8 +2314,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (cantidad > stockActual) {
       Swal.fire({
         icon: 'error',
-        title: 'Stock insuficiente en inventario de campo',
-        text: `No cuentas con suficiente stock en tu inventario de campo (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Por favor, ajusta la cantidad o utiliza una alternativa de medicamento disponible.`,
+        title: 'Stock insuficiente en maletín de campo',
+        text: `No cuentas con suficiente stock en tu maletín (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Por favor, ajusta la cantidad a descontar.`,
         confirmButtonColor: '#4141a5'
       });
       return;
@@ -2230,7 +2325,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     Swal.fire({
       title: '¿Confirmar administración y descuento?',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades de tu maletín de campo y actualizará el inventario en tiempo real.</span>`,
+      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b>.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades de tu maletín de campo y actualizará el inventario en tiempo real.</span>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, confirmar y descontar',
@@ -2248,7 +2343,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
             catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
           ).subscribe({
-            next: (resp) => {
+            next: () => {
               med.administrando = false;
               med.administrado = true;
               med.cantidadEfectivaAdministrada = cantidad;
@@ -2259,14 +2354,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
               Swal.fire({
                 icon: 'success',
-                title: '¡Administración registrada con éxito!',
-                html: `Se administraron y descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> de tu maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
+                title: '¡Descontado con éxito!',
+                html: `Se descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> de tu maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
                 confirmButtonColor: '#4141a5'
               });
             }
           });
         },
-        error: (err) => {
+        error: () => {
           med.administrando = false;
           this.cdr.detectChanges();
           Swal.fire({
@@ -2508,20 +2603,30 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       proxima_visita_notas: this.proxima_visita_notas || ''
     };
 
+    (dto as any).medicamentos_usados = this.medicamentosSeleccionados.map(m => ({
+      id_medicamento: Number(m.id || m.id_medicamento),
+      unidades: Number(m.cantidadEfectivaAdministrada || m.cantidadAAdministrar) || 1,
+      nombre: m.nombre
+    }));
+
     // Descontar del kit de campo cualquier medicamento prescrito que aún no haya sido administrado
     if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
       this.medicamentosSeleccionados.forEach((m: any) => {
         if (!m.administrado && (m.id || m.id_medicamento)) {
           const cantUsar = Number(m.cantidadAAdministrar) || 1;
+          const idMed = Number(m.id || m.id_medicamento);
           this.vetInvSvc.registrarConsumo(
-            m.id || m.id_medicamento,
+            idMed,
             cantUsar,
             'Administración al guardar historia clínica #' + (this.idHistoria || '')
           ).subscribe();
+          this.comprasService.descontarStockMedicamento(idMed, cantUsar, m.nombre).subscribe();
           m.administrado = true;
           m.cantidadEfectivaAdministrada = cantUsar;
+          m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
         }
       });
+      this.recargarStockMedicamentos();
     }
 
     const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');

@@ -89,6 +89,10 @@ export class VeterinaryInventoryComponent implements OnInit {
               const current = vets.find(v => Number(v.id_usuario) === Number(this.veterinarioSeleccionadoId));
               if (current) this.veterinarioNombre = current.nombre;
             }
+            try {
+              sessionStorage.setItem('veterinario_seleccionado_supervision', String(this.veterinarioSeleccionadoId));
+              localStorage.setItem('veterinario_seleccionado_supervision', String(this.veterinarioSeleccionadoId));
+            } catch {}
           }
           this.cargarDatos();
         },
@@ -104,6 +108,10 @@ export class VeterinaryInventoryComponent implements OnInit {
     if (vet) {
       this.veterinarioNombre = vet.nombre;
     }
+    try {
+      sessionStorage.setItem('veterinario_seleccionado_supervision', String(this.veterinarioSeleccionadoId));
+      localStorage.setItem('veterinario_seleccionado_supervision', String(this.veterinarioSeleccionadoId));
+    } catch {}
     this.cargarDatos();
   }
 
