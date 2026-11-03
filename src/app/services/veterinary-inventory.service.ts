@@ -802,16 +802,19 @@ export class VeterinaryInventoryService {
 
   /**
    * Limpia claves residuales generadas en pruebas previas en localStorage,
-   * preservando únicamente el veterinario de pruebas activo (ID 41).
+   * preservando tanto el veterinario activo actual como el veterinario de pruebas (ID 41).
    */
   public limpiarDatosResidualesVeterinarios(): void {
     try {
+      const idActivo = this.getVeterinarioLogueadoId();
       const keysAEliminar: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && (key.startsWith(this.STORAGE_ASIGNACIONES_KEY) || key.startsWith(this.STORAGE_CONSUMOS_KEY))) {
-          // Preservar clave si pertenece al veterinario 41 o al veterinario activo
-          if (!key.endsWith('41')) {
+          // Preservar clave si pertenece al veterinario activo actual o al 41
+          const esDelActivo = idActivo && key.endsWith(String(idActivo));
+          const esDel41 = key.endsWith('41');
+          if (!esDelActivo && !esDel41) {
             keysAEliminar.push(key);
           }
         }
@@ -926,7 +929,7 @@ export class VeterinaryInventoryService {
   /**
    * Validación en tiempo real para prescripción / consumo
    */
-  public validarConsumo(idMedicamento: number, cantidadSolicitada: number): ConsumoValidationResult {
+  public validarConsumo(idMedicamento: number, cantidadSolicitada: number, nombreMedicamento?: string): ConsumoValidationResult {
     let items = this.inventarioActual$.getValue();
     const idVet = this.getVeterinarioLogueadoId();
 
@@ -937,7 +940,11 @@ export class VeterinaryInventoryService {
       }
     }
 
-    const item = items.find(i => Number(i.id_medicamento) === Number(idMedicamento) || Number(i.id) === Number(idMedicamento));
+    const nomNorm = (nombreMedicamento || '').trim().toLowerCase();
+    const item = items.find(i =>
+      (Number(idMedicamento) > 0 && (Number(i.id_medicamento) === Number(idMedicamento) || Number(i.id) === Number(idMedicamento))) ||
+      (nomNorm.length > 0 && i.nombre && i.nombre.trim().toLowerCase() === nomNorm)
+    );
     
     const saldo = item ? item.saldoDisponible : 0;
     const cantNum = Number(cantidadSolicitada) || 0;
@@ -1009,7 +1016,7 @@ export class VeterinaryInventoryService {
    * 2. Guarda localmente para persistencia inmediata.
    * 3. Sincroniza con el backend mediante POST /api/inventario/kit/sincronizar-offline/
    */
-  public registrarConsumo(idMedicamento: number, cantidad: number, observaciones?: string): Observable<boolean> {
+  public registrarConsumo(idMedicamento: number, cantidad: number, observaciones?: string, nombreMedicamento?: string): Observable<boolean> {
     const idVet = this.getVeterinarioLogueadoId();
     let items = this.inventarioActual$.getValue();
     if (!items || items.length === 0) {
@@ -1019,7 +1026,7 @@ export class VeterinaryInventoryService {
       }
     }
 
-    const validacion = this.validarConsumo(idMedicamento, cantidad);
+    const validacion = this.validarConsumo(idMedicamento, cantidad, nombreMedicamento);
 
     if (!validacion.valido && validacion.saldoDisponible <= 0) {
       return of(false);
@@ -1027,9 +1034,16 @@ export class VeterinaryInventoryService {
 
     // Actualizar reactivo y persistencia local de maletín
     let encontrado = false;
+    let idEfectivo = Number(idMedicamento) || 0;
+    const nomNorm = (nombreMedicamento || '').trim().toLowerCase();
+
     const itemsActualizados = items.map(item => {
-      if (Number(item.id_medicamento) === Number(idMedicamento) || Number(item.id) === Number(idMedicamento)) {
+      const matchId = idEfectivo > 0 && (Number(item.id_medicamento) === idEfectivo || Number(item.id) === idEfectivo);
+      const matchNom = nomNorm.length > 0 && item.nombre && item.nombre.trim().toLowerCase() === nomNorm;
+
+      if (matchId || matchNom) {
         encontrado = true;
+        idEfectivo = Number(item.id_medicamento || item.id) || idEfectivo;
         const nuevoConsumo = (Number(item.cantidadConsumida) || 0) + cantidad;
         const nuevoSaldo = Math.max(0, (Number(item.cantidadEntregada) || item.saldoDisponible) - nuevoConsumo);
         return {
@@ -1047,15 +1061,23 @@ export class VeterinaryInventoryService {
       this.guardarAsignacionesLocales(idVet, itemsActualizados);
     }
 
-    this.guardarConsumoLocal(idVet, idMedicamento, cantidad);
+    if (idEfectivo > 0) {
+      this.guardarConsumoLocal(idVet, idEfectivo, cantidad);
+    }
 
-    // Sincronizar con el backend
-    const clientUuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `offline_${Date.now()}_${Math.random()}`;
+    // Sincronizar con el backend con UUID v4 garantizado
+    const clientUuid = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
     const payloadSinc = {
       consumos: [
         {
           client_uuid: clientUuid,
-          id_medicamento: Number(idMedicamento),
+          id_medicamento: Number(idEfectivo),
           unidades: Number(cantidad),
           fecha_consumo: new Date().toISOString()
         }
