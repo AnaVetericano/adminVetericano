@@ -412,10 +412,10 @@
           <!-- Nombre y Rol -->
           <div class="hidden sm:flex flex-col text-left leading-tight">
             <span class="text-xs font-extrabold text-[#170B3D] max-w-[140px] truncate">
-              {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : (authService.isAdmin() ? 'Administrador' : 'Veterinario') }}
+              {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : (authService.isAdmin() ? 'Administrador' : (authService.isJuridico() ? 'Jurídico' : 'Veterinario')) }}
             </span>
             <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : 'bg-emerald-500'"></span>
+              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
               {{ authService.userRole() || 'En línea' }}
             </span>
           </div>
@@ -453,7 +453,7 @@
               <span class="text-[10px] font-bold text-slate-400 uppercase">Rol</span>
               <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
                    [ngClass]="authService.isAdmin() ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
-                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : 'bg-emerald-500'"></span>
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
                 {{ authService.userRole() }} (Web & Móvil)
               </div>
             </div>
