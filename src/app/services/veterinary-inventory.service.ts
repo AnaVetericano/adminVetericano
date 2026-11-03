@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, of, BehaviorSubject } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth';
 
@@ -153,14 +153,15 @@ export class VeterinaryInventoryService {
   public getVeterinarioLogueadoId(): number {
     const sesion = this.authService.currentUser();
     if (sesion?.['id_usuario']) return Number(sesion['id_usuario']);
+    if (sesion?.['id']) return Number(sesion['id']);
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return Number(payload['id_usuario'] || payload['user_id'] || payload['id'] || 1);
+        return Number(payload['id_usuario'] || payload['user_id'] || payload['id'] || 41);
       } catch {}
     }
-    return 1;
+    return 41;
   }
 
   /**
@@ -234,9 +235,9 @@ export class VeterinaryInventoryService {
    * GET /api/inventario/kit/alertas/ [?id_veterinario=X]
    */
   public obtenerAlertasKit(idVeterinario?: number): Observable<KitAlertasResponse> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('page_size', '1000').set('limit', '1000');
     if (idVeterinario) {
-      params = params.set('id_veterinario', String(idVeterinario));
+      params = params.set('id_veterinario', String(idVeterinario)).set('id_vete', String(idVeterinario));
     }
     return this.http.get<KitAlertasResponse>(`${this.baseUrlKit}alertas/`, { params });
   }
@@ -246,7 +247,7 @@ export class VeterinaryInventoryService {
    * GET /api/inventario/kit/kardex/
    */
   public obtenerKardexKit(filtros?: any): Observable<any> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('page_size', '1000').set('limit', '1000');
     if (filtros) {
       Object.keys(filtros).forEach(key => {
         if (filtros[key] !== undefined && filtros[key] !== null && filtros[key] !== '') {
@@ -255,6 +256,47 @@ export class VeterinaryInventoryService {
       });
     }
     return this.http.get<any>(`${this.baseUrlKit}kardex/`, { params });
+  }
+
+  /**
+   * Consulta exhaustiva y reactiva de la totalidad de movimientos de Kardex,
+   * siguiendo la paginación recursiva de DRF (next URL) para no truncar consumos ni asignaciones.
+   */
+  public obtenerTodoElKardexKit(filtros?: any): Observable<any[]> {
+    const fetchPage = (url: string, params?: HttpParams): Observable<any[]> => {
+      return this.http.get<any>(url, { params }).pipe(
+        switchMap(res => {
+          let items: any[] = [];
+          let nextUrl: string | null = null;
+          if (Array.isArray(res)) {
+            items = res;
+          } else if (res && typeof res === 'object') {
+            items = Array.isArray(res.results) ? res.results : (Array.isArray(res.movimientos) ? res.movimientos : (Array.isArray(res.data) ? res.data : []));
+            nextUrl = res.next || null;
+          }
+
+          if (nextUrl) {
+            return fetchPage(nextUrl).pipe(
+              map(nextItems => items.concat(nextItems)),
+              catchError(() => of(items))
+            );
+          }
+          return of(items);
+        }),
+        catchError(() => of([]))
+      );
+    };
+
+    let params = new HttpParams().set('page_size', '1000').set('limit', '1000');
+    if (filtros) {
+      Object.keys(filtros).forEach(key => {
+        if (filtros[key] !== undefined && filtros[key] !== null && filtros[key] !== '') {
+          params = params.set(key, String(filtros[key]));
+        }
+      });
+    }
+
+    return fetchPage(`${this.baseUrlKit}kardex/`, params);
   }
 
   /**
@@ -278,7 +320,7 @@ export class VeterinaryInventoryService {
    * GET /api/inventario/kit/solicitudes/
    */
   public obtenerSolicitudesKit(filtros?: any): Observable<any> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('page_size', '1000').set('limit', '1000');
     if (filtros) {
       Object.keys(filtros).forEach(key => {
         if (filtros[key] !== undefined && filtros[key] !== null && filtros[key] !== '') {
@@ -341,14 +383,18 @@ export class VeterinaryInventoryService {
 
     const idVet = idVetParam || this.getVeterinarioLogueadoId();
 
-    // Consulta del Kit según rol y contexto
+    // Consulta del Kit según rol y contexto:
+    // Si es Administrador supervisando un maletín, se consulta exclusivamente el kit de ese veterinario.
+    // Nunca debe caer en obtenerMiKit() para evitar mezclar la sesión del administrador con el maletín supervisado.
     const kitRequest$ = (esAdmin && idVet)
       ? this.obtenerKitVeterinario(idVet).pipe(
-          catchError(() => this.obtenerMiKit().pipe(catchError(() => of({ total_unidades: 0, items: [] }))))
+          catchError(() => of({ total_unidades: 0, items: [] }))
         )
-      : this.obtenerMiKit().pipe(
-          catchError(() => idVet ? this.obtenerKitVeterinario(idVet).pipe(catchError(() => of({ total_unidades: 0, items: [] }))) : of({ total_unidades: 0, items: [] }))
-        );
+      : (idVet ? this.obtenerKitVeterinario(idVet).pipe(
+          catchError(() => this.obtenerMiKit().pipe(catchError(() => of({ total_unidades: 0, items: [] }))))
+        ) : this.obtenerMiKit().pipe(
+          catchError(() => of({ total_unidades: 0, items: [] }))
+        ));
 
     return forkJoin({
       kit: kitRequest$,
@@ -359,9 +405,13 @@ export class VeterinaryInventoryService {
       catalogo: this.http.get<any>(this.baseUrlMedicamentosCatalogo).pipe(
         map(res => Array.isArray(res) ? res : (res?.['results'] || [])),
         catchError(() => of([]))
+      ),
+      kardex: this.obtenerTodoElKardexKit({ id_veterinario: idVet }).pipe(
+        map(res => Array.isArray(res) ? res : (res?.['results'] || res?.['movimientos'] || [])),
+        catchError(() => of([]))
       )
     }).pipe(
-      map(({ kit, medicamentos, catalogo }) => {
+      map(({ kit, medicamentos, catalogo, kardex }) => {
         const medMap = new Map<number, any>();
         catalogo.forEach((c: any) => {
           const id = Number(c['id_medicamento'] ?? c['id']);
@@ -383,8 +433,52 @@ export class VeterinaryInventoryService {
           if (!isNaN(id) && !medMap.has(id)) medMap.set(id, m);
         });
 
+        // Consumos, asignaciones y retiros reales consolidados desde el Kardex oficial de Supabase
+        const consumosKardexPorMed = new Map<number, number>();
+        const asignacionesKardexPorMed = new Map<number, number>();
+        const retirosKardexPorMed = new Map<number, number>();
+
+        (kardex || []).forEach((k: any) => {
+          const tipo = String(k['tipo_movimiento'] || '').toUpperCase();
+          const idV = Number(k['id_veterinario'] ?? k['id_vete'] ?? k['veterinario_id'] ?? k['id_vet'] ?? k['id_usuario']);
+          const idM = Number(k['id_medicamento'] ?? k['id_med'] ?? k['medicamento_id']);
+          const cant = Number(k['cantidad']) || 0;
+          const ubicacion = String(k['ubicacion'] || '').toUpperCase();
+          const esDelVet = (
+            idV === Number(idVet) ||
+            Number(k['id_veterinario']) === Number(idVet) ||
+            Number(k['id_vete']) === Number(idVet) ||
+            Number(k['id_usuario']) === Number(idVet)
+          );
+
+          if (esDelVet && idM > 0) {
+            // Asignación / dotación inicial a kit de campo
+            if (tipo === 'ASIGNACION_KIT' && (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')) {
+              asignacionesKardexPorMed.set(idM, (asignacionesKardexPorMed.get(idM) || 0) + cant);
+            }
+            // Retiro o devolución a bodega
+            else if (tipo.includes('RETIRO') || tipo.includes('DEVOLUCION')) {
+              retirosKardexPorMed.set(idM, (retirosKardexPorMed.get(idM) || 0) + cant);
+            }
+            // Consumo real (desde la app móvil o web en historias / actas)
+            else if (
+              (tipo.includes('CONSUMO') || tipo.includes('ACTA') || tipo === 'SALIDA' || tipo === 'FORMULACION') &&
+              tipo !== 'ASIGNACION_KIT' && tipo !== 'ENTRADA' &&
+              (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')
+            ) {
+              consumosKardexPorMed.set(idM, (consumosKardexPorMed.get(idM) || 0) + cant);
+            }
+          }
+        });
+
+        // Cachear consumos descubiertos de Kardex en localStorage para que nunca se pierdan
+        consumosKardexPorMed.forEach((cantKardex, idM) => {
+          this.actualizarConsumoLocalMax(Number(idVet), idM, cantKardex);
+        });
+
         const itemsBackend = (kit?.items || []) as KitResponseItem[];
-        const consumosLocales = this.obtenerConsumosLocales(idVet);
+        const consumosLocales = this.obtenerConsumosLocales(Number(idVet));
+        const asignacionesLocales = this.obtenerAsignacionesLocales(Number(idVet));
         const resultado: VeterinaryKitItem[] = [];
         const idsMedicamentosEnResultado = new Set<number>();
 
@@ -393,10 +487,39 @@ export class VeterinaryInventoryService {
             const idMed = Number(it.id_medicamento);
             idsMedicamentosEnResultado.add(idMed);
             const medInfo = medMap.get(idMed);
-            const saldoDisp = Number(it.saldo_disponible) || 0;
             const saldoVenc = Number(it.saldo_vencido) || 0;
-            const consumido = consumosLocales.get(idMed) || 0;
-            const entregado = saldoDisp + saldoVenc + consumido;
+
+            // Cantidad consumida consolidada (Móvil desde Kardex + local web)
+            const consumidoKardex = consumosKardexPorMed.get(idMed) || 0;
+            const consumidoLocal = consumosLocales.get(idMed) || 0;
+            const consumido = Math.max(consumidoKardex, consumidoLocal);
+
+            // Saldo disponible base informado por el backend
+            const saldoDispBackend = Number(it.saldo_disponible) || 0;
+
+            // Cantidad entregada/dotada real al maletín de campo:
+            // REGLA FUNDAMENTAL: La cantidad entregada representa la dotación fija
+            // y NUNCA se incrementa cuando un veterinario realiza aplicaciones o consumos.
+            const asigLocal = asignacionesLocales.find(a => Number(a.id_medicamento || a.id) === idMed);
+            let entregado = 0;
+            if (asignacionesKardexPorMed.has(idMed) && (asignacionesKardexPorMed.get(idMed) || 0) > 0) {
+              const totalDotado = asignacionesKardexPorMed.get(idMed) || 0;
+              const totalRetirado = retirosKardexPorMed.get(idMed) || 0;
+              entregado = Math.max(0, totalDotado - totalRetirado);
+            } else if (asigLocal && asigLocal.cantidadEntregada > 0) {
+              entregado = asigLocal.cantidadEntregada;
+            } else {
+              entregado = saldoDispBackend;
+            }
+
+            // Protección de integridad: la dotación entregada nunca debe ser menor a lo consumido acumulado
+            if (entregado < consumido) {
+              entregado = consumido;
+            }
+
+            // Saldo disponible en tiempo real:
+            // SALDO_DISPONIBLE = CANTIDAD_ENTREGADA - CANTIDAD_CONSUMIDA - SALDO_VENCIDO
+            const saldoDisp = Math.max(0, entregado - consumido - saldoVenc);
 
             // Formatear texto de lotes
             let loteTexto = `KIT-VET${idVet}`;
@@ -424,28 +547,31 @@ export class VeterinaryInventoryService {
           });
         }
 
-        // Combinar con asignaciones que no estén aún en el kit del backend
-        const asignacionesLocales = this.obtenerAsignacionesLocales(idVet);
-        asignacionesLocales.forEach(item => {
-          const idMed = Number(item.id_medicamento || item.id);
-          if (!idsMedicamentosEnResultado.has(idMed)) {
+        // Si hay movimientos en inventario_kardex de Supabase que no estén en kit.items
+        // (por ejemplo asignaciones registradas en Kardex que aún no consolidaron en la vista del kit)
+        asignacionesKardexPorMed.forEach((dotado, idMed) => {
+          if (!idsMedicamentosEnResultado.has(idMed) && dotado > 0) {
             idsMedicamentosEnResultado.add(idMed);
-            const consumidoLocal = consumosLocales.get(idMed) || item.cantidadConsumida || 0;
-            const entregado = Number(item.cantidadEntregada) || 0;
-            const saldo = Math.max(0, entregado - consumidoLocal);
+            const retirado = retirosKardexPorMed.get(idMed) || 0;
+            const entregado = Math.max(0, dotado - retirado);
+            const consumido = consumosKardexPorMed.get(idMed) || 0;
+            const saldo = Math.max(0, entregado - consumido);
             const medInfo = medMap.get(idMed);
 
             resultado.push({
-              ...item,
               id: idMed,
               id_medicamento: idMed,
-              nombre: item.nombre || medInfo?.nombre || `Medicamento #${idMed}`,
-              descripcion: item.descripcion || medInfo?.descripcion || 'Lote asignado',
-              tipo: item.tipo || medInfo?.tipo || 'Medicamento General',
-              presentacion: item.presentacion || medInfo?.presentacion || 'Unidad de campo',
+              nombre: medInfo?.nombre || `Medicamento #${idMed}`,
+              descripcion: medInfo?.descripcion || medInfo?.presentacion || 'Medicamento asignado a kit de campo',
+              tipo: medInfo?.tipo || 'Medicamento de Campo',
+              presentacion: medInfo?.presentacion || medInfo?.cantidad_ml || 'Presentación clínica',
+              concentracion: medInfo?.concentracion || '',
               cantidadEntregada: entregado,
-              cantidadConsumida: consumidoLocal,
+              cantidadConsumida: consumido,
               saldoDisponible: saldo,
+              saldoVencido: 0,
+              fechaEntrega: new Date().toISOString(),
+              lote: `KIT-VET${idVet}`,
               umbralBajo: saldo <= this.UMBRAL_STOCK_BAJO
             });
           }
@@ -456,6 +582,7 @@ export class VeterinaryInventoryService {
       }),
       tap(items => {
         this.inventarioActual$.next(items);
+        this.guardarAsignacionesLocales(Number(idVet), items);
       })
     );
   }
@@ -477,6 +604,7 @@ export class VeterinaryInventoryService {
       cantidad: number;
       motivo?: string;
       veterinarioNombre?: string;
+      tipoOperacion?: 'ASIGNAR' | 'RETIRO' | 'AJUSTE';
     }
   ): Observable<boolean> {
     const idNum = Number(idVet);
@@ -484,29 +612,45 @@ export class VeterinaryInventoryService {
     const idMed = Number(payload.id_medicamento || payload.id_inventario);
     const index = asignaciones.findIndex(a => Number(a.id_medicamento) === idMed || Number(a.id) === Number(payload.id_inventario));
 
-    const cantAsignar = Number(payload.cantidad) || 0;
+    const cantRaw = Number(payload.cantidad) || 0;
+    const esRetiro = payload.tipoOperacion === 'RETIRO' || cantRaw < 0;
+    const cantAbs = Math.abs(cantRaw);
 
     if (index >= 0) {
-      asignaciones[index].cantidadEntregada = (Number(asignaciones[index].cantidadEntregada) || 0) + cantAsignar;
+      if (esRetiro) {
+        // Reducir la cantidad entregada (50 - 10 = 40)
+        asignaciones[index].cantidadEntregada = Math.max(0, (Number(asignaciones[index].cantidadEntregada) || 0) - cantAbs);
+      } else {
+        // Sumar a la dotación
+        asignaciones[index].cantidadEntregada = (Number(asignaciones[index].cantidadEntregada) || 0) + cantAbs;
+      }
       const consumido = Number(asignaciones[index].cantidadConsumida) || 0;
       asignaciones[index].saldoDisponible = Math.max(0, asignaciones[index].cantidadEntregada - consumido);
       asignaciones[index].umbralBajo = asignaciones[index].saldoDisponible <= this.UMBRAL_STOCK_BAJO;
       asignaciones[index].fechaEntrega = new Date().toISOString();
     } else {
+      const currentItems = this.inventarioActual$.value || [];
+      const itemExistente = currentItems.find(it => Number(it.id_medicamento || it.id) === idMed);
+      const baseEntregada = itemExistente ? (Number(itemExistente.cantidadEntregada) || Number(itemExistente.saldoDisponible) || 0) : 0;
+      const baseConsumida = itemExistente ? (Number(itemExistente.cantidadConsumida) || 0) : 0;
+
+      const nuevaEntregada = esRetiro ? Math.max(0, baseEntregada - cantAbs) : (baseEntregada + cantAbs);
+      const nuevoSaldo = Math.max(0, nuevaEntregada - baseConsumida);
+
       asignaciones.push({
         id: payload.id_inventario,
         id_medicamento: idMed,
-        nombre: payload.nombre,
-        descripcion: payload.descripcion || 'Lote asignado desde inventario general CBA',
-        tipo: payload.tipo || 'Medicamento General',
-        presentacion: payload.presentacion || 'Unidad de campo',
-        concentracion: '',
-        cantidadEntregada: cantAsignar,
-        cantidadConsumida: 0,
-        saldoDisponible: cantAsignar,
+        nombre: itemExistente?.nombre || payload.nombre,
+        descripcion: itemExistente?.descripcion || payload.descripcion || 'Lote asignado desde inventario general CBA',
+        tipo: itemExistente?.tipo || payload.tipo || 'Medicamento General',
+        presentacion: itemExistente?.presentacion || payload.presentacion || 'Unidad de campo',
+        concentracion: itemExistente?.concentracion || '',
+        cantidadEntregada: nuevaEntregada,
+        cantidadConsumida: baseConsumida,
+        saldoDisponible: nuevoSaldo,
         fechaEntrega: new Date().toISOString(),
-        lote: payload.lote || `LOTE-${payload.id_inventario}`,
-        umbralBajo: cantAsignar <= this.UMBRAL_STOCK_BAJO
+        lote: itemExistente?.lote || payload.lote || `LOTE-${payload.id_inventario}`,
+        umbralBajo: nuevoSaldo <= this.UMBRAL_STOCK_BAJO
       });
     }
 
@@ -519,8 +663,8 @@ export class VeterinaryInventoryService {
       veterinarioNombre: payload.veterinarioNombre || `Veterinario #${idNum}`,
       idInventario: payload.id_inventario,
       nombreMedicamento: payload.nombre,
-      cantidad: cantAsignar,
-      motivo: payload.motivo || 'Dotación de maletín de campo'
+      cantidad: esRetiro ? -cantAbs : cantAbs,
+      motivo: payload.motivo || (esRetiro ? 'Devolución de stock a bodega CBA' : 'Dotación de maletín de campo')
     });
 
     if (this.getVeterinarioLogueadoId() === idNum) {
@@ -528,6 +672,68 @@ export class VeterinaryInventoryService {
     }
 
     return of(true);
+  }
+
+  /**
+   * Ajuste de inventario / Retiro directo de kit a bodega:
+   * Si es RETIRO (devolver unidades a bodega general o corregir diferencias):
+   * Resta en el backend kit mediante POST /api/inventario/kit/retiro-directo/ y descuenta en local
+   */
+  public ajustarStockKit(
+    idVeterinario: number,
+    idMedicamento: number,
+    cantidad: number,
+    tipoOperacion: 'ASIGNAR' | 'RETIRO' = 'RETIRO',
+    motivo: string = 'Ajuste de inventario en kit de campo'
+  ): Observable<any> {
+    const cantNum = Math.abs(Number(cantidad)) || 0;
+    const idVet = Number(idVeterinario);
+    const idMed = Number(idMedicamento);
+
+    if (tipoOperacion === 'RETIRO') {
+      const payloadRetiro: RetiroDirectoPayload = {
+        id_veterinario: idVet,
+        id_medicamento: idMed,
+        cantidad: cantNum,
+        motivo
+      };
+
+      return this.retiroDirectoKit(payloadRetiro).pipe(
+        tap(() => {
+          this.asignarLoteAVeterinario(idVet, {
+            id_inventario: idMed,
+            id_medicamento: idMed,
+            nombre: `Medicamento #${idMed}`,
+            cantidad: cantNum,
+            tipoOperacion: 'RETIRO',
+            motivo
+          }).subscribe();
+        }),
+        catchError(() => {
+          return this.asignarLoteAVeterinario(idVet, {
+            id_inventario: idMed,
+            id_medicamento: idMed,
+            nombre: `Medicamento #${idMed}`,
+            cantidad: cantNum,
+            tipoOperacion: 'RETIRO',
+            motivo
+          });
+        })
+      );
+    } else {
+      return this.asignarStockKit(idVet, [{ id_medicamento: idMed, cantidad: cantNum }], motivo).pipe(
+        tap(() => {
+          this.asignarLoteAVeterinario(idVet, {
+            id_inventario: idMed,
+            id_medicamento: idMed,
+            nombre: `Medicamento #${idMed}`,
+            cantidad: cantNum,
+            tipoOperacion: 'ASIGNAR',
+            motivo
+          }).subscribe();
+        })
+      );
+    }
   }
 
   public obtenerAsignacionesLocales(idVet: number): VeterinaryKitItem[] {
@@ -558,16 +764,13 @@ export class VeterinaryInventoryService {
    * Limpia claves residuales generadas en pruebas previas en localStorage,
    * preservando únicamente el veterinario de pruebas activo (ID 41).
    */
-  public limpiarDatosResidualesVeterinarios(idVetValido: number = 41): void {
+  public limpiarDatosResidualesVeterinarios(): void {
     try {
       const keysAEliminar: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith(this.STORAGE_ASIGNACIONES_KEY)) {
-          const id = Number(key.replace(this.STORAGE_ASIGNACIONES_KEY, ''));
-          if (id !== idVetValido) {
-            keysAEliminar.push(key);
-          }
+        if (key && (key.startsWith(this.STORAGE_ASIGNACIONES_KEY) || key.startsWith(this.STORAGE_CONSUMOS_KEY))) {
+          keysAEliminar.push(key);
         }
       }
       keysAEliminar.forEach(k => localStorage.removeItem(k));
@@ -818,6 +1021,18 @@ export class VeterinaryInventoryService {
       const obj = data ? JSON.parse(data) : {};
       obj[idMedicamento] = (Number(obj[idMedicamento]) || 0) + Number(cantidad);
       localStorage.setItem(key, JSON.stringify(obj));
+    } catch {}
+  }
+  public actualizarConsumoLocalMax(idVet: number, idMedicamento: number, cantidad: number): void {
+    try {
+      const key = `${this.STORAGE_CONSUMOS_KEY}${idVet}`;
+      const data = localStorage.getItem(key);
+      const obj = data ? JSON.parse(data) : {};
+      const actual = Number(obj[idMedicamento]) || 0;
+      if (Number(cantidad) > actual) {
+        obj[idMedicamento] = Number(cantidad);
+        localStorage.setItem(key, JSON.stringify(obj));
+      }
     } catch {}
   }
 }

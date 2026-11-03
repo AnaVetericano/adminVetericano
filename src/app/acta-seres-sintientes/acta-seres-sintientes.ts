@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { ComprasService } from '../services/compras.service';
+import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
@@ -1917,9 +1918,20 @@ export class ActaSeresSintientes implements OnInit {
           });
         }
 
-        // 2. Registrar Tratamientos asociados a la consulta con responsable_admin y reaccion_comentarios
+        // 2. Registrar Tratamientos asociados a la consulta y descontar del maletín de campo
         if (idConsultaGenerada && Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
           this.medicamentosSeleccionados.forEach((m: any) => {
+            // Descontar del kit de campo si no fue administrado previamente en la tarjeta
+            if (!m.administrado && (m.id || m.id_medicamento)) {
+              const cantUsar = Number(m.cantidadAAdministrar) || 1;
+              this.vetInvSvc.registrarConsumo(
+                m.id || m.id_medicamento,
+                cantUsar,
+                `Administración en Acta #${this.numeroRadicadoActual || idConsultaGenerada}`
+              ).subscribe();
+              m.administrado = true;
+              m.cantidadEfectivaAdministrada = cantUsar;
+            }
             const detallesExtra = [
               m.descripcion?.trim(),
               m.responsable_admin?.trim() ? `Resp: ${m.responsable_admin.trim()}` : '',
@@ -2629,6 +2641,7 @@ export class ActaSeresSintientes implements OnInit {
     private route: ActivatedRoute,
     private authService: AuthService,
     private comprasService: ComprasService,
+    private vetInvSvc: VeterinaryInventoryService,
     private historiaClinicaService: HistoriaClinicaService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
@@ -3739,6 +3752,8 @@ export class ActaSeresSintientes implements OnInit {
     this.cargandoMedicamentos = true;
     this.mensajeMedicamentos = '';
 
+    const idVet = this.vetInvSvc.getVeterinarioLogueadoId();
+
     forkJoin({
       catalogo: this.authService.getMedicamentosCatalogo().pipe(
         map((respuesta: any) => {
@@ -3749,20 +3764,46 @@ export class ActaSeresSintientes implements OnInit {
         }),
         catchError(() => of([]))
       ),
-      stock: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+      stockGeneral: this.comprasService.obtenerMapaStockMedicamentos().pipe(
         catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      ),
+      kitVeterinario: this.vetInvSvc.cargarInventarioVeterinario(idVet).pipe(
+        catchError(() => of([]))
       )
     }).subscribe({
-      next: ({ catalogo, stock }) => {
-        this.mapaStockPorId = stock.porId;
-        this.mapaStockPorNombre = stock.porNombre;
+      next: ({ catalogo, stockGeneral, kitVeterinario }) => {
+        this.mapaStockPorId = stockGeneral.porId;
+        this.mapaStockPorNombre = stockGeneral.porNombre;
+
+        const mapaKitPorId = new Map<number, number>();
+        const mapaKitPorNombre = new Map<string, number>();
+
+        kitVeterinario.forEach((k: any) => {
+          const idMed = Number(k.id_medicamento);
+          if (!isNaN(idMed) && idMed > 0) {
+            mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
+          }
+          const nom = String(k.nombre || '').trim().toLowerCase();
+          if (nom) {
+            mapaKitPorNombre.set(nom, Number(k.saldoDisponible) || 0);
+          }
+        });
+
+        const calcularStock = (id: number, nombreKey: string): number => {
+          if (kitVeterinario.length > 0) {
+            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
+            return 0;
+          }
+          return (!isNaN(id) && stockGeneral.porId.has(id))
+            ? (stockGeneral.porId.get(id) ?? 0)
+            : (stockGeneral.porNombre.get(nombreKey) ?? 0);
+        };
 
         this.medicamentosCatalogo = catalogo.map((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
-          const stockDisponible = (!isNaN(id) && stock.porId.has(id))
-            ? (stock.porId.get(id) ?? 0)
-            : (stock.porNombre.get(nombreKey) ?? 0);
+          const stockDisponible = calcularStock(id, nombreKey);
 
           return {
             ...med,
@@ -3788,27 +3829,56 @@ export class ActaSeresSintientes implements OnInit {
   }
 
   recargarStockMedicamentos(): void {
-    this.comprasService.obtenerMapaStockMedicamentos().subscribe({
-      next: (stock) => {
-        this.mapaStockPorId = stock.porId;
-        this.mapaStockPorNombre = stock.porNombre;
+    const idVet = this.vetInvSvc.getVeterinarioLogueadoId();
+
+    forkJoin({
+      stockGeneral: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+        catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      ),
+      kitVeterinario: this.vetInvSvc.cargarInventarioVeterinario(idVet).pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe({
+      next: ({ stockGeneral, kitVeterinario }) => {
+        this.mapaStockPorId = stockGeneral.porId;
+        this.mapaStockPorNombre = stockGeneral.porNombre;
+
+        const mapaKitPorId = new Map<number, number>();
+        const mapaKitPorNombre = new Map<string, number>();
+
+        kitVeterinario.forEach((k: any) => {
+          const idMed = Number(k.id_medicamento);
+          if (!isNaN(idMed) && idMed > 0) {
+            mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
+          }
+          const nom = String(k.nombre || '').trim().toLowerCase();
+          if (nom) {
+            mapaKitPorNombre.set(nom, Number(k.saldoDisponible) || 0);
+          }
+        });
+
+        const calcularStock = (id: number, nombreKey: string): number => {
+          if (kitVeterinario.length > 0) {
+            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
+            return 0;
+          }
+          return (!isNaN(id) && stockGeneral.porId.has(id))
+            ? (stockGeneral.porId.get(id) ?? 0)
+            : (stockGeneral.porNombre.get(nombreKey) ?? 0);
+        };
 
         this.medicamentosCatalogo.forEach((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
-          med.stockDisponible = (!isNaN(id) && stock.porId.has(id))
-            ? (stock.porId.get(id) ?? 0)
-            : (stock.porNombre.get(nombreKey) ?? 0);
+          med.stockDisponible = calcularStock(id, nombreKey);
         });
 
-        // Actualizar también los no administrados en la lista seleccionada
         this.medicamentosSeleccionados.forEach((item: any) => {
           if (!item.administrado) {
             const id = Number(item.id);
             const nombreKey = String(item.nombre || '').trim().toLowerCase();
-            item.stockDisponible = (!isNaN(id) && stock.porId.has(id))
-              ? (stock.porId.get(id) ?? 0)
-              : (stock.porNombre.get(nombreKey) ?? 0);
+            item.stockDisponible = calcularStock(id, nombreKey);
           }
         });
 
@@ -3946,31 +4016,35 @@ export class ActaSeresSintientes implements OnInit {
       med.administrando = true;
       this.cdr.detectChanges();
 
-      this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).subscribe({
-        next: (resp) => {
-          med.administrando = false;
-          med.administrado = true;
-          med.cantidadEfectivaAdministrada = cantidad;
-          med.stockDisponible = resp.restante;
-          this.recargarStockMedicamentos();
-          this.cdr.detectChanges();
+      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en Acta #' + (this.numeroRadicadoActual || '')).subscribe({
+        next: () => {
+          this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
+            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
+          ).subscribe({
+            next: (resp) => {
+              med.administrando = false;
+              med.administrado = true;
+              med.cantidadEfectivaAdministrada = cantidad;
+              med.stockDisponible = Math.max(0, stockActual - cantidad);
+              this.recargarStockMedicamentos();
+              this.cdr.detectChanges();
 
-          Swal.fire({
-            icon: 'success',
-            title: '¡Administración registrada con éxito!',
-            html: `Se descontaron <b>${cantidad} uds</b> de inventario.<br>Stock restante en CBA: <b>${resp.restante} uds</b>.`,
-            confirmButtonColor: '#4141A5'
+              Swal.fire({
+                icon: 'success',
+                title: '¡Administración registrada con éxito!',
+                html: `Se administraron y descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> de tu maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
+                confirmButtonColor: '#4141A5'
+              });
+            }
           });
         },
-        error: (err) => {
+        error: () => {
           med.administrando = false;
           this.cdr.detectChanges();
-          console.error('Error al descontar stock:', err);
-          const msg = err?.message || 'No fue posible registrar la administración en inventario.';
           Swal.fire({
             icon: 'error',
-            title: 'Error al descontar inventario',
-            text: msg,
+            title: 'Error al descontar maletín',
+            text: 'No fue posible registrar la administración en el inventario del maletín.',
             confirmButtonColor: '#4141A5'
           });
         }

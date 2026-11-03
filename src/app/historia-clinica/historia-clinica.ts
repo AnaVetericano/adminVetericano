@@ -17,6 +17,7 @@ import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
+import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
 
 @Component({
@@ -466,6 +467,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     private patologiaService: PatologiaService,
     private examenesService: ExamenesClinicosService,
     private comprasService: ComprasService,
+    private vetInvSvc: VeterinaryInventoryService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
@@ -1960,25 +1962,53 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.cargandoMedicamentos = true;
     this.mensajeMedicamentos = '';
 
+    const idVet = this.vetInvSvc.getVeterinarioLogueadoId();
+
     forkJoin({
       catalogo: this.comprasService.listarMedicamentosCatalogo().pipe(
         catchError(() => this.comprasService.listarMedicamentos()),
         catchError(() => of([]))
       ),
-      stock: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+      stockGeneral: this.comprasService.obtenerMapaStockMedicamentos().pipe(
         catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      ),
+      kitVeterinario: this.vetInvSvc.cargarInventarioVeterinario(idVet).pipe(
+        catchError(() => of([]))
       )
     }).subscribe({
-      next: ({ catalogo, stock }) => {
-        this.mapaStockPorId = stock.porId;
-        this.mapaStockPorNombre = stock.porNombre;
+      next: ({ catalogo, stockGeneral, kitVeterinario }) => {
+        this.mapaStockPorId = stockGeneral.porId;
+        this.mapaStockPorNombre = stockGeneral.porNombre;
+
+        const mapaKitPorId = new Map<number, number>();
+        const mapaKitPorNombre = new Map<string, number>();
+
+        kitVeterinario.forEach((k: any) => {
+          const idMed = Number(k.id_medicamento);
+          if (!isNaN(idMed) && idMed > 0) {
+            mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
+          }
+          const nom = String(k.nombre || '').trim().toLowerCase();
+          if (nom) {
+            mapaKitPorNombre.set(nom, Number(k.saldoDisponible) || 0);
+          }
+        });
+
+        const calcularStock = (id: number, nombreKey: string): number => {
+          if (kitVeterinario.length > 0) {
+            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
+            return 0;
+          }
+          return (!isNaN(id) && stockGeneral.porId.has(id))
+            ? (stockGeneral.porId.get(id) ?? 0)
+            : (stockGeneral.porNombre.get(nombreKey) ?? 0);
+        };
 
         this.medicamentosCatalogo = catalogo.map((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
-          const stockDisponible = (!isNaN(id) && stock.porId.has(id))
-            ? (stock.porId.get(id) ?? 0)
-            : (stock.porNombre.get(nombreKey) ?? 0);
+          const stockDisponible = calcularStock(id, nombreKey);
 
           return {
             ...med,
@@ -2002,26 +2032,56 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   recargarStockMedicamentos(): void {
-    this.comprasService.obtenerMapaStockMedicamentos().subscribe({
-      next: (stock) => {
-        this.mapaStockPorId = stock.porId;
-        this.mapaStockPorNombre = stock.porNombre;
+    const idVet = this.vetInvSvc.getVeterinarioLogueadoId();
+
+    forkJoin({
+      stockGeneral: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+        catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      ),
+      kitVeterinario: this.vetInvSvc.cargarInventarioVeterinario(idVet).pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe({
+      next: ({ stockGeneral, kitVeterinario }) => {
+        this.mapaStockPorId = stockGeneral.porId;
+        this.mapaStockPorNombre = stockGeneral.porNombre;
+
+        const mapaKitPorId = new Map<number, number>();
+        const mapaKitPorNombre = new Map<string, number>();
+
+        kitVeterinario.forEach((k: any) => {
+          const idMed = Number(k.id_medicamento);
+          if (!isNaN(idMed) && idMed > 0) {
+            mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
+          }
+          const nom = String(k.nombre || '').trim().toLowerCase();
+          if (nom) {
+            mapaKitPorNombre.set(nom, Number(k.saldoDisponible) || 0);
+          }
+        });
+
+        const calcularStock = (id: number, nombreKey: string): number => {
+          if (kitVeterinario.length > 0) {
+            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
+            return 0;
+          }
+          return (!isNaN(id) && stockGeneral.porId.has(id))
+            ? (stockGeneral.porId.get(id) ?? 0)
+            : (stockGeneral.porNombre.get(nombreKey) ?? 0);
+        };
 
         this.medicamentosCatalogo.forEach((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
-          med.stockDisponible = (!isNaN(id) && stock.porId.has(id))
-            ? (stock.porId.get(id) ?? 0)
-            : (stock.porNombre.get(nombreKey) ?? 0);
+          med.stockDisponible = calcularStock(id, nombreKey);
         });
 
         this.medicamentosSeleccionados.forEach((item: any) => {
           if (!item.administrado) {
             const id = Number(item.id);
             const nombreKey = String(item.nombre || '').trim().toLowerCase();
-            item.stockDisponible = (!isNaN(id) && stock.porId.has(id))
-              ? (stock.porId.get(id) ?? 0)
-              : (stock.porNombre.get(nombreKey) ?? 0);
+            item.stockDisponible = calcularStock(id, nombreKey);
           }
         });
         this.cdr.detectChanges();
@@ -2170,12 +2230,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     Swal.fire({
       title: '¿Confirmar administración y descuento?',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades directamente de los lotes activos en el inventario del CBA.</span>`,
+      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades de tu maletín de campo y actualizará el inventario en tiempo real.</span>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, confirmar y descontar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#059669',
+      confirmButtonColor: '#4141a5',
       cancelButtonColor: '#64748b'
     }).then((resultado) => {
       if (!resultado.isConfirmed) return;
@@ -2183,31 +2243,36 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       med.administrando = true;
       this.cdr.detectChanges();
 
-      this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).subscribe({
-        next: (resp) => {
-          med.administrando = false;
-          med.administrado = true;
-          med.cantidadEfectivaAdministrada = cantidad;
-          med.stockDisponible = resp.restante;
-          this.recargarStockMedicamentos();
-          this.formHistoria.markAsDirty();
-          this.cdr.detectChanges();
+      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en historia clínica #' + (this.idHistoria || '')).subscribe({
+        next: () => {
+          this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
+            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
+          ).subscribe({
+            next: (resp) => {
+              med.administrando = false;
+              med.administrado = true;
+              med.cantidadEfectivaAdministrada = cantidad;
+              med.stockDisponible = Math.max(0, stockActual - cantidad);
+              this.recargarStockMedicamentos();
+              this.formHistoria.markAsDirty();
+              this.cdr.detectChanges();
 
-          Swal.fire({
-            icon: 'success',
-            title: '¡Administración registrada con éxito!',
-            html: `Se descontaron <b>${cantidad} uds</b> de inventario.<br>Stock restante en CBA: <b>${resp.restante} uds</b>.`,
-            confirmButtonColor: '#4141a5'
+              Swal.fire({
+                icon: 'success',
+                title: '¡Administración registrada con éxito!',
+                html: `Se administraron y descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> de tu maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
+                confirmButtonColor: '#4141a5'
+              });
+            }
           });
         },
         error: (err) => {
           med.administrando = false;
           this.cdr.detectChanges();
-          const msg = err?.message || 'No fue posible registrar la administración en inventario.';
           Swal.fire({
             icon: 'error',
-            title: 'Error al descontar inventario',
-            text: msg,
+            title: 'Error al registrar consumo',
+            text: 'No se pudo registrar la administración en el inventario del maletín.',
             confirmButtonColor: '#4141a5'
           });
         }
@@ -2442,6 +2507,22 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       proxima_visita_fecha: this.proxima_visita_fecha || '',
       proxima_visita_notas: this.proxima_visita_notas || ''
     };
+
+    // Descontar del kit de campo cualquier medicamento prescrito que aún no haya sido administrado
+    if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
+      this.medicamentosSeleccionados.forEach((m: any) => {
+        if (!m.administrado && (m.id || m.id_medicamento)) {
+          const cantUsar = Number(m.cantidadAAdministrar) || 1;
+          this.vetInvSvc.registrarConsumo(
+            m.id || m.id_medicamento,
+            cantUsar,
+            'Administración al guardar historia clínica #' + (this.idHistoria || '')
+          ).subscribe();
+          m.administrado = true;
+          m.cantidadEfectivaAdministrada = cantUsar;
+        }
+      });
+    }
 
     const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
     const idAnimalEfectivo = Number(
