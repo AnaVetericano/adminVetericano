@@ -40,7 +40,7 @@ export class Graficas implements OnInit {
 
         this.rolPet = response.filter(u => u.nombre_rol === 'Peticionario').length;
         this.rolVet = response.filter(u => u.nombre_rol === 'Veterinario').length;
-        this.rolJud = response.filter(u => u.nombre_rol === 'Juridico').length;
+        this.rolJud = response.filter(u => u.nombre_rol && (u.nombre_rol === 'Juridico' || u.nombre_rol === 'Jurídico' || u.nombre_rol.toLowerCase().includes('jur'))).length;
         this.rolAdm = response.filter(u => u.nombre_rol === 'Administrador').length;
 
         this.cargandoGrafica = false;

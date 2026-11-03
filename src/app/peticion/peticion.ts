@@ -5,8 +5,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
-import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
 
+import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
 
 @Component({
   selector: 'app-peticion',
@@ -140,7 +140,7 @@ export class Peticion implements OnInit {
     private http: HttpClient,
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
@@ -817,7 +817,7 @@ export class Peticion implements OnInit {
     const tipo = String(p.tipo || this.tipoLabel(p) || '').toLowerCase();
     const est = String(p.estado || '').toLowerCase();
     return prio.includes('urgente') || prio.includes('alta') || prio.includes('crit') ||
-           tipo.includes('herido') || est.includes('urgente');
+      tipo.includes('herido') || est.includes('urgente');
   }
 
   diasTranscurridos(p: any): number | null {

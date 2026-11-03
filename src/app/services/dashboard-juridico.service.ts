@@ -45,6 +45,7 @@ export interface ResumenDashboardJuridico {
 export class DashboardJuridicoService {
   private backendUrl = environment.backendUrl;
 
+  private urlDashboardConsolidado = `${this.backendUrl}/api/peticiones/dashboard-juridico/`;
   private urlPeticiones = `${this.backendUrl}/api/peticiones/listar/`;
   private urlFuncionarios = `${this.backendUrl}/api/peticiones/seguimiento/funcionarios/`;
   private urlConsultas = `${this.backendUrl}/api/clinica/consultas/`;
@@ -64,6 +65,19 @@ export class DashboardJuridicoService {
    * Obtiene y consolida todas las fuentes de datos para el Dashboard Jurídico.
    */
   obtenerDatosDashboard(): Observable<ResumenDashboardJuridico> {
+    const headers = this.getHeaders();
+    return this.http.get<any>(this.urlDashboardConsolidado, { headers }).pipe(
+      map((res: any) => {
+        if (res && res.peticiones && res.cba) {
+          return res as ResumenDashboardJuridico;
+        }
+        throw new Error('Respuesta no coincide con estructura consolidada');
+      }),
+      catchError(() => this.obtenerDatosDashboardFallback())
+    );
+  }
+
+  obtenerDatosDashboardFallback(): Observable<ResumenDashboardJuridico> {
     const headers = this.getHeaders();
 
     return forkJoin({

@@ -30,8 +30,8 @@ export class UsuariosRoles implements OnInit{
   usuarioSeleccionadoRol: any = null;
   rolesDisponibles: any[] = [
     { id_rol: 1, nombre_rol: 'Administrador' },
-    { id_rol: 2, nombre_rol: 'Veterinario' },
-    { id_rol: 3, nombre_rol: 'Jurídico' },
+    { id_rol: 2, nombre_rol: 'Jurídico' },
+    { id_rol: 3, nombre_rol: 'Veterinario' },
     { id_rol: 4, nombre_rol: 'Peticionario' }
   ];
 
