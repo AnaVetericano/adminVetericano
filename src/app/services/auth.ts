@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+﻿import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -225,6 +225,10 @@ export class AuthService {
     const rol = (this.userRole() || '').toLowerCase();
     return rol.includes('vet');
   });
+  public isJuridico = computed(() => {
+    const rol = (this.userRole() || '').toLowerCase();
+    return rol.includes('jur');
+  });
 
   constructor(private http: HttpClient) { }
 
@@ -279,7 +283,8 @@ export class AuthService {
     const idNum = Number(rolRaw);
     if (!isNaN(idNum)) {
       if (idNum === 1) return 'Administrador';
-      if (idNum === 2 || idNum === 3) return 'Veterinario';
+      if (idNum === 2) return 'Jurídico';
+      if (idNum === 3) return 'Veterinario';
       if (idNum === 4) return 'Peticionario';
     }
 
@@ -383,10 +388,11 @@ export class AuthService {
    * Verifica si el usuario actual tiene alguno de los roles permitidos (insensible a mayúsculas)
    */
   hasRole(allowedRoles: UserRole[]): boolean {
-    const rolActual = (this.userRole() || '').toLowerCase().trim();
-    if (!rolActual) return true; // Si no está especificado, permitir por defecto
+    const norm = (txt: string) => (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const rolActual = norm(this.userRole() || '');
+    if (!rolActual) return true;
     return allowedRoles.some((r) => {
-      const rLower = String(r).toLowerCase().trim();
+      const rLower = norm(String(r));
       return rLower === rolActual || rolActual.includes(rLower) || rLower.includes(rolActual);
     });
   }
