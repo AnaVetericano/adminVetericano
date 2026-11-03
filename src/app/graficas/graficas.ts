@@ -24,6 +24,14 @@ export class Graficas implements OnInit {
   rolJud = 0;
   rolAdm = 0;
 
+  get totalUsuarios(): number {
+    return this.activosPie + this.inactivosPie;
+  }
+
+  get totalOperativo(): number {
+    return this.rolAdm + this.rolJud + this.rolVet;
+  }
+
   constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
@@ -35,13 +43,28 @@ export class Graficas implements OnInit {
 
     this.authService.listUsersActive().subscribe({
       next: (response: any[]) => {
-        this.activosPie = response.filter(u => u.activo === true).length;
-        this.inactivosPie = response.filter(u => u.activo === false).length;
+        const lista = Array.isArray(response) ? response : [];
+        this.activosPie = lista.filter(u => u.activo === true).length;
+        this.inactivosPie = lista.filter(u => u.activo === false).length;
 
-        this.rolPet = response.filter(u => u.nombre_rol === 'Peticionario').length;
-        this.rolVet = response.filter(u => u.nombre_rol === 'Veterinario').length;
-        this.rolJud = response.filter(u => u.nombre_rol && (u.nombre_rol === 'Juridico' || u.nombre_rol === 'Jurídico' || u.nombre_rol.toLowerCase().includes('jur'))).length;
-        this.rolAdm = response.filter(u => u.nombre_rol === 'Administrador').length;
+        const normalizarRol = (u: any): string => {
+          const id = Number(u.id_rol);
+          if (id === 1) return 'admin';
+          if (id === 2) return 'juridico';
+          if (id === 3) return 'veterinario';
+          if (id === 4) return 'peticionario';
+          const n = String(u.nombre_rol || '').toLowerCase();
+          if (n.includes('adm')) return 'admin';
+          if (n.includes('jur')) return 'juridico';
+          if (n.includes('vet')) return 'veterinario';
+          if (n.includes('pet')) return 'peticionario';
+          return '';
+        };
+
+        this.rolAdm = lista.filter(u => normalizarRol(u) === 'admin').length;
+        this.rolJud = lista.filter(u => normalizarRol(u) === 'juridico').length;
+        this.rolVet = lista.filter(u => normalizarRol(u) === 'veterinario').length;
+        this.rolPet = lista.filter(u => normalizarRol(u) === 'peticionario').length;
 
         this.cargandoGrafica = false;
 
@@ -66,20 +89,33 @@ export class Graficas implements OnInit {
     }
 
     this.chartUsersActive = new Chart(this.GraficUsers.nativeElement, {
-      type: 'pie',
+      type: 'doughnut',
       data: {
-        labels: ['Usuarios activos: ' + this.activosPie, 'Usuarios inactivos: ' + this.inactivosPie],
+        labels: ['Activos: ' + this.activosPie, 'Inactivos: ' + this.inactivosPie],
         datasets: [{
-          label: 'Cantidad',
           data: [this.activosPie, this.inactivosPie],
-          backgroundColor: ['#10B981', '#F1C63C']
+          backgroundColor: [
+            '#4141A5', // Indigo corporativo VETERICANO
+            '#64748B'  // Slate corporativo
+          ],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 6
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
         plugins: {
           legend: {
-            position: 'top'
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              color: '#475569',
+              padding: 16
+            }
           }
         }
       }
@@ -94,30 +130,40 @@ export class Graficas implements OnInit {
     }
 
     this.chartUsersRol = new Chart(this.GraficUsersRol.nativeElement, {
-      type: 'pie',
+      type: 'doughnut',
       data: {
         labels: [
           'Administradores: ' + this.rolAdm,
-          'Juridicos: ' + this.rolJud,
+          'Jurídicos: ' + this.rolJud,
           'Veterinarios: ' + this.rolVet,
           'Peticionarios: ' + this.rolPet
         ],
         datasets: [{
-          label: 'Cantidad',
           data: [this.rolAdm, this.rolJud, this.rolVet, this.rolPet],
           backgroundColor: [
-            '#10B981',
-            '#F1C63C',
-            '#3B82F6',
-            '#EF4444'
-          ]
+            '#170B3D', // Deep Navy institucional
+            '#4141A5', // Indigo corporativo
+            '#6366F1', // Indigo claro
+            '#64748B'  // Slate institucional
+          ],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 6
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
         plugins: {
           legend: {
-            position: 'top'
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              color: '#475569',
+              padding: 16
+            }
           }
         }
       }

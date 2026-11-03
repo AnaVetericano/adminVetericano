@@ -51,7 +51,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
-          <span>+ Registrar Paciente</span>
+          <span>Registrar Paciente</span>
         </button>
 
         <!-- Botón Atención de Campo (Acta) -->
@@ -244,8 +244,8 @@
                       [alt]="historia.animal_nombre"
                       (error)="historia.animal_foto = ''"
                       class="w-full h-full object-cover">
-                    <span *ngIf="!historia.animal_foto" class="text-xs font-extrabold text-slate-500">
-                      🐾
+                    <span *ngIf="!historia.animal_foto" class="text-xs font-black text-slate-600 uppercase">
+                      {{ (historia.animal_nombre || 'P').charAt(0) }}
                     </span>
                   </div>
                   <div class="min-w-0">
@@ -313,9 +313,9 @@
 
                   <button
                     type="button"
-                    (click)="irAEditar(historia)"
-                    class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                    title="Editar evolución y diagnósticos">
+                    (click)="abrirModalEditarAnimal(historia)"
+                    class="p-1.5 rounded-lg text-[#4141a5] hover:bg-[#4141a5]/10 transition-colors cursor-pointer"
+                    title="Editar ficha del paciente">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -361,7 +361,9 @@
                   [alt]="historia.animal_nombre"
                   (error)="historia.animal_foto = ''"
                   class="w-full h-full object-cover">
-                <span *ngIf="!historia.animal_foto" class="text-lg">🐾</span>
+                <span *ngIf="!historia.animal_foto" class="text-sm font-black text-slate-600 uppercase">
+                  {{ (historia.animal_nombre || 'P').charAt(0) }}
+                </span>
               </div>
               <div class="min-w-0">
                 <h4 class="font-bold text-gray-900 text-xs truncate">{{ historia.animal_nombre }}</h4>
@@ -401,9 +403,9 @@
             </button>
             <button
               type="button"
-              (click)="irAEditar(historia)"
+              (click)="abrirModalEditarAnimal(historia)"
               class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition-all shadow-xs cursor-pointer text-center">
-              Editar
+              Editar Paciente
             </button>
           </div>
 
@@ -416,7 +418,9 @@
       *ngIf="!cargando && historiasFiltradas.length === 0"
       class="flex-1 bg-white rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-4">
       <div class="w-16 h-16 rounded-3xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center text-2xl shadow-xs">
-        📋
+        <svg class="w-8 h-8 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
       </div>
       <div class="max-w-md space-y-1">
         <h3 class="text-base font-extrabold text-[#170B3D]">No se encontraron historias clínicas</h3>
@@ -481,8 +485,8 @@
         <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            (click)="irAEditar(historiaSeleccionada)"
-            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white rounded-xl text-xs font-bold transition cursor-pointer">
+            (click)="abrirModalEditarAnimal(historiaSeleccionada)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white rounded-xl text-xs font-bold transition cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
@@ -498,10 +502,12 @@
         </div>
       </div>
 
-      <!-- BARRA SUPERIOR DE PESTAÑAS (IDÉNTICA A CP-VET) -->
+
+
+      <!-- BARRA SUPERIOR DE PESTAÑAS (HISTORIAL Y CONSULTAS) -->
       <div class="px-5 sm:px-7 pt-3 pb-2 border-b border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto shrink-0 select-none">
         
-        <!-- Pestaña 1: Historial (Activa) -->
+        <!-- Pestaña 1: Historial -->
         <button
           type="button"
           (click)="cambiarPestanaDetalle('historial')"
@@ -527,100 +533,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <span>Consultas</span>
-        </button>
-
-        <!-- Pestaña 3: Evolución -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('evolucion')"
-          [ngClass]="pestanaDetalle === 'evolucion'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-          <span>Evolución</span>
-        </button>
-
-        <!-- Pestaña 4: Fórmulas -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('formulas')"
-          [ngClass]="pestanaDetalle === 'formulas'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <span>Fórmulas</span>
-        </button>
-
-        <!-- Pestaña 5: Exámenes -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('examenes')"
-          [ngClass]="pestanaDetalle === 'examenes'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-          </svg>
-          <span>Exámenes</span>
-        </button>
-
-        <!-- Pestaña 6: Imágenes -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('imagenes')"
-          [ngClass]="pestanaDetalle === 'imagenes'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span>Imágenes</span>
-        </button>
-
-        <!-- Pestaña 7: Vacunas -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('vacunas')"
-          [ngClass]="pestanaDetalle === 'vacunas'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <span class="text-xs">💉</span>
-          <span>Vacunas</span>
-        </button>
-
-        <!-- Pestaña 8: Desp. -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('desp')"
-          [ngClass]="pestanaDetalle === 'desp'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <span class="text-xs">🪱</span>
-          <span>Desp.</span>
-        </button>
-
-        <!-- Pestaña 9: Procedimientos -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('procedimientos')"
-          [ngClass]="pestanaDetalle === 'procedimientos'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <span>Procedimientos</span>
         </button>
 
       </div>
@@ -652,7 +564,7 @@
               [(ngModel)]="filtroFechaHistorial"
               (change)="filtrarHistorial()"
               class="appearance-none bg-white border border-slate-200 text-slate-700 font-bold text-xs pl-3 pr-8 py-2 rounded-xl focus:border-[#2563EB] outline-none cursor-pointer">
-              <option value="Todas">📅 Fecha ∨</option>
+              <option value="Todas">Fecha ∨</option>
               <option value="Hoy">Hoy</option>
               <option value="Mes">Este Mes</option>
               <option value="Ano">Este Año</option>
@@ -665,7 +577,7 @@
               [(ngModel)]="filtroTipoHistorial"
               (change)="filtrarHistorial()"
               class="appearance-none bg-white border border-slate-200 text-slate-700 font-bold text-xs pl-3 pr-8 py-2 rounded-xl focus:border-[#2563EB] outline-none cursor-pointer">
-              <option value="Todos">🏷️ Tipo ∨</option>
+              <option value="Todos">Tipo ∨</option>
               <option value="General">Consulta General</option>
               <option value="Digestiv">Consulta Digestiva</option>
               <option value="Esquelet">Músculo-Esquelético</option>
@@ -680,7 +592,7 @@
               [(ngModel)]="filtroVetHistorial"
               (change)="filtrarHistorial()"
               class="appearance-none bg-white border border-slate-200 text-slate-700 font-bold text-xs pl-3 pr-8 py-2 rounded-xl focus:border-[#2563EB] outline-none cursor-pointer">
-              <option value="Todos">👤 Médico Vet. ∨</option>
+              <option value="Todos">Médico Vet. ∨</option>
               <option value="SMITH ORDOÑEZ">SMITH ORDOÑEZ</option>
               <option value="Dr. Juan Camilo Valencia">Dr. Juan Camilo Valencia</option>
             </select>
@@ -717,40 +629,14 @@
               <button type="button"
                 (click)="menuCrearDesplegable = false; iniciarConsultaGeneralDesdeHistorial()"
                 class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-800 hover:bg-blue-50 hover:text-[#2563EB] flex items-center gap-3 transition cursor-pointer">
-                <span class="w-8 h-8 rounded-xl bg-blue-100 text-[#2563EB] flex items-center justify-center text-sm font-black shrink-0">🩺</span>
+                <span class="w-8 h-8 rounded-xl bg-blue-100 text-[#2563EB] flex items-center justify-center text-sm font-black shrink-0">
+                  <svg class="w-4 h-4 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </span>
                 <div class="flex-1 min-w-0">
                   <div class="font-extrabold text-[#170B3D]">Consulta General</div>
                   <div class="text-[10px] text-slate-500 font-medium truncate">Formulario clínico 360° (CP-Vet)</div>
-                </div>
-              </button>
-
-              <button type="button"
-                (click)="menuCrearDesplegable = false; abrirModalCrearEnHistorial('Vacunación')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center gap-3 transition cursor-pointer">
-                <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-black shrink-0">💉</span>
-                <div class="flex-1 min-w-0">
-                  <div>Vacunación</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Plan Sanitario</div>
-                </div>
-              </button>
-
-              <button type="button"
-                (click)="menuCrearDesplegable = false; abrirModalCrearEnHistorial('Desparasitación')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center gap-3 transition cursor-pointer">
-                <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-black shrink-0">🐛</span>
-                <div class="flex-1 min-w-0">
-                  <div>Desparasitación</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Interna y externa</div>
-                </div>
-              </button>
-
-              <button type="button"
-                (click)="menuCrearDesplegable = false; abrirModalCrearEnHistorial('Procedimiento Quirúrgico')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center gap-3 transition cursor-pointer">
-                <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-sm font-black shrink-0">📋</span>
-                <div class="flex-1 min-w-0">
-                  <div>Procedimiento Quirúrgico</div>
-                  <div class="text-[10px] text-slate-400 font-normal">Cirugía o curación</div>
                 </div>
               </button>
             </div>
@@ -781,7 +667,7 @@
             </span>
           </div>
 
-          <!-- LÍNEA DE TIEMPO CON BURBUJAS DE ESTETOSCOPIO (🩺) Y TARJETAS -->
+          <!-- LÍNEA DE TIEMPO CON BURBUJAS Y TARJETAS -->
           <div class="relative pl-7 sm:pl-10 space-y-6 before:content-[''] before:absolute before:left-3.5 sm:before:left-4.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
             
             <!-- TARJETA DE CONSULTA (COPIA EXACTA DE LA IMAGEN) -->
@@ -789,7 +675,9 @@
               
               <!-- Burbuja de Estetoscopio en la Línea -->
               <div class="absolute -left-7 sm:-left-10 top-3.5 w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white border-2 border-[#2563EB] text-[#2563EB] flex items-center justify-center text-xs sm:text-sm shadow-xs group-hover:scale-110 transition-transform">
-                🩺
+                <svg class="w-4 h-4 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
 
               <!-- Tarjeta Blanca con Línea Lateral Azul -->
@@ -902,9 +790,46 @@
 
           <!-- ESTADO VACÍO EN BÚSQUEDA -->
           <div *ngIf="consultasFiltradasHistorial.length === 0" class="py-12 bg-white rounded-2xl border border-slate-200 text-center p-8 space-y-3">
-            <div class="text-3xl">🔍</div>
+            <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
             <h4 class="text-sm font-bold text-slate-800">No se encontraron atenciones con los filtros actuales</h4>
             <p class="text-xs text-slate-500">Prueba cambiando el término de búsqueda o restableciendo los filtros de fecha y tipo.</p>
+          </div>
+
+          <!-- TARJETA RESUMEN DE HISTORIA CLÍNICA (IDÉNTICA A LA IMAGEN) -->
+          <div class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3 mt-6">
+            <h4 class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+              Resumen de Historia Clínica
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs pt-1">
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Número de Historia</span>
+                <span class="font-black text-[#170B3D] text-xs sm:text-sm mt-1 block">
+                  {{ historiaSeleccionada.numero_historia || ('HC-' + (historiaSeleccionada.id_historia || '001')) }}
+                </span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Fecha de Ingreso</span>
+                <span class="font-bold text-slate-800 text-xs sm:text-sm mt-1 block">
+                  {{ formatearFechaTexto(historiaSeleccionada.fecha_apertura) }}
+                </span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Última Visita</span>
+                <span class="font-bold text-slate-800 text-xs sm:text-sm mt-1 block">
+                  {{ obtenerFechaUltimaVisita() }}
+                </span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total de Registros</span>
+                <span class="font-black text-slate-900 text-sm sm:text-base mt-1 block">
+                  {{ consultasHistorial.length }}
+                </span>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -955,7 +880,9 @@
       <div class="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-3 pt-1">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center text-xl shadow-md border border-[#F1C63C]/30 shrink-0">
-            🩺
+            <svg class="w-6 h-6 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
           </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
@@ -971,10 +898,15 @@
               </span>
             </div>
             <p class="text-xs text-slate-500 font-medium flex items-center gap-2 mt-1 flex-wrap">
-              <span>📅 {{ consultaDetalleSeleccionada.fecha_formateada }} · {{ consultaDetalleSeleccionada.hora_formateada }}</span>
+              <span class="inline-flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>{{ consultaDetalleSeleccionada.fecha_formateada }} · {{ consultaDetalleSeleccionada.hora_formateada }}</span>
+              </span>
               <span class="text-slate-300">•</span>
               <span class="bg-[#170B3D]/5 text-[#170B3D] font-extrabold px-2 py-0.5 rounded-lg border border-[#170B3D]/10">
-                🐾 Paciente: {{ historiaSeleccionada?.animal_nombre }} ({{ historiaSeleccionada?.numero_historia }})
+                Paciente: {{ historiaSeleccionada?.animal_nombre }} ({{ historiaSeleccionada?.numero_historia }})
               </span>
             </p>
           </div>
@@ -1039,19 +971,19 @@
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
             <div class="bg-[#4141a5]/5 p-2.5 rounded-xl border border-[#4141a5]/20 shadow-2xs">
-              <span class="text-[10px] text-[#4141a5] font-black block uppercase tracking-wider">⚖️ Peso</span>
+              <span class="text-[10px] text-[#4141a5] font-black block uppercase tracking-wider">Peso</span>
               <span class="font-black text-[#4141a5] text-sm mt-0.5 block">{{ consultaDetalleSeleccionada.peso ? consultaDetalleSeleccionada.peso + ' kg' : 'No reg.' }}</span>
             </div>
             <div class="bg-rose-50/70 p-2.5 rounded-xl border border-rose-200/80 shadow-2xs">
-              <span class="text-[10px] text-rose-600 font-black block uppercase tracking-wider">🌡️ Temperatura</span>
+              <span class="text-[10px] text-rose-600 font-black block uppercase tracking-wider">Temperatura</span>
               <span class="font-black text-rose-700 text-sm mt-0.5 block">{{ consultaDetalleSeleccionada.temperatura ? consultaDetalleSeleccionada.temperatura + ' °C' : 'No reg.' }}</span>
             </div>
             <div class="bg-[#170B3D]/5 p-2.5 rounded-xl border border-[#170B3D]/15 shadow-2xs">
-              <span class="text-[10px] text-[#170B3D] font-black block uppercase tracking-wider">💓 Frec. Cardíaca</span>
+              <span class="text-[10px] text-[#170B3D] font-black block uppercase tracking-wider">Frec. Cardíaca</span>
               <span class="font-black text-[#170B3D] text-sm mt-0.5 block">{{ consultaDetalleSeleccionada.frecuencia_cardiaca ? consultaDetalleSeleccionada.frecuencia_cardiaca + ' lpm' : 'No reg.' }}</span>
             </div>
             <div class="bg-teal-50/70 p-2.5 rounded-xl border border-teal-200/80 shadow-2xs">
-              <span class="text-[10px] text-teal-700 font-black block uppercase tracking-wider">🫁 Frec. Respiratoria</span>
+              <span class="text-[10px] text-teal-700 font-black block uppercase tracking-wider">Frec. Respiratoria</span>
               <span class="font-black text-teal-900 text-sm mt-0.5 block">{{ consultaDetalleSeleccionada.frecuencia_respiratoria ? consultaDetalleSeleccionada.frecuencia_respiratoria + ' rpm' : 'No reg.' }}</span>
             </div>
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -1087,7 +1019,7 @@
             <div *ngFor="let s of listaSistemasDef"
               class="bg-slate-50/70 hover:bg-slate-100/70 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 transition min-h-[44px]">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-base shrink-0">{{ s.icono }}</span>
+                <span class="w-2 h-2 rounded-full bg-[#4141a5] shrink-0"></span>
                 <span class="text-xs font-bold text-slate-700 leading-snug">{{ s.label }}</span>
               </div>
               <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md border shrink-0 shadow-2xs"
@@ -1100,7 +1032,10 @@
           <div *ngIf="consultaDetalleSeleccionada.observaciones_sistemas"
             class="bg-amber-50/60 border border-amber-200/80 rounded-xl p-3 text-xs text-amber-950 space-y-1">
             <span class="font-black uppercase text-[10px] text-amber-900 block flex items-center gap-1.5">
-              <span>🔍</span> Observaciones del examen físico de sistemas:
+              <svg class="w-3.5 h-3.5 shrink-0 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>Observaciones del examen físico de sistemas:</span>
             </span>
             <p class="leading-relaxed font-semibold">{{ consultaDetalleSeleccionada.observaciones_sistemas }}</p>
           </div>
@@ -1116,7 +1051,10 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="md:col-span-2 p-4 bg-amber-50/50 border border-amber-200/80 rounded-2xl space-y-2">
               <span class="text-[10px] font-black uppercase text-amber-900 flex items-center gap-1.5">
-                <span>🎯</span> Diagnóstico Presuntivo / Principal
+                <svg class="w-3.5 h-3.5 shrink-0 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Diagnóstico Presuntivo / Principal</span>
               </span>
               <p class="font-black text-[#170B3D] text-sm leading-relaxed">
                 {{ consultaDetalleSeleccionada.diagnostico || 'Evaluación médica general estable.' }}
@@ -1137,7 +1075,10 @@
             <div class="p-4 bg-gradient-to-br from-[#170B3D] to-[#2E1A66] text-white rounded-2xl space-y-2 flex flex-col justify-between border border-[#170B3D] shadow-sm">
               <div>
                 <span class="text-[10px] font-black uppercase text-[#F1C63C] flex items-center gap-1.5">
-                  <span>🌱</span> Pronóstico
+                  <svg class="w-3.5 h-3.5 shrink-0 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>Pronóstico</span>
                 </span>
                 <p class="font-black text-white text-base mt-1 tracking-wide">{{ consultaDetalleSeleccionada.pronostico || 'Favorable' }}</p>
               </div>
@@ -1208,7 +1149,10 @@
         <div class="flex items-center gap-2">
           <span class="font-bold text-slate-600">Médico Veterinario:</span>
           <span class="bg-[#170B3D] text-[#F1C63C] px-3.5 py-1.5 rounded-xl font-black uppercase text-xs border border-[#F1C63C]/30 flex items-center gap-1.5 shadow-2xs">
-            👨‍⚕️ {{ consultaDetalleSeleccionada.veterinario || 'SMITH ORDOÑEZ' }}
+            <svg class="w-3.5 h-3.5 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>{{ consultaDetalleSeleccionada.veterinario || 'SMITH ORDOÑEZ' }}</span>
           </span>
         </div>
 
@@ -1265,7 +1209,11 @@
       <!-- Banner de Acceso Directo al Formulario 360° CP-Vet -->
       <div class="bg-blue-50/80 border border-blue-200 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs">
         <div class="flex items-center gap-2.5 min-w-0">
-          <span class="text-2xl shrink-0">🩺</span>
+          <span class="w-8 h-8 rounded-xl bg-blue-100 text-[#2563EB] flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-[#2563EB]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </span>
           <div class="min-w-0">
             <h4 class="text-xs font-black text-[#170B3D] truncate">Formulario Completo de Consulta</h4>
             <p class="text-[10px] text-slate-500 truncate">Vista CP-Vet con 10 secciones y valoración por sistemas</p>
@@ -1275,7 +1223,7 @@
           type="button"
           (click)="cerrarModalCrearEnHistorial(); iniciarConsultaGeneralDesdeHistorial()"
           class="px-3 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-[11px] font-black rounded-xl shadow-xs transition active:scale-95 cursor-pointer shrink-0">
-          Abrir ➔
+          Abrir
         </button>
       </div>
 
@@ -1403,7 +1351,9 @@
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-slate-50">
         <div class="flex items-center gap-3">
           <div class="w-11 h-11 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black shadow-md">
-            🐾
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
           </div>
           <div>
             <div class="flex items-center gap-2">
@@ -1686,6 +1636,307 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <span>{{ guardandoNuevoPaciente ? 'Guardando en Base de Datos...' : 'Guardar y Abrir Expediente' }}</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 5. MODAL EDITAR DATOS DEL PACIENTE / ANIMAL RESCATADO (CBA BIOMETRÍA)       -->
+  <!-- ========================================================================= -->
+  <div
+    *ngIf="modalEditarAnimalAbierto"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in overflow-y-auto">
+
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden my-auto">
+
+      <!-- ENCABEZADO DEL MODAL (Paleta institucional CBA #170B3D / #4141a5) -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-slate-50 shrink-0">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black text-lg shadow-md overflow-hidden shrink-0 border border-white/20">
+            <img *ngIf="animalEnEdicion.foto_url" [src]="animalEnEdicion.foto_url" (error)="animalEnEdicion.foto_url = ''" class="w-full h-full object-cover">
+            <span *ngIf="!animalEnEdicion.foto_url">{{ (animalEnEdicion.nombre || 'P').charAt(0).toUpperCase() }}</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Editar Ficha del Paciente
+              </h2>
+              <span class="bg-[#4141a5]/10 text-[#4141a5] text-[10px] font-black px-2.5 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
+                Animal Rescatado CBA
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">
+              Actualización biométrica, características físicas e identificación oficial
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="cerrarModalEditarAnimal()"
+          class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+          title="Cerrar modal">
+          ✕
+        </button>
+      </div>
+
+      <!-- CUERPO DEL MODAL (Formulario centrado en el animal rescatado) -->
+      <div class="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+
+        <!-- BLOQUE 1: IDENTIFICACIÓN BÁSICA DEL ANIMAL -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5]"></span>
+              <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                1. Identificación y Biometría
+              </h3>
+            </div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase">Datos Principales</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Nombre -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Nombre o Alias del Animal <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.nombre"
+                placeholder="Ej. JUAN, Toby, Manchitas..."
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-slate-800 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Especie -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Especie <span class="text-rose-500">*</span>
+              </label>
+              <select
+                [(ngModel)]="animalEnEdicion.especie"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                <option value="Canino">Canino</option>
+                <option value="Felino">Felino</option>
+                <option value="Equino">Equino</option>
+                <option value="Bovino">Bovino</option>
+                <option value="Porcino">Porcino</option>
+                <option value="Aves">Aves</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <!-- Raza -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Raza / Cruzado
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.raza"
+                placeholder="Ej. Mestizo, Criollo, Labrador..."
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Sexo -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Sexo
+              </label>
+              <select
+                [(ngModel)]="animalEnEdicion.sexo"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                <option value="Macho">Macho</option>
+                <option value="Hembra">Hembra</option>
+                <option value="Indeterminado">Indeterminado</option>
+              </select>
+            </div>
+
+            <!-- Peso (kg) -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Peso Actual (kg)
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                [(ngModel)]="animalEnEdicion.peso"
+                placeholder="Ej. 14.5"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Esterilizado -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                ¿Esterilizado / Castrado?
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  (click)="animalEnEdicion.esterilizado = true"
+                  [ngClass]="animalEnEdicion.esterilizado
+                    ? 'bg-[#4141a5] text-white font-black shadow-xs'
+                    : 'bg-white text-gray-600 border border-gray-200 font-bold hover:bg-gray-50'"
+                  class="h-10 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                  <span>✓</span> Sí
+                </button>
+                <button
+                  type="button"
+                  (click)="animalEnEdicion.esterilizado = false"
+                  [ngClass]="!animalEnEdicion.esterilizado
+                    ? 'bg-[#170B3D] text-white font-black shadow-xs'
+                    : 'bg-white text-gray-600 border border-gray-200 font-bold hover:bg-gray-50'"
+                  class="h-10 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                  <span>✕</span> No
+                </button>
+              </div>
+            </div>
+
+            <!-- Estado Clínico General -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Estado General del Animal
+              </label>
+              <select
+                [(ngModel)]="animalEnEdicion.estado_general"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                <option value="Estable">Estable</option>
+                <option value="En recuperación">En recuperación</option>
+                <option value="En observación">En observación</option>
+                <option value="Delicado">Delicado</option>
+                <option value="Crítico">Crítico</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOQUE 2: CARACTERÍSTICAS FÍSICAS Y FOTOGRAFÍA -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#170B3D]"></span>
+              <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                2. Rasgos Físicos, Identificador y Fotografía
+              </h3>
+            </div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase">CBA / Rescate</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Color / Pelaje -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Color y Pelaje
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.color"
+                placeholder="Ej. Negro con blanco, atigrado, café..."
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Microchip / Placa -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Microchip / Placa / Tatuaje
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.microchip"
+                placeholder="Código de microchip o placa CBA"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-mono focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Señas Particulares -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Señas Particulares y Cicatrices
+              </label>
+              <textarea
+                [(ngModel)]="animalEnEdicion.caracteristicas"
+                rows="2"
+                placeholder="Ej. Mancha blanca en pecho, oreja derecha mocha, cicatriz quirúrgica en abdomen..."
+                class="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition"></textarea>
+            </div>
+
+            <!-- Observaciones / Procedencia -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Observaciones de Comportamiento / Rescate
+              </label>
+              <textarea
+                [(ngModel)]="animalEnEdicion.observaciones"
+                rows="2"
+                placeholder="Ej. Animal rescatado en el parque central, carácter sociable y dócil..."
+                class="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition"></textarea>
+            </div>
+
+            <!-- Fotografía URL y selector -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Foto del Paciente (URL o Cargar Archivo)
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="animalEnEdicion.foto_url"
+                  placeholder="https://ejemplo.com/foto.jpg"
+                  class="flex-1 h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                <label class="h-10 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer shrink-0 border border-slate-200">
+                  <svg class="w-4 h-4 mr-1 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Subir</span>
+                  <input type="file" accept="image/*" (change)="onFotoAnimalSeleccionada($event)" class="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Toggle Disponible para Adopción -->
+            <div class="sm:col-span-2 flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/80">
+              <div>
+                <span class="block text-xs font-bold text-[#170B3D]">Disponible para Adopción</span>
+                <span class="block text-[11px] text-gray-500">Permite registrar al animal como candidato a adopción responsable</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" [(ngModel)]="animalEnEdicion.disponible_adopcion" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4141a5]"></div>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PIE DEL MODAL CON ACCIONES -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
+        <span class="text-[11px] text-gray-500 hidden sm:inline-block">
+          Modificando ficha de: <strong>{{ animalEnEdicion.nombre || 'Paciente' }}</strong>
+        </span>
+
+        <div class="flex items-center gap-2.5 ml-auto">
+          <button
+            type="button"
+            (click)="cerrarModalEditarAnimal()"
+            [disabled]="guardandoEdicionAnimal"
+            class="px-4 py-2.5 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer disabled:opacity-50">
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            (click)="guardarEdicionAnimal()"
+            [disabled]="guardandoEdicionAnimal"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-extrabold transition shadow-md active:scale-95 cursor-pointer disabled:opacity-50">
+            <span *ngIf="guardandoEdicionAnimal" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <svg *ngIf="!guardandoEdicionAnimal" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{{ guardandoEdicionAnimal ? 'Guardando Ficha...' : 'Guardar Cambios del Paciente' }}</span>
           </button>
         </div>
       </div>

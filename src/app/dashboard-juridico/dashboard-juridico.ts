@@ -4,7 +4,9 @@ import {
   OnDestroy,
   ViewChild,
   ElementRef,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  Output,
+  EventEmitter
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -23,6 +25,7 @@ import {
   styleUrl: './dashboard-juridico.css'
 })
 export class DashboardJuridicoComponent implements OnInit, OnDestroy {
+  @Output() verCasos = new EventEmitter<void>();
   @ViewChild('chartPeticiones') chartPeticionesRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chartVeterinarios') chartVeterinariosRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chartCBA') chartCBARef!: ElementRef<HTMLCanvasElement>;
@@ -142,12 +145,12 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
         datasets: [{
           data,
           backgroundColor: [
-            '#F59E0B', // Amber (Pendiente)
-            '#3B82F6', // Blue (En proceso)
-            '#10B981', // Emerald (Finalizada)
-            '#EF4444', // Red (Urgente)
-            '#8B5CF6', // Purple
-            '#06B6D4'  // Cyan
+            '#170B3D', // Deep Navy institucional
+            '#4141a5', // Indigo corporativo
+            '#6366F1', // Indigo claro
+            '#DC2626', // Red (Urgente)
+            '#64748B', // Slate corporativo
+            '#94A3B8'  // Slate suave
           ],
           borderWidth: 2,
           borderColor: '#ffffff',
@@ -209,19 +212,19 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           {
             label: 'Pendiente',
             data: dataPendientes,
-            backgroundColor: '#FBBF24', // Amber
+            backgroundColor: '#94A3B8', // Slate neutral
             borderRadius: 6
           },
           {
             label: 'En Proceso',
             data: dataEnProceso,
-            backgroundColor: '#3B82F6', // Blue
+            backgroundColor: '#4141a5', // Indigo corporativo
             borderRadius: 6
           },
           {
             label: 'Finalizada',
             data: dataFinalizadas,
-            backgroundColor: '#10B981', // Emerald
+            backgroundColor: '#170B3D', // Deep Navy institucional
             borderRadius: 6
           }
         ]
@@ -290,11 +293,11 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
         datasets: [{
           data,
           backgroundColor: [
-            'rgba(99, 102, 241, 0.75)',  // Indigo
-            'rgba(245, 158, 11, 0.75)',  // Amber
-            'rgba(16, 185, 129, 0.75)',  // Emerald
-            'rgba(239, 68, 68, 0.75)',   // Rose
-            'rgba(14, 165, 233, 0.75)'   // Sky
+            'rgba(23, 11, 61, 0.85)',   // Deep Navy
+            'rgba(65, 65, 165, 0.85)',  // Indigo corporativo
+            'rgba(99, 102, 241, 0.85)', // Indigo suave
+            'rgba(100, 116, 139, 0.85)',// Slate medio
+            'rgba(148, 163, 184, 0.85)' // Slate claro
           ],
           borderColor: '#ffffff',
           borderWidth: 2
@@ -324,6 +327,7 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   }
 
   irAGestionPeticiones(): void {
-    this.router.navigate(['/inicio-admin/peticion']);
+    this.verCasos.emit();
+    this.router.navigate(['/inicio-admin/peticion'], { queryParams: { tab: 'peticiones' } });
   }
 }

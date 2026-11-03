@@ -17,6 +17,7 @@ import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
+import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
 
 @Component({
@@ -272,18 +273,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   modoTextoEnriquecido: boolean = false;
 
   listaSistemasOrganicos = [
-    { clave: 'general', nombre: '1. Estado General / Actitud', icono: '⚡' },
-    { clave: 'hidratacion', nombre: '2. Estado de Hidratación', icono: '💧' },
-    { clave: 'tegumentario', nombre: '3. Sistema Tegumentario (Piel y Pelo)', icono: '🐾' },
-    { clave: 'ojos', nombre: '4. Ojos y Anexos Oculares', icono: '👁️' },
-    { clave: 'oidos', nombre: '5. Oídos y Conducto Auditivo', icono: '👂' },
-    { clave: 'nariz', nombre: '6. Nariz y Cavidad Nasal', icono: '👃' },
-    { clave: 'digestivo', nombre: '7. Sistema Digestivo', icono: '🥣' },
-    { clave: 'respiratorio', nombre: '8. Sistema Respiratorio', icono: '🫁' },
-    { clave: 'nervioso', nombre: '9. Sistema Nervioso', icono: '🧠' },
-    { clave: 'musculoesqueletico', nombre: '10. Músculo-Esquelético', icono: '🦴' },
-    { clave: 'cardiovascular', nombre: '11. Sistema Cardiovascular', icono: '❤️' },
-    { clave: 'genitourinario', nombre: '12. Sistema Genitourinario', icono: '🚻' }
+    { clave: 'general', nombre: '1. Estado General / Actitud' },
+    { clave: 'hidratacion', nombre: '2. Estado de Hidratación' },
+    { clave: 'tegumentario', nombre: '3. Sistema Tegumentario (Piel y Pelo)' },
+    { clave: 'ojos', nombre: '4. Ojos y Anexos Oculares' },
+    { clave: 'oidos', nombre: '5. Oídos y Conducto Auditivo' },
+    { clave: 'nariz', nombre: '6. Nariz y Cavidad Nasal' },
+    { clave: 'digestivo', nombre: '7. Sistema Digestivo' },
+    { clave: 'respiratorio', nombre: '8. Sistema Respiratorio' },
+    { clave: 'nervioso', nombre: '9. Sistema Nervioso' },
+    { clave: 'musculoesqueletico', nombre: '10. Músculo-Esquelético' },
+    { clave: 'cardiovascular', nombre: '11. Sistema Cardiovascular' },
+    { clave: 'genitourinario', nombre: '12. Sistema Genitourinario' }
   ];
 
   get conteoInfoBasica(): string {
@@ -386,11 +387,52 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     return (this.proxima_visita_fecha && this.proxima_visita_fecha.trim()) ? '1/1' : '0/1';
   }
 
+  readonly seccionesConsulta: string[] = [
+    'info_basica',
+    'anamnesis',
+    'signos_vitales',
+    'examenes',
+    'valoracion',
+    'diagnostico',
+    'tratamiento',
+    'remisiones',
+    'adjuntos',
+    'proxima_visita'
+  ];
+  private bloqueandoScrollSpy: boolean = false;
+
   irASeccionConsulta(seccionId: string): void {
     this.seccionConsultaActiva = seccionId;
+    this.bloqueandoScrollSpy = true;
     const el = document.getElementById('seccion-' + seccionId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setTimeout(() => {
+      this.bloqueandoScrollSpy = false;
+    }, 600);
+  }
+
+  alHacerScroll(event: Event): void {
+    if (this.bloqueandoScrollSpy) return;
+    const container = event.target as HTMLElement;
+    if (!container) return;
+    const containerTop = container.getBoundingClientRect().top;
+
+    let seccionVisible = this.seccionesConsulta[0];
+    for (const id of this.seccionesConsulta) {
+      const el = document.getElementById('seccion-' + id);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top - containerTop <= 160) {
+          seccionVisible = id;
+        }
+      }
+    }
+
+    if (seccionVisible !== this.seccionConsultaActiva) {
+      this.seccionConsultaActiva = seccionVisible;
+      this.cdr.detectChanges();
     }
   }
 
@@ -425,6 +467,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     private patologiaService: PatologiaService,
     private examenesService: ExamenesClinicosService,
     private comprasService: ComprasService,
+    private vetInvSvc: VeterinaryInventoryService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
@@ -644,6 +687,30 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     }
   }
 
+  formatearFechaTexto(fechaStr?: string | null): string {
+    if (!fechaStr) return '02 de noviembre de 2026';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return fechaStr;
+    }
+  }
+
+  obtenerFechaUltimaVisita(): string {
+    if (this.consultasAnteriores && this.consultasAnteriores.length > 0) {
+      const primera = this.consultasAnteriores[0];
+      const f = primera.fecha_hora || primera.fechaHora || primera.fecha;
+      if (f) return this.formatearFechaTexto(f);
+    }
+    return this.formatearFechaTexto(this.historiaOriginal?.fecha_apertura);
+  }
+
   formatearFechaHora(fechaStr?: string | null): string {
     if (!fechaStr) return 'No registrada';
     try {
@@ -667,6 +734,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   normalizarUrlFoto(url: any): string {
     if (!url || typeof url !== 'string' || !url.trim()) return '';
     const u = url.trim();
+    if (u === 'null' || u === 'undefined' || u === 'None') return '';
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
@@ -677,6 +745,97 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       return `https://backendvetericano-production.up.railway.app/${u}`;
     }
     return `https://backendvetericano-production.up.railway.app/media/${u}`;
+  }
+
+  extraerFotoDeObjeto(item: any): string {
+    if (!item) return '';
+    const extraerPrimera = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'string') {
+        const t = val.trim();
+        if (t.startsWith('[')) {
+          try {
+            return extraerPrimera(JSON.parse(t));
+          } catch {
+            return '';
+          }
+        }
+        return t;
+      }
+      if (Array.isArray(val) && val.length > 0) {
+        const primero = val[0];
+        if (typeof primero === 'string') return primero;
+        if (primero && typeof primero === 'object') {
+          return primero.foto || primero.url || primero.imagen || primero.ruta_archivo || primero.foto_url || primero.fotoUrl || '';
+        }
+      }
+      return '';
+    };
+
+    const candidata =
+      item.foto_url ||
+      item.fotoUrl ||
+      item.foto ||
+      extraerPrimera(item.fotos) ||
+      extraerPrimera(item.multimedia) ||
+      extraerPrimera(item.evidencias) ||
+      item.imagen ||
+      item.foto_paciente ||
+      item.imagen_paciente ||
+      item.animales?.[0]?.foto_url ||
+      item.animales?.[0]?.foto ||
+      item.animales?.[0]?.imagen ||
+      item.animal?.foto_url ||
+      item.animal?.foto ||
+      item.animal?.imagen ||
+      '';
+
+    return this.normalizarUrlFoto(candidata);
+  }
+
+  private hidratarFotoDesdeSeguimientos(idAnimal?: number, nombrePaciente?: string, numeroHistoria?: string): void {
+    this.authService.listarSeguimientos().subscribe({
+      next: (resp) => {
+        const lista: any[] = Array.isArray(resp) ? resp : (resp?.results || resp?.data || []);
+        const nomBuscar = String(nombrePaciente || '').trim().toLowerCase();
+        const radBuscar = String(numeroHistoria || '').trim().toLowerCase();
+
+        const coincidencia = lista.find((s: any) => {
+          const idCand = Number(
+            s?.id_animal ??
+            s?.id_animal_id ??
+            s?.animal?.id_animal ??
+            s?.animales?.[0]?.id_animal ??
+            s?.paciente?.id_animal
+          );
+          if (idAnimal && !isNaN(idCand) && idCand === Number(idAnimal)) return true;
+
+          const radCand = String(s?.numero_radicado || s?.radicado || '').trim().toLowerCase();
+          if (radBuscar && radCand && radCand === radBuscar) return true;
+
+          const nomCand = String(
+            s?.nombre_paciente ||
+            s?.nombre_animal ||
+            s?.nombre ||
+            s?.animal?.nombre ||
+            s?.animales?.[0]?.nombre ||
+            ''
+          ).trim().toLowerCase();
+          if (nomBuscar && nomBuscar !== 'paciente' && nomCand && nomCand === nomBuscar) return true;
+
+          return false;
+        });
+
+        if (coincidencia) {
+          const fotoSeg = this.extraerFotoDeObjeto(coincidencia);
+          if (fotoSeg && this.paciente && !this.paciente.foto_url) {
+            this.paciente.foto_url = fotoSeg;
+            this.cdr.detectChanges();
+          }
+        }
+      },
+      error: () => {}
+    });
   }
 
   obtenerColorAvatar(item: any): string {
@@ -1197,7 +1356,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         raza: seg?.paciente_raza || seg?.raza || 'Mestizo',
         sexo: seg?.paciente_sexo || seg?.sexo || 'Hembra',
         peso: Number(seg?.peso_paciente ?? seg?.peso ?? 4.0),
-        foto_url: seg?.foto_url || '',
+        foto_url: this.extraerFotoDeObjeto(seg),
         tenedor_nombre: tutorNom,
         tenedor_documento: tutorCed,
         tenedor_telefono: tutorTel
@@ -1297,6 +1456,15 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.paciente.foto_url = this.normalizarUrlFoto(foto);
         } else if (data.paciente?.foto_url && this.paciente && !this.paciente.foto_url) {
           this.paciente.foto_url = this.normalizarUrlFoto(data.paciente.foto_url);
+        }
+
+        // Si el paciente aún no tiene foto cargada, hidratarla desde los seguimientos / actas
+        if (this.paciente && !this.paciente.foto_url) {
+          this.hidratarFotoDesdeSeguimientos(
+            Number(this.paciente.id_animal || idAnimal),
+            this.paciente.nombre || nombre,
+            data.numero_historia || this.numeroRadicadoActual
+          );
         }
 
         // =====================================================================
@@ -1794,25 +1962,53 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.cargandoMedicamentos = true;
     this.mensajeMedicamentos = '';
 
+    const idVet = this.vetInvSvc.getVeterinarioLogueadoId();
+
     forkJoin({
       catalogo: this.comprasService.listarMedicamentosCatalogo().pipe(
         catchError(() => this.comprasService.listarMedicamentos()),
         catchError(() => of([]))
       ),
-      stock: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+      stockGeneral: this.comprasService.obtenerMapaStockMedicamentos().pipe(
         catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      ),
+      kitVeterinario: this.vetInvSvc.cargarInventarioVeterinario(idVet).pipe(
+        catchError(() => of([]))
       )
     }).subscribe({
-      next: ({ catalogo, stock }) => {
-        this.mapaStockPorId = stock.porId;
-        this.mapaStockPorNombre = stock.porNombre;
+      next: ({ catalogo, stockGeneral, kitVeterinario }) => {
+        this.mapaStockPorId = stockGeneral.porId;
+        this.mapaStockPorNombre = stockGeneral.porNombre;
+
+        const mapaKitPorId = new Map<number, number>();
+        const mapaKitPorNombre = new Map<string, number>();
+
+        kitVeterinario.forEach((k: any) => {
+          const idMed = Number(k.id_medicamento);
+          if (!isNaN(idMed) && idMed > 0) {
+            mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
+          }
+          const nom = String(k.nombre || '').trim().toLowerCase();
+          if (nom) {
+            mapaKitPorNombre.set(nom, Number(k.saldoDisponible) || 0);
+          }
+        });
+
+        const calcularStock = (id: number, nombreKey: string): number => {
+          if (kitVeterinario.length > 0) {
+            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
+            return 0;
+          }
+          return (!isNaN(id) && stockGeneral.porId.has(id))
+            ? (stockGeneral.porId.get(id) ?? 0)
+            : (stockGeneral.porNombre.get(nombreKey) ?? 0);
+        };
 
         this.medicamentosCatalogo = catalogo.map((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
-          const stockDisponible = (!isNaN(id) && stock.porId.has(id))
-            ? (stock.porId.get(id) ?? 0)
-            : (stock.porNombre.get(nombreKey) ?? 0);
+          const stockDisponible = calcularStock(id, nombreKey);
 
           return {
             ...med,
@@ -1836,26 +2032,56 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   recargarStockMedicamentos(): void {
-    this.comprasService.obtenerMapaStockMedicamentos().subscribe({
-      next: (stock) => {
-        this.mapaStockPorId = stock.porId;
-        this.mapaStockPorNombre = stock.porNombre;
+    const idVet = this.vetInvSvc.getVeterinarioLogueadoId();
+
+    forkJoin({
+      stockGeneral: this.comprasService.obtenerMapaStockMedicamentos().pipe(
+        catchError(() => of({ porId: new Map<number, number>(), porNombre: new Map<string, number>() }))
+      ),
+      kitVeterinario: this.vetInvSvc.cargarInventarioVeterinario(idVet).pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe({
+      next: ({ stockGeneral, kitVeterinario }) => {
+        this.mapaStockPorId = stockGeneral.porId;
+        this.mapaStockPorNombre = stockGeneral.porNombre;
+
+        const mapaKitPorId = new Map<number, number>();
+        const mapaKitPorNombre = new Map<string, number>();
+
+        kitVeterinario.forEach((k: any) => {
+          const idMed = Number(k.id_medicamento);
+          if (!isNaN(idMed) && idMed > 0) {
+            mapaKitPorId.set(idMed, Number(k.saldoDisponible) || 0);
+          }
+          const nom = String(k.nombre || '').trim().toLowerCase();
+          if (nom) {
+            mapaKitPorNombre.set(nom, Number(k.saldoDisponible) || 0);
+          }
+        });
+
+        const calcularStock = (id: number, nombreKey: string): number => {
+          if (kitVeterinario.length > 0) {
+            if (!isNaN(id) && mapaKitPorId.has(id)) return mapaKitPorId.get(id) ?? 0;
+            if (mapaKitPorNombre.has(nombreKey)) return mapaKitPorNombre.get(nombreKey) ?? 0;
+            return 0;
+          }
+          return (!isNaN(id) && stockGeneral.porId.has(id))
+            ? (stockGeneral.porId.get(id) ?? 0)
+            : (stockGeneral.porNombre.get(nombreKey) ?? 0);
+        };
 
         this.medicamentosCatalogo.forEach((med: any) => {
           const id = Number(med?.id_medicamento ?? med?.id);
           const nombreKey = String(med?.nombre || '').trim().toLowerCase();
-          med.stockDisponible = (!isNaN(id) && stock.porId.has(id))
-            ? (stock.porId.get(id) ?? 0)
-            : (stock.porNombre.get(nombreKey) ?? 0);
+          med.stockDisponible = calcularStock(id, nombreKey);
         });
 
         this.medicamentosSeleccionados.forEach((item: any) => {
           if (!item.administrado) {
             const id = Number(item.id);
             const nombreKey = String(item.nombre || '').trim().toLowerCase();
-            item.stockDisponible = (!isNaN(id) && stock.porId.has(id))
-              ? (stock.porId.get(id) ?? 0)
-              : (stock.porNombre.get(nombreKey) ?? 0);
+            item.stockDisponible = calcularStock(id, nombreKey);
           }
         });
         this.cdr.detectChanges();
@@ -2004,12 +2230,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     Swal.fire({
       title: '¿Confirmar administración y descuento?',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades directamente de los lotes activos en el inventario del CBA.</span>`,
+      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades de tu maletín de campo y actualizará el inventario en tiempo real.</span>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Sí, confirmar y descontar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#059669',
+      confirmButtonColor: '#4141a5',
       cancelButtonColor: '#64748b'
     }).then((resultado) => {
       if (!resultado.isConfirmed) return;
@@ -2017,31 +2243,36 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       med.administrando = true;
       this.cdr.detectChanges();
 
-      this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).subscribe({
-        next: (resp) => {
-          med.administrando = false;
-          med.administrado = true;
-          med.cantidadEfectivaAdministrada = cantidad;
-          med.stockDisponible = resp.restante;
-          this.recargarStockMedicamentos();
-          this.formHistoria.markAsDirty();
-          this.cdr.detectChanges();
+      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en historia clínica #' + (this.idHistoria || '')).subscribe({
+        next: () => {
+          this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
+            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
+          ).subscribe({
+            next: (resp) => {
+              med.administrando = false;
+              med.administrado = true;
+              med.cantidadEfectivaAdministrada = cantidad;
+              med.stockDisponible = Math.max(0, stockActual - cantidad);
+              this.recargarStockMedicamentos();
+              this.formHistoria.markAsDirty();
+              this.cdr.detectChanges();
 
-          Swal.fire({
-            icon: 'success',
-            title: '¡Administración registrada con éxito!',
-            html: `Se descontaron <b>${cantidad} uds</b> de inventario.<br>Stock restante en CBA: <b>${resp.restante} uds</b>.`,
-            confirmButtonColor: '#4141a5'
+              Swal.fire({
+                icon: 'success',
+                title: '¡Administración registrada con éxito!',
+                html: `Se administraron y descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> de tu maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
+                confirmButtonColor: '#4141a5'
+              });
+            }
           });
         },
         error: (err) => {
           med.administrando = false;
           this.cdr.detectChanges();
-          const msg = err?.message || 'No fue posible registrar la administración en inventario.';
           Swal.fire({
             icon: 'error',
-            title: 'Error al descontar inventario',
-            text: msg,
+            title: 'Error al registrar consumo',
+            text: 'No se pudo registrar la administración en el inventario del maletín.',
             confirmButtonColor: '#4141a5'
           });
         }
@@ -2276,6 +2507,22 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       proxima_visita_fecha: this.proxima_visita_fecha || '',
       proxima_visita_notas: this.proxima_visita_notas || ''
     };
+
+    // Descontar del kit de campo cualquier medicamento prescrito que aún no haya sido administrado
+    if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
+      this.medicamentosSeleccionados.forEach((m: any) => {
+        if (!m.administrado && (m.id || m.id_medicamento)) {
+          const cantUsar = Number(m.cantidadAAdministrar) || 1;
+          this.vetInvSvc.registrarConsumo(
+            m.id || m.id_medicamento,
+            cantUsar,
+            'Administración al guardar historia clínica #' + (this.idHistoria || '')
+          ).subscribe();
+          m.administrado = true;
+          m.cantidadEfectivaAdministrada = cantUsar;
+        }
+      });
+    }
 
     const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
     const idAnimalEfectivo = Number(
