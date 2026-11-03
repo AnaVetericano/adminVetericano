@@ -485,15 +485,6 @@
         <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            (click)="abrirModalEditarAnimal(historiaSeleccionada)"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white rounded-xl text-xs font-bold transition cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            <span>Editar Paciente</span>
-          </button>
-          <button
-            type="button"
             (click)="cerrarModalDetalle()"
             class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
             title="Cerrar">
@@ -504,7 +495,7 @@
 
 
 
-      <!-- BARRA SUPERIOR DE PESTAÑAS (HISTORIAL Y CONSULTAS) -->
+      <!-- BARRA SUPERIOR DE PESTAÑAS (HISTORIAL) -->
       <div class="px-5 sm:px-7 pt-3 pb-2 border-b border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto shrink-0 select-none">
         
         <!-- Pestaña 1: Historial -->
@@ -519,20 +510,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
           <span>Historial</span>
-        </button>
-
-        <!-- Pestaña 2: Consultas -->
-        <button
-          type="button"
-          (click)="cambiarPestanaDetalle('consultas')"
-          [ngClass]="pestanaDetalle === 'consultas'
-            ? 'bg-[#2563EB] text-white shadow-xs font-black'
-            : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 font-bold'"
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer shrink-0">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span>Consultas</span>
         </button>
 
       </div>
@@ -848,12 +825,6 @@
             (click)="cerrarModalDetalle()"
             class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">
             Cerrar
-          </button>
-          <button
-            type="button"
-            (click)="cerrarModalDetalle(); irAEditar(historiaSeleccionada)"
-            class="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
-            Abrir Historia Completa
           </button>
         </div>
       </div>

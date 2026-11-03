@@ -5,6 +5,15 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
 
+export interface OpcionViaAdministracion {
+  valor: string;
+  etiqueta: string;
+  unidad: 'und' | 'ml' | 'g';
+  nombreUnidad: string;
+  labelCantidad: string;
+  placeholder: string;
+}
+
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
@@ -21,6 +30,101 @@ export class Medicamentos implements OnInit {
   cargando: boolean = true;
 
   editandoId: number | null = null;
+
+  viasAdministracion: OpcionViaAdministracion[] = [
+    {
+      valor: 'Oral (Pastilla / Tableta)',
+      etiqueta: 'Oral (Pastilla / Tableta / Cápsula) — Unidades (und)',
+      unidad: 'und',
+      nombreUnidad: 'unidades',
+      labelCantidad: 'Cantidad (Unidades)',
+      placeholder: 'Ej. 20'
+    },
+    {
+      valor: 'Oral (Jarabe / Suspensión)',
+      etiqueta: 'Oral (Jarabe / Suspensión líquida) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 100'
+    },
+    {
+      valor: 'Subcutánea (SC)',
+      etiqueta: 'Subcutánea (SC - Inyectable) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 50'
+    },
+    {
+      valor: 'Intramuscular (IM)',
+      etiqueta: 'Intramuscular (IM - Inyectable) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 50'
+    },
+    {
+      valor: 'Intravenosa (IV)',
+      etiqueta: 'Intravenosa (IV - Inyectable / Suero) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 100'
+    },
+    {
+      valor: 'Tópica (Crema / Pomada)',
+      etiqueta: 'Tópica (Crema / Pomada / Pasta) — Gramos (g)',
+      unidad: 'g',
+      nombreUnidad: 'gramos (g)',
+      labelCantidad: 'Cantidad (g)',
+      placeholder: 'Ej. 30'
+    },
+    {
+      valor: 'Tópica (Spray / Solución)',
+      etiqueta: 'Tópica (Spray / Solución líquida) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 120'
+    },
+    {
+      valor: 'Tópica (Pipeta / Spot-on)',
+      etiqueta: 'Tópica (Pipeta / Spot-on) — Unidades (und)',
+      unidad: 'und',
+      nombreUnidad: 'unidades',
+      labelCantidad: 'Cantidad (Unidades)',
+      placeholder: 'Ej. 1'
+    },
+    {
+      valor: 'Ótica (Oídos)',
+      etiqueta: 'Ótica (Gotas / Limpiador de oídos) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 15'
+    },
+    {
+      valor: 'Oftálmica (Ojos)',
+      etiqueta: 'Oftálmica (Colirio / Gotas oculares) — Mililitros (ml)',
+      unidad: 'ml',
+      nombreUnidad: 'ml',
+      labelCantidad: 'Cantidad (ml)',
+      placeholder: 'Ej. 10'
+    }
+  ];
+
+  tiposSugeridos: string[] = [
+    'Antibiótico',
+    'Analgésico',
+    'Antiinflamatorio',
+    'Antiparasitario',
+    'Vacuna',
+    'Calmante / Sedante',
+    'Cicatrizante / Antiséptico',
+    'Vitaminas / Suplemento',
+    'Otro'
+  ];
 
   medicamento = {
     nombre: '',
@@ -39,6 +143,152 @@ export class Medicamentos implements OnInit {
 
   ngOnInit(): void {
     this.obtenerMedicamentos();
+  }
+
+  private normalizarTexto(texto?: string | null): string {
+    return (texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  /**
+   * Determina la unidad de medida ('und', 'ml', 'g') y etiquetas dinámicas
+   * según la vía de administración (y tipo/descripción como respaldo).
+   */
+  obtenerInfoUnidad(via?: string | null, tipo?: string | null, descripcion?: string | null): OpcionViaAdministracion {
+    const viaRaw = (via || '').trim();
+    const coincidenciaExacta = this.viasAdministracion.find(
+      v => this.normalizarTexto(v.valor) === this.normalizarTexto(viaRaw)
+    );
+    if (coincidenciaExacta) {
+      return coincidenciaExacta;
+    }
+
+    const v = this.normalizarTexto(viaRaw);
+    const t = this.normalizarTexto(tipo);
+    const d = this.normalizarTexto(descripcion);
+
+    // 1. Si menciona jarabe, suspensión, spray o solución líquida -> ml
+    if (
+      v.includes('jarabe') ||
+      v.includes('suspension') ||
+      v.includes('spray') ||
+      v.includes('solucion') ||
+      v.includes('liquido')
+    ) {
+      return this.viasAdministracion[1]; // ml
+    }
+
+    // 2. Si la vía es Oral (pastilla/tableta/cápsula) o Pipeta -> Unidades (und)
+    if (
+      v.includes('oral') ||
+      v.includes('pastilla') ||
+      v.includes('tableta') ||
+      v.includes('capsula') ||
+      v.includes('comprimido') ||
+      v.includes('pipeta') ||
+      v.includes('spot') ||
+      v.includes('unidad')
+    ) {
+      return this.viasAdministracion[0]; // und
+    }
+
+    // 3. Si es crema, pomada, pasta, ungüento o tópica sólida -> Gramos (g)
+    if (
+      v.includes('crema') ||
+      v.includes('pomada') ||
+      v.includes('pasta') ||
+      v.includes('unguento') ||
+      v.includes('gel') ||
+      t.includes('pasta') ||
+      t.includes('crema') ||
+      t.includes('pomada')
+    ) {
+      return this.viasAdministracion[5]; // g
+    }
+
+    // 4. Si la vía no está definida pero el tipo o descripción indica pastilla/tableta -> Unidades (und)
+    if (
+      !v &&
+      (t.includes('pastilla') ||
+        t.includes('tableta') ||
+        t.includes('capsula') ||
+        t.includes('comprimido') ||
+        d.includes('pastilla') ||
+        d.includes('tableta') ||
+        d.includes('capsula'))
+    ) {
+      return this.viasAdministracion[0]; // und
+    }
+
+    // 5. Por defecto (Subcutánea, Intramuscular, Intravenosa, Ótica, Oftálmica, Tópica líquida, etc.) -> ml
+    return this.viasAdministracion[2]; // ml
+  }
+
+  get infoUnidadActual(): OpcionViaAdministracion {
+    return this.obtenerInfoUnidad(
+      this.medicamento.via_administracion,
+      this.medicamento.tipo,
+      this.medicamento.descripcion
+    );
+  }
+
+  /**
+   * Formatea la cantidad de cada fila en la tabla con su unidad correspondiente ('und', 'ml', 'g'),
+   * evitando duplicar sufijos si algún registro antiguo ya traía letras en cantidad_ml (ej. '2ml').
+   */
+  formatearCantidadTabla(m: any): string {
+    if (m?.cantidad_ml === null || m?.cantidad_ml === undefined || m?.cantidad_ml === '') {
+      return '-';
+    }
+    const raw = String(m.cantidad_ml).trim();
+    const soloNumero = raw.replace(/[a-zA-Z\s]+$/, '').trim() || raw;
+    const info = this.obtenerInfoUnidad(m?.via_administracion || m?.via, m?.tipo, m?.descripcion);
+    return `${soloNumero} ${info.unidad}`;
+  }
+
+  /**
+   * Normaliza vías antiguas guardadas en texto libre para que al editar un medicamento
+   * el selector (<select>) marque la opción adecuada.
+   */
+  private normalizarViaParaSelector(viaRaw?: string, tipoRaw?: string): string {
+    const limpia = (viaRaw || '').trim();
+    if (!limpia) return '';
+
+    const exacta = this.viasAdministracion.find(
+      v => this.normalizarTexto(v.valor) === this.normalizarTexto(limpia)
+    );
+    if (exacta) return exacta.valor;
+
+    const v = this.normalizarTexto(limpia);
+    const t = this.normalizarTexto(tipoRaw);
+
+    if (v.includes('oral')) {
+      return v.includes('jarabe') || v.includes('suspension')
+        ? 'Oral (Jarabe / Suspensión)'
+        : 'Oral (Pastilla / Tableta)';
+    }
+    if (v.includes('subcutanea') || v === 'sc') return 'Subcutánea (SC)';
+    if (v.includes('intramuscular') || v === 'im') return 'Intramuscular (IM)';
+    if (v.includes('intravenosa') || v === 'iv') return 'Intravenosa (IV)';
+    if (v.includes('otica') || v.includes('oido') || v.includes('oreja')) return 'Ótica (Oídos)';
+    if (v.includes('oftalmica') || v.includes('ojo')) return 'Oftálmica (Ojos)';
+    if (v.includes('pipeta') || v.includes('spot')) return 'Tópica (Pipeta / Spot-on)';
+    if (v.includes('topica') || v.includes('cutanea')) {
+      if (t.includes('pasta') || t.includes('crema') || t.includes('pomada') || v.includes('crema')) {
+        return 'Tópica (Crema / Pomada)';
+      }
+      return 'Tópica (Spray / Solución)';
+    }
+
+    return limpia;
+  }
+
+  esViaPersonalizada(via?: string): boolean {
+    if (!via || !via.trim()) return false;
+    return !this.viasAdministracion.some(v => v.valor === via);
   }
 
   obtenerMedicamentos(): void {
@@ -99,7 +349,7 @@ export class Medicamentos implements OnInit {
       descripcion: '',
       cantidad_ml: null,
       tipo: '',
-      via_administracion: '',
+      via_administracion: 'Oral (Pastilla / Tableta)',
       activo: true
     };
     this.modalAbierto = true;
@@ -107,12 +357,16 @@ export class Medicamentos implements OnInit {
 
   abrirModalEditar(m: any): void {
     this.editandoId = m?.id || m?.id_medicamento || null;
+    const cantRaw = m?.cantidad_ml !== null && m?.cantidad_ml !== undefined
+      ? parseFloat(String(m.cantidad_ml).replace(/[^\d.]/g, ''))
+      : null;
+
     this.medicamento = {
       nombre: m?.nombre || '',
       descripcion: m?.descripcion || '',
-      cantidad_ml: m?.cantidad_ml ?? null,
+      cantidad_ml: cantRaw !== null && !isNaN(cantRaw) ? cantRaw : null,
       tipo: m?.tipo || '',
-      via_administracion: m?.via_administracion || m?.via || '',
+      via_administracion: this.normalizarViaParaSelector(m?.via_administracion || m?.via || '', m?.tipo || ''),
       activo: m?.activo !== undefined ? m.activo : true
     };
     this.modalAbierto = true;
@@ -144,10 +398,21 @@ export class Medicamentos implements OnInit {
       return;
     }
 
-    if (this.medicamento.cantidad_ml === null || this.medicamento.cantidad_ml === undefined) {
+    if (!this.medicamento.via_administracion?.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes ingresar la cantidad en ml.',
+        text: 'Debes seleccionar la vía de administración.',
+        icon: 'warning',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    if (this.medicamento.cantidad_ml === null || this.medicamento.cantidad_ml === undefined || Number(this.medicamento.cantidad_ml) <= 0) {
+      const info = this.infoUnidadActual;
+      Swal.fire({
+        title: 'Campo obligatorio',
+        text: `Debes ingresar una cantidad válida en ${info.nombreUnidad}.`,
         icon: 'warning',
         confirmButtonColor: '#4141A5'
       });
@@ -205,7 +470,14 @@ export class Medicamentos implements OnInit {
           });
           this.cerrarModal();
           this.obtenerMedicamentos();
-          this.medicamento = { nombre: '', descripcion: '', cantidad_ml: null, tipo: '', via_administracion: '', activo: true };
+          this.medicamento = {
+            nombre: '',
+            descripcion: '',
+            cantidad_ml: null,
+            tipo: '',
+            via_administracion: 'Oral (Pastilla / Tableta)',
+            activo: true
+          };
         },
         error: (err: any) => {
           console.error('Error al crear:', err);
@@ -244,7 +516,6 @@ export class Medicamentos implements OnInit {
 
       this.authService.cambiarEstadoMedicamento(idReal, nuevoEstado).subscribe({
         next: () => {
-          // Actualizamos directo en la lista local sin volver a llamar a obtenerMedicamentos()
           m.activo = nuevoEstado;
           this.medicamentosOriginales = [...this.medicamentos];
           this.cdr.detectChanges();
