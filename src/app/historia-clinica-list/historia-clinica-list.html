@@ -841,6 +841,39 @@
             <p class="text-xs text-slate-500">Prueba cambiando el término de búsqueda o restableciendo los filtros de fecha y tipo.</p>
           </div>
 
+          <!-- TARJETA RESUMEN DE HISTORIA CLÍNICA (IDÉNTICA A LA IMAGEN) -->
+          <div class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3 mt-6">
+            <h4 class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+              Resumen de Historia Clínica
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs pt-1">
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Número de Historia</span>
+                <span class="font-black text-[#170B3D] text-xs sm:text-sm mt-1 block">
+                  {{ historiaSeleccionada.numero_historia || ('HC-' + (historiaSeleccionada.id_historia || '001')) }}
+                </span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Fecha de Ingreso</span>
+                <span class="font-bold text-slate-800 text-xs sm:text-sm mt-1 block">
+                  {{ formatearFechaTexto(historiaSeleccionada.fecha_apertura) }}
+                </span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Última Visita</span>
+                <span class="font-bold text-slate-800 text-xs sm:text-sm mt-1 block">
+                  {{ obtenerFechaUltimaVisita() }}
+                </span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total de Registros</span>
+                <span class="font-black text-slate-900 text-sm sm:text-base mt-1 block">
+                  {{ consultasHistorial.length }}
+                </span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
       </div>
