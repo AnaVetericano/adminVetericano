@@ -11,6 +11,9 @@ export const environment = {
   backendUrl: BACKEND_CLOUD_URL,
   apiBaseUrl: `${BACKEND_CLOUD_URL}/api`,
 
+  // Endpoints del módulo de Peticiones y Notificaciones
+  apiUrlPeticiones: `${BACKEND_CLOUD_URL}/api/peticiones/`,
+
   // Endpoints del módulo de Historia Clínica
   apiUrlClinica: `${BACKEND_CLOUD_URL}/api/clinica/`,
   apiUrlHistorias: `${BACKEND_CLOUD_URL}/api/clinica/historias/`,

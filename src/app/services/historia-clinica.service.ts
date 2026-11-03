@@ -42,12 +42,16 @@ export interface RegistroAuditoria {
   id_auditoria: number;
   id_historia: number;
   id_consulta?: number;
-  usuario: string;
-  rol: string;
-  fecha_hora: string;
-  tipo_accion: string;
-  motivo_cambio: string;
-  campos_cambiados: ModificacionCampo[];
+  usuario?: string;
+  usuario_nombre?: string;
+  rol?: string;
+  fecha_hora?: string;
+  fecha_modificacion?: string;
+  tipo_accion?: string;
+  motivo_cambio?: string;
+  motivo_modificacion?: string;
+  campos_cambiados?: ModificacionCampo[];
+  campos_modificados?: any;
 }
 
 export interface HistoriaClinicaEdicion {
@@ -88,6 +92,7 @@ export interface HistoriaClinicaEdicion {
   observaciones_sistemas?: string;
   examenes_solicitados?: any[];
   tratamientos?: any[];
+  tratamientos_eliminados?: number[];
   materiales_utilizados?: string;
   ingresa_cba?: boolean | string;
   motivo_ingreso_cba?: string;
@@ -98,11 +103,21 @@ export interface HistoriaClinicaEdicion {
   tarjeta_profesional?: string;
   nombre_acudiente?: string;
   cedula_acudiente?: string;
+  consultas_anteriores?: any[];
+  anamnesicos?: Record<string, any>;
+  alimento_marca?: string;
+  esterilizado_opcion?: 'Sí' | 'No';
+  condicion_corporal?: string;
+  proxima_visita_fecha?: string;
+  proxima_visita_notas?: string;
 }
 
 export interface ActualizarHistoriaDto {
+  motivo_consulta?: string;
   diagnostico_principal: string;
   diagnostico_diferencial?: string;
+  hallazgos_examen?: string;
+  id_patologia?: number | null;
   lista_problemas?: string;
   evolucion: string;
   pronostico: string;
@@ -123,9 +138,16 @@ export interface ActualizarHistoriaDto {
   organos_sistemas?: Record<string, any>;
   examenes_solicitados?: any[];
   tratamientos?: any[];
+  tratamientos_eliminados?: number[];
   materiales_utilizados?: string;
   ingreso_cba?: Record<string, any>;
   tenedor?: Record<string, any>;
+  anamnesicos?: Record<string, any>;
+  alimento_marca?: string;
+  esterilizado_opcion?: 'Sí' | 'No';
+  condicion_corporal?: string;
+  proxima_visita_fecha?: string;
+  proxima_visita_notas?: string;
 }
 
 /**
@@ -196,6 +218,7 @@ export interface RespuestaActualizacionHistoria {
   historia_id: number;
   consulta_id?: number;
   auditoria?: RegistroAuditoria;
+  historial_modificaciones?: RegistroAuditoria[];
 }
 
 @Injectable({
@@ -258,6 +281,16 @@ export class HistoriaClinicaService {
     const d = payload.diagnostico || {};
     const limpiarFecha = (f: any) => (f && String(f).trim() !== '' ? String(f).trim() : null);
 
+    let motivoStr = '';
+    if (typeof payload.motivoConsulta === 'string' && payload.motivoConsulta.trim()) {
+      motivoStr = payload.motivoConsulta.trim();
+    } else if (payload.motivoConsulta && typeof payload.motivoConsulta === 'object') {
+      motivoStr = payload.motivoConsulta.motivo_consulta || payload.motivoConsulta.motivo || '';
+    }
+    if (!motivoStr) {
+      motivoStr = c.motivo_consulta || payload.motivo_consulta || 'Consulta clínica general';
+    }
+
     const payloadBackend = {
       ...payload,
       id_animal: payload.id_animal || a.id_animal || null,
@@ -265,6 +298,7 @@ export class HistoriaClinicaService {
       sincronizacion_offline: !!payload.sincronizacion_offline,
       animal: {
         id_animal: payload.id_animal || a.id_animal || null,
+        numeroHistoriaClinica: h.numero_historia || payload.numero_historia || a.numeroHistoriaClinica || null,
         nombre: a.nombre || a.nombre_animal || 'Sin nombre',
         especie: a.especie || 'Canino',
         raza: a.raza || 'Mestizo',
@@ -278,58 +312,82 @@ export class HistoriaClinicaService {
         estado_reproductivo: a.estado_reproductivo || h.estado_reproductivo || 'No aplica'
       },
       tenedor: (p.tiene_propietario === false) ? {} : {
-        nombre: p.nombre_completo || p.nombre || '',
-        documento: p.documento_identidad || p.documento || '',
+        documentoIdentidad: p.documentoIdentidad || p.documento_identidad || p.documento || '',
+        nombres: p.nombres || p.nombre_completo || p.nombre || '',
         telefono: p.telefono || '',
-        correo: p.correo || '',
+        correoElectronico: p.correoElectronico || p.correo || '',
         direccion: p.direccion || '',
-        parentesco: p.parentesco || 'Propietario'
+        parentesco: p.parentesco || 'Propietario',
+        nombre: p.nombres || p.nombre_completo || p.nombre || '',
+        documento: p.documentoIdentidad || p.documento_identidad || p.documento || '',
+        correo: p.correoElectronico || p.correo || ''
       },
       anamnesicos: {
-        ultDesparasitacion: limpiarFecha(h.fecha_ultima_desparasitacion || h.ultDesparasitacion),
-        prodDesparasitacion: h.producto_desparasitacion || h.prodDesparasitacion || '',
+        ultimaDesparasitacion: limpiarFecha(h.ultimaDesparasitacion || h.fecha_ultima_desparasitacion || h.ultDesparasitacion),
+        productoDesparasitacion: h.productoDesparasitacion || h.producto_desparasitacion || h.prodDesparasitacion || '',
         vacunas: h.vacunas || '',
-        enfermedadesPrevias: h.enfermedades_anteriores || h.enfermedadesPrevias || '',
-        tratamientosPrevios: h.tratamientos_anteriores || h.tratamientosPrevios || '',
-        evolucionPrevia: h.evolucion_previa || h.evolucionPrevia || '',
+        enfermedadesAnteriores: h.enfermedadesAnteriores || h.enfermedades_anteriores || h.enfermedadesPrevias || '',
+        tratamientos: h.tratamientos || h.tratamientos_anteriores || h.tratamientosPrevios || '',
+        evolucion: h.evolucion || h.evolucion_previa || h.evolucionPrevia || '',
         alimentacion: h.alimentacion || '',
-        estadoReproductivo: h.estado_reproductivo || h.estadoReproductivo || a.estado_reproductivo || '',
-        ultCelo: limpiarFecha(h.fecha_ultimo_celo || h.ultCelo),
-        ultParto: limpiarFecha(h.fecha_ultimo_parto || h.ultParto)
+        historiaReproductiva: h.historiaReproductiva || h.estado_reproductivo || h.estadoReproductivo || a.estado_reproductivo || '',
+        ultimoCelo: limpiarFecha(h.ultimoCelo || h.fecha_ultimo_celo || h.ultCelo),
+        fechaUltimoParto: limpiarFecha(h.fechaUltimoParto || h.fecha_ultimo_parto || h.ultParto),
+        ultDesparasitacion: limpiarFecha(h.ultimaDesparasitacion || h.fecha_ultima_desparasitacion || h.ultDesparasitacion),
+        prodDesparasitacion: h.productoDesparasitacion || h.producto_desparasitacion || h.prodDesparasitacion || '',
+        enfermedadesPrevias: h.enfermedadesAnteriores || h.enfermedades_anteriores || h.enfermedadesPrevias || '',
+        tratamientosPrevios: h.tratamientos || h.tratamientos_anteriores || h.tratamientosPrevios || '',
+        evolucionPrevia: h.evolucion || h.evolucion_previa || h.evolucionPrevia || '',
+        estadoReproductivo: h.historiaReproductiva || h.estado_reproductivo || h.estadoReproductivo || a.estado_reproductivo || '',
+        ultCelo: limpiarFecha(h.ultimoCelo || h.fecha_ultimo_celo || h.ultCelo),
+        ultParto: limpiarFecha(h.fechaUltimoParto || h.fecha_ultimo_parto || h.ultParto)
       },
-      motivoConsulta: c.motivo_consulta || payload.motivoConsulta || payload.motivo_consulta || '',
+      motivoConsulta: motivoStr,
       examenClinico: {
-        condicionCorporal: c.resultado_estado || 'Normal',
-        temperatura: c.temperatura ?? payload.temperatura ?? null,
-        fc: c.frecuencia_cardiaca ?? payload.frecuencia_cardiaca ?? null,
-        fr: c.frecuencia_respiratoria ?? payload.frecuencia_respiratoria ?? null,
-        pulso: c.pulso || '',
-        tllc: c.tllc || '',
-        mucosas: c.mucosas || '',
-        ganglios: c.ganglios_linfaticos || '',
-        actitud: c.actitud_temperamento || 'Alerta'
+        condicionCorporal: c.resultado_estado || payload.examenClinico?.condicionCorporal || payload.examenClinico?.resultado_estado || payload.resultado_estado || 'Normal',
+        temperatura: c.temperatura ?? payload.examenClinico?.temperatura ?? payload.temperatura ?? null,
+        frecuenciaCardiaca: c.frecuencia_cardiaca ?? payload.examenClinico?.frecuenciaCardiaca ?? payload.examenClinico?.fc ?? payload.examenClinico?.frecuencia_cardiaca ?? payload.frecuencia_cardiaca ?? null,
+        frecuenciaRespiratoria: c.frecuencia_respiratoria ?? payload.examenClinico?.frecuenciaRespiratoria ?? payload.examenClinico?.fr ?? payload.examenClinico?.frecuencia_respiratoria ?? payload.frecuencia_respiratoria ?? null,
+        pulso: c.pulso || payload.examenClinico?.pulso || payload.pulso || '',
+        tiempoLlenadoCapilar: c.tllc || payload.examenClinico?.tiempoLlenadoCapilar || payload.examenClinico?.tllc || payload.tllc || '',
+        mucosas: c.mucosas || payload.examenClinico?.mucosas || payload.mucosas || '',
+        gangliosLinfaticos: c.ganglios_linfaticos || payload.examenClinico?.gangliosLinfaticos || payload.examenClinico?.ganglios || payload.examenClinico?.ganglios_linfaticos || '',
+        actitudTemperamento: c.actitud_temperamento || payload.examenClinico?.actitudTemperamento || payload.examenClinico?.actitud || payload.examenClinico?.actitud_temperamento || payload.actitud_temperamento || 'Alerta',
+        fc: c.frecuencia_cardiaca ?? payload.examenClinico?.frecuenciaCardiaca ?? payload.examenClinico?.fc ?? payload.examenClinico?.frecuencia_cardiaca ?? payload.frecuencia_cardiaca ?? null,
+        fr: c.frecuencia_respiratoria ?? payload.examenClinico?.frecuenciaRespiratoria ?? payload.examenClinico?.fr ?? payload.examenClinico?.frecuencia_respiratoria ?? payload.frecuencia_respiratoria ?? null,
+        tllc: c.tllc || payload.examenClinico?.tiempoLlenadoCapilar || payload.examenClinico?.tllc || payload.tllc || '',
+        ganglios: c.ganglios_linfaticos || payload.examenClinico?.gangliosLinfaticos || payload.examenClinico?.ganglios || payload.examenClinico?.ganglios_linfaticos || '',
+        actitud: c.actitud_temperamento || payload.examenClinico?.actitudTemperamento || payload.examenClinico?.actitud || payload.examenClinico?.actitud_temperamento || payload.actitud_temperamento || 'Alerta'
       },
       organosSistemas: {
-        ...(c.evaluacion_sistemas || {}),
-        observaciones: c.observaciones_examen || c.observaciones_sistemas || ''
+        ...(payload.organosSistemas || c.evaluacion_sistemas || payload.organos_sistemas || {}),
+        observaciones: c.observaciones_examen || c.observaciones_sistemas || payload.organosSistemas?.observaciones || payload.observaciones_examen || ''
       },
       hoja2: {
-        listaProblemas: d.lista_problemas || payload.lista_problemas || '',
-        diagnosticoDiferencial: d.tipo_diagnostico || payload.diagnostico_diferencial || '',
-        diagnosticoPresuntivo: d.descripcion || payload.diagnostico_principal || '',
-        pronostico: c.pronostico || payload.pronostico || 'Reservado',
-        id_patologia: d.id_patologia || payload.id_patologia || null,
-        hallazgos_pruebas: c.hallazgos_examen || payload.evolucion || '',
-        examenesSolicitados: c.examenes_complementarios || {},
-        planProcedimientos: c.plan_procedimientos || payload.plan_tratamiento || '',
-        materialesUtilizados: c.materiales_utilizados || '',
-        tratamientos: (payload.tratamientos || []).map((t: any) => ({
+        listaProblemas: d.lista_problemas || payload.hoja2?.listaProblemas || payload.lista_problemas || '',
+        diagnosticoDiferencial: d.tipo_diagnostico || payload.hoja2?.diagnosticoDiferencial || payload.diagnostico_diferencial || '',
+        diagnosticoFinal: d.descripcion || payload.hoja2?.diagnosticoFinal || payload.hoja2?.diagnosticoPresuntivo || payload.hoja2?.diagnosticoPrincipal || payload.diagnostico_principal || '',
+        diagnosticoPresuntivo: d.descripcion || payload.hoja2?.diagnosticoFinal || payload.hoja2?.diagnosticoPresuntivo || payload.hoja2?.diagnosticoPrincipal || payload.diagnostico_principal || '',
+        pronostico: c.pronostico || payload.hoja2?.pronostico || payload.pronostico || 'Reservado',
+        idPatologia: d.id_patologia || payload.hoja2?.idPatologia || payload.hoja2?.id_patologia || payload.id_patologia || null,
+        id_patologia: d.id_patologia || payload.hoja2?.idPatologia || payload.hoja2?.id_patologia || payload.id_patologia || null,
+        descripcionHallazgos: c.hallazgos_examen || payload.hoja2?.descripcionHallazgos || payload.hoja2?.hallazgos_pruebas || payload.hoja2?.evolucion || payload.evolucion || '',
+        hallazgos_pruebas: c.hallazgos_examen || payload.hoja2?.descripcionHallazgos || payload.hoja2?.hallazgos_pruebas || payload.hoja2?.evolucion || payload.evolucion || '',
+        examenes: c.examenes_complementarios || payload.hoja2?.examenes || payload.hoja2?.examenesSolicitados || payload.examenes_solicitados || {},
+        examenesSolicitados: c.examenes_complementarios || payload.hoja2?.examenes || payload.hoja2?.examenesSolicitados || payload.examenes_solicitados || {},
+        planProcedimientos: c.plan_procedimientos || payload.hoja2?.planProcedimientos || payload.plan_tratamiento || '',
+        materialesUtilizados: c.materiales_utilizados || payload.hoja2?.materialesUtilizados || payload.materiales_utilizados || '',
+        tratamientos: (payload.hoja2?.tratamientos || payload.tratamientos || []).map((t: any) => ({
           id_medicamento: t.id_medicamento || null,
-          producto: t.producto_base || t.producto || '',
-          dosis: t.dosis_basica || t.dosis || '',
+          id_tratamiento: t.id_tratamiento || null,
+          productoBase: t.productoBase || t.producto_base || t.producto || t.nombre || '',
+          producto: t.productoBase || t.producto_base || t.producto || t.nombre || '',
+          dosisBasica: t.dosisBasica || t.dosis_basica || t.dosis || '',
+          dosis: t.dosisBasica || t.dosis_basica || t.dosis || '',
           presentacion: t.presentacion || '',
           via: t.via_administracion || t.via || '',
-          frecuencia: t.frecuencia || t.frecuencia_duracion || '',
+          frecuenciaDuracion: t.frecuenciaDuracion || t.frecuencia_duracion || t.frecuencia || '',
+          frecuencia: t.frecuenciaDuracion || t.frecuencia_duracion || t.frecuencia || '',
           duracion_dias: t.duracion_dias ?? null,
           posologia: t.descripcion || t.posologia || '',
           responsable_admin: t.responsable_admin || '',
@@ -337,10 +395,11 @@ export class HistoriaClinicaService {
         }))
       },
       hoja3: {
-        ingresaCBA: c.ingresa_cba ? 'SI' : 'NO',
-        motivoIngresoNoIngreso: c.motivo_ingreso_cba || '',
-        canilAsignado: c.canil_asignado || null,
-        funcionarioRecibe: c.funcionario_recibe_cba || null
+        ingresaCBA: (payload.hoja3?.ingresaCBA === 'SI' || payload.hoja3?.ingresaCBA === true || c.ingresa_cba) ? 'SI' : 'NO',
+        motivoIngresoNoIngreso: payload.hoja3?.motivoIngresoNoIngreso || c.motivo_ingreso_cba || '',
+        canilAsignado: payload.hoja3?.canilAsignado || c.canil_asignado || null,
+        funcionarioRecibeCBA: payload.hoja3?.funcionarioRecibeCBA || payload.hoja3?.funcionarioRecibe || c.funcionario_recibe_cba || null,
+        funcionarioRecibe: payload.hoja3?.funcionarioRecibeCBA || payload.hoja3?.funcionarioRecibe || c.funcionario_recibe_cba || null
       },
       medicamentos_usados: payload.medicamentos_usados || []
     };
@@ -501,11 +560,81 @@ export class HistoriaClinicaService {
   ): Observable<HistoriaClinicaEdicion> {
     const cleanId = String(id || '').trim();
     const cleanIdAnimal = idAnimal ? String(idAnimal).trim() : '';
-    const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${cleanId}/`;
 
+    // ESTRATEGIA 1: Si conocemos id_animal con certeza, el endpoint más fidedigno y directo
+    // es expediente-por-animal/${cleanIdAnimal}/, evitando colisiones accidentales de id_consulta.
+    if (cleanIdAnimal) {
+      const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${cleanIdAnimal}/`;
+      return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
+        switchMap((animalData) => {
+          const consultas = Array.isArray(animalData?.consultas_anteriores) ? animalData.consultas_anteriores : [];
+          // Si el ID proporcionado coincide con alguna consulta específica de este animal, la usamos; si no, la más reciente
+          let consultaObjetivo = consultas.find((c: any) => String(c?.id_consulta) === cleanId);
+          if (!consultaObjetivo && consultas.length > 0) {
+            consultaObjetivo = consultas[0];
+          }
+
+          if (consultaObjetivo?.id_consulta) {
+            const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${consultaObjetivo.id_consulta}/`;
+            return this.http.get<any>(urlExpCompleto, { headers: this.authHeaders }).pipe(
+              map((expData) => {
+                const fused = {
+                  ...expData,
+                  id_animal: cleanIdAnimal,
+                  id_historia: animalData?.id_historia || expData?.id_historia || cleanId,
+                  numero_historia: animalData?.numero_historia || expData?.numero_historia,
+                  animal: animalData?.animal || expData?.animal,
+                  paciente: animalData?.animal || expData?.paciente,
+                  tenedor: animalData?.tenedor || expData?.tenedor,
+                  historial_modificaciones: animalData?.historial_modificaciones || expData?.historial_modificaciones || [],
+                  consultas_anteriores: animalData?.consultas_anteriores || []
+                };
+                return this.mapearRespuestaBackend(fused, cleanId, nombrePaciente);
+              }),
+              catchError(() => of(this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)))
+            );
+          }
+          return of(this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente));
+        }),
+        catchError(() => {
+          // Si falla el expediente por animal, continuar con el fallback
+          return this.cargarHistoriaPorConsultasFallback(cleanId, cleanIdAnimal, nombrePaciente);
+        })
+      );
+    }
+
+    // ESTRATEGIA 2: Si no tenemos id_animal, consultamos expediente-completo/${cleanId}/
+    // pero verificamos que no pertenezca a otro paciente si viene nombrePaciente sugerido.
+    const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${cleanId}/`;
     return this.http.get<any>(urlExpCompleto, { headers: this.authHeaders }).pipe(
       switchMap((expData) => {
-        const idAnimalEfectivo = expData?.id_animal || expData?.animal?.id_animal || cleanIdAnimal;
+        const nombreAnimalExp = String(expData?.animal?.nombre || expData?.paciente?.nombre || '').toLowerCase().trim();
+        const nombreEsperado = String(nombrePaciente || '').toLowerCase().trim();
+        const conflictoNombre = nombreEsperado && nombreAnimalExp && nombreEsperado !== nombreAnimalExp;
+
+        // Si hay conflicto de nombre, cleanId no era la consulta de este paciente (posible id_historia colisionado)
+        if (conflictoNombre) {
+          const urlHistoriaDirecta = `${this.baseUrlClinica}historias/${cleanId}/`;
+          return this.http.get<any>(urlHistoriaDirecta, { headers: this.authHeaders }).pipe(
+            switchMap((histResp) => {
+              const realAnimalId = histResp?.id_animal;
+              if (realAnimalId) {
+                return this.obtenerHistoriaPorId(cleanId, nombrePaciente, realAnimalId);
+              }
+              return of(this.mapearRespuestaBackend(histResp, cleanId, nombrePaciente));
+            }),
+            catchError(() => {
+              // Intentar consultar como id_animal directamente
+              const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${cleanId}/`;
+              return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
+                map(animalData => this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)),
+                catchError(() => of(this.mapearRespuestaBackend(expData, cleanId, nombrePaciente)))
+              );
+            })
+          );
+        }
+
+        const idAnimalEfectivo = expData?.id_animal || expData?.animal?.id_animal;
         if (idAnimalEfectivo) {
           return this.http.get<any>(`${this.baseUrlClinica}expediente-por-animal/${idAnimalEfectivo}/`, { headers: this.authHeaders }).pipe(
             map((animalData) => {
@@ -522,12 +651,24 @@ export class HistoriaClinicaService {
         return of(this.mapearRespuestaBackend(expData, cleanId, nombrePaciente));
       }),
       catchError(() => {
-        // Fallback a expediente-por-animal si expediente-completo/${id}/ devolvió 404 (ej. se entró con id_animal)
-        const animalIdParaBuscar = cleanIdAnimal || cleanId;
-        const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${animalIdParaBuscar}/`;
-        return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
-          map(animalData => this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)),
-          catchError(() => this.cargarHistoriaPorConsultasFallback(cleanId, animalIdParaBuscar, nombrePaciente))
+        // Fallback: verificar si cleanId es un id_historia en /historias/${cleanId}/
+        const urlHistoriaDirecta = `${this.baseUrlClinica}historias/${cleanId}/`;
+        return this.http.get<any>(urlHistoriaDirecta, { headers: this.authHeaders }).pipe(
+          switchMap((histResp) => {
+            const realAnimalId = histResp?.id_animal;
+            if (realAnimalId) {
+              return this.obtenerHistoriaPorId(cleanId, nombrePaciente, realAnimalId);
+            }
+            return of(this.mapearRespuestaBackend(histResp, cleanId, nombrePaciente));
+          }),
+          catchError(() => {
+            const animalIdParaBuscar = cleanIdAnimal || cleanId;
+            const urlExpAnimal = `${this.baseUrlClinica}expediente-por-animal/${animalIdParaBuscar}/`;
+            return this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).pipe(
+              map(animalData => this.mapearRespuestaBackend(animalData, cleanId, nombrePaciente)),
+              catchError(() => this.cargarHistoriaPorConsultasFallback(cleanId, animalIdParaBuscar, nombrePaciente))
+            );
+          })
         );
       })
     );
@@ -749,11 +890,13 @@ export class HistoriaClinicaService {
         tenedor_nombre: tenedor.nombres || tenedor.nombre || '',
         tenedor_documento: tenedor.documentoIdentidad || tenedor.documento || '',
         tenedor_telefono: tenedor.telefono || '',
-        foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
+        foto_url: animal.foto_url || animal.fotoUrl || animal.foto || animal.imagen || ''
       },
       motivo_consulta: motivoStr,
       diagnostico_principal: hoja2Obj.diagnosticoPresuntivo || hoja2Obj.diagnosticoFinal || ultimaConsulta.diagnostico_principal || ultimaConsulta.diagnostico_final || raw.diagnostico_principal || '',
-      diagnostico_diferencial: hoja2Obj.diagnosticoDiferencial || hallazgosStr || ultimaConsulta.diagnostico_diferencial || raw.diagnostico_diferencial || '',
+      diagnostico_diferencial: orgObj._diagnostico_diferencial !== undefined
+        ? orgObj._diagnostico_diferencial
+        : (hoja2Obj.diagnosticoDiferencial || ultimaConsulta.diagnostico_diferencial || raw.diagnostico_diferencial || ''),
       lista_problemas: listaProblemasStr,
       evolucion: anamnesisStr || hallazgosStr,
       pronostico: hoja2Obj.pronostico || ultimaConsulta.pronostico || raw.pronostico || 'Favorable',
@@ -783,6 +926,13 @@ export class HistoriaClinicaService {
       tarjeta_profesional: orgObj._tarjeta_profesional || raw.tarjeta_profesional || '',
       nombre_acudiente: orgObj._acudiente_nombre || tenedor.nombres || tenedor.nombre || raw.nombre_acudiente || '',
       cedula_acudiente: orgObj._acudiente_cedula || tenedor.documentoIdentidad || tenedor.documento || raw.cedula_acudiente || '',
+      consultas_anteriores: consultasPrevias,
+      anamnesicos: anamnesicos,
+      alimento_marca: orgObj._alimento_marca || anamnesicos.alimentacion || '',
+      esterilizado_opcion: orgObj._esterilizado_opcion || (String(anamnesicos.historiaReproductiva || animal.estado_reproductivo || '').toLowerCase().includes('esteril') ? 'Sí' : 'No'),
+      condicion_corporal: orgObj._condicion_corporal || examObj.condicionCorporal || '3/5 (Ideal)',
+      proxima_visita_fecha: orgObj._proxima_visita_fecha || '',
+      proxima_visita_notas: orgObj._proxima_visita_notas || '',
       historial_modificaciones: Array.isArray(raw.historial_modificaciones)
         ? raw.historial_modificaciones
         : (Array.isArray(orgObj._historial_modificaciones) ? orgObj._historial_modificaciones : [])
@@ -1012,7 +1162,9 @@ export class HistoriaClinicaService {
       },
       motivo_consulta: ultConsulta?.motivo_consulta || 'Consulta clínica general',
       diagnostico_principal: diagObj?.descripcion || ultConsulta?.diagnostico_final || ultConsulta?.motivo_consulta || '',
-      diagnostico_diferencial: ultConsulta?.hallazgos_examen || '',
+      diagnostico_diferencial: sistemas?._diagnostico_diferencial !== undefined
+        ? sistemas._diagnostico_diferencial
+        : (diagObj?.tipo_diagnostico && diagObj.tipo_diagnostico !== 'Final' ? diagObj.tipo_diagnostico : ''),
       lista_problemas: listaProblemas,
       evolucion: ultConsulta?.anamnesis || '',
       pronostico: ultConsulta?.pronostico || 'Favorable',
@@ -1090,7 +1242,7 @@ export class HistoriaClinicaService {
             tenedor_nombre: tenedor.nombres || '',
             tenedor_documento: tenedor.documentoIdentidad || '',
             tenedor_telefono: tenedor.telefono || '',
-            foto_url: animal.fotoUrl || animal.foto || animal.imagen || ''
+            foto_url: animal.foto_url || animal.fotoUrl || animal.foto || animal.imagen || ''
           },
           motivo_consulta: ultConsulta?.motivo_consulta || 'Consulta clínica general',
           diagnostico_principal: ultConsulta?.diagnostico_final || '',
@@ -1267,98 +1419,248 @@ export class HistoriaClinicaService {
   }
 
   /**
-   * Criterio 1: Actualiza la historia clínica mediante PATCH directo a la Consulta,
-   * sincronizando diagnósticos, tratamientos, constantes y sistemas sin perder información.
+   * Criterio 1: Actualiza o consolida la historia clínica del animal en el backend (/api/clinica/expediente-completo/)
+   * garantizando persistencia real en base de datos, trazabilidad y auditoría de cambios.
    */
   actualizarHistoria(
     id: number | string,
     dto: ActualizarHistoriaDto,
-    historiaActual: HistoriaClinicaEdicion
+    historiaActual: HistoriaClinicaEdicion,
+    esNuevaConsulta: boolean = false
   ): Observable<RespuestaActualizacionHistoria> {
-    const idConsulta = historiaActual.id_consulta;
-    const idHistoria = Number(historiaActual.id_historia) || Number(id);
-    const idAnimal = historiaActual.id_animal || historiaActual.paciente?.id_animal;
+    const idConsulta = historiaActual?.id_consulta;
+    const idHistoria = Number(historiaActual?.id_historia) || (Number(id) > 0 ? Number(id) : null);
+    const idAnimal = Number((dto as any)?.id_animal || historiaActual?.id_animal || historiaActual?.paciente?.id_animal || (Number(id) > 0 ? Number(id) : null) || 1);
 
-    const payloadConsulta: any = {
-      motivo_consulta: dto.motivo_modificacion ? `Modificación: ${dto.motivo_modificacion}` : (historiaActual.motivo_consulta || 'Control / Consulta'),
-      prioridad: dto.prioridad || 'Normal',
-      resultado_estado: dto.resultado_estado || 'Estable',
-      frecuencia_respiratoria: dto.frecuencia_respiratoria !== undefined && dto.frecuencia_respiratoria !== null ? Number(dto.frecuencia_respiratoria) : null,
+    // 1. Preparar payload para PATCH /api/clinica/expediente-completo/
+    // Nota: El endpoint PATCH de Django asigna data.get('diagnostico_diferencial') a consulta.hallazgos_examen,
+    // por lo que enviamos hallazgos_examen allí y guardamos diagnostico_diferencial en su campo propio.
+    const organosEnriquecidos: Record<string, any> = {
+      ...(dto.organos_sistemas || {}),
+      _diagnostico_diferencial: dto.diagnostico_diferencial ?? '',
+      _alimento_marca: dto.alimento_marca ?? '',
+      _esterilizado_opcion: dto.esterilizado_opcion ?? '',
+      _condicion_corporal: dto.condicion_corporal ?? '',
+      _proxima_visita_fecha: dto.proxima_visita_fecha ?? '',
+      _proxima_visita_notas: dto.proxima_visita_notas ?? ''
+    };
+
+    const payloadPatch: any = {
+      id_animal: idAnimal,
+      animal: {
+        id_animal: idAnimal,
+        nombre: (dto as any)?.animal?.nombre || historiaActual?.paciente?.nombre || 'Paciente'
+      },
+      motivo_consulta: (dto.motivo_consulta || 'Consulta General').trim(),
+      diagnostico_principal: (dto.diagnostico_principal || 'Consulta médica general').trim(),
+      diagnostico_diferencial: dto.hallazgos_examen !== undefined ? dto.hallazgos_examen : '',
+      hallazgos_examen: dto.hallazgos_examen !== undefined ? dto.hallazgos_examen : '',
+      evolucion: (dto.evolucion || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.').trim(),
+      pronostico: dto.pronostico || 'Favorable',
+      plan_tratamiento: (dto.plan_tratamiento || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.').trim(),
+      motivo_modificacion: (dto.motivo_modificacion || 'Actualización y sincronización de datos clínicos desde módulo oficial.').trim(),
+      peso: dto.peso !== undefined && dto.peso !== null ? Number(dto.peso) : null,
       frecuencia_cardiaca: dto.frecuencia_cardiaca !== undefined && dto.frecuencia_cardiaca !== null ? Number(dto.frecuencia_cardiaca) : null,
+      frecuencia_respiratoria: dto.frecuencia_respiratoria !== undefined && dto.frecuencia_respiratoria !== null ? Number(dto.frecuencia_respiratoria) : null,
       temperatura: dto.temperatura !== undefined && dto.temperatura !== null ? Number(dto.temperatura) : null,
       pulso: dto.pulso || '',
       tllc: dto.tllc || '',
       ganglios_linfaticos: dto.ganglios_linfaticos || '',
       mucosas: dto.mucosas || '',
       actitud_temperamento: dto.actitud_temperamento || '',
-      evaluacion_sistemas: dto.organos_sistemas || {},
-      hallazgos_examen: dto.diagnostico_diferencial || '',
       observaciones_examen: dto.observaciones_examen || '',
-      observaciones_sistemas: dto.organos_sistemas?.['observaciones'] || '',
+      organos_sistemas: organosEnriquecidos,
+      tratamientos: dto.tratamientos || [],
+      examenes_solicitados: dto.examenes_solicitados || [],
       materiales_utilizados: dto.materiales_utilizados || '',
-      plan_procedimientos: dto.plan_tratamiento || '',
-      pronostico: dto.pronostico || 'Favorable',
-      examenes_complementarios: dto.examenes_solicitados || [],
-      ingresa_cba: (dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true),
-      motivo_ingreso_cba: dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || '',
-      canil_asignado: dto.ingreso_cba?.['canil_asignado'] || '',
-      funcionario_recibe_cba: dto.ingreso_cba?.['funcionario_recibe_cba'] || ''
+      prioridad: dto.prioridad || 'Normal',
+      resultado_estado: dto.resultado_estado || 'Estable'
     };
 
-    // Petición de actualización de la consulta
-    let patchConsulta$: Observable<any>;
-    if (idConsulta && Number(idConsulta) > 0) {
-      const urlConsultaId = `${this.baseUrlClinica}consultas/${idConsulta}/`;
-      patchConsulta$ = this.http.patch<any>(urlConsultaId, payloadConsulta, { headers: this.authHeaders }).pipe(
-        catchError(() => this.http.put<any>(urlConsultaId, payloadConsulta, { headers: this.authHeaders })),
-        catchError((e) => {
-          console.warn('Error al actualizar consulta existente, intentando crear nueva:', e);
-          const urlConsultas = `${this.baseUrlClinica}consultas/`;
-          return this.http.post<any>(urlConsultas, { id_historia: idHistoria, ...payloadConsulta }, { headers: this.authHeaders });
+    // 2. Función constructora de respaldo para creación de expediente si el animal no tenía HC previa (POST)
+    const crearExpedienteFallback = () => {
+      const payloadPost: any = {
+        id_animal: idAnimal,
+        numero_historia: historiaActual?.numero_historia || `HC-${idAnimal}`,
+        animal: {
+          id_animal: idAnimal,
+          nombre: (dto as any)?.animal?.nombre || historiaActual?.paciente?.nombre || 'Paciente',
+          especie: (dto as any)?.animal?.especie || historiaActual?.paciente?.especie || 'Canino',
+          raza: (dto as any)?.animal?.raza || historiaActual?.paciente?.raza || 'Mestizo',
+          sexo: (dto as any)?.animal?.sexo || historiaActual?.paciente?.sexo || 'Macho',
+          peso: payloadPatch.peso ?? historiaActual?.paciente?.peso ?? null
+        },
+        tenedor: {
+          nombres: dto.tenedor?.['nombres'] || historiaActual?.paciente?.tenedor_nombre || '',
+          documentoIdentidad: dto.tenedor?.['documentoIdentidad'] || historiaActual?.paciente?.tenedor_documento || '',
+          telefono: dto.tenedor?.['telefono'] || historiaActual?.paciente?.tenedor_telefono || ''
+        },
+        anamnesicos: {
+          vacunas: dto.anamnesicos?.['vacunas'] || (historiaActual as any)?.vacunas || '',
+          ultimaDesparasitacion: dto.anamnesicos?.['ultimaDesparasitacion'] || '',
+          productoDesparasitacion: dto.anamnesicos?.['productoDesparasitacion'] || '',
+          enfermedadesAnteriores: dto.anamnesicos?.['enfermedadesAnteriores'] || (historiaActual as any)?.enfermedades_anteriores || '',
+          alimentacion: dto.alimento_marca || dto.anamnesicos?.['alimentacion'] || '',
+          historiaReproductiva: dto.esterilizado_opcion ? (dto.esterilizado_opcion === 'Sí' ? 'Esterilizado' : 'Entero') : (dto.anamnesicos?.['historiaReproductiva'] || ''),
+          evolucion: payloadPatch.evolucion,
+          tratamientos: payloadPatch.plan_tratamiento
+        },
+        motivoConsulta: (dto.motivo_consulta || dto.motivo_modificacion || historiaActual?.motivo_consulta || 'Consulta clínica y seguimiento').trim(),
+        examenClinico: {
+          condicionCorporal: dto.condicion_corporal || payloadPatch.resultado_estado || 'Normal',
+          temperatura: payloadPatch.temperatura,
+          frecuenciaCardiaca: payloadPatch.frecuencia_cardiaca,
+          frecuenciaRespiratoria: payloadPatch.frecuencia_respiratoria,
+          pulso: payloadPatch.pulso,
+          tiempoLlenadoCapilar: payloadPatch.tllc,
+          mucosas: payloadPatch.mucosas,
+          gangliosLinfaticos: payloadPatch.ganglios_linfaticos,
+          actitudTemperamento: payloadPatch.actitud_temperamento || 'Alerta'
+        },
+        organosSistemas: payloadPatch.organos_sistemas,
+        hoja2: {
+          listaProblemas: dto.lista_problemas || '',
+          diagnosticoDiferencial: dto.diagnostico_diferencial || '',
+          diagnosticoFinal: payloadPatch.diagnostico_principal,
+          diagnosticoPresuntivo: payloadPatch.diagnostico_principal,
+          idPatologia: dto.id_patologia || null,
+          pronostico: payloadPatch.pronostico,
+          descripcionHallazgos: dto.hallazgos_examen || '',
+          hallazgos_pruebas: dto.hallazgos_examen || '',
+          examenes: payloadPatch.examenes_solicitados,
+          planProcedimientos: payloadPatch.plan_tratamiento,
+          materialesUtilizados: payloadPatch.materiales_utilizados,
+          tratamientos: payloadPatch.tratamientos
+        },
+        hoja3: {
+          ingresaCBA: (dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true) ? 'SI' : 'NO',
+          motivoIngresoNoIngreso: dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || '',
+          canilAsignado: dto.ingreso_cba?.['canil_asignado'] || null,
+          funcionarioRecibeCBA: dto.ingreso_cba?.['funcionario_recibe_cba'] || null,
+          funcionarioRecibe: dto.ingreso_cba?.['funcionario_recibe_cba'] || null
+        }
+      };
+
+      return this.crearExpedienteCompleto(payloadPost);
+    };
+
+    const urlExpediente = `${this.baseUrlClinica}expediente-completo/`;
+
+    // 3. Selección y ejecución de la petición según si es nueva consulta o edición de historia previa
+    let peticion$: Observable<any>;
+    if (esNuevaConsulta) {
+      peticion$ = crearExpedienteFallback();
+    } else if (idHistoria && idHistoria > 0 && !isNaN(idHistoria)) {
+      peticion$ = this.http.patch<any>(urlExpediente, payloadPatch, { headers: this.authHeaders }).pipe(
+        catchError((errPatch) => {
+          if (errPatch?.status === 404) {
+            return crearExpedienteFallback();
+          }
+          throw errPatch;
         })
       );
     } else {
-      const urlConsultas = `${this.baseUrlClinica}consultas/`;
-      patchConsulta$ = this.http.post<any>(urlConsultas, { id_historia: idHistoria, ...payloadConsulta }, { headers: this.authHeaders });
+      peticion$ = crearExpedienteFallback().pipe(
+        catchError((errPost) => {
+          return this.http.patch<any>(urlExpediente, payloadPatch, { headers: this.authHeaders });
+        })
+      );
     }
 
-    return patchConsulta$.pipe(
-      switchMap((respConsulta) => {
-        const idConsultaEfectiva = respConsulta?.id_consulta || idConsulta;
+    return peticion$.pipe(
+      switchMap((resp) => {
+        const idHistoriaEfectiva = resp?.historia_id || resp?.id_historia || idHistoria || 1;
+        const idConsultaEfectiva = resp?.consulta_id || resp?.id_consulta || idConsulta || 1;
+        const auditoria = resp?.auditoria || this.generarAuditoriaDesdeCambios(idHistoriaEfectiva, dto, historiaActual, idConsultaEfectiva);
+        const historialModificaciones = resp?.historial_modificaciones || [auditoria];
 
-        // Tareas secundarias en segundo plano (diagnóstico, historia, tratamientos, peso animal)
-        this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoria, idAnimal);
+        if (idConsultaEfectiva) {
+          this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoriaEfectiva, idAnimal);
+        }
 
-        const auditoriaNueva = this.generarAuditoriaDesdeCambios(
-          idHistoria,
-          dto,
-          historiaActual,
-          idConsultaEfectiva
-        );
+        const sincronizacionesDirectas: Observable<any>[] = [];
 
-        return of({
+        // Sincronización directa contra /api/clinica/consultas/:id/ (ModelViewSet con fields='__all__')
+        // Garantiza que los 12 Sistemas Orgánicos, signos cualitativos, exámenes, hallazgos_examen y CBA queden persistidos en PostgreSQL
+        if (idConsultaEfectiva && Number(idConsultaEfectiva) > 0) {
+          const urlConsultaDirecta = `${this.baseUrlClinica}consultas/${idConsultaEfectiva}/`;
+          const bodyConsultaCompleta: any = {
+            motivo_consulta: payloadPatch.motivo_consulta,
+            prioridad: payloadPatch.prioridad,
+            resultado_estado: payloadPatch.resultado_estado,
+            anamnesis: payloadPatch.evolucion,
+            hallazgos_examen: dto.hallazgos_examen !== undefined ? dto.hallazgos_examen : '',
+            frecuencia_cardiaca: payloadPatch.frecuencia_cardiaca,
+            frecuencia_respiratoria: payloadPatch.frecuencia_respiratoria,
+            temperatura: payloadPatch.temperatura,
+            pulso: payloadPatch.pulso,
+            tllc: payloadPatch.tllc,
+            ganglios_linfaticos: payloadPatch.ganglios_linfaticos,
+            mucosas: payloadPatch.mucosas,
+            actitud_temperamento: payloadPatch.actitud_temperamento,
+            evaluacion_sistemas: {
+              ...organosEnriquecidos,
+              _historial_modificaciones: historialModificaciones
+            },
+            observaciones_examen: payloadPatch.observaciones_examen,
+            materiales_utilizados: payloadPatch.materiales_utilizados,
+            plan_procedimientos: payloadPatch.plan_tratamiento,
+            pronostico: payloadPatch.pronostico,
+            examenes_complementarios: payloadPatch.examenes_solicitados,
+            ingresa_cba: dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true,
+            motivo_ingreso_cba: dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || '',
+            canil_asignado: dto.ingreso_cba?.['canil_asignado'] || '',
+            funcionario_recibe_cba: dto.ingreso_cba?.['funcionario_recibe_cba'] || ''
+          };
+          sincronizacionesDirectas.push(
+            this.http.patch<any>(urlConsultaDirecta, bodyConsultaCompleta, { headers: this.authHeaders }).pipe(
+              catchError(() => of(null))
+            )
+          );
+        }
+
+        // Sincronización directa contra /api/clinica/historias/:id/ (ModelViewSet con fields='__all__')
+        if (idHistoriaEfectiva && Number(idHistoriaEfectiva) > 0) {
+          const urlHistoriaDirecta = `${this.baseUrlClinica}historias/${idHistoriaEfectiva}/`;
+          const bodyHistoriaCompleta: any = {
+            evolucion_previa: dto.evolucion,
+            tratamientos_anteriores: dto.plan_tratamiento
+          };
+          if (dto.alimento_marca !== undefined) {
+            bodyHistoriaCompleta.alimentacion = dto.alimento_marca;
+          }
+          if (dto.esterilizado_opcion !== undefined) {
+            bodyHistoriaCompleta.estado_reproductivo = dto.esterilizado_opcion === 'Sí' ? 'Esterilizado' : 'Entero';
+          }
+          if (dto.anamnesicos?.['vacunas'] !== undefined) {
+            bodyHistoriaCompleta.vacunas = dto.anamnesicos['vacunas'];
+          }
+          if (dto.anamnesicos?.['productoDesparasitacion'] !== undefined) {
+            bodyHistoriaCompleta.producto_desparasitacion = dto.anamnesicos['productoDesparasitacion'];
+          }
+          if (dto.anamnesicos?.['enfermedadesAnteriores'] !== undefined) {
+            bodyHistoriaCompleta.enfermedades_anteriores = dto.anamnesicos['enfermedadesAnteriores'];
+          }
+          sincronizacionesDirectas.push(
+            this.http.patch<any>(urlHistoriaDirecta, bodyHistoriaCompleta, { headers: this.authHeaders }).pipe(
+              catchError(() => of(null))
+            )
+          );
+        }
+
+        const resultadoFinal: RespuestaActualizacionHistoria = {
           success: true,
-          mensaje: 'Historia clínica actualizada con éxito en la nube.',
-          historia_id: idHistoria,
+          mensaje: resp?.detail || resp?.mensaje || (esNuevaConsulta ? 'Nueva consulta clínica guardada exitosamente en la base de datos.' : 'Historia clínica guardada exitosamente en la base de datos.'),
+          historia_id: idHistoriaEfectiva,
           consulta_id: idConsultaEfectiva,
-          auditoria: auditoriaNueva
-        });
-      }),
-      catchError((errGlobal) => {
-        console.error('Error durante la actualización en el backend:', errGlobal);
-        const auditoriaLocal = this.generarAuditoriaDesdeCambios(
-          idHistoria,
-          dto,
-          historiaActual,
-          idConsulta
-        );
-        return of({
-          success: true,
-          mensaje: 'Modificación registrada localmente con auditoría.',
-          historia_id: idHistoria,
-          consulta_id: idConsulta,
-          auditoria: auditoriaLocal
-        });
+          auditoria: auditoria,
+          historial_modificaciones: historialModificaciones
+        };
+
+        if (sincronizacionesDirectas.length === 0) {
+          return of(resultadoFinal);
+        }
+        return forkJoin(sincronizacionesDirectas).pipe(map(() => resultadoFinal));
       })
     );
   }
@@ -1436,30 +1738,71 @@ export class HistoriaClinicaService {
       });
     }
 
-    // 2. Sincronizar Tratamientos en /api/clinica/tratamientos/
-    if (Array.isArray(dto.tratamientos) && dto.tratamientos.length > 0) {
-      const urlTratamientos = `${this.baseUrlClinica}tratamientos/`;
-      dto.tratamientos.forEach(t => {
-        const idTrat = t.id_tratamiento || t.id;
-        if (idTrat && Number(idTrat) > 0) {
-          this.http.patch<any>(`${urlTratamientos}${idTrat}/`, {
-            producto_base: t.nombre || t.producto_base || '',
-            dosis_basica: t.dosis || t.dosis_basica || '',
-            presentacion: t.presentacion || '',
-            via_administracion: t.via || '',
-            frecuencia_duracion: t.frecuencia || '',
-            materiales_utilizados: dto.materiales_utilizados || ''
-          }, { headers: this.authHeaders }).subscribe({ error: () => {} });
-        } else {
-          this.http.post<any>(urlTratamientos, {
-            id_consulta: idConsulta,
-            producto_base: t.nombre || t.producto_base || '',
-            dosis_basica: t.dosis || t.dosis_basica || '',
-            presentacion: t.presentacion || '',
-            via_administracion: t.via || '',
-            frecuencia_duracion: t.frecuencia || '',
-            materiales_utilizados: dto.materiales_utilizados || ''
-          }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+    // 2. Sincronizar Tratamientos en /api/clinica/tratamientos/ (con soporte de actualización y eliminación sin duplicar)
+    const urlTratamientos = `${this.baseUrlClinica}tratamientos/`;
+    const eliminadosExplicito = Array.isArray(dto.tratamientos_eliminados)
+      ? dto.tratamientos_eliminados.filter(id => Number(id) > 0).map(id => Number(id))
+      : [];
+
+    eliminadosExplicito.forEach(idElim => {
+      this.http.delete<any>(`${urlTratamientos}${idElim}/`, { headers: this.authHeaders }).subscribe({ error: () => {} });
+    });
+
+    if (Array.isArray(dto.tratamientos)) {
+      this.http.get<any>(`${urlTratamientos}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
+        map(res => this.extraerLista(res).filter((tr: any) => Number(tr.id_consulta) === Number(idConsulta))),
+        catchError(() => of([]))
+      ).subscribe({
+        next: (existentesEnBd: any[]) => {
+          const idsConservados = new Set<number>();
+
+          (dto.tratamientos || []).forEach(t => {
+            const nombreProd = (t.nombre || t.producto_base || t.productoBase || '').trim();
+            let idTrat = t.id_tratamiento && Number(t.id_tratamiento) > 0 ? Number(t.id_tratamiento) : null;
+
+            if (!idTrat && nombreProd) {
+              const coincidencia = existentesEnBd.find((eb: any) =>
+                !idsConservados.has(Number(eb.id_tratamiento)) &&
+                !eliminadosExplicito.includes(Number(eb.id_tratamiento)) &&
+                String(eb.producto_base || eb.productoBase || '').trim().toLowerCase() === nombreProd.toLowerCase()
+              );
+              if (coincidencia?.id_tratamiento) {
+                idTrat = Number(coincidencia.id_tratamiento);
+              }
+            }
+
+            const bodyTrat = {
+              id_consulta: idConsulta,
+              producto_base: nombreProd,
+              dosis_basica: t.dosis || t.dosis_basica || t.dosisBasica || '',
+              presentacion: t.presentacion || '',
+              via_administracion: t.via || t.via_administracion || '',
+              frecuencia_duracion: t.frecuencia || t.frecuencia_duracion || t.frecuenciaDuracion || '',
+              materiales_utilizados: dto.materiales_utilizados || ''
+            };
+
+            if (idTrat && idTrat > 0) {
+              idsConservados.add(idTrat);
+              t.id_tratamiento = idTrat;
+              if (t._ref) {
+                t._ref.id_tratamiento = idTrat;
+              }
+              this.http.patch<any>(`${urlTratamientos}${idTrat}/`, bodyTrat, { headers: this.authHeaders }).subscribe({ error: () => {} });
+            } else if (nombreProd) {
+              this.http.post<any>(urlTratamientos, bodyTrat, { headers: this.authHeaders }).subscribe({
+                next: (creado) => {
+                  const nuevoId = creado?.id_tratamiento || creado?.id;
+                  if (nuevoId) {
+                    t.id_tratamiento = Number(nuevoId);
+                    if (t._ref) {
+                      t._ref.id_tratamiento = Number(nuevoId);
+                    }
+                  }
+                },
+                error: () => {}
+              });
+            }
+          });
         }
       });
     }

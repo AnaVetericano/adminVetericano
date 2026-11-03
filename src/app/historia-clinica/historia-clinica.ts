@@ -29,6 +29,7 @@ import { ComponenteConCambiosPendientes } from '../services/pending-changes.guar
 export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPendientes {
   // Identificador de la historia clínica en edición
   idHistoria: string | number = '';
+  esNuevaConsulta: boolean = false;
 
   // Control de pasos del Stepper (Paso 1: Consulta, Paso 2: Exámenes, Paso 3: Tratamientos)
   // Se inicia en 'consulta' para revisar la información desde el inicio del expediente
@@ -109,6 +110,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   mensajeMedicamentos: string = '';
   medicamentosCatalogo: any[] = [];
   medicamentosSeleccionados: any[] = [];
+  tratamientosEliminadosIds: number[] = [];
   mapaStockPorId: Map<number, number> = new Map();
   mapaStockPorNombre: Map<string, number> = new Map();
   materialesUtilizados: string = '';
@@ -128,62 +130,60 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   // MODELOS ESTRUCTURADOS DEL ACTA MÓVIL (TRIAJE EN CAMPO Y CIERRE CBA)
   // =========================================================================
   triajeSistemasCampo = {
-    tieneEvaluacion: true,
-    totalAlertas: 5,
+    tieneEvaluacion: false,
+    totalAlertas: 0,
     respiratorio: {
-      moco: true as boolean | null,
+      moco: false as boolean | null,
       dificultadRespirar: false as boolean | null,
       tos: false as boolean | null,
       laganeo: false as boolean | null
     },
     digestivo: {
       vomito: false as boolean | null,
-      diarrea: true as boolean | null,
+      diarrea: false as boolean | null,
       desnutrido: false as boolean | null,
       deshidratado: false as boolean | null
     },
     musculoEsqueletico: {
       caidaPatas: false as boolean | null,
-      cojera: true as boolean | null,
+      cojera: false as boolean | null,
       heridaAbierta: false as boolean | null,
       gusanosMiasis: false as boolean | null,
       postrado: false as boolean | null
     },
     dermatologico: {
-      peladuras: true as boolean | null,
+      peladuras: false as boolean | null,
       heridasSangre: false as boolean | null,
       pulgasGarrapatas: false as boolean | null
     },
     genitourinario: {
       masaSecrecion: false as boolean | null,
-      gestante: true as boolean | null,
+      gestante: false as boolean | null,
       enCelo: false as boolean | null
     }
   };
 
   evaluacionCampo = {
-    frecuenciaCardiaca: 8 as number | null,
-    frecuenciaRespiratoria: 8 as number | null,
-    temperatura: 38.5 as number | null,
-    mucosas: 'Ictéricas / Amarillentas',
-    anamnesisLimpia: 'Paciente encontrado en vía pública / condición de calle',
+    frecuenciaCardiaca: null as number | null,
+    frecuenciaRespiratoria: null as number | null,
+    temperatura: null as number | null,
+    mucosas: '',
+    anamnesisLimpia: '',
     quejaCompleta: '',
-    descripcionQueja: 'Paciente encontrado en vía pública / condición de calle'
+    descripcionQueja: ''
   };
 
   resolucionCierre = {
-    desparasitacion: true as boolean | null,
-    pruebasRapidas: [
-      { prueba: 'Viruela', resultado: 'Positivo (+)', esPositivo: true, esNegativo: false }
-    ] as Array<{ prueba: string; resultado: string; esPositivo: boolean; esNegativo: boolean }>,
-    requirioRescate: true,
+    desparasitacion: null as boolean | null,
+    pruebasRapidas: [] as Array<{ prueba: string; resultado: string; esPositivo: boolean; esNegativo: boolean }>,
+    requirioRescate: false,
     fundamentoLegal: 'Ley 1774 de 2016 / Ley 84 de 1989 / Formato de Rescate F-GS-C01-03-33',
     plazoDias: null as number | null,
-    compromisos: 'Garantizar suministro constante de agua potable y alimento balanceado. Custodia, tratamiento y recuperación médica en Centro de Bienestar Animal (CBA).',
-    observacionesCierre: 'Retiro preventivo ejecutado por salud crítica y vulnerabilidad en vía pública.',
+    compromisos: '',
+    observacionesCierre: '',
     datosRescate: {
-      causal: 'Por salud crítica / Urgencia médica',
-      personaEntrega: 'Sin acudiente / Rescate en vía pública',
+      causal: '',
+      personaEntrega: '',
       personaEntregaCedula: '',
       personaEntregaTel: '',
       barrio: '',
@@ -193,10 +193,23 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       testigo2: '',
       testigo2Cedula: '',
       testigo2Tel: '',
-      observacionesRescate: 'Por salud crítica / Urgencia médica. Se efectúa rescate y retiro preventivo de Rorito (Canino) para su traslado inmediato al Centro de Bienestar Animal (CBA).',
-      veterinarioReceptor: 'Junior Smith López',
-      fechaHoraRecepcion: '2026-10-31 10:30'
+      observacionesRescate: '',
+      veterinarioReceptor: '',
+      fechaHoraRecepcion: ''
     }
+  };
+
+  planSanitario = {
+    vacunas: '',
+    estadoRabia: 'Vigente / Aplicada',
+    estadoPolivalente: 'Al Día',
+    estadoRefuerzo: 'Programada',
+    ultimaDesparasitacion: '',
+    productoDesparasitacion: 'Praziquantel + Pamoato de Pirantel + Febantel',
+    estadoDesparasitacion: 'Suministrada',
+    estadoEctoparasitos: 'Tratado',
+    enfermedadesAnteriores: '',
+    historiaReproductiva: ''
   };
 
   datosPropietario = {
@@ -220,6 +233,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   nombreAcudiente: string = '';
   cedulaAcudiente: string = '';
   telefonoAcudiente: string = '';
+  idAnimal: number | null = null;
 
   // =========================================================================
   // FORMULARIO REACTIVO Y ESTADOS GLOBALES
@@ -228,6 +242,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   historiaOriginal: HistoriaClinicaEdicion | null = null;
   paciente: PacienteHistoria | null = null;
   historialModificaciones: RegistroAuditoria[] = [];
+
+  // Navegación Maestra del Expediente 360° (Estilo CP-Vet)
+  pestanaPrincipal: 'atencion' | 'historial' | 'plan_sanitario' | 'receta' | 'auditoria' = 'atencion';
+  consultasAnteriores: any[] = [];
+  consultaPasadaSeleccionada: any = null;
+  modalConsultaPasadaAbierto: boolean = false;
 
   cargando: boolean = true;
   guardando: boolean = false;
@@ -239,6 +259,152 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   mostrarModalCancelar: boolean = false;
   mostrarDetalleAuditoria: boolean = true;
+
+  // =========================================================================
+  // VISTA DE CONSULTA CP-VET: NAVEGACIÓN Y CONTADORES DINÁMICOS
+  // =========================================================================
+  seccionConsultaActiva: string = 'info_basica';
+  alimento_marca: string = '';
+  esterilizado_opcion: 'Sí' | 'No' = 'No';
+  proxima_visita_fecha: string = '';
+  proxima_visita_notas: string = '';
+  condicion_corporal: string = '3/5 (Ideal)';
+  modoTextoEnriquecido: boolean = false;
+
+  listaSistemasOrganicos = [
+    { clave: 'general', nombre: '1. Estado General / Actitud', icono: '⚡' },
+    { clave: 'hidratacion', nombre: '2. Estado de Hidratación', icono: '💧' },
+    { clave: 'tegumentario', nombre: '3. Sistema Tegumentario (Piel y Pelo)', icono: '🐾' },
+    { clave: 'ojos', nombre: '4. Ojos y Anexos Oculares', icono: '👁️' },
+    { clave: 'oidos', nombre: '5. Oídos y Conducto Auditivo', icono: '👂' },
+    { clave: 'nariz', nombre: '6. Nariz y Cavidad Nasal', icono: '👃' },
+    { clave: 'digestivo', nombre: '7. Sistema Digestivo', icono: '🥣' },
+    { clave: 'respiratorio', nombre: '8. Sistema Respiratorio', icono: '🫁' },
+    { clave: 'nervioso', nombre: '9. Sistema Nervioso', icono: '🧠' },
+    { clave: 'musculoesqueletico', nombre: '10. Músculo-Esquelético', icono: '🦴' },
+    { clave: 'cardiovascular', nombre: '11. Sistema Cardiovascular', icono: '❤️' },
+    { clave: 'genitourinario', nombre: '12. Sistema Genitourinario', icono: '🚻' }
+  ];
+
+  get conteoInfoBasica(): string {
+    let count = 0;
+    const motivo = (this.formHistoria?.get('motivo_consulta')?.value || this.motivo_consulta || '').trim();
+    if (motivo) count++;
+    if ((this.alimento_marca || '').trim()) count++;
+    if (this.esterilizado_opcion) count++;
+    return `${count}/3`;
+  }
+
+  get conteoAnamnesis(): string {
+    let count = 0;
+    const form = this.formHistoria?.value || {};
+    if ((form.anamnesis || this.anamnesis || '').trim()) count++;
+    if ((form.actitudTemperamento || form.actitud_temperamento || this.actitud_temperamento || '').trim()) count++;
+    if ((form.prioridad || this.prioridad || '').trim()) count++;
+    if ((form.resultadoEstado || form.resultado_estado || this.resultado_estado || '').trim()) count++;
+    if ((form.evolucion || '').trim()) count++;
+    if ((this.evaluacionCampo?.descripcionQueja || '').trim()) count++;
+    if (this.triajeSistemasCampo?.totalAlertas !== undefined) count++;
+    return `${count}/7`;
+  }
+
+  get conteoSignosVitales(): string {
+    let count = 0;
+    const form = this.formHistoria?.value || {};
+    const peso = form.peso ?? this.paciente?.peso;
+    const temp = form.temperatura ?? this.temperatura;
+    const fc = form.frecuenciaCardiaca ?? form.frecuencia_cardiaca ?? this.frecuencia_cardiaca;
+    const fr = form.frecuenciaRespiratoria ?? form.frecuencia_respiratoria ?? this.frecuencia_respiratoria;
+    const pulso = (form.pulso || this.pulso || '').trim();
+    const tllc = (form.tiempoLlenadoCapilar || form.tllc || this.tllc || '').trim();
+    const mucosas = (form.mucosas || this.mucosas || '').trim();
+    const ganglios = (form.gangliosLinfaticos || form.ganglios_linfaticos || this.ganglios_linfaticos || '').trim();
+
+    if (peso && Number(peso) > 0) count++;
+    if (temp && Number(temp) > 0) count++;
+    if (fc && Number(fc) > 0) count++;
+    if (fr && Number(fr) > 0) count++;
+    if (pulso) count++;
+    if (tllc) count++;
+    if (mucosas) count++;
+    if (ganglios) count++;
+    if (this.condicion_corporal || form.resultadoEstado || this.resultado_estado) count++;
+    return `${count}/9`;
+  }
+
+  get conteoExamenes(): string {
+    let count = 0;
+    if (this.examenesSolicitados && this.examenesSolicitados.length > 0) count++;
+    const hallazgos = (this.descripcionHallazgos || this.formHistoria?.get('hallazgos_examen')?.value || '').trim();
+    if (hallazgos) count++;
+    return `${count}/2`;
+  }
+
+  get conteoValoracion(): string {
+    const total = 12;
+    if (!this.sistemas) return `0/${total}`;
+    const evaluados = Object.values(this.sistemas).filter(v => v === 'N' || v === 'AN').length;
+    return `${evaluados}/${total}`;
+  }
+
+  get conteoDiagnostico(): string {
+    let count = 0;
+    const form = this.formHistoria?.value || {};
+    const diag = (form.diagnosticoPrincipal || this.diagnosticoFinal || '').trim();
+    const diagDif = (form.diagnosticoDiferencial || '').trim();
+    const probs = this.problemasClinicos.filter(p => p && p.trim().length > 0);
+    const pron = (form.pronostico || this.pronostico || '').trim();
+    if (diag) count++;
+    if (diagDif) count++;
+    if (probs.length > 0 || (form.listaProblemas || '').trim()) count++;
+    if (pron) count++;
+    if (this.idPatologiaSeleccionada || this.patologiaSeleccionada) count++;
+    return `${count}/5`;
+  }
+
+  get conteoTratamiento(): string {
+    let count = 0;
+    if (this.medicamentosSeleccionados && this.medicamentosSeleccionados.length > 0) count++;
+    const plan = (this.formHistoria?.get('planTratamiento')?.value || this.planProcedimientos || '').trim();
+    if (plan) count++;
+    const mat = (this.materialesUtilizados || this.formHistoria?.get('materiales_utilizados')?.value || '').trim();
+    if (mat) count++;
+    return `${count}/3`;
+  }
+
+  get conteoRemisiones(): string {
+    const ing = this.ingresaCBA || (this.ingresa_cba ? 'SÍ' : 'NO');
+    const canil = (this.canilAsignado || this.canil_asignado || '').trim();
+    return (ing === 'SÍ' || canil || ing === 'NO') ? '1/1' : '0/1';
+  }
+
+  get conteoAdjuntos(): string {
+    return (this.paciente?.foto_url || this.route.snapshot.queryParamMap.get('foto')) ? '1/1' : '0/1';
+  }
+
+  get conteoProximaVisita(): string {
+    return (this.proxima_visita_fecha && this.proxima_visita_fecha.trim()) ? '1/1' : '0/1';
+  }
+
+  irASeccionConsulta(seccionId: string): void {
+    this.seccionConsultaActiva = seccionId;
+    const el = document.getElementById('seccion-' + seccionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  setEsterilizado(opcion: 'Sí' | 'No'): void {
+    this.esterilizado_opcion = opcion;
+    this.cdr.detectChanges();
+  }
+
+  setEstadoSistema(clave: string, estado: string): void {
+    this.sistemas[clave] = estado;
+    this.evaluacion_sistemas = { ...this.sistemas };
+    this.formHistoria?.markAsDirty();
+    this.cdr.detectChanges();
+  }
 
   popalog = {
     logopop: 'images/Escudo_Popayan.svg'
@@ -281,10 +447,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       } catch (e) {}
     }
 
-    if (datosActa) {
-      this.aplicarDatosDesdeActa(datosActa);
-    }
-
     this.route.paramMap.subscribe(params => {
       const idParam = params.get('id');
       const idQuery = this.route.snapshot.queryParamMap.get('id');
@@ -294,6 +456,35 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       const idSeguimientoQuery = this.route.snapshot.queryParamMap.get('id_seguimiento');
       const nombreQuery = this.route.snapshot.queryParamMap.get('nombre') || '';
       const fotoQuery = this.route.snapshot.queryParamMap.get('foto') || '';
+
+      // Validación de coherencia: Si hay datos en sessionStorage pero venimos a consultar
+      // una historia guardada o un animal diferente, descartamos datosActa residuales.
+      if (datosActa) {
+        const idAnimalActa = Number(datosActa.id_animal || datosActa.paciente?.id_animal);
+        const nombreActa = String(datosActa.paciente?.nombre || '').toLowerCase().trim();
+        const idAnimalEsperado = idAnimalQuery ? Number(idAnimalQuery) : null;
+        const nombreEsperado = nombreQuery ? nombreQuery.toLowerCase().trim() : '';
+
+        const conflictoAnimal = (idAnimalEsperado && idAnimalActa && idAnimalEsperado !== idAnimalActa) ||
+                                (nombreEsperado && nombreActa && nombreEsperado !== nombreActa);
+        const vieneDeEdicionDirecta = !!idHistoriaQuery || (!history?.state?.datosActa && !!idAnimalQuery);
+
+        if (conflictoAnimal || vieneDeEdicionDirecta) {
+          datosActa = null;
+          try {
+            sessionStorage.removeItem('acta_edicion_temporal');
+          } catch (e) {}
+          this.tieneDatosDesdeActa = false;
+        } else {
+          this.aplicarDatosDesdeActa(datosActa);
+        }
+      }
+
+      if (idAnimalQuery && !isNaN(Number(idAnimalQuery))) {
+        this.idAnimal = Number(idAnimalQuery);
+      } else if (idParam && !isNaN(Number(idParam))) {
+        this.idAnimal = Number(idParam);
+      }
 
       this.idHistoria = idParam || idConsultaQuery || idHistoriaQuery || idQuery || '';
 
@@ -320,6 +511,154 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     }
 
     this.cdr.detectChanges();
+  }
+
+  cambiarPestanaPrincipal(p: 'atencion' | 'historial' | 'plan_sanitario' | 'receta' | 'auditoria'): void {
+    this.pestanaPrincipal = p;
+    this.cdr.detectChanges();
+  }
+
+  iniciarNuevaConsulta(): void {
+    Swal.fire({
+      icon: 'question',
+      title: '¿Nueva Consulta Médica?',
+      text: `Se iniciará un nuevo registro de atención para ${this.paciente?.nombre || 'el paciente'}, conservando todos sus antecedentes y datos base.`,
+      showCancelButton: true,
+      confirmButtonText: 'Sí, iniciar nueva consulta',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4141a5'
+    }).then((res) => {
+      if (res.isConfirmed) {
+        this.esNuevaConsulta = true;
+        this.motivo_consulta = 'Consulta y seguimiento médico';
+        this.prioridad = 'Normal';
+        this.anamnesis = '';
+        this.actitud_temperamento = 'Alerta / Responsivo';
+        this.resultado_estado = 'Estable';
+        this.temperatura = null;
+        this.frecuencia_cardiaca = null;
+        this.frecuencia_respiratoria = null;
+        this.pulso = '';
+        this.tllc = '';
+        this.ganglios_linfaticos = '';
+        this.mucosas = '';
+        this.descripcionHallazgos = '';
+        this.observaciones_examen = '';
+        this.medicamentosSeleccionados = [];
+        this.tratamientosEliminadosIds = [];
+        this.examenesSolicitados = [];
+        this.pronostico = 'Favorable';
+        this.planProcedimientos = '';
+        this.plan_procedimientos = '';
+        this.materialesUtilizados = '';
+        this.materiales_utilizados = '';
+        this.ingresa_cba = false;
+        this.ingresaCBA = 'NO';
+        this.canilAsignado = '';
+        this.canil_asignado = '';
+
+        this.sistemas = {
+          general: 'NE',
+          hidratacion: 'NE',
+          tegumentario: 'NE',
+          ojos: 'NE',
+          oidos: 'NE',
+          nariz: 'NE',
+          digestivo: 'NE',
+          respiratorio: 'NE',
+          nervioso: 'NE',
+          musculoesqueletico: 'NE',
+          cardiovascular: 'NE',
+          genitourinario: 'NE'
+        };
+        this.evaluacion_sistemas = this.sistemas;
+
+        if (this.formHistoria) {
+          this.formHistoria.patchValue({
+            motivo_consulta: 'Consulta y seguimiento médico',
+            prioridad: 'Normal',
+            anamnesis: '',
+            actitud_temperamento: 'Alerta / Responsivo',
+            resultado_estado: 'Estable',
+            temperatura: null,
+            frecuencia_cardiaca: null,
+            frecuencia_respiratoria: null,
+            pulso: '',
+            tllc: '',
+            ganglios_linfaticos: '',
+            mucosas: '',
+            hallazgos_examen: '',
+            observaciones_examen: '',
+            diagnosticoPrincipal: '',
+            diagnosticoDiferencial: '',
+            listaProblemas: '',
+            evolucion: '',
+            pronostico: 'Favorable',
+            planTratamiento: '',
+            materiales_utilizados: '',
+            motivoModificacion: 'Nueva evolución clínica registrada.'
+          });
+        }
+
+        this.pestanaPrincipal = 'atencion';
+        this.pestanaActiva = 'consulta';
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Formulario Listo',
+          text: 'Puedes diligenciar la nueva evolución médica.',
+          timer: 1700,
+          showConfirmButton: false
+        });
+      }
+    });
+  }
+
+  verDetalleConsultaPasada(consulta: any): void {
+    this.consultaPasadaSeleccionada = consulta;
+    this.modalConsultaPasadaAbierto = true;
+  }
+
+  cerrarModalConsultaPasada(): void {
+    this.modalConsultaPasadaAbierto = false;
+    this.consultaPasadaSeleccionada = null;
+  }
+
+  imprimirReceta(): void {
+    window.print();
+  }
+
+  formatearFecha(fechaStr?: string | null): string {
+    if (!fechaStr) return 'No registrada';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+    } catch {
+      return fechaStr;
+    }
+  }
+
+  formatearFechaHora(fechaStr?: string | null): string {
+    if (!fechaStr) return 'No registrada';
+    try {
+      const d = new Date(fechaStr);
+      if (isNaN(d.getTime())) return fechaStr;
+      return d.toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return fechaStr;
+    }
   }
 
   /**
@@ -453,7 +792,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const consts = datosActa.constantes || {};
 
     this.paciente = {
-      id_animal: datosActa.id_animal || pac.id_animal || 1,
+      id_animal: datosActa.id_animal || pac.id_animal || this.idAnimal || 1,
       nombre: pac.nombre || 'Paciente',
       especie: pac.especie || 'Canino',
       raza: pac.raza || 'Mestizo',
@@ -464,6 +803,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       tenedor_documento: pac.tenedor_documento || ten.cedula || 'No registrado',
       tenedor_telefono: pac.tenedor_telefono || ten.telefono || 'No disponible'
     };
+
+    if (this.paciente.id_animal) {
+      this.idAnimal = Number(this.paciente.id_animal);
+    }
 
     this.nombreAcudiente = ten.nombre || pac.tenedor_nombre || '';
     this.cedulaAcudiente = ten.cedula || pac.tenedor_documento || '';
@@ -534,7 +877,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         estado_general: this.resultado_estado,
         motivo_consulta: this.motivo_consulta,
         paciente: this.paciente,
-        diagnostico_principal: datosActa.diagnostico_principal || 'Prueba 8',
+        diagnostico_principal: datosActa.diagnostico_principal || 'Consulta médica general',
         diagnostico_diferencial: datosActa.diagnostico_diferencial || '',
         lista_problemas: datosActa.lista_problemas || '',
         evolucion: this.anamnesis || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico.',
@@ -574,7 +917,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       ganglios_linfaticos: this.ganglios_linfaticos,
       gangliosLinfaticos: this.ganglios_linfaticos,
       mucosas: this.mucosas,
-      diagnosticoPrincipal: datosActa.diagnostico_principal || 'Prueba 8',
+      diagnosticoPrincipal: datosActa.diagnostico_principal || 'Consulta médica general',
       diagnosticoDiferencial: datosActa.diagnostico_diferencial || '',
       listaProblemas: datosActa.lista_problemas || '',
       evolucion: this.anamnesis || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico.',
@@ -767,7 +1110,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   get diagnosticoFinal(): string {
-    return this.formHistoria?.get('diagnosticoPrincipal')?.value || this.historiaOriginal?.diagnostico_principal || 'Prueba 8';
+    return this.formHistoria?.get('diagnosticoPrincipal')?.value || this.historiaOriginal?.diagnostico_principal || '';
   }
   set diagnosticoFinal(val: string) {
     this.actualizarDiagnosticoFinal(val);
@@ -849,9 +1192,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       numero_historia: seg?.numero_radicado || `HC-${seg?.id_animal || '103'}`,
       paciente: {
         id_animal: seg?.id_animal || 1,
-        nombre: seg?.nombre_paciente || seg?.nombre_animal || seg?.nombre || nombreSugerido || 'Rorito',
+        nombre: seg?.nombre_paciente || seg?.nombre_animal || seg?.nombre || nombreSugerido || 'Paciente',
         especie: seg?.paciente_especie || seg?.especie || 'Canino',
-        raza: seg?.paciente_raza || seg?.raza || 'Labrador',
+        raza: seg?.paciente_raza || seg?.raza || 'Mestizo',
         sexo: seg?.paciente_sexo || seg?.sexo || 'Hembra',
         peso: Number(seg?.peso_paciente ?? seg?.peso ?? 4.0),
         foto_url: seg?.foto_url || '',
@@ -867,21 +1210,21 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       motivo_consulta: observacionRaw || quejaRaw.split('===')[0].trim() || 'Consulta y seguimiento en campo',
       prioridad: 'Normal',
       resultado_estado: 'Estable',
-      anamnesis: quejaRaw.split('===')[0].trim() || 'Paciente encontrado en vía pública / condición de calle',
+      anamnesis: quejaRaw.split('===')[0].trim() || 'Paciente evaluado en campo.',
       constantes: {
         temperatura: !isNaN(temp) && temp > 0 ? temp : 38.5,
-        frecuencia_cardiaca: !isNaN(fc) && fc > 0 ? fc : 8,
-        frecuencia_respiratoria: !isNaN(fr) && fr > 0 ? fr : 8,
+        frecuencia_cardiaca: !isNaN(fc) && fc > 0 ? fc : 110,
+        frecuencia_respiratoria: !isNaN(fr) && fr > 0 ? fr : 24,
         pulso: seg?.pulso || 'Fuerte, lleno y regular',
         tllc: seg?.tllc || '2 seg',
         ganglios_linfaticos: seg?.ganglios_linfaticos || 'Normales / Sin reactividad',
-        mucosas: muc || 'Ictéricas / Amarillentas',
+        mucosas: muc || 'Rosadas y húmedas',
         peso: Number(seg?.peso_paciente ?? seg?.peso ?? 4.0)
       },
-      diagnostico_principal: observacionRaw || 'Prueba 8',
+      diagnostico_principal: observacionRaw || 'Valoración clínica general',
       plan_procedimientos: tratamientoRaw || 'Tratamiento y seguimiento clínico en CBA',
       ingresa_cba: true,
-      motivo_ingreso_cba: matchCausal ? matchCausal[1].trim() : 'Por salud crítica / Urgencia médica. Se efectúa rescate y retiro preventivo para su traslado inmediato al CBA'
+      motivo_ingreso_cba: matchCausal ? matchCausal[1].trim() : 'Ingreso para valoración y custodia médica en CBA'
     };
 
     this.aplicarDatosDesdeActa(datos);
@@ -919,8 +1262,22 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         const raw = data as any;
         this.historiaOriginal = { ...(this.historiaOriginal || {}), ...data };
         this.historialModificaciones = data.historial_modificaciones || this.historialModificaciones || [];
+        this.consultasAnteriores = data.consultas_anteriores || raw.consultas_anteriores || [];
 
-        if (this.paciente) {
+        if (!this.tieneDatosDesdeActa && data.paciente) {
+          this.paciente = {
+            id_animal: data.paciente.id_animal || this.idAnimal || 1,
+            nombre: data.paciente.nombre && data.paciente.nombre !== 'Paciente' ? data.paciente.nombre : (nombre || 'Paciente'),
+            especie: data.paciente.especie || 'Canino',
+            raza: data.paciente.raza || 'Mestizo',
+            sexo: data.paciente.sexo || 'Hembra',
+            peso: data.paciente.peso ?? 4.0,
+            tenedor_nombre: data.paciente.tenedor_nombre || this.nombreAcudiente || 'Sin acudiente',
+            tenedor_documento: data.paciente.tenedor_documento || this.cedulaAcudiente || 'No registrado',
+            tenedor_telefono: data.paciente.tenedor_telefono || this.telefonoAcudiente || 'No disponible',
+            foto_url: data.paciente.foto_url ? this.normalizarUrlFoto(data.paciente.foto_url) : ''
+          };
+        } else if (this.paciente) {
           this.paciente = {
             ...this.paciente,
             nombre: this.paciente.nombre && this.paciente.nombre !== 'Paciente' ? this.paciente.nombre : (data.paciente?.nombre || nombre || 'Paciente'),
@@ -970,8 +1327,13 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           if (raw.ganglios_linfaticos || data.constantes?.ganglios_linfaticos) this.ganglios_linfaticos = raw.ganglios_linfaticos || data.constantes?.ganglios_linfaticos;
           if (raw.mucosas || data.constantes?.mucosas) this.mucosas = raw.mucosas || data.constantes?.mucosas;
 
-          if (raw.hallazgos_examen || data.descripcion_hallazgos) {
-            this.descripcionHallazgos = raw.hallazgos_examen || data.descripcion_hallazgos;
+          if (raw.hallazgos_examen !== undefined || data.descripcion_hallazgos !== undefined) {
+            this.descripcionHallazgos = raw.hallazgos_examen ?? data.descripcion_hallazgos ?? '';
+          }
+
+          if (raw.observaciones_examen || data.observaciones_sistemas) {
+            this.observaciones_examen = raw.observaciones_examen || data.observaciones_sistemas || '';
+            this.observacionesSistemas = this.observaciones_examen;
           }
 
           const sistemasParseados = this.parsearJsonSeguro<Record<string, any>>(
@@ -981,11 +1343,87 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           if (sistemasParseados && typeof sistemasParseados === 'object' && Object.keys(sistemasParseados).length > 0) {
             this.sistemas = { ...this.sistemas, ...sistemasParseados };
             this.evaluacion_sistemas = this.sistemas;
+            if (sistemasParseados['observaciones'] && !this.observacionesSistemas) {
+              this.observacionesSistemas = sistemasParseados['observaciones'];
+              this.observaciones_examen = this.observacionesSistemas;
+            }
           }
 
+          if (data.alimento_marca || sistemasParseados?.['_alimento_marca']) {
+            this.alimento_marca = data.alimento_marca || sistemasParseados['_alimento_marca'] || '';
+          }
+          if (data.esterilizado_opcion || sistemasParseados?.['_esterilizado_opcion']) {
+            const estVal = data.esterilizado_opcion || sistemasParseados['_esterilizado_opcion'];
+            this.esterilizado_opcion = estVal === 'Sí' ? 'Sí' : 'No';
+          }
+          if (data.condicion_corporal || sistemasParseados?.['_condicion_corporal']) {
+            this.condicion_corporal = data.condicion_corporal || sistemasParseados['_condicion_corporal'] || '3/5 (Ideal)';
+          }
+          if (data.proxima_visita_fecha !== undefined || sistemasParseados?.['_proxima_visita_fecha'] !== undefined) {
+            this.proxima_visita_fecha = data.proxima_visita_fecha ?? sistemasParseados?.['_proxima_visita_fecha'] ?? '';
+          }
+          if (data.proxima_visita_notas !== undefined || sistemasParseados?.['_proxima_visita_notas'] !== undefined) {
+            this.proxima_visita_notas = data.proxima_visita_notas ?? sistemasParseados?.['_proxima_visita_notas'] ?? '';
+          }
+
+          const anam = data.anamnesicos || raw.anamnesicos || {};
+          this.planSanitario = {
+            vacunas: anam.vacunas || sistemasParseados?.['_vacunas'] || '',
+            estadoRabia: sistemasParseados?.['_estado_rabia'] || (anam.vacunas ? 'Vigente / Aplicada' : 'Pendiente / En revisión'),
+            estadoPolivalente: sistemasParseados?.['_estado_polivalente'] || (anam.vacunas ? 'Al Día' : 'En evaluación'),
+            estadoRefuerzo: sistemasParseados?.['_estado_refuerzo'] || 'Programada',
+            ultimaDesparasitacion: anam.ultimaDesparasitacion || anam.ultDesparasitacion || sistemasParseados?.['_ultima_desparasitacion'] || '',
+            productoDesparasitacion: anam.productoDesparasitacion || anam.prodDesparasitacion || sistemasParseados?.['_producto_desparasitacion'] || '',
+            estadoDesparasitacion: sistemasParseados?.['_estado_desparasitacion'] || ((anam.productoDesparasitacion || anam.ultimaDesparasitacion) ? 'Suministrada' : 'En evaluación'),
+            estadoEctoparasitos: sistemasParseados?.['_estado_ectoparasitos'] || 'Tratado',
+            enfermedadesAnteriores: anam.enfermedadesAnteriores || anam.enfermedadesPrevias || sistemasParseados?.['_enfermedades_anteriores'] || '',
+            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || ''
+          };
+
+          if (Array.isArray(data.examenes_solicitados) && data.examenes_solicitados.length > 0) {
+            this.examenesSolicitados = data.examenes_solicitados.map((ex: any) => ({
+              id_examen: ex.id_examen || ex.id || null,
+              nombre: ex.nombre || 'Examen',
+              tipo: ex.tipo || 'Laboratorio',
+              estado: ex.estado || 'solicitado',
+              resultado: ex.resultado || '',
+              ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+            }));
+          }
+
+          if (data.materiales_utilizados !== undefined) {
+            this.materialesUtilizados = data.materiales_utilizados || '';
+            this.materiales_utilizados = this.materialesUtilizados;
+          }
+          if (data.plan_tratamiento || raw.plan_procedimientos) {
+            this.planProcedimientos = data.plan_tratamiento || raw.plan_procedimientos || '';
+            this.plan_procedimientos = this.planProcedimientos;
+          }
+          if (data.pronostico) {
+            this.pronostico = data.pronostico;
+          }
+          if (data.ingresa_cba !== undefined) {
+            this.ingresa_cba = data.ingresa_cba === true || String(data.ingresa_cba).toUpperCase() === 'SI';
+            this.ingresaCBA = this.ingresa_cba ? 'SI' : 'NO';
+          }
+          if (data.motivo_ingreso_no_ingreso !== undefined || data.motivo_ingreso_cba !== undefined) {
+            this.motivoIngresoNoIngreso = data.motivo_ingreso_no_ingreso || data.motivo_ingreso_cba || '';
+            this.motivo_ingreso_cba = this.motivoIngresoNoIngreso;
+          }
+          if (data.canil_asignado !== undefined) {
+            this.canilAsignado = data.canil_asignado || '';
+            this.canil_asignado = this.canilAsignado;
+          }
+          if (data.funcionario_recibe_cba !== undefined) {
+            this.funcionarioRecibeCBA = data.funcionario_recibe_cba || '';
+            this.funcionario_recibe_cba = this.funcionarioRecibeCBA;
+          }
+
+          this.tratamientosEliminadosIds = [];
           if (Array.isArray(data.tratamientos) && data.tratamientos.length > 0) {
             this.medicamentosSeleccionados = data.tratamientos.map((t: any) => ({
-              id: t.id_medicamento || t.id,
+              id: t.id_medicamento || t.id || null,
+              id_tratamiento: t.id_tratamiento || null,
               nombre: t.nombre || t.productoBase || t.producto_base || t.nombre_medicamento || 'Medicamento',
               principio_activo: t.principio_activo || '',
               concentracion: t.concentracion || '',
@@ -1033,13 +1471,15 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           hallazgos_examen: this.descripcionHallazgos,
           observaciones_examen: this.observaciones_examen,
           observacionesExamen: this.observaciones_examen,
-          diagnosticoPrincipal: this.formHistoria.get('diagnosticoPrincipal')?.value || data.diagnostico_principal || 'Prueba 8',
-          diagnosticoDiferencial: this.formHistoria.get('diagnosticoDiferencial')?.value || data.diagnostico_diferencial || this.descripcionHallazgos || '',
-          listaProblemas: this.formHistoria.get('listaProblemas')?.value || data.lista_problemas || '',
-          evolucion: this.formHistoria.get('evolucion')?.value || data.evolucion || this.anamnesis || 'Paciente evaluado bajo seguimiento clínico.',
+          diagnosticoPrincipal: data.diagnostico_principal || this.formHistoria.get('diagnosticoPrincipal')?.value || '',
+          diagnosticoDiferencial: data.diagnostico_diferencial !== undefined
+            ? data.diagnostico_diferencial
+            : (this.formHistoria.get('diagnosticoDiferencial')?.value || ''),
+          listaProblemas: data.lista_problemas || this.formHistoria.get('listaProblemas')?.value || '',
+          evolucion: data.evolucion || this.anamnesis || this.formHistoria.get('evolucion')?.value || '',
           pronostico: this.pronostico || data.pronostico || 'Favorable',
           plan_procedimientos: this.plan_procedimientos,
-          planTratamiento: this.formHistoria.get('planTratamiento')?.value || data.plan_tratamiento || this.plan_procedimientos || 'Tratamiento y seguimiento clínico en CBA.',
+          planTratamiento: data.plan_tratamiento || this.plan_procedimientos || this.formHistoria.get('planTratamiento')?.value || '',
           materiales_utilizados: this.materiales_utilizados,
           ingresa_cba: this.ingresa_cba,
           motivo_ingreso_cba: this.motivo_ingreso_cba,
@@ -1055,6 +1495,49 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         } else {
           this.historiaAnulada = false;
           this.formHistoria.enable();
+        }
+
+        const esNuevaConsulta = this.route.snapshot.queryParamMap.get('nueva_consulta') === 'true';
+        this.esNuevaConsulta = esNuevaConsulta;
+        if (esNuevaConsulta) {
+          this.motivo_consulta = 'Consulta General';
+          this.prioridad = 'Normal';
+          this.anamnesis = '';
+          this.temperatura = null;
+          this.frecuencia_cardiaca = null;
+          this.frecuencia_respiratoria = null;
+          this.pulso = '';
+          this.tllc = '';
+          this.ganglios_linfaticos = '';
+          this.mucosas = '';
+          this.medicamentosSeleccionados = [];
+          this.examenesSolicitados = [];
+          this.pronostico = 'Favorable';
+          this.planProcedimientos = '';
+          this.materialesUtilizados = '';
+          this.marcarTodosSistemas('NE');
+          this.formHistoria.patchValue({
+            motivo_consulta: 'Consulta General',
+            prioridad: 'Normal',
+            anamnesis: '',
+            temperatura: null,
+            frecuencia_cardiaca: null,
+            frecuencia_respiratoria: null,
+            pulso: '',
+            tllc: '',
+            ganglios_linfaticos: '',
+            mucosas: '',
+            diagnosticoPrincipal: '',
+            diagnosticoDiferencial: '',
+            listaProblemas: '',
+            evolucion: '',
+            pronostico: 'Favorable',
+            planTratamiento: '',
+            materiales_utilizados: '',
+            motivoModificacion: 'Nueva consulta clínica registrada.'
+          });
+          this.pestanaPrincipal = 'atencion';
+          this.seccionConsultaActiva = 'info_basica';
         }
 
         this.formHistoria.markAsPristine();
@@ -1412,6 +1895,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     this.medicamentosSeleccionados.push({
       id,
+      id_tratamiento: null,
       nombre: nombre || 'Medicamento',
       principio_activo: medicamento?.principio_activo || '',
       concentracion: medicamento?.concentracion || '',
@@ -1451,6 +1935,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         cancelButtonColor: '#4141a5'
       }).then((res) => {
         if (res.isConfirmed) {
+          if (med.id_tratamiento && Number(med.id_tratamiento) > 0) {
+            this.tratamientosEliminadosIds.push(Number(med.id_tratamiento));
+          }
           this.medicamentosSeleccionados.splice(indice, 1);
           this.formHistoria.markAsDirty();
           this.cdr.detectChanges();
@@ -1459,6 +1946,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       return;
     }
 
+    if (med?.id_tratamiento && Number(med.id_tratamiento) > 0) {
+      this.tratamientosEliminadosIds.push(Number(med.id_tratamiento));
+    }
     this.medicamentosSeleccionados.splice(indice, 1);
     this.formHistoria.markAsDirty();
   }
@@ -1595,8 +2085,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   reemplazarMedicamento(indice: number, nuevoMed: any): void {
     const stock = Number(nuevoMed.stockDisponible) || 0;
     const nombre = nuevoMed.nombre || 'Medicamento sin nombre';
+    const idTratExistente = this.medicamentosSeleccionados[indice]?.id_tratamiento || null;
     this.medicamentosSeleccionados[indice] = {
       id: nuevoMed.id_medicamento ?? nuevoMed.id,
+      id_tratamiento: idTratExistente,
       nombre,
       principio_activo: nuevoMed.principio_activo || '',
       concentracion: nuevoMed.concentracion || '',
@@ -1697,8 +2189,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       : (formVal.listaProblemas || '');
 
     const dto: ActualizarHistoriaDto = {
+      motivo_consulta: (this.formHistoria.get('motivo_consulta')?.value || this.motivo_consulta || 'Consulta General').trim(),
       diagnostico_principal: formVal.diagnosticoPrincipal,
-      diagnostico_diferencial: formVal.diagnosticoDiferencial || this.descripcionHallazgos,
+      diagnostico_diferencial: (formVal.diagnosticoDiferencial || '').trim(),
+      hallazgos_examen: (this.descripcionHallazgos || formVal.hallazgos_examen || '').trim(),
+      id_patologia: this.idPatologiaSeleccionada || null,
       lista_problemas: listaProblemasFinal,
       evolucion: formVal.evolucion,
       pronostico: formVal.pronostico,
@@ -1718,7 +2213,17 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       motivo_modificacion: formVal.motivoModificacion,
       organos_sistemas: {
         ...this.sistemas,
-        observaciones: this.observacionesSistemas || formVal.observacionesExamen || ''
+        observaciones: this.observacionesSistemas || formVal.observacionesExamen || '',
+        _vacunas: this.planSanitario.vacunas || '',
+        _estado_rabia: this.planSanitario.estadoRabia || 'Vigente / Aplicada',
+        _estado_polivalente: this.planSanitario.estadoPolivalente || 'Al Día',
+        _estado_refuerzo: this.planSanitario.estadoRefuerzo || 'Programada',
+        _ultima_desparasitacion: this.planSanitario.ultimaDesparasitacion || '',
+        _producto_desparasitacion: this.planSanitario.productoDesparasitacion || '',
+        _estado_desparasitacion: this.planSanitario.estadoDesparasitacion || 'Suministrada',
+        _estado_ectoparasitos: this.planSanitario.estadoEctoparasitos || 'Tratado',
+        _enfermedades_anteriores: this.planSanitario.enfermedadesAnteriores || '',
+        _historia_reproductiva: this.planSanitario.historiaReproductiva || ''
       },
       examenes_solicitados: this.examenesSolicitados.map(ex => ({
         id_examen: ex.id_examen || ex.id,
@@ -1729,6 +2234,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
       })),
       tratamientos: this.medicamentosSeleccionados.map(m => ({
+        id_tratamiento: m.id_tratamiento || null,
         id_medicamento: m.id,
         nombre: m.nombre,
         principio_activo: m.principio_activo,
@@ -1740,8 +2246,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         administrado: !!m.administrado,
         descripcion: m.descripcion || m.posologia || '',
         responsable_admin: m.responsable_admin || this.nombreVeterinario || '',
-        reaccion_comentarios: m.reaccion_comentarios || ''
+        reaccion_comentarios: m.reaccion_comentarios || '',
+        _ref: m
       })),
+      tratamientos_eliminados: [...this.tratamientosEliminadosIds],
       materiales_utilizados: this.materialesUtilizados,
       ingreso_cba: {
         ingresa_cba: this.ingresaCBA,
@@ -1753,20 +2261,79 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         nombres: this.nombreAcudiente,
         documentoIdentidad: this.cedulaAcudiente,
         telefono: this.paciente?.tenedor_telefono || ''
-      }
+      },
+      anamnesicos: {
+        vacunas: this.planSanitario.vacunas || '',
+        ultimaDesparasitacion: this.planSanitario.ultimaDesparasitacion || '',
+        productoDesparasitacion: this.planSanitario.productoDesparasitacion || '',
+        enfermedadesAnteriores: this.planSanitario.enfermedadesAnteriores || '',
+        alimentacion: this.alimento_marca || '',
+        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero')
+      },
+      alimento_marca: this.alimento_marca || '',
+      esterilizado_opcion: this.esterilizado_opcion || 'No',
+      condicion_corporal: this.condicion_corporal || '3/5 (Ideal)',
+      proxima_visita_fecha: this.proxima_visita_fecha || '',
+      proxima_visita_notas: this.proxima_visita_notas || ''
     };
 
-    this.historiaService.actualizarHistoria(this.idHistoria, dto, this.historiaOriginal!).subscribe({
+    const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
+    const idAnimalEfectivo = Number(
+      idAnimalQuery ||
+      this.idAnimal ||
+      this.paciente?.id_animal ||
+      this.historiaOriginal?.id_animal ||
+      (this.idHistoria && !isNaN(Number(this.idHistoria)) ? Number(this.idHistoria) : null) ||
+      1
+    );
+    (dto as any).id_animal = idAnimalEfectivo;
+    (dto as any).animal = this.paciente || { id_animal: idAnimalEfectivo, nombre: 'Paciente' };
+
+    const historiaBase = this.historiaOriginal || ({
+      id_historia: Number(this.idHistoria) || 0,
+      id_animal: idAnimalEfectivo,
+      paciente: this.paciente
+    } as any);
+
+    const eraNuevaConsulta = this.esNuevaConsulta;
+
+    this.historiaService.actualizarHistoria(this.idHistoria, dto, historiaBase, this.esNuevaConsulta).subscribe({
       next: (resp) => {
         this.guardando = false;
         this.formularioEnviado = false;
-        this.mensajeExito = resp.mensaje || 'Historia clínica actualizada con éxito.';
+        this.esNuevaConsulta = false;
+        this.tratamientosEliminadosIds = [];
+        this.mensajeExito = resp.mensaje || (eraNuevaConsulta ? 'Nueva consulta clínica guardada exitosamente.' : 'Historia clínica actualizada con éxito.');
+
+        // Limpieza de memoria temporal para evitar que el navegador recargue datos antiguos desactualizados
+        try {
+          sessionStorage.removeItem('acta_edicion_temporal');
+          sessionStorage.removeItem('historia_edicion_temporal');
+        } catch (e) {}
+
+        if (resp.historia_id) {
+          this.idHistoria = resp.historia_id;
+        }
 
         if (resp.auditoria) {
           this.historialModificaciones = [resp.auditoria, ...this.historialModificaciones];
         }
 
+        if (!this.historiaOriginal) {
+          this.historiaOriginal = {
+            id_historia: resp.historia_id || this.idHistoria,
+            id_consulta: resp.consulta_id || 1,
+            id_animal: idAnimalEfectivo,
+            numero_historia: `HC-${idAnimalEfectivo}`,
+            fecha_apertura: new Date().toISOString(),
+            paciente: this.paciente
+          } as any;
+        }
+
         if (this.historiaOriginal) {
+          this.historiaOriginal.id_historia = resp.historia_id || this.historiaOriginal.id_historia;
+          this.historiaOriginal.id_consulta = resp.consulta_id || this.historiaOriginal.id_consulta;
+          this.historiaOriginal.motivo_consulta = dto.motivo_consulta || this.historiaOriginal.motivo_consulta;
           this.historiaOriginal.diagnostico_principal = dto.diagnostico_principal;
           this.historiaOriginal.diagnostico_diferencial = dto.diagnostico_diferencial;
           this.historiaOriginal.lista_problemas = dto.lista_problemas;
@@ -1793,9 +2360,23 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.formHistoria.markAsPristine();
         this.formHistoria.get('motivoModificacion')?.reset('');
 
+        // Limpiar query param 'nueva_consulta' de la URL si se guardó exitosamente
+        if (eraNuevaConsulta) {
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: this.idHistoria, id_consulta: resp.consulta_id || '' },
+            queryParamsHandling: 'merge'
+          });
+        }
+
+        const tituloAlerta = eraNuevaConsulta ? '¡Consulta Guardada!' : '¡Actualización Exitosa!';
+        const textoAlerta = eraNuevaConsulta
+          ? 'Se ha registrado la nueva consulta clínica en la base de datos con éxito.'
+          : 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.';
+
         Swal.fire({
-          title: '¡Actualización Exitosa!',
-          text: 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.',
+          title: tituloAlerta,
+          text: textoAlerta,
           icon: 'success',
           confirmButtonColor: '#4141a5',
           confirmButtonText: 'Aceptar',
