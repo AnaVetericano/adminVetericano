@@ -313,9 +313,9 @@
 
                   <button
                     type="button"
-                    (click)="irAEditar(historia)"
-                    class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                    title="Editar evolución y diagnósticos">
+                    (click)="abrirModalEditarAnimal(historia)"
+                    class="p-1.5 rounded-lg text-[#4141a5] hover:bg-[#4141a5]/10 transition-colors cursor-pointer"
+                    title="Editar ficha del paciente">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -403,9 +403,9 @@
             </button>
             <button
               type="button"
-              (click)="irAEditar(historia)"
+              (click)="abrirModalEditarAnimal(historia)"
               class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition-all shadow-xs cursor-pointer text-center">
-              Editar
+              Editar Paciente
             </button>
           </div>
 
@@ -485,8 +485,8 @@
         <div class="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            (click)="irAEditar(historiaSeleccionada)"
-            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white rounded-xl text-xs font-bold transition cursor-pointer">
+            (click)="abrirModalEditarAnimal(historiaSeleccionada)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white rounded-xl text-xs font-bold transition cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
@@ -1636,6 +1636,307 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <span>{{ guardandoNuevoPaciente ? 'Guardando en Base de Datos...' : 'Guardar y Abrir Expediente' }}</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 5. MODAL EDITAR DATOS DEL PACIENTE / ANIMAL RESCATADO (CBA BIOMETRÍA)       -->
+  <!-- ========================================================================= -->
+  <div
+    *ngIf="modalEditarAnimalAbierto"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in overflow-y-auto">
+
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden my-auto">
+
+      <!-- ENCABEZADO DEL MODAL (Paleta institucional CBA #170B3D / #4141a5) -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-slate-50 shrink-0">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black text-lg shadow-md overflow-hidden shrink-0 border border-white/20">
+            <img *ngIf="animalEnEdicion.foto_url" [src]="animalEnEdicion.foto_url" (error)="animalEnEdicion.foto_url = ''" class="w-full h-full object-cover">
+            <span *ngIf="!animalEnEdicion.foto_url">{{ (animalEnEdicion.nombre || 'P').charAt(0).toUpperCase() }}</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Editar Ficha del Paciente
+              </h2>
+              <span class="bg-[#4141a5]/10 text-[#4141a5] text-[10px] font-black px-2.5 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
+                Animal Rescatado CBA
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">
+              Actualización biométrica, características físicas e identificación oficial
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="cerrarModalEditarAnimal()"
+          class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+          title="Cerrar modal">
+          ✕
+        </button>
+      </div>
+
+      <!-- CUERPO DEL MODAL (Formulario centrado en el animal rescatado) -->
+      <div class="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+
+        <!-- BLOQUE 1: IDENTIFICACIÓN BÁSICA DEL ANIMAL -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5]"></span>
+              <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                1. Identificación y Biometría
+              </h3>
+            </div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase">Datos Principales</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Nombre -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Nombre o Alias del Animal <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.nombre"
+                placeholder="Ej. JUAN, Toby, Manchitas..."
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-slate-800 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Especie -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Especie <span class="text-rose-500">*</span>
+              </label>
+              <select
+                [(ngModel)]="animalEnEdicion.especie"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                <option value="Canino">Canino</option>
+                <option value="Felino">Felino</option>
+                <option value="Equino">Equino</option>
+                <option value="Bovino">Bovino</option>
+                <option value="Porcino">Porcino</option>
+                <option value="Aves">Aves</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <!-- Raza -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Raza / Cruzado
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.raza"
+                placeholder="Ej. Mestizo, Criollo, Labrador..."
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Sexo -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Sexo
+              </label>
+              <select
+                [(ngModel)]="animalEnEdicion.sexo"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-semibold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                <option value="Macho">Macho</option>
+                <option value="Hembra">Hembra</option>
+                <option value="Indeterminado">Indeterminado</option>
+              </select>
+            </div>
+
+            <!-- Peso (kg) -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Peso Actual (kg)
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                [(ngModel)]="animalEnEdicion.peso"
+                placeholder="Ej. 14.5"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Esterilizado -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                ¿Esterilizado / Castrado?
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  (click)="animalEnEdicion.esterilizado = true"
+                  [ngClass]="animalEnEdicion.esterilizado
+                    ? 'bg-[#4141a5] text-white font-black shadow-xs'
+                    : 'bg-white text-gray-600 border border-gray-200 font-bold hover:bg-gray-50'"
+                  class="h-10 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                  <span>✓</span> Sí
+                </button>
+                <button
+                  type="button"
+                  (click)="animalEnEdicion.esterilizado = false"
+                  [ngClass]="!animalEnEdicion.esterilizado
+                    ? 'bg-[#170B3D] text-white font-black shadow-xs'
+                    : 'bg-white text-gray-600 border border-gray-200 font-bold hover:bg-gray-50'"
+                  class="h-10 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                  <span>✕</span> No
+                </button>
+              </div>
+            </div>
+
+            <!-- Estado Clínico General -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Estado General del Animal
+              </label>
+              <select
+                [(ngModel)]="animalEnEdicion.estado_general"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                <option value="Estable">Estable</option>
+                <option value="En recuperación">En recuperación</option>
+                <option value="En observación">En observación</option>
+                <option value="Delicado">Delicado</option>
+                <option value="Crítico">Crítico</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOQUE 2: CARACTERÍSTICAS FÍSICAS Y FOTOGRAFÍA -->
+        <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#170B3D]"></span>
+              <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                2. Rasgos Físicos, Identificador y Fotografía
+              </h3>
+            </div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase">CBA / Rescate</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Color / Pelaje -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Color y Pelaje
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.color"
+                placeholder="Ej. Negro con blanco, atigrado, café..."
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Microchip / Placa -->
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Microchip / Placa / Tatuaje
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="animalEnEdicion.microchip"
+                placeholder="Código de microchip o placa CBA"
+                class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-mono focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+            </div>
+
+            <!-- Señas Particulares -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Señas Particulares y Cicatrices
+              </label>
+              <textarea
+                [(ngModel)]="animalEnEdicion.caracteristicas"
+                rows="2"
+                placeholder="Ej. Mancha blanca en pecho, oreja derecha mocha, cicatriz quirúrgica en abdomen..."
+                class="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition"></textarea>
+            </div>
+
+            <!-- Observaciones / Procedencia -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Observaciones de Comportamiento / Rescate
+              </label>
+              <textarea
+                [(ngModel)]="animalEnEdicion.observaciones"
+                rows="2"
+                placeholder="Ej. Animal rescatado en el parque central, carácter sociable y dócil..."
+                class="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition"></textarea>
+            </div>
+
+            <!-- Fotografía URL y selector -->
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                Foto del Paciente (URL o Cargar Archivo)
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [(ngModel)]="animalEnEdicion.foto_url"
+                  placeholder="https://ejemplo.com/foto.jpg"
+                  class="flex-1 h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                <label class="h-10 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer shrink-0 border border-slate-200">
+                  <svg class="w-4 h-4 mr-1 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Subir</span>
+                  <input type="file" accept="image/*" (change)="onFotoAnimalSeleccionada($event)" class="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Toggle Disponible para Adopción -->
+            <div class="sm:col-span-2 flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200/80">
+              <div>
+                <span class="block text-xs font-bold text-[#170B3D]">Disponible para Adopción</span>
+                <span class="block text-[11px] text-gray-500">Permite registrar al animal como candidato a adopción responsable</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" [(ngModel)]="animalEnEdicion.disponible_adopcion" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4141a5]"></div>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PIE DEL MODAL CON ACCIONES -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
+        <span class="text-[11px] text-gray-500 hidden sm:inline-block">
+          Modificando ficha de: <strong>{{ animalEnEdicion.nombre || 'Paciente' }}</strong>
+        </span>
+
+        <div class="flex items-center gap-2.5 ml-auto">
+          <button
+            type="button"
+            (click)="cerrarModalEditarAnimal()"
+            [disabled]="guardandoEdicionAnimal"
+            class="px-4 py-2.5 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer disabled:opacity-50">
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            (click)="guardarEdicionAnimal()"
+            [disabled]="guardandoEdicionAnimal"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-extrabold transition shadow-md active:scale-95 cursor-pointer disabled:opacity-50">
+            <span *ngIf="guardandoEdicionAnimal" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <svg *ngIf="!guardandoEdicionAnimal" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{{ guardandoEdicionAnimal ? 'Guardando Ficha...' : 'Guardar Cambios del Paciente' }}</span>
           </button>
         </div>
       </div>
