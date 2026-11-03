@@ -1132,12 +1132,15 @@
                           <span>✓</span>
                           <span>Descontado ({{ med.cantidadEfectivaAdministrada }} uds)</span>
                         </div>
-                        <button *ngIf="!med.administrado" type="button" (click)="registrarAdministracion(med, i)"
-                          [disabled]="med.administrando"
-                          class="px-2.5 py-1 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-lg text-[10px] font-extrabold uppercase shadow-2xs active:scale-95 transition cursor-pointer flex items-center justify-center gap-1 mx-auto whitespace-nowrap">
-                          <span *ngIf="med.administrando" class="animate-spin">⏳</span>
-                          <span>⚡ Descontar Ahora</span>
-                        </button>
+                        <div *ngIf="!med.administrado" class="flex flex-col items-center gap-1">
+                          <button type="button" (click)="registrarAdministracion(med, i)"
+                            [disabled]="med.administrando"
+                            class="px-2.5 py-1 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-lg text-[10px] font-extrabold uppercase shadow-2xs active:scale-95 transition cursor-pointer flex items-center justify-center gap-1 mx-auto whitespace-nowrap">
+                            <span *ngIf="med.administrando" class="animate-spin">⏳</span>
+                            <span>⚡ Descontar Ahora</span>
+                          </button>
+                          <span class="text-[9px] text-slate-400 font-semibold">o se descuenta al Guardar</span>
+                        </div>
                       </td>
                       <td class="py-2.5 px-3 text-right">
                         <button type="button" (click)="quitarMedicamento(i)"

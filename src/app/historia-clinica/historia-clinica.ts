@@ -2213,10 +2213,20 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         ? (this.mapaStockPorId.get(Number(id)) ?? 0)
         : (this.mapaStockPorNombre.get(nombreKey) ?? 0));
 
+    const uuidMed = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+
     this.medicamentosSeleccionados.push({
       id: !isNaN(id) ? id : null,
+      id_medicamento: !isNaN(id) ? id : null,
       id_tratamiento: null,
       nombre: nombre || 'Medicamento',
+      client_uuid: uuidMed,
       principio_activo: medicamento?.principio_activo || '',
       concentracion: medicamento?.concentracion || '',
       presentacion: medicamento?.presentacion || '',
@@ -2338,9 +2348,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       med.administrando = true;
       this.cdr.detectChanges();
 
-      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en historia clínica #' + (this.idHistoria || '')).subscribe({
+      const idMedEfectivo = Number(med.id || med.id_medicamento);
+      this.vetInvSvc.registrarConsumo(idMedEfectivo, cantidad, 'Administración en historia clínica #' + (this.idHistoria || ''), med.nombre).subscribe({
         next: () => {
-          this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
+          this.comprasService.descontarStockMedicamento(idMedEfectivo, cantidad, med.nombre).pipe(
             catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
           ).subscribe({
             next: () => {
@@ -2508,6 +2519,68 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.guardando = true;
     const formVal = this.formHistoria.value;
 
+    // Descontar automáticamente del kit de campo cualquier medicamento prescrito que aún no haya sido administrado
+    let farmacosDescontadosAuto = 0;
+    const detallesDescuentoAuto: string[] = [];
+
+    const generarUUID = (): string => {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    };
+
+    if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
+      this.medicamentosSeleccionados.forEach((m: any) => {
+        if (!m.client_uuid) {
+          m.client_uuid = generarUUID();
+        }
+
+        let idMed = Number(m.id || m.id_medicamento);
+        if ((isNaN(idMed) || idMed <= 0) && m.nombre) {
+          const matchMaletin = this.medicamentosMaletin.find(k => k.nombre && k.nombre.trim().toLowerCase() === m.nombre.trim().toLowerCase());
+          if (matchMaletin) {
+            idMed = Number(matchMaletin.id_medicamento || matchMaletin.id);
+            m.id = idMed;
+            m.id_medicamento = idMed;
+          } else {
+            const matchCat = this.medicamentosCatalogo.find(c => c.nombre && c.nombre.trim().toLowerCase() === m.nombre.trim().toLowerCase());
+            if (matchCat) {
+              idMed = Number(matchCat.id_medicamento || matchCat.id);
+              m.id = idMed;
+              m.id_medicamento = idMed;
+            }
+          }
+        }
+
+        const cantUsar = Number(m.cantidadAAdministrar) || 1;
+
+        if (!m.administrado && (idMed > 0 || m.nombre)) {
+          this.vetInvSvc.registrarConsumo(
+            idMed,
+            cantUsar,
+            'Administración al guardar historia clínica #' + (this.idHistoria || ''),
+            m.nombre
+          ).subscribe();
+
+          if (idMed && idMed > 0) {
+            this.comprasService.descontarStockMedicamento(idMed, cantUsar, m.nombre).subscribe();
+          }
+
+          m.administrado = true;
+          m.cantidadEfectivaAdministrada = cantUsar;
+          m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
+          farmacosDescontadosAuto += cantUsar;
+          detallesDescuentoAuto.push(`<b>${m.nombre}</b> (${cantUsar} uds)`);
+        }
+      });
+      this.recargarStockMedicamentos();
+    }
+
     // Procesar lista de problemas formateada
     const problemasDesdeArray = this.problemasClinicos.filter(p => p && p.trim().length > 0);
     const listaProblemasFinal = problemasDesdeArray.length > 0
@@ -2603,31 +2676,22 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       proxima_visita_notas: this.proxima_visita_notas || ''
     };
 
-    (dto as any).medicamentos_usados = this.medicamentosSeleccionados.map(m => ({
-      id_medicamento: Number(m.id || m.id_medicamento),
-      unidades: Number(m.cantidadEfectivaAdministrada || m.cantidadAAdministrar) || 1,
-      nombre: m.nombre
-    }));
-
-    // Descontar del kit de campo cualquier medicamento prescrito que aún no haya sido administrado
-    if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
-      this.medicamentosSeleccionados.forEach((m: any) => {
-        if (!m.administrado && (m.id || m.id_medicamento)) {
-          const cantUsar = Number(m.cantidadAAdministrar) || 1;
-          const idMed = Number(m.id || m.id_medicamento);
-          this.vetInvSvc.registrarConsumo(
-            idMed,
-            cantUsar,
-            'Administración al guardar historia clínica #' + (this.idHistoria || '')
-          ).subscribe();
-          this.comprasService.descontarStockMedicamento(idMed, cantUsar, m.nombre).subscribe();
-          m.administrado = true;
-          m.cantidadEfectivaAdministrada = cantUsar;
-          m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
+    (dto as any).medicamentos_usados = (this.medicamentosSeleccionados || [])
+      .map((m: any) => {
+        let idMed = Number(m.id || m.id_medicamento);
+        if ((isNaN(idMed) || idMed <= 0) && m.nombre) {
+          const matchMaletin = this.medicamentosMaletin.find(k => k.nombre && k.nombre.trim().toLowerCase() === m.nombre.trim().toLowerCase());
+          idMed = Number(matchMaletin?.id_medicamento || matchMaletin?.id || 0);
         }
-      });
-      this.recargarStockMedicamentos();
-    }
+        const unidades = Number(m.cantidadEfectivaAdministrada || m.cantidadAAdministrar) || 1;
+        return {
+          client_uuid: m.client_uuid || generarUUID(),
+          id_medicamento: idMed,
+          unidades: unidades,
+          nombre: m.nombre
+        };
+      })
+      .filter((m: any) => m.id_medicamento > 0 && m.unidades > 0);
 
     const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
     const idAnimalEfectivo = Number(
@@ -2726,9 +2790,24 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           ? 'Se ha registrado la nueva consulta clínica en la base de datos con éxito.'
           : 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.';
 
+        let htmlAlerta = `<p class="mb-3 text-slate-700">${textoAlerta}</p>`;
+        if (detallesDescuentoAuto.length > 0) {
+          htmlAlerta += `
+            <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-left text-xs">
+              <p class="font-black text-emerald-800 flex items-center gap-1.5 mb-1.5">
+                <span>🎒</span> Descuento automático de Maletín (${farmacosDescontadosAuto} uds):
+              </p>
+              <ul class="list-disc list-inside text-emerald-700 space-y-0.5">
+                ${detallesDescuentoAuto.map(d => `<li>${d}</li>`).join('')}
+              </ul>
+              <p class="mt-2 text-[11px] text-emerald-600 font-medium">El inventario de tu kit de campo ha sido actualizado en tiempo real.</p>
+            </div>
+          `;
+        }
+
         Swal.fire({
           title: tituloAlerta,
-          text: textoAlerta,
+          html: htmlAlerta,
           icon: 'success',
           confirmButtonColor: '#4141a5',
           confirmButtonText: 'Aceptar',

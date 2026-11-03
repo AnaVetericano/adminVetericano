@@ -1522,7 +1522,9 @@ export class HistoriaClinicaService {
       examenes_solicitados: dto.examenes_solicitados || [],
       materiales_utilizados: dto.materiales_utilizados || '',
       prioridad: dto.prioridad || 'Normal',
-      resultado_estado: dto.resultado_estado || 'Estable'
+      resultado_estado: dto.resultado_estado || 'Estable',
+      medicamentos_usados: (dto as any).medicamentos_usados || [],
+      sincronizacion_offline: false
     };
 
     // 2. Función constructora de respaldo para creación de expediente si el animal no tenía HC previa (POST)
@@ -1588,7 +1590,9 @@ export class HistoriaClinicaService {
           canilAsignado: dto.ingreso_cba?.['canil_asignado'] || null,
           funcionarioRecibeCBA: dto.ingreso_cba?.['funcionario_recibe_cba'] || null,
           funcionarioRecibe: dto.ingreso_cba?.['funcionario_recibe_cba'] || null
-        }
+        },
+        medicamentos_usados: (dto as any).medicamentos_usados || [],
+        sincronizacion_offline: false
       };
 
       return this.crearExpedienteCompleto(payloadPost);
