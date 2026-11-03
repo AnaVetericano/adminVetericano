@@ -185,26 +185,51 @@ Recargar</button>
         </p>
       </div>
 
-      <!-- Cantidad a Asignar -->
+      <!-- Selector de Tipo de Operación: Asignar (+) o Retirar (-) -->
       <div>
         <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-          Cantidad a Transferir al Maletín <span class="text-rose-500">*</span>
+          Tipo de Movimiento <span class="text-rose-500">*</span>
+        </label>
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+          <button
+            type="button"
+            (click)="tipoOperacionAsignar = 'ASIGNAR'"
+            class="py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer"
+            [ngClass]="tipoOperacionAsignar === 'ASIGNAR' ? 'bg-[#4141a5] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'">
+            <span>＋ Dotar a Maletín</span>
+          </button>
+          <button
+            type="button"
+            (click)="tipoOperacionAsignar = 'RETIRO'"
+            class="py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer"
+            [ngClass]="tipoOperacionAsignar === 'RETIRO' ? 'bg-[#170B3D] text-[#F1C63C] shadow-xs' : 'text-slate-600 hover:text-slate-900 bg-transparent'">
+            <span>− Retirar / Devolver</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cantidad a Asignar / Retirar -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+          {{ tipoOperacionAsignar === 'ASIGNAR' ? 'Cantidad a Transferir al Maletín' : 'Cantidad a Retirar y Reintegrar a Bodega' }} <span class="text-rose-500">*</span>
         </label>
         <div class="flex items-center gap-3">
           <input
             type="number"
             [(ngModel)]="cantidadAAsignar"
             [min]="1"
-            [max]="loteSeleccionado?.stock || 1"
+            [max]="tipoOperacionAsignar === 'ASIGNAR' ? (loteSeleccionado?.stock || 1) : 9999"
             class="flex-1 h-11 px-3.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-[#170B3D] outline-none focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 shadow-xs"
             placeholder="Ej. 10" />
           <span class="text-xs font-bold text-gray-400 uppercase">Unidades</span>
         </div>
         <!-- Indicador de Nuevo Balance -->
         <div *ngIf="loteSeleccionado" class="flex justify-between items-center text-xs mt-1.5 px-1 font-medium">
-          <span class="text-gray-400">Stock restante en CBA tras la entrega:</span>
-          <span [ngClass]="(loteSeleccionado.stock - cantidadAAsignar) <= 10 ? 'text-[#8d7010] font-black' : 'text-[#4141a5] font-bold'">
-            {{ loteSeleccionado.stock - cantidadAAsignar }} uds
+          <span class="text-gray-400">
+            {{ tipoOperacionAsignar === 'ASIGNAR' ? 'Stock restante en CBA tras la entrega:' : 'Nuevo stock en CBA tras reintegrar:' }}
+          </span>
+          <span [ngClass]="tipoOperacionAsignar === 'ASIGNAR' && (loteSeleccionado.stock - cantidadAAsignar) <= 10 ? 'text-[#8d7010] font-black' : 'text-[#4141a5] font-bold'">
+            {{ tipoOperacionAsignar === 'ASIGNAR' ? (loteSeleccionado.stock - cantidadAAsignar) : (loteSeleccionado.stock + cantidadAAsignar) }} uds
           </span>
         </div>
       </div>

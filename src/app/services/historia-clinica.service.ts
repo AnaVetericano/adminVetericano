@@ -844,11 +844,45 @@ export class HistoriaClinicaService {
       }));
     }
 
-    // Tratamientos
+    // Tratamientos: consolidar tanto de la consulta actual como de atenciones previas (ej. app móvil / actas)
     let tratamientos: any[] = [];
     const tratRaw = hoja2Obj.tratamientos || ultimaConsulta.tratamientos || raw.tratamientos;
     if (Array.isArray(tratRaw)) {
-      tratamientos = tratRaw;
+      tratamientos = [...tratRaw];
+    }
+
+    // Integrar historial de tratamientos de consultas anteriores del animal (atenciones móviles o de campo)
+    if (Array.isArray(raw.consultas_anteriores)) {
+      raw.consultas_anteriores.forEach((cAnt: any) => {
+        if (Array.isArray(cAnt.tratamientos)) {
+          cAnt.tratamientos.forEach((tAnt: any) => {
+            const idT = tAnt.id_tratamiento || tAnt.id;
+            const nombreT = tAnt.producto_base || tAnt.nombre || tAnt.nombre_medicamento || 'Medicamento';
+            const yaExiste = tratamientos.some((t: any) =>
+              (idT && (t.id_tratamiento === idT || t.id === idT)) ||
+              (t.nombre === nombreT && t.fecha === tAnt.fecha)
+            );
+            if (!yaExiste) {
+              tratamientos.push({
+                ...tAnt,
+                id: idT,
+                id_medicamento: tAnt.id_medicamento || idT,
+                nombre: nombreT,
+                productoBase: nombreT,
+                dosis: tAnt.dosis_basica || tAnt.dosis || '',
+                via: tAnt.via_administracion || tAnt.via || '',
+                frecuencia: tAnt.frecuencia_duracion || tAnt.frecuencia || '',
+                responsable_admin: tAnt.responsable_admin || cAnt.veterinario_nombre || 'Veterinario Móvil CBA',
+                administrado: true,
+                suministrado_clinica: true,
+                cantidadEfectivaAdministrada: tAnt.cantidad_administrada || tAnt.unidades || 1,
+                cantidadAAdministrar: tAnt.cantidad_administrada || tAnt.unidades || 1,
+                fecha: tAnt.fecha || cAnt.fecha_hora || ''
+              });
+            }
+          });
+        }
+      });
     }
 
     const obsExamen = orgObj.observaciones || ultimaConsulta.observaciones_examen || ultimaConsulta.observaciones_sistemas || raw.observaciones_examen || raw.observaciones_sistemas || '';
