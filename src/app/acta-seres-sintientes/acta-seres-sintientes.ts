@@ -2624,6 +2624,28 @@ export class ActaSeresSintientes implements OnInit {
     presentacion: ''
   };
 
+  // Modal para Registro Rápido de Pacientes (CBA)
+  modalRegistrarPacienteAbierto: boolean = false;
+  guardandoNuevoPacienteModal: boolean = false;
+  nuevoPacienteModal = {
+    tutorDocumento: '2222222222',
+    tutorNombre: 'CBA - Albergue Municipal Popayán',
+    tutorTelefono: '3000000000',
+    tutorDireccion: 'Centro de Bienestar Animal, Popayán',
+    tutorCorreo: '',
+    nombre: '',
+    especie: 'Canino',
+    raza: 'Mestizo',
+    sexo: 'Macho',
+    peso: null as number | null,
+    color: '',
+    microchip: '',
+    estadoReproductivo: 'Entero',
+    fotoUrl: '',
+    motivoConsulta: 'Ingreso y valoración clínica de paciente',
+    estadoGeneral: 'Estable'
+  };
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -2714,7 +2736,7 @@ export class ActaSeresSintientes implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Sí, generar historia',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#059669',
+      confirmButtonColor: '#4141a5',
       cancelButtonColor: '#64748b',
       customClass: {
         popup: 'rounded-2xl',
@@ -3724,6 +3746,131 @@ export class ActaSeresSintientes implements OnInit {
       this.seguimientoSeleccionado.paciente_sexo = sexo;
       this.cdr.detectChanges();
     }
+  }
+
+  // =========================================================================
+  // BOTONES SUPERIORES: HISTORIAS GUARDADAS Y REGISTRO DE PACIENTES
+  // =========================================================================
+  irAHistoriasGuardadas(): void {
+    this.router.navigate(['/inicio-admin/historia-clinica/lista']);
+  }
+
+  abrirModalRegistrarPaciente(): void {
+    this.nuevoPacienteModal = {
+      tutorDocumento: '2222222222',
+      tutorNombre: 'CBA - Albergue Municipal Popayán',
+      tutorTelefono: '3000000000',
+      tutorDireccion: 'Centro de Bienestar Animal, Popayán',
+      tutorCorreo: '',
+      nombre: '',
+      especie: 'Canino',
+      raza: 'Mestizo',
+      sexo: 'Macho',
+      peso: null,
+      color: '',
+      microchip: '',
+      estadoReproductivo: 'Entero',
+      fotoUrl: '',
+      motivoConsulta: 'Ingreso y valoración clínica de paciente',
+      estadoGeneral: 'Estable'
+    };
+    this.modalRegistrarPacienteAbierto = true;
+    this.cdr.detectChanges();
+  }
+
+  cerrarModalRegistrarPaciente(): void {
+    this.modalRegistrarPacienteAbierto = false;
+    this.guardandoNuevoPacienteModal = false;
+    this.cdr.detectChanges();
+  }
+
+  onFotoNuevoPacienteSeleccionada(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.nuevoPacienteModal.fotoUrl = reader.result as string;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  guardarNuevoPacienteDesdeModal(): void {
+    if (!this.nuevoPacienteModal.nombre.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor ingresa el nombre o alias del paciente.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.guardandoNuevoPacienteModal = true;
+
+    const payload = {
+      animal: {
+        nombre: this.nuevoPacienteModal.nombre.trim(),
+        especie: this.nuevoPacienteModal.especie,
+        raza: this.nuevoPacienteModal.raza.trim() || 'Mestizo',
+        sexo: this.nuevoPacienteModal.sexo,
+        peso: this.nuevoPacienteModal.peso ? Number(this.nuevoPacienteModal.peso) : null,
+        color: this.nuevoPacienteModal.color || '',
+        microchip: this.nuevoPacienteModal.microchip || null,
+        estado_reproductivo: this.nuevoPacienteModal.estadoReproductivo,
+        fotoUrl: this.nuevoPacienteModal.fotoUrl || null
+      },
+      tenedor: {
+        documento: this.nuevoPacienteModal.tutorDocumento.trim() || '2222222222',
+        documento_identidad: this.nuevoPacienteModal.tutorDocumento.trim() || '2222222222',
+        nombre: this.nuevoPacienteModal.tutorNombre.trim() || 'CBA Popayán',
+        nombre_completo: this.nuevoPacienteModal.tutorNombre.trim() || 'CBA Popayán',
+        telefono: this.nuevoPacienteModal.tutorTelefono.trim() || '3000000000',
+        direccion: this.nuevoPacienteModal.tutorDireccion.trim() || 'CBA Popayán',
+        correo: this.nuevoPacienteModal.tutorCorreo.trim(),
+        parentesco: 'Tenedor / Responsable'
+      },
+      anamnesicos: {
+        estadoReproductivo: this.nuevoPacienteModal.estadoReproductivo
+      },
+      motivoConsulta: this.nuevoPacienteModal.motivoConsulta.trim() || 'Ingreso y valoración clínica de paciente',
+      examenClinico: {
+        condicionCorporal: this.nuevoPacienteModal.estadoGeneral
+      },
+      hoja2: {
+        diagnosticoPresuntivo: 'Consulta médica general inicial',
+        pronostico: 'Favorable'
+      },
+      hoja3: {
+        ingresaCBA: 'NO'
+      }
+    };
+
+    this.historiaClinicaService.crearExpedienteCompleto(payload).subscribe({
+      next: (resp) => {
+        this.guardandoNuevoPacienteModal = false;
+        this.cerrarModalRegistrarPaciente();
+        this.cargarSeguimientos();
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Paciente registrado!',
+          text: `El paciente ${this.nuevoPacienteModal.nombre} fue registrado con éxito en el sistema.`,
+          confirmButtonColor: '#4141a5'
+        });
+      },
+      error: (err) => {
+        this.guardandoNuevoPacienteModal = false;
+        console.error('Error al registrar paciente:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al registrar',
+          text: err?.error?.detail || err?.message || 'No fue posible registrar el paciente. Verifique su conexión al servidor.',
+          confirmButtonColor: '#4141a5'
+        });
+      }
+    });
   }
 
   // Catálogo de medicamentos

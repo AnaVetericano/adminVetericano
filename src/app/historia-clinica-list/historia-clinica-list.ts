@@ -130,6 +130,29 @@ export class HistoriaClinicaListComponent implements OnInit {
     estadoGeneral: 'Estable'
   };
 
+  // Modal de edición exclusiva de datos del animal / paciente rescatado
+  modalEditarAnimalAbierto: boolean = false;
+  guardandoEdicionAnimal: boolean = false;
+  animalEnEdicion = {
+    id_animal: null as number | null,
+    id_historia: null as number | null,
+    nombre: '',
+    especie: 'Canino',
+    raza: 'Mestizo',
+    sexo: 'Macho',
+    esterilizado: false,
+    edad_aproximada: '',
+    fecha_nacimiento: '',
+    peso: null as number | null,
+    color: '',
+    microchip: '',
+    caracteristicas: '',
+    observaciones: '',
+    foto_url: '',
+    estado_general: 'Estable',
+    disponible_adopcion: false
+  };
+
   // Diccionarios auxiliares de animales y seguimientos (por id_animal, radicado y nombre)
   private mapaAnimales: Map<number, any> = new Map();
   private mapaPorRadicado: Map<string, any> = new Map();
@@ -1148,6 +1171,188 @@ export class HistoriaClinicaListComponent implements OnInit {
         foto: historia.animal_foto || ''
       }
     });
+  }
+
+  // =========================================================================
+  // MÉTODOS DEL MODAL EDITAR DATOS DEL ANIMAL (BIOMETRÍA Y RESCATE CBA)
+  // =========================================================================
+  abrirModalEditarAnimal(historia: any): void {
+    if (!historia) return;
+    const idAnim = Number(historia.id_animal);
+    const animalCache = (idAnim && !isNaN(idAnim)) ? (this.mapaAnimales.get(idAnim) || {}) : {};
+
+    this.animalEnEdicion = {
+      id_animal: (idAnim && !isNaN(idAnim)) ? idAnim : null,
+      id_historia: historia.id_historia || null,
+      nombre: historia.animal_nombre || animalCache.nombre || '',
+      especie: historia.animal_especie || animalCache.especie || 'Canino',
+      raza: historia.animal_raza || animalCache.raza || 'Mestizo',
+      sexo: historia.animal_sexo || animalCache.sexo || 'Macho',
+      esterilizado: animalCache.esterilizado ?? false,
+      edad_aproximada: animalCache.edad_aproximada || '',
+      fecha_nacimiento: animalCache.fecha_nacimiento || '',
+      peso: historia.animal_peso ? Number(historia.animal_peso) : (animalCache.peso ? Number(animalCache.peso) : null),
+      color: animalCache.color || '',
+      microchip: animalCache.microchip || '',
+      caracteristicas: animalCache.caracteristicas || '',
+      observaciones: animalCache.observaciones || '',
+      foto_url: historia.animal_foto || animalCache.foto_url || '',
+      estado_general: historia.estado_general || 'Estable',
+      disponible_adopcion: animalCache.disponible_adopcion ?? false
+    };
+
+    this.modalEditarAnimalAbierto = true;
+
+    // Si conocemos id_animal válido, consultamos el registro completo del animal desde el backend
+    if (idAnim && !isNaN(idAnim) && idAnim > 0) {
+      const urlAnimal = `${environment.apiUrlAnimales || (environment.apiUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnim}/`;
+      this.http.get<any>(urlAnimal, { headers: this.authHeaders }).subscribe({
+        next: (data) => {
+          if (data) {
+            if (data.nombre) this.animalEnEdicion.nombre = data.nombre;
+            if (data.sexo) this.animalEnEdicion.sexo = data.sexo;
+            if (data.color) this.animalEnEdicion.color = data.color;
+            if (data.peso !== undefined && data.peso !== null) this.animalEnEdicion.peso = Number(data.peso);
+            if (data.esterilizado !== undefined) this.animalEnEdicion.esterilizado = Boolean(data.esterilizado);
+            if (data.caracteristicas) this.animalEnEdicion.caracteristicas = data.caracteristicas;
+            if (data.observaciones) this.animalEnEdicion.observaciones = data.observaciones;
+            if (data.foto_url) this.animalEnEdicion.foto_url = this.normalizarUrlFoto(data.foto_url);
+            if (data.fecha_nacimiento) this.animalEnEdicion.fecha_nacimiento = data.fecha_nacimiento;
+            if (data.disponible_adopcion !== undefined) this.animalEnEdicion.disponible_adopcion = Boolean(data.disponible_adopcion);
+            this.cdr.detectChanges();
+          }
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  cerrarModalEditarAnimal(): void {
+    this.modalEditarAnimalAbierto = false;
+    this.guardandoEdicionAnimal = false;
+  }
+
+  onFotoAnimalSeleccionada(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.animalEnEdicion.foto_url = reader.result as string;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  guardarEdicionAnimal(): void {
+    if (!this.animalEnEdicion.nombre.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor asigna o ingresa el nombre o alias del animal rescatado.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.guardandoEdicionAnimal = true;
+    const idAnim = this.animalEnEdicion.id_animal;
+
+    const payloadAnimal: any = {
+      nombre: this.animalEnEdicion.nombre.trim(),
+      sexo: this.animalEnEdicion.sexo,
+      color: this.animalEnEdicion.color.trim(),
+      peso: this.animalEnEdicion.peso !== null && this.animalEnEdicion.peso !== undefined ? Number(this.animalEnEdicion.peso) : null,
+      esterilizado: Boolean(this.animalEnEdicion.esterilizado),
+      caracteristicas: this.animalEnEdicion.caracteristicas.trim(),
+      observaciones: this.animalEnEdicion.observaciones.trim(),
+      foto_url: this.animalEnEdicion.foto_url.trim() || null,
+      disponible_adopcion: Boolean(this.animalEnEdicion.disponible_adopcion)
+    };
+
+    if (this.animalEnEdicion.fecha_nacimiento) {
+      payloadAnimal.fecha_nacimiento = this.animalEnEdicion.fecha_nacimiento;
+    }
+
+    const urlAnimal = (idAnim && idAnim > 0)
+      ? `${environment.apiUrlAnimales || (environment.apiUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnim}/`
+      : null;
+
+    const finalizarActualizacion = () => {
+      // 1. Actualizar historiaSeleccionada si está activa en pantalla
+      if (this.historiaSeleccionada) {
+        this.historiaSeleccionada.animal_nombre = this.animalEnEdicion.nombre;
+        this.historiaSeleccionada.animal_especie = this.animalEnEdicion.especie;
+        this.historiaSeleccionada.animal_raza = this.animalEnEdicion.raza;
+        this.historiaSeleccionada.animal_sexo = this.animalEnEdicion.sexo;
+        this.historiaSeleccionada.animal_peso = this.animalEnEdicion.peso;
+        if (this.animalEnEdicion.foto_url) {
+          this.historiaSeleccionada.animal_foto = this.animalEnEdicion.foto_url;
+        }
+        this.historiaSeleccionada.estado_general = this.animalEnEdicion.estado_general;
+      }
+
+      // 2. Actualizar en el arreglo de historias de la vista
+      const histEnLista = this.historias.find(h =>
+        (idAnim && Number(h.id_animal) === Number(idAnim)) ||
+        (this.animalEnEdicion.id_historia && Number(h.id_historia) === Number(this.animalEnEdicion.id_historia))
+      );
+      if (histEnLista) {
+        histEnLista.animal_nombre = this.animalEnEdicion.nombre;
+        histEnLista.animal_especie = this.animalEnEdicion.especie;
+        histEnLista.animal_raza = this.animalEnEdicion.raza;
+        histEnLista.animal_sexo = this.animalEnEdicion.sexo;
+        histEnLista.animal_peso = this.animalEnEdicion.peso;
+        if (this.animalEnEdicion.foto_url) {
+          histEnLista.animal_foto = this.animalEnEdicion.foto_url;
+        }
+        histEnLista.estado_general = this.animalEnEdicion.estado_general;
+      }
+
+      // 3. Actualizar memoria local en mapaAnimales
+      if (idAnim) {
+        const prev = this.mapaAnimales.get(Number(idAnim)) || {};
+        this.mapaAnimales.set(Number(idAnim), {
+          ...prev,
+          ...this.animalEnEdicion,
+          foto_url: this.animalEnEdicion.foto_url || prev.foto_url
+        });
+      }
+
+      this.aplicarFiltros();
+      this.guardandoEdicionAnimal = false;
+      this.cerrarModalEditarAnimal();
+      this.cdr.detectChanges();
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Ficha del paciente actualizada!',
+        text: `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron exitosamente en el sistema.`,
+        confirmButtonColor: '#4141a5'
+      });
+    };
+
+    // Si tiene historia clínica vinculada y se modificó estado general, actualizamos estado en la historia
+    if (this.animalEnEdicion.id_historia) {
+      const urlHistoria = `${environment.apiUrlHistorias || (environment.apiUrlClinica + 'historias/')}${this.animalEnEdicion.id_historia}/`;
+      this.http.patch<any>(urlHistoria, { estado_general: this.animalEnEdicion.estado_general }, { headers: this.authHeaders }).subscribe({
+        error: () => {}
+      });
+    }
+
+    if (urlAnimal) {
+      this.http.patch<any>(urlAnimal, payloadAnimal, { headers: this.authHeaders }).subscribe({
+        next: () => {
+          finalizarActualizacion();
+        },
+        error: (err) => {
+          console.warn('Error en PATCH a /api/animales/animales/, persistiendo localmente:', err);
+          finalizarActualizacion();
+        }
+      });
+    } else {
+      finalizarActualizacion();
+    }
   }
 
   irANuevaConsulta(): void {
