@@ -272,18 +272,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   modoTextoEnriquecido: boolean = false;
 
   listaSistemasOrganicos = [
-    { clave: 'general', nombre: '1. Estado General / Actitud', icono: '⚡' },
-    { clave: 'hidratacion', nombre: '2. Estado de Hidratación', icono: '💧' },
-    { clave: 'tegumentario', nombre: '3. Sistema Tegumentario (Piel y Pelo)', icono: '🐾' },
-    { clave: 'ojos', nombre: '4. Ojos y Anexos Oculares', icono: '👁️' },
-    { clave: 'oidos', nombre: '5. Oídos y Conducto Auditivo', icono: '👂' },
-    { clave: 'nariz', nombre: '6. Nariz y Cavidad Nasal', icono: '👃' },
-    { clave: 'digestivo', nombre: '7. Sistema Digestivo', icono: '🥣' },
-    { clave: 'respiratorio', nombre: '8. Sistema Respiratorio', icono: '🫁' },
-    { clave: 'nervioso', nombre: '9. Sistema Nervioso', icono: '🧠' },
-    { clave: 'musculoesqueletico', nombre: '10. Músculo-Esquelético', icono: '🦴' },
-    { clave: 'cardiovascular', nombre: '11. Sistema Cardiovascular', icono: '❤️' },
-    { clave: 'genitourinario', nombre: '12. Sistema Genitourinario', icono: '🚻' }
+    { clave: 'general', nombre: '1. Estado General / Actitud' },
+    { clave: 'hidratacion', nombre: '2. Estado de Hidratación' },
+    { clave: 'tegumentario', nombre: '3. Sistema Tegumentario (Piel y Pelo)' },
+    { clave: 'ojos', nombre: '4. Ojos y Anexos Oculares' },
+    { clave: 'oidos', nombre: '5. Oídos y Conducto Auditivo' },
+    { clave: 'nariz', nombre: '6. Nariz y Cavidad Nasal' },
+    { clave: 'digestivo', nombre: '7. Sistema Digestivo' },
+    { clave: 'respiratorio', nombre: '8. Sistema Respiratorio' },
+    { clave: 'nervioso', nombre: '9. Sistema Nervioso' },
+    { clave: 'musculoesqueletico', nombre: '10. Músculo-Esquelético' },
+    { clave: 'cardiovascular', nombre: '11. Sistema Cardiovascular' },
+    { clave: 'genitourinario', nombre: '12. Sistema Genitourinario' }
   ];
 
   get conteoInfoBasica(): string {
@@ -667,6 +667,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   normalizarUrlFoto(url: any): string {
     if (!url || typeof url !== 'string' || !url.trim()) return '';
     const u = url.trim();
+    if (u === 'null' || u === 'undefined' || u === 'None') return '';
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
@@ -677,6 +678,97 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       return `https://backendvetericano-production.up.railway.app/${u}`;
     }
     return `https://backendvetericano-production.up.railway.app/media/${u}`;
+  }
+
+  extraerFotoDeObjeto(item: any): string {
+    if (!item) return '';
+    const extraerPrimera = (val: any): string => {
+      if (!val) return '';
+      if (typeof val === 'string') {
+        const t = val.trim();
+        if (t.startsWith('[')) {
+          try {
+            return extraerPrimera(JSON.parse(t));
+          } catch {
+            return '';
+          }
+        }
+        return t;
+      }
+      if (Array.isArray(val) && val.length > 0) {
+        const primero = val[0];
+        if (typeof primero === 'string') return primero;
+        if (primero && typeof primero === 'object') {
+          return primero.foto || primero.url || primero.imagen || primero.ruta_archivo || primero.foto_url || primero.fotoUrl || '';
+        }
+      }
+      return '';
+    };
+
+    const candidata =
+      item.foto_url ||
+      item.fotoUrl ||
+      item.foto ||
+      extraerPrimera(item.fotos) ||
+      extraerPrimera(item.multimedia) ||
+      extraerPrimera(item.evidencias) ||
+      item.imagen ||
+      item.foto_paciente ||
+      item.imagen_paciente ||
+      item.animales?.[0]?.foto_url ||
+      item.animales?.[0]?.foto ||
+      item.animales?.[0]?.imagen ||
+      item.animal?.foto_url ||
+      item.animal?.foto ||
+      item.animal?.imagen ||
+      '';
+
+    return this.normalizarUrlFoto(candidata);
+  }
+
+  private hidratarFotoDesdeSeguimientos(idAnimal?: number, nombrePaciente?: string, numeroHistoria?: string): void {
+    this.authService.listarSeguimientos().subscribe({
+      next: (resp) => {
+        const lista: any[] = Array.isArray(resp) ? resp : (resp?.results || resp?.data || []);
+        const nomBuscar = String(nombrePaciente || '').trim().toLowerCase();
+        const radBuscar = String(numeroHistoria || '').trim().toLowerCase();
+
+        const coincidencia = lista.find((s: any) => {
+          const idCand = Number(
+            s?.id_animal ??
+            s?.id_animal_id ??
+            s?.animal?.id_animal ??
+            s?.animales?.[0]?.id_animal ??
+            s?.paciente?.id_animal
+          );
+          if (idAnimal && !isNaN(idCand) && idCand === Number(idAnimal)) return true;
+
+          const radCand = String(s?.numero_radicado || s?.radicado || '').trim().toLowerCase();
+          if (radBuscar && radCand && radCand === radBuscar) return true;
+
+          const nomCand = String(
+            s?.nombre_paciente ||
+            s?.nombre_animal ||
+            s?.nombre ||
+            s?.animal?.nombre ||
+            s?.animales?.[0]?.nombre ||
+            ''
+          ).trim().toLowerCase();
+          if (nomBuscar && nomBuscar !== 'paciente' && nomCand && nomCand === nomBuscar) return true;
+
+          return false;
+        });
+
+        if (coincidencia) {
+          const fotoSeg = this.extraerFotoDeObjeto(coincidencia);
+          if (fotoSeg && this.paciente && !this.paciente.foto_url) {
+            this.paciente.foto_url = fotoSeg;
+            this.cdr.detectChanges();
+          }
+        }
+      },
+      error: () => {}
+    });
   }
 
   obtenerColorAvatar(item: any): string {
@@ -1197,7 +1289,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         raza: seg?.paciente_raza || seg?.raza || 'Mestizo',
         sexo: seg?.paciente_sexo || seg?.sexo || 'Hembra',
         peso: Number(seg?.peso_paciente ?? seg?.peso ?? 4.0),
-        foto_url: seg?.foto_url || '',
+        foto_url: this.extraerFotoDeObjeto(seg),
         tenedor_nombre: tutorNom,
         tenedor_documento: tutorCed,
         tenedor_telefono: tutorTel
@@ -1297,6 +1389,15 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.paciente.foto_url = this.normalizarUrlFoto(foto);
         } else if (data.paciente?.foto_url && this.paciente && !this.paciente.foto_url) {
           this.paciente.foto_url = this.normalizarUrlFoto(data.paciente.foto_url);
+        }
+
+        // Si el paciente aún no tiene foto cargada, hidratarla desde los seguimientos / actas
+        if (this.paciente && !this.paciente.foto_url) {
+          this.hidratarFotoDesdeSeguimientos(
+            Number(this.paciente.id_animal || idAnimal),
+            this.paciente.nombre || nombre,
+            data.numero_historia || this.numeroRadicadoActual
+          );
         }
 
         // =====================================================================
