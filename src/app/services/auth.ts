@@ -1,4 +1,4 @@
-﻿import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -189,7 +189,8 @@ export interface CrearMedicamento {
   tipo?: string;
   via_administracion?: string;
   via?: string;
-  activo: boolean;
+  activo?: boolean;
+  estado?: boolean;
 }
 
 export interface ActualizarMedicamento {
@@ -199,7 +200,8 @@ export interface ActualizarMedicamento {
   tipo?: string;
   via_administracion?: string;
   via?: string;
-  activo: boolean;
+  activo?: boolean;
+  estado?: boolean;
 }
 
 @Injectable({
@@ -679,7 +681,7 @@ export class AuthService {
 
   cambiarEstadoMedicamento(id: any, activo: boolean): Observable<any> {
     const idReal = typeof id === 'object' ? (id.id_medicamento || id.id) : id;
-    return this.http.patch<any>(`${this.apiUrlMedicamentos}${idReal}/`, { activo });
+    return this.http.patch<any>(`${this.apiUrlMedicamentos}${idReal}/`, { activo, estado: activo });
   }
 
   // AnaC 

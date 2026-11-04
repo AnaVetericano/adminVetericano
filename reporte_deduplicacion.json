@@ -1,0 +1,218 @@
+[
+  {
+    "idx_duplicado": 81,
+    "texto_duplicado": "NEOLYTIC MUCOLITICO X 120 ML9",
+    "idx_original": 80,
+    "texto_original": "NEOLYTIC MUCOLITICO X 120 ML",
+    "nombre_unificado": "NEOLYTIC MUCOLITICO",
+    "cantidad_unificada": "X 120 ML",
+    "razon": "Error tipográfico en celda original (ML9 vs ML). Misma presentación."
+  },
+  {
+    "idx_duplicado": 89,
+    "texto_duplicado": "BERBEEL - OMACOOR AMPOLLA X 5 MILILITROS10",
+    "idx_original": 88,
+    "texto_original": "BERBEEL - OMACOOR AMPOLLA X 5 MILILITROS",
+    "nombre_unificado": "BERBEEL - OMACOOR",
+    "cantidad_unificada": "AMPOLLA X 5 MILILITROS",
+    "razon": "Error tipográfico en celda original (MILILITROS10 vs MILILITROS). Misma presentación."
+  },
+  {
+    "idx_duplicado": 146,
+    "texto_duplicado": "ZEEL AMPOLLA X 5 ML ",
+    "idx_original": 145,
+    "texto_original": "ZEELAMPOLLA X 5 ML ",
+    "nombre_unificado": "ZEEL COMPOSITUM",
+    "cantidad_unificada": "AMPOLLA X 5 ML",
+    "razon": "Espaciado y denominación idéntica ('ZEELAMPOLLA' vs 'ZEEL AMPOLLA'). Misma ampolla x 5 ml."
+  },
+  {
+    "idx_duplicado": 160,
+    "texto_duplicado": "VERDEMINT X 50 GRAMOS",
+    "idx_original": 83,
+    "texto_original": "VERDEMINT X 50 GRAMS",
+    "nombre_unificado": "VERDEMINT",
+    "cantidad_unificada": "X 50 GRAMOS",
+    "razon": "Ítem idéntico repetido en la lista ('VERDEMINT X 50 GRAMS' vs 'X 50 GRAMOS')."
+  },
+  {
+    "idx_duplicado": 219,
+    "texto_duplicado": "Agujas hipodermica # 23 G 1\"",
+    "idx_original": 172,
+    "texto_original": "AGUJA 23 DESECHABLE X UNIDAD ",
+    "nombre_unificado": "AGUJA HIPODERMICA 23G",
+    "cantidad_unificada": "X UNIDAD",
+    "razon": "Ítem técnico idéntico ('AGUJA 23 DESECHABLE' vs 'Agujas hipodermica # 23 G 1\"')."
+  },
+  {
+    "idx_duplicado": 222,
+    "texto_duplicado": "Bolsas rojas/ negras / \nblancas / verdes",
+    "idx_original": 221,
+    "texto_original": "Bolsas rojas/ negras / blancas / verdes",
+    "nombre_unificado": "BOLSAS PARA RESIDUOS HOSPITALARIOS",
+    "cantidad_unificada": "PAQUETE",
+    "razon": "Celda idéntica consecutiva ('Bolsas rojas/ negras / blancas / verdes')."
+  },
+  {
+    "idx_duplicado": 223,
+    "texto_duplicado": "Buretrol",
+    "idx_original": 26,
+    "texto_original": "BURETROLE X UNIDAD",
+    "nombre_unificado": "BURETROL",
+    "cantidad_unificada": "X UNIDAD",
+    "razon": "Ítem técnico idéntico ('BURETROLE X UNIDAD' vs 'Buretrol')."
+  },
+  {
+    "idx_duplicado": 224,
+    "texto_duplicado": "Campos quirúrgicos de\nmesa de cirugía",
+    "idx_original": 99,
+    "texto_original": "CAMPO QUIRÚRGICO DESECHABLE X UNIDAD",
+    "nombre_unificado": "CAMPO QUIRURGICO DESECHABLE",
+    "cantidad_unificada": "X UNIDAD",
+    "razon": "Insumo quirúrgico idéntico ('Campos quirúrgicos de mesa de cirugía' vs 'CAMPO QUIRÚRGICO DESECHABLE')."
+  },
+  {
+    "idx_duplicado": 225,
+    "texto_duplicado": "Equipo venoclisis\nmacrogoteo",
+    "idx_original": 57,
+    "texto_original": "VENOCLISIS X UNIDAD MACRO",
+    "nombre_unificado": "VENOCLISIS MACRO",
+    "cantidad_unificada": "X UNIDAD MACRO",
+    "razon": "Ítem técnico idéntico ('VENOCLISIS X UNIDAD MACRO' vs 'Equipo venoclisis macrogoteo')."
+  },
+  {
+    "idx_duplicado": 226,
+    "texto_duplicado": "Equipo venoclisis microgoteo",
+    "idx_original": 169,
+    "texto_original": "VENOCLISIS X UNIDAD MICRO",
+    "nombre_unificado": "VENOCLISIS MICRO",
+    "cantidad_unificada": "X UNIDAD MICRO",
+    "razon": "Ítem técnico idéntico ('VENOCLISIS X UNIDAD MICRO' vs 'Equipo venoclisis microgoteo')."
+  },
+  {
+    "idx_duplicado": 230,
+    "texto_duplicado": "Jeringas 3 ml",
+    "idx_original": 107,
+    "texto_original": "JERINGA 3 ML",
+    "nombre_unificado": "JERINGA 3 ML",
+    "cantidad_unificada": "3 ML",
+    "razon": "Ítem técnico idéntico ('JERINGA 3 ML' vs 'Jeringas 3 ml')."
+  },
+  {
+    "idx_duplicado": 231,
+    "texto_duplicado": "Jeringas 5 ml",
+    "idx_original": 39,
+    "texto_original": "JERINGA X 5ML",
+    "nombre_unificado": "JERINGA 5 ML",
+    "cantidad_unificada": "X 5ML",
+    "razon": "Ítem técnico idéntico ('JERINGA X 5ML' vs 'Jeringas 5 ml')."
+  },
+  {
+    "idx_duplicado": 249,
+    "texto_duplicado": "Extracto natural de hígado de cerdo 0,083 g (equivalente a 5 mcg de Vit.B12)",
+    "idx_original": 216,
+    "texto_original": "Extracto de hígado (5 mcg de Vit B12)  0.083 g",
+    "nombre_unificado": "EXTRACTO DE HIGADO",
+    "cantidad_unificada": "0.083 G",
+    "razon": "Fórmula idéntica repetida ('Extracto natural de hígado de cerdo 0,083 g' vs 'Extracto de hígado 0.083 g')."
+  },
+  {
+    "idx_duplicado": 250,
+    "texto_duplicado": "Ácido salicílico  2g/100ml,\nAzufre 2g/100ml",
+    "idx_original": 244,
+    "texto_original": "ácido salicílico azufre antisarna",
+    "nombre_unificado": "ACIDO SALICILICO + AZUFRE ANTISARNA",
+    "cantidad_unificada": "SOLUCION",
+    "razon": "Fórmula queratolítica idéntica ('ácido salicílico azufre antisarna' vs 'Ácido salicílico 2g/100ml, Azufre 2g/100ml')."
+  },
+  {
+    "idx_duplicado": 257,
+    "texto_duplicado": "Oxido de Zinc: 10.0 g,\nLidocaina: 5.0 g,\nAlantona: 2.0 g,\nNeomicina: 1.0 g, Excipientes c.s.p.: 100.0 g",
+    "idx_original": 252,
+    "texto_original": "Neomicina sulfato 1 g Alantoína 2 g Lidocaína\n2.75 g Óxido de zinc 10 g Aceite de kalaya csp 100\ngr.",
+    "nombre_unificado": "NEOMICINA + ALANTOINA + LIDOCAINA + OXIDO DE ZINC",
+    "cantidad_unificada": "POMADA CSP 100 G",
+    "razon": "Fórmula dermatológica idéntica ('Oxido de Zinc... Lidocaina... Neomicina...' vs formulación tópica)."
+  },
+  {
+    "idx_duplicado": 258,
+    "texto_duplicado": "UT balance Oxido de Zinc:\n10.0 g, Lidocaina: 5.0 g,\nAlantona: 2.0 g,\nNeomicina: 1.0 g,\nExcipientes c.s.p.: 100.0 g",
+    "idx_original": 252,
+    "texto_original": "Neomicina sulfato 1 g Alantoína 2 g Lidocaína\n2.75 g Óxido de zinc 10 g Aceite de kalaya csp 100\ngr.",
+    "nombre_unificado": "NEOMICINA + ALANTOINA + LIDOCAINA + OXIDO DE ZINC",
+    "cantidad_unificada": "POMADA CSP 100 G",
+    "razon": "Fórmula dermatológica idéntica ('UT balance Oxido de Zinc...')."
+  },
+  {
+    "idx_duplicado": 271,
+    "texto_duplicado": "Vacuna quintuple canino",
+    "idx_original": 121,
+    "texto_original": "CANIGEN MHA2PPI/L QUINTUPLE X DOSIS",
+    "nombre_unificado": "CANIGEN QUINTUPLE",
+    "cantidad_unificada": "DOSIS",
+    "razon": "Biológico idéntico ('Vacuna quintuple canino' vs 'CANIGEN MHA2PPI/L QUINTUPLE X DOSIS')."
+  },
+  {
+    "idx_duplicado": 272,
+    "texto_duplicado": "Vacuna Leucemia felina",
+    "idx_original": 129,
+    "texto_original": "VACUNA LEUCEMIA FELINA",
+    "nombre_unificado": "VACUNA LEUCEMIA FELINA",
+    "cantidad_unificada": "DOSIS",
+    "razon": "Biológico idéntico ('Vacuna Leucemia felina' vs 'VACUNA LEUCEMIA FELINA')."
+  },
+  {
+    "idx_duplicado": 273,
+    "texto_duplicado": "Prueba de dispemper canino",
+    "idx_original": 63,
+    "texto_original": "TEST MOQUILLO- DISTEMPER",
+    "nombre_unificado": "TEST MOQUILLO-DISTEMPER",
+    "cantidad_unificada": "UNIDAD",
+    "razon": "Prueba diagnóstica idéntica ('Prueba de dispemper canino' vs 'TEST MOQUILLO- DISTEMPER')."
+  },
+  {
+    "idx_duplicado": 275,
+    "texto_duplicado": "Prueba de parvovirus",
+    "idx_original": 91,
+    "texto_original": "TEST DE PARVOVIRUS BIONOTE X UNIDAD",
+    "nombre_unificado": "TEST DE PARVOVIRUS BIONOTE",
+    "cantidad_unificada": "X UNIDAD",
+    "razon": "Prueba diagnóstica idéntica ('Prueba de parvovirus' vs 'TEST DE PARVOVIRUS BIONOTE X UNIDAD')."
+  },
+  {
+    "idx_duplicado": 277,
+    "texto_duplicado": "Triple felina",
+    "idx_original": 128,
+    "texto_original": "VACUNA PUREVAX TRIPLE FELINA X DOSIS",
+    "nombre_unificado": "PUREVAX TRIPLE FELINA",
+    "cantidad_unificada": "X DOSIS",
+    "razon": "Biológico idéntico ('Triple felina' vs 'VACUNA PUREVAX TRIPLE FELINA X DOSIS')."
+  },
+  {
+    "idx_duplicado": 278,
+    "texto_duplicado": "Solución salina 500ml",
+    "idx_original": 125,
+    "texto_original": "CLORURO DE SODIO AL 0,9% X 500 ML",
+    "nombre_unificado": "CLORURO DE SODIO 0.9%",
+    "cantidad_unificada": "0,9% X 500 ML",
+    "razon": "Solución cristaloide idéntica ('Solución salina 500ml' vs 'CLORURO DE SODIO AL 0,9% X 500 ML')."
+  },
+  {
+    "idx_duplicado": 279,
+    "texto_duplicado": "Tubo tapa roja vacutainer",
+    "idx_original": 120,
+    "texto_original": "TUBO TAPA ROJA X UNIDAD",
+    "nombre_unificado": "TUBO VACUTAINER ROJO",
+    "cantidad_unificada": "X UNIDAD",
+    "razon": "Insumo de laboratorio idéntico ('Tubo tapa roja vacutainer' vs 'TUBO TAPA ROJA X UNIDAD')."
+  },
+  {
+    "idx_duplicado": 280,
+    "texto_duplicado": "Tubo vacutainer tapa lila",
+    "idx_original": 119,
+    "texto_original": "TUBO LILA X UNIDAD",
+    "nombre_unificado": "TUBO VACUTAINER LILA",
+    "cantidad_unificada": "X UNIDAD",
+    "razon": "Insumo de laboratorio idéntico ('Tubo vacutainer tapa lila' vs 'TUBO LILA X UNIDAD')."
+  }
+]
