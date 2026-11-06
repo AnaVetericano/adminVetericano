@@ -7,7 +7,8 @@ import {
   VeterinaryInventoryService,
   VeterinaryKitItem,
   ConsumoValidationResult,
-  KitAlertasResponse
+  KitAlertasResponse,
+  SolicitudKitPayload
 } from '../services/veterinary-inventory.service';
 import { AuthService } from '../services/auth';
 
@@ -40,6 +41,14 @@ export class VeterinaryInventoryComponent implements OnInit {
   esAdmin = false;
   veterinariosDisponibles: any[] = [];
   veterinarioSeleccionadoId: number = 0;
+
+  // Modal de Solicitud de Reposición a Farmacia CBA
+  modalNuevaSolicitudAbierto = false;
+  medicamentoSolicitudId: number | null = null;
+  cantidadSolicitud: number = 10;
+  justificacionSolicitud = 'Reposición de existencias para cuota operativa de maletín de campo CBA.';
+  guardandoSolicitud = false;
+  catalogoMedicamentos: any[] = [];
 
   // Modal de Prescripción / Consumo
   modalConsumoAbierto = false;
@@ -95,6 +104,7 @@ export class VeterinaryInventoryComponent implements OnInit {
             } catch {}
           }
           this.cargarDatos();
+    this.cargarCatalogoGeneral();
         },
         error: () => this.cargarDatos()
       });
@@ -458,5 +468,75 @@ export class VeterinaryInventoryComponent implements OnInit {
       }
     });
   }
-}
 
+  cargarCatalogoGeneral(): void {
+    this.authService.listarMedicamentos().subscribe({
+      next: (res: any) => {
+        const datos = Array.isArray(res) ? res : (res?.results || res?.data || []);
+        this.catalogoMedicamentos = datos;
+      },
+      error: () => {}
+    });
+  }
+
+  abrirModalNuevaSolicitud(idMedPredeterminado?: number): void {
+    this.medicamentoSolicitudId = idMedPredeterminado || (this.itemsKit.length > 0 ? this.itemsKit[0].id_medicamento : null);
+    this.cantidadSolicitud = 10;
+    this.justificacionSolicitud = 'Reposición de existencias para cuota operativa de maletín de campo CBA.';
+    this.modalNuevaSolicitudAbierto = true;
+  }
+
+  cerrarModalNuevaSolicitud(): void {
+    this.modalNuevaSolicitudAbierto = false;
+  }
+
+  radicarSolicitudReposicion(): void {
+    if (!this.medicamentoSolicitudId || this.cantidadSolicitud <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Datos Incompletos',
+        text: 'Por favor selecciona un medicamento y una cantidad mayor a cero.',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    this.guardandoSolicitud = true;
+
+    const payload: SolicitudKitPayload = {
+      tipo: 'REPOSICION',
+      justificacion: this.justificacionSolicitud.trim() || 'Reposición de medicamentos para kit veterinario',
+      items: [
+        {
+          id_medicamento: Number(this.medicamentoSolicitudId),
+          cantidad_solicitada: Number(this.cantidadSolicitud)
+        }
+      ]
+    };
+
+    this.inventoryService.crearSolicitudKit(payload).subscribe({
+      next: (resp) => {
+        this.guardandoSolicitud = false;
+        this.modalNuevaSolicitudAbierto = false;
+        Swal.fire({
+          icon: 'success',
+          title: '¡Solicitud Radicada!',
+          text: `La solicitud ante Farmacia CBA ha sido radicada exitosamente bajo el código #${resp?.id_solicitud || ''}.`,
+          confirmButtonColor: '#4141A5'
+        });
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.guardandoSolicitud = false;
+        const msg = err.error?.detail || err.error?.error || err.error?.mensaje || 'Error al radicar la solicitud de reposición.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al Radicar',
+          text: msg,
+          confirmButtonColor: '#4141A5'
+        });
+      }
+    });
+  }
+
+}

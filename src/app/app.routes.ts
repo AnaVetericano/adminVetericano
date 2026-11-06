@@ -27,6 +27,7 @@ import { Inventario } from './inventario/inventario';
 import { PerfilComponent } from './perfil/perfil';
 import { VeterinaryInventoryComponent } from './veterinary-inventory/veterinary-inventory.component';
 import { DashboardJuridicoComponent } from './dashboard-juridico/dashboard-juridico';
+import { DashboardVeterinarioComponent } from './dashboard-veterinario/dashboard-veterinario';
 import { AuthService } from './services/auth';
 
 export const routes: Routes = [
@@ -50,7 +51,7 @@ export const routes: Routes = [
             return '/inicio-admin/dashboard-juridico';
           }
           if (auth.isVeterinario()) {
-            return '/inicio-admin/acta-seres-sintientes';
+            return '/inicio-admin/dashboard-veterinario';
           }
           return '/inicio-admin/graficas';
         }
@@ -70,6 +71,7 @@ export const routes: Routes = [
       { path: 'dashboard-juridico', component: DashboardJuridicoComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Jurídico'] } },
 
       // Módulo Veterinario (y Administrador con acceso de supervisión)
+      { path: 'dashboard-veterinario', component: DashboardVeterinarioComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'inventario-veterinario', component: VeterinaryInventoryComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'acta-seres-sintientes', component: ActaSeresSintientes, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historias-clinicas', component: HistoriaClinicaListComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },

@@ -26,7 +26,7 @@ export const loginGuard: CanActivateFn = () => {
     if (authService.isJuridico()) {
       router.navigate(['/inicio-admin/dashboard-juridico']);
     } else if (authService.isVeterinario()) {
-      router.navigate(['/inicio-admin/acta-seres-sintientes']);
+      router.navigate(['/inicio-admin/dashboard-veterinario']);
     } else {
       router.navigate(['/inicio-admin']);
     }
@@ -75,7 +75,7 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   if (authService.isJuridico()) {
     router.navigate(['/inicio-admin/dashboard-juridico']);
   } else if (authService.isVeterinario()) {
-    router.navigate(['/inicio-admin/acta-seres-sintientes']);
+    router.navigate(['/inicio-admin/dashboard-veterinario']);
   } else {
     router.navigate(['/inicio-admin']);
   }

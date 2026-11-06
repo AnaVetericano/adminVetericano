@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 
 import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-peticion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, DashboardJuridicoComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, DashboardJuridicoComponent, RouterLink],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'
 })
@@ -138,15 +140,26 @@ export class Peticion implements OnInit {
     return this.funcionarios;
   }
 
+  get puedeAsignarOReasignar(): boolean {
+    return this.authService.isAdmin() || this.authService.isJuridico();
+  }
+
+  get esVeterinario(): boolean {
+    return this.authService.isVeterinario();
+  }
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
     private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public authService: AuthService
   ) { }
 
   ngOnInit(): void {
-    if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
+    if (this.esVeterinario) {
+      this.vistaJuridica = 'peticiones';
+    } else if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
       this.vistaJuridica = 'dashboard';
     }
     this.reporteForm = this.fb.group({
