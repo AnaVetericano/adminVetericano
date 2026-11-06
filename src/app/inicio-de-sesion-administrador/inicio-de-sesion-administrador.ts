@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -72,7 +72,7 @@ export class InicioDeSesionAdministradorComponent {
         if (this.authService.isJuridico()) {
           this.router.navigate(['/inicio-admin/dashboard-juridico']);
         } else if (this.authService.isVeterinario()) {
-          this.router.navigate(['/inicio-admin/acta-seres-sintientes']);
+          this.router.navigate(['/inicio-admin/dashboard-veterinario']);
         } else {
           this.router.navigate(['/inicio-admin']);
         }
