@@ -27,6 +27,7 @@ import { Inventario } from './inventario/inventario';
 import { PerfilComponent } from './perfil/perfil';
 import { VeterinaryInventoryComponent } from './veterinary-inventory/veterinary-inventory.component';
 import { DashboardJuridicoComponent } from './dashboard-juridico/dashboard-juridico';
+import { InventarioJuridicoComponent } from './inventario-juridico/inventario-juridico';
 import { DashboardVeterinarioComponent } from './dashboard-veterinario/dashboard-veterinario';
 import { AuthService } from './services/auth';
 
@@ -69,6 +70,7 @@ export const routes: Routes = [
 
       // Módulo Jurídico
       { path: 'dashboard-juridico', component: DashboardJuridicoComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Jurídico'] } },
+      { path: 'inventario-juridico', component: InventarioJuridicoComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Jurídico'] } },
 
       // Módulo Veterinario (y Administrador con acceso de supervisión)
       { path: 'dashboard-veterinario', component: DashboardVeterinarioComponent, canActivate: [roleGuard], data: { roles: ['Veterinario', 'Administrador'] } },
