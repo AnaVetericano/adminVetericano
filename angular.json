@@ -31,11 +31,14 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "fonts": false
+              },
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "3MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",

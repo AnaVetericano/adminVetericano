@@ -149,7 +149,7 @@
         </button>
 
         <!-- Alternar entre Listado y Registrar Petición -->
-        <button type="button" (click)="toggleVistaPeticiones()"
+        <button *ngIf="vistaJuridica === 'peticiones'" type="button" (click)="toggleVistaPeticiones()"
           class="px-5 py-2.5 bg-white border border-[#4141a5]/30 text-[#4141a5] font-bold rounded-2xl text-xs uppercase tracking-wider shadow-xs hover:bg-[#4141a5] hover:text-white transition-all active:scale-95 cursor-pointer">
           {{ mostrarLista ? '+ Registrar nueva petición' : '← Volver al listado' }}
         </button>
@@ -157,10 +157,49 @@
     </div>
   </header>
 
+  <!-- BARRA DE PESTAÑAS PRINCIPALES DEL MÓDULO JURÍDICO (SOLO ADMIN Y JURÍDICO) -->
+  <div *ngIf="puedeAsignarOReasignar" class="bg-white border-b border-gray-200 px-4 sm:px-8 py-2.5 w-full shadow-2xs shrink-0 lg:pl-24">
+    <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          (click)="setVistaJuridica('dashboard')"
+          [ngClass]="vistaJuridica === 'dashboard' ? 'bg-[#170B3D] text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+          class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span>Dashboard Jurídico</span>
+        </button>
+        <button
+          type="button"
+          (click)="setVistaJuridica('peticiones')"
+          [ngClass]="vistaJuridica === 'peticiones' ? 'bg-[#170B3D] text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+          class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-2 transition-all cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+          <span>Casos y Peticiones</span>
+        </button>
+      </div>
+
+      <div class="text-[11px] text-gray-500 font-medium">
+        <span *ngIf="vistaJuridica === 'dashboard'">Módulo unificado · Estadísticas de rescate y tiempos de respuesta</span>
+        <span *ngIf="vistaJuridica === 'peticiones'">Gestión operativa · Bandeja de entrada y asignaciones</span>
+      </div>
+    </div>
+  </div>
+
   <!-- CONTENEDOR PRINCIPAL -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col lg:pl-20 transition-all duration-300">
 
-    
+    <!-- VISTA DASHBOARD JURÍDICO EMBEBIDO -->
+    <div *ngIf="vistaJuridica === 'dashboard'" class="w-full animate-fade-in">
+      <app-dashboard-juridico (verCasos)="setVistaJuridica('peticiones')"></app-dashboard-juridico>
+    </div>
+
+    <!-- VISTA CASOS Y PETICIONES TRADICIONAL -->
+    <ng-container *ngIf="vistaJuridica === 'peticiones'">
 
     <!-- ========================================================================= -->
     <!-- 3.1. PANEL PRINCIPAL DE JURÍDICO: RESUMEN Y MÉTRICAS VISUALES            -->
@@ -186,7 +225,8 @@
         [ngClass]="{'ring-2 ring-amber-400': filtroEstadoAsignacion === 'Sin asignar'}">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Por Asignar</span>
-          <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold">⏳</span>
+          <span
+            class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold">⏳</span>
         </div>
         <div class="mt-2">
           <div class="text-2xl font-black text-amber-600">{{ totalPendientes }}</div>
@@ -200,7 +240,8 @@
         [ngClass]="{'ring-2 ring-blue-400': filtroEstadoAsignacion === 'Asignadas'}">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">Asignadas</span>
-          <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">🩺</span>
+          <span
+            class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">🩺</span>
         </div>
         <div class="mt-2">
           <div class="text-2xl font-black text-blue-600">{{ totalAsignadas }}</div>
@@ -520,7 +561,8 @@
         </button>
       </div>
 
-    
+    </ng-container>
+
     <!-- ========================================================================= -->
     <!-- 3.6. FORMULARIO REGISTRAR PETICIÓN (CON OPCIÓN DE PRIORIDAD/URGENCIA)     -->
     <!-- ========================================================================= -->
@@ -533,7 +575,7 @@
           <p class="text-xs text-gray-500">Registrar formalmente un caso de maltrato o atención de animal de compañía
           </p>
         </div>
-        <button type="button" (click)="toggleVistaPeticiones()"
+        <button *ngIf="vistaJuridica === 'peticiones'" type="button" (click)="toggleVistaPeticiones()"
           class="text-xs font-bold text-[#4141a5] hover:underline cursor-pointer">
           ← Cancelar y volver al listado
         </button>
@@ -678,7 +720,7 @@
           </div>
 
           <div class="pt-4 border-t border-gray-100 flex justify-end gap-3">
-            <button type="button" (click)="toggleVistaPeticiones()"
+            <button *ngIf="vistaJuridica === 'peticiones'" type="button" (click)="toggleVistaPeticiones()"
               class="px-5 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase hover:bg-gray-50 cursor-pointer">
               Cancelar
             </button>

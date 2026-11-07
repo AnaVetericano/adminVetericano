@@ -23,21 +23,16 @@
       </div>
     </div>
     <div class="flex items-center gap-2.5 self-end md:self-center">
-      <button
-        type="button"
-        class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-        </svg>
-        <span>Imprimir Formato</span>
-      </button>
+      <!-- Botón: Historias Guardadas -->
       <button 
         type="button"
-        class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer uppercase tracking-wider">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        (click)="irAHistoriasGuardadas()"
+        class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer tracking-wide"
+        title="Ver listado de historias clínicas y expedientes archivados">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
-        <span>Exportar Paquete</span>
+        <span>Historias Guardadas</span>
       </button>
     </div>
   </header>
@@ -426,24 +421,18 @@
           </div>
 
           <div class="flex items-center gap-2 self-stretch sm:self-auto justify-end">
-            <!-- Botón Opción 2: Generar Historia Clínica Directa (solo si el paciente está pendiente) -->
-            <button *ngIf="!esAnimalAtendido(seguimientoSeleccionado)"
+            <!-- Botón Opción 2: Generar Historia Clínica Directa (Morado Institucional) -->
+            <button
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-emerald-400/30 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
-            </button>
-
-            <button type="button" (click)="irAEditarHistoria(seguimientoSeleccionado, $event)"
-              class="inline-flex items-center justify-center px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/15 uppercase tracking-wider"
-              title="Abrir formulario para editar evolución y diagnósticos de este paciente">
-              Editar Historia Clínica
             </button>
           </div>
         </div>
@@ -1022,15 +1011,60 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 2: EXÁMENES (Agrupa Hoja 3: Pruebas y Hoja 4: 12 Sistemas)  -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'examenes'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+  <div *ngIf="pestanaActiva === 'examenes'" class="space-y-6 max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-    <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL (HOJAS 3 Y 4) -->
-    <div class="lg:col-span-2 space-y-6">
+      <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL (HOJAS 3 Y 4) -->
+      <div class="lg:col-span-2 space-y-6 min-w-0">
 
-      <!-- ========================================================================= -->
-      <!-- EXAMEN FÍSICO Y EVALUACIÓN CLÍNICA (EN CAMPO) - DISEÑO INSTITUCIONAL      -->
-      <!-- ========================================================================= -->
-      <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA (IDÉNTICA AL PASO 1) -->
+        <div *ngIf="seguimientoSeleccionado"
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          <div class="flex items-center gap-3 flex-wrap">
+            <!-- BOTÓN PRINCIPAL DE RETORNO: HOVER CON COLOR #F1C63C -->
+            <button type="button" (click)="deseleccionarPaciente()"
+              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-[#F1C63C] text-slate-900 hover:text-slate-950 font-black text-xs rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 cursor-pointer group border border-white/20"
+              title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
+              <span
+                class="w-7 h-7 rounded-lg bg-slate-900 group-hover:bg-slate-950 text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
+                ←
+              </span>
+              <span class="tracking-wide uppercase font-black">VOLVER A LA LISTA DE ANIMALES</span>
+            </button>
+
+            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+
+            <div
+              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs text-white/80">
+                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+                  seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+            <!-- Botón Opción 2: Generar Historia Clínica Directa (Morado Institucional) -->
+            <button
+              type="button"
+              (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
+              [disabled]="guardandoExpediente"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
+              <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- EXAMEN FÍSICO Y EVALUACIÓN CLÍNICA (EN CAMPO) - DISEÑO INSTITUCIONAL      -->
+        <!-- ========================================================================= -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs border border-white/10">
@@ -1061,7 +1095,7 @@
         </div>
 
         <!-- Cuadrícula de Constantes Fisiológicas y Parámetros Clínicos (Paleta Oficial - Consulta de Campo) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5">
           <!-- 1. Frecuencia Cardíaca (lpm) -->
           <div class="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs hover:border-[#4141a5]/40 hover:bg-white hover:shadow-xs transition-all">
             <div class="w-11 h-11 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0 border border-[#4141a5]/20 shadow-2xs">
@@ -1830,13 +1864,59 @@
       </div>
     </aside>
 
+    </div>
   </div>
 
   <!-- ================================================================= -->
   <!-- PESTAÑA 3: TRATAMIENTOS (Terapéutica, Rescate y Cierre Legal)       -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'tratamientos'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-    <div class="lg:col-span-2 space-y-6">
+  <div *ngIf="pestanaActiva === 'tratamientos'" class="space-y-6 max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div class="lg:col-span-2 space-y-6 min-w-0">
+
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA (IDÉNTICA AL PASO 1) -->
+        <div *ngIf="seguimientoSeleccionado"
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          <div class="flex items-center gap-3 flex-wrap">
+            <!-- BOTÓN PRINCIPAL DE RETORNO: HOVER CON COLOR #F1C63C -->
+            <button type="button" (click)="deseleccionarPaciente()"
+              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-[#F1C63C] text-slate-900 hover:text-slate-950 font-black text-xs rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 cursor-pointer group border border-white/20"
+              title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
+              <span
+                class="w-7 h-7 rounded-lg bg-slate-900 group-hover:bg-slate-950 text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
+                ←
+              </span>
+              <span class="tracking-wide uppercase font-black">VOLVER A LA LISTA DE ANIMALES</span>
+            </button>
+
+            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+
+            <div
+              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs text-white/80">
+                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+                  seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+            <!-- Botón Opción 2: Generar Historia Clínica Directa (Morado Institucional) -->
+            <button
+              type="button"
+              (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
+              [disabled]="guardandoExpediente"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
+              <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
+            </button>
+          </div>
+        </div>
       <!-- ========================================================================= -->
       <!-- 1. TRATAMIENTOS Y SUMINISTROS (EN CAMPO)                                  -->
       <!-- ========================================================================= -->
@@ -2251,21 +2331,21 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <!-- Botón Opción 2: Generar Historia Clínica Directa (solo si el paciente está pendiente) -->
-            <button *ngIf="!esAnimalAtendido(seguimientoSeleccionado)"
+            <!-- Botón Opción 2: Generar Historia Clínica Directa (Morado Institucional) -->
+            <button
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer border border-emerald-400/30 disabled:opacity-50">
+              class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 uppercase tracking-wider bg-[#4141a5] hover:bg-[#33338b] text-white cursor-pointer border border-white/20 disabled:opacity-50">
               <span *ngIf="guardandoExpediente" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando Historia...' : 'Generar Historia Clínica Directa' }}</span>
             </button>
 
             <button type="button" (click)="irAEditarHistoria(seguimientoSeleccionado)"
-              class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 uppercase tracking-wider bg-[#4141A5] hover:bg-[#170B3D] text-white cursor-pointer">
+              class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 uppercase tracking-wider bg-[#170B3D] hover:bg-[#23125d] text-white cursor-pointer border border-white/15">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -2351,6 +2431,322 @@
       </div>
     </aside>
 
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL REGISTRAR PACIENTES (CENTRO DE BIENESTAR ANIMAL CBA)                 -->
+  <!-- ========================================================================= -->
+  <div
+    *ngIf="modalRegistrarPacienteAbierto"
+    class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in overflow-y-auto">
+
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden my-auto">
+
+      <!-- Encabezado del Modal -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-slate-50 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black shadow-md">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
+                Registrar Paciente
+              </h2>
+              <span class="bg-[#4141a5]/10 text-[#4141a5] text-[10px] font-black px-2 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
+                CBA Popayán
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 font-medium">
+              Ingreso y apertura rápida de expediente para atención clínica veterinaria
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="cerrarModalRegistrarPaciente()"
+          class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+          title="Cerrar modal">
+          ✕
+        </button>
+      </div>
+
+      <!-- Cuerpo del Modal (2 Columnas) -->
+      <div class="p-6 overflow-y-auto space-y-6 text-xs flex-1">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- COLUMNA 1: DATOS DEL PACIENTE / MASCOTA -->
+          <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#170B3D]"></span>
+                <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                  1. Datos del Paciente (Animal)
+                </h3>
+              </div>
+              <span class="text-[10px] text-gray-400 font-bold uppercase">Biometría</span>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Nombre -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Nombre del Paciente <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPacienteModal.nombre"
+                  placeholder="Ej. Toby, Luna, Manchitas..."
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-slate-800 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Especie y Raza -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Especie <span class="text-rose-500">*</span>
+                  </label>
+                  <select
+                    [(ngModel)]="nuevoPacienteModal.especie"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                    <option value="Canino">Canino</option>
+                    <option value="Felino">Felino</option>
+                    <option value="Equino">Equino</option>
+                    <option value="Bovino">Bovino</option>
+                    <option value="Porcino">Porcino</option>
+                    <option value="Aves">Aves</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Raza
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.raza"
+                    placeholder="Ej. Mestizo, Criollo..."
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Sexo y Peso -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Sexo
+                  </label>
+                  <select
+                    [(ngModel)]="nuevoPacienteModal.sexo"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Peso (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    [(ngModel)]="nuevoPacienteModal.peso"
+                    placeholder="Ej. 12.5"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Color y Microchip -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Color / Pelaje
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.color"
+                    placeholder="Ej. Negro con blanco"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Microchip / Placa
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.microchip"
+                    placeholder="Código opcional"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-mono focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Estado Reproductivo -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Estado Reproductivo
+                </label>
+                <select
+                  [(ngModel)]="nuevoPacienteModal.estadoReproductivo"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                  <option value="Entero">Entero</option>
+                  <option value="Castrado / Esterilizado">Castrado / Esterilizado</option>
+                  <option value="Gestante">Gestante</option>
+                  <option value="En celo">En celo</option>
+                </select>
+              </div>
+
+              <!-- Foto URL o Archivo -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Foto del Paciente (URL o Cargar Archivo)
+                </label>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.fotoUrl"
+                    placeholder="https://ejemplo.com/foto.jpg"
+                    class="flex-1 h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                  <label class="h-10 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer shrink-0 border border-slate-200">
+                    <svg class="w-4 h-4 mr-1 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span>Subir</span>
+                    <input type="file" accept="image/*" (change)="onFotoNuevoPacienteSeleccionada($event)" class="hidden" />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COLUMNA 2: DATOS DEL RESPONSABLE / CUSTODIA Y CONSULTA -->
+          <div class="bg-slate-50/80 rounded-2xl p-4 sm:p-5 border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#4141a5]"></span>
+                <h3 class="font-extrabold text-xs text-[#170B3D] uppercase tracking-wider">
+                  2. Responsable / Tenedor y Motivo
+                </h3>
+              </div>
+              <span class="text-[10px] text-gray-400 font-bold uppercase">Custodia CBA</span>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Nombre del Responsable / Institución -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Nombre del Tenedor / Custodia
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPacienteModal.tutorNombre"
+                  placeholder="Ej. CBA - Albergue Municipal Popayán"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Documento y Teléfono -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Documento / Cédula
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.tutorDocumento"
+                    placeholder="Ej. 2222222222"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                    Teléfono / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.tutorTelefono"
+                    placeholder="Ej. 3124567890"
+                    class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+                </div>
+              </div>
+
+              <!-- Dirección / Procedencia -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Dirección o Lugar de Rescate
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="nuevoPacienteModal.tutorDireccion"
+                  placeholder="Ej. Barrio Bolívar, Comuna 4..."
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition" />
+              </div>
+
+              <!-- Motivo de Ingreso / Atención -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Motivo de Ingreso / Atención
+                </label>
+                <textarea
+                  [(ngModel)]="nuevoPacienteModal.motivoConsulta"
+                  rows="2"
+                  placeholder="Ej. Rescate en vía pública, consulta médica general y esterilización..."
+                  class="w-full p-2.5 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition"></textarea>
+              </div>
+
+              <!-- Estado General Inicial -->
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                  Estado Clínico Inicial
+                </label>
+                <select
+                  [(ngModel)]="nuevoPacienteModal.estadoGeneral"
+                  class="w-full h-10 px-3 rounded-xl border border-gray-200 bg-white text-xs font-bold focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 outline-none transition">
+                  <option value="Estable">Estable</option>
+                  <option value="En observación">En observación</option>
+                  <option value="Delicado">Delicado</option>
+                  <option value="Crítico">Crítico</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
+        <p class="text-[11px] text-gray-500 hidden sm:block">
+          El paciente ingresará a la lista de turnos y se creará su expediente clínico oficial.
+        </p>
+
+        <div class="flex items-center gap-2.5 ml-auto">
+          <button
+            type="button"
+            (click)="cerrarModalRegistrarPaciente()"
+            [disabled]="guardandoNuevoPacienteModal"
+            class="px-4 py-2.5 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer disabled:opacity-50">
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            (click)="guardarNuevoPacienteDesdeModal()"
+            [disabled]="guardandoNuevoPacienteModal"
+            class="flex items-center gap-2 px-5 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-extrabold transition shadow-md active:scale-95 cursor-pointer disabled:opacity-50">
+            <span *ngIf="guardandoNuevoPacienteModal" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <svg *ngIf="!guardandoNuevoPacienteModal" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{{ guardandoNuevoPacienteModal ? 'Guardando Paciente...' : 'Guardar y Abrir Turno' }}</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 </div>

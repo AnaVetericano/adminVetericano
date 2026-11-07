@@ -291,6 +291,17 @@ export class HistoriaClinicaService {
       motivoStr = c.motivo_consulta || payload.motivo_consulta || 'Consulta clínica general';
     }
 
+    const fotoAnimal =
+      a.foto_url ||
+      a.fotoUrl ||
+      a.foto ||
+      a.imagen ||
+      payload.foto_url ||
+      payload.fotoUrl ||
+      payload.foto ||
+      (Array.isArray(payload.fotos) && payload.fotos.length > 0 ? payload.fotos[0] : null) ||
+      null;
+
     const payloadBackend = {
       ...payload,
       id_animal: payload.id_animal || a.id_animal || null,
@@ -309,7 +320,10 @@ export class HistoriaClinicaService {
         tamano: a.tamano || '',
         procedencia: a.origen || a.procedencia || 'Rescate callejero',
         microchip: a.microchip || null,
-        estado_reproductivo: a.estado_reproductivo || h.estado_reproductivo || 'No aplica'
+        estado_reproductivo: a.estado_reproductivo || h.estado_reproductivo || 'No aplica',
+        foto_url: fotoAnimal,
+        fotoUrl: fotoAnimal,
+        foto: fotoAnimal
       },
       tenedor: (p.tiene_propietario === false) ? {} : {
         documentoIdentidad: p.documentoIdentidad || p.documento_identidad || p.documento || '',
@@ -830,11 +844,45 @@ export class HistoriaClinicaService {
       }));
     }
 
-    // Tratamientos
+    // Tratamientos: consolidar tanto de la consulta actual como de atenciones previas (ej. app móvil / actas)
     let tratamientos: any[] = [];
     const tratRaw = hoja2Obj.tratamientos || ultimaConsulta.tratamientos || raw.tratamientos;
     if (Array.isArray(tratRaw)) {
-      tratamientos = tratRaw;
+      tratamientos = [...tratRaw];
+    }
+
+    // Integrar historial de tratamientos de consultas anteriores del animal (atenciones móviles o de campo)
+    if (Array.isArray(raw.consultas_anteriores)) {
+      raw.consultas_anteriores.forEach((cAnt: any) => {
+        if (Array.isArray(cAnt.tratamientos)) {
+          cAnt.tratamientos.forEach((tAnt: any) => {
+            const idT = tAnt.id_tratamiento || tAnt.id;
+            const nombreT = tAnt.producto_base || tAnt.nombre || tAnt.nombre_medicamento || 'Medicamento';
+            const yaExiste = tratamientos.some((t: any) =>
+              (idT && (t.id_tratamiento === idT || t.id === idT)) ||
+              (t.nombre === nombreT && t.fecha === tAnt.fecha)
+            );
+            if (!yaExiste) {
+              tratamientos.push({
+                ...tAnt,
+                id: idT,
+                id_medicamento: tAnt.id_medicamento || idT,
+                nombre: nombreT,
+                productoBase: nombreT,
+                dosis: tAnt.dosis_basica || tAnt.dosis || '',
+                via: tAnt.via_administracion || tAnt.via || '',
+                frecuencia: tAnt.frecuencia_duracion || tAnt.frecuencia || '',
+                responsable_admin: tAnt.responsable_admin || cAnt.veterinario_nombre || 'Veterinario Móvil CBA',
+                administrado: true,
+                suministrado_clinica: true,
+                cantidadEfectivaAdministrada: tAnt.cantidad_administrada || tAnt.unidades || 1,
+                cantidadAAdministrar: tAnt.cantidad_administrada || tAnt.unidades || 1,
+                fecha: tAnt.fecha || cAnt.fecha_hora || ''
+              });
+            }
+          });
+        }
+      });
     }
 
     const obsExamen = orgObj.observaciones || ultimaConsulta.observaciones_examen || ultimaConsulta.observaciones_sistemas || raw.observaciones_examen || raw.observaciones_sistemas || '';
@@ -1474,7 +1522,9 @@ export class HistoriaClinicaService {
       examenes_solicitados: dto.examenes_solicitados || [],
       materiales_utilizados: dto.materiales_utilizados || '',
       prioridad: dto.prioridad || 'Normal',
-      resultado_estado: dto.resultado_estado || 'Estable'
+      resultado_estado: dto.resultado_estado || 'Estable',
+      medicamentos_usados: (dto as any).medicamentos_usados || [],
+      sincronizacion_offline: false
     };
 
     // 2. Función constructora de respaldo para creación de expediente si el animal no tenía HC previa (POST)
@@ -1488,7 +1538,9 @@ export class HistoriaClinicaService {
           especie: (dto as any)?.animal?.especie || historiaActual?.paciente?.especie || 'Canino',
           raza: (dto as any)?.animal?.raza || historiaActual?.paciente?.raza || 'Mestizo',
           sexo: (dto as any)?.animal?.sexo || historiaActual?.paciente?.sexo || 'Macho',
-          peso: payloadPatch.peso ?? historiaActual?.paciente?.peso ?? null
+          peso: payloadPatch.peso ?? historiaActual?.paciente?.peso ?? null,
+          foto_url: (dto as any)?.animal?.foto_url || historiaActual?.paciente?.foto_url || null,
+          fotoUrl: (dto as any)?.animal?.foto_url || historiaActual?.paciente?.foto_url || null
         },
         tenedor: {
           nombres: dto.tenedor?.['nombres'] || historiaActual?.paciente?.tenedor_nombre || '',
@@ -1538,7 +1590,9 @@ export class HistoriaClinicaService {
           canilAsignado: dto.ingreso_cba?.['canil_asignado'] || null,
           funcionarioRecibeCBA: dto.ingreso_cba?.['funcionario_recibe_cba'] || null,
           funcionarioRecibe: dto.ingreso_cba?.['funcionario_recibe_cba'] || null
-        }
+        },
+        medicamentos_usados: (dto as any).medicamentos_usados || [],
+        sincronizacion_offline: false
       };
 
       return this.crearExpedienteCompleto(payloadPost);

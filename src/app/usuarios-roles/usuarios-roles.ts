@@ -30,8 +30,8 @@ export class UsuariosRoles implements OnInit{
   usuarioSeleccionadoRol: any = null;
   rolesDisponibles: any[] = [
     { id_rol: 1, nombre_rol: 'Administrador' },
-    { id_rol: 2, nombre_rol: 'Veterinario' },
-    { id_rol: 3, nombre_rol: 'Jurídico' },
+    { id_rol: 2, nombre_rol: 'Jurídico' },
+    { id_rol: 3, nombre_rol: 'Veterinario' },
     { id_rol: 4, nombre_rol: 'Peticionario' }
   ];
 
@@ -51,6 +51,18 @@ export class UsuariosRoles implements OnInit{
     activo: true
   };
 
+  get totalUsuarios(): number {
+    return this.usuarios.length;
+  }
+
+  get totalActivos(): number {
+    return this.usuarios.filter(u => u.activo).length;
+  }
+
+  get totalInactivos(): number {
+    return this.usuarios.filter(u => !u.activo).length;
+  }
+
   constructor(private http: HttpClient,private authService: AuthService,
     private cdr: ChangeDetectorRef, private router:Router
   ) {}
@@ -68,12 +80,26 @@ listarUsuarios(): void {
 
       // Mapeamos los usuarios para asegurar que si no tienen rol, diga 'Indefinido'
       this.usuarios = lista.map((u: any) => {
-        // Extraemos el nombre del rol dependiendo de cómo lo devuelva tu backend (string u objeto)
+        // Extraemos el nombre del rol dependiendo de cómo lo devuelva tu backend (string, objeto o ID)
         let rolTexto = u.nombre_rol;
         
         if (!rolTexto && u.id_rol) {
-          // Si por alguna razón solo llega el ID o viene en un objeto
-          rolTexto = typeof u.id_rol === 'object' ? u.id_rol?.nombre_rol : null;
+          if (typeof u.id_rol === 'object') {
+            rolTexto = u.id_rol?.nombre_rol;
+          } else {
+            const idBuscado = Number(u.id_rol);
+            const r = this.rolesDisponibles.find(rd => Number(rd.id_rol || rd.id) === idBuscado);
+            rolTexto = r ? r.nombre_rol : null;
+          }
+        }
+
+        // Si tenemos texto de rol, normalizamos la presentación
+        if (rolTexto && typeof rolTexto === 'string') {
+          const n = rolTexto.toLowerCase();
+          if (n.includes('adm')) rolTexto = 'Administrador';
+          else if (n.includes('jur')) rolTexto = 'Jurídico';
+          else if (n.includes('vet')) rolTexto = 'Veterinario';
+          else if (n.includes('pet')) rolTexto = 'Peticionario';
         }
 
         return {
@@ -199,7 +225,9 @@ error: (error) => {
     html: mensajeErrorHtml, // IMPORTANTE: Cambiar 'text' por 'html'
     icon: 'error',
     confirmButtonText: 'Cerrar',
-    confirmButtonColor: '#d33'
+    confirmButtonColor: '#991b1b',
+    background: '#FFFFFF',
+    color: '#170B3D'
   });
 }
     });
@@ -286,7 +314,9 @@ actualizarUsuario(): void {
       title: `¿Estás seguro de que deseas ${accion} este usuario?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: nuevoEstado ? '#16a34a' : '#ef4444',
+      confirmButtonColor: nuevoEstado ? '#16a34a' : '#991b1b',
+      background: '#FFFFFF',
+      color: '#170B3D',
       cancelButtonColor: '#ffffff',
       confirmButtonText: `Sí, ${accion}`,
       cancelButtonText: 'Cancelar',

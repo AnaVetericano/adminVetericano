@@ -22,6 +22,9 @@
           <p class="text-xs sm:text-sm text-gray-500 font-medium">
             Maletín asignado a: <span class="font-bold text-[#4141a5]">{{ veterinarioNombre }}</span> · Saldo en tiempo real para atención de animales
           </p>
+          <p class="text-[11px] text-slate-400 font-semibold mt-0.5">
+            ℹ️ Los consumos de medicamentos se descuentan y registran directamente desde la atención en Historia Clínica o Acta de Seres Sintientes.
+          </p>
         </div>
       </div>
 
@@ -339,19 +342,18 @@
                     }
                   </td>
 
-                  <!-- ACCIONES: FORMULAR / REGISTRAR CONSUMO -->
+                  <!-- ACCIONES: AJUSTAR STOCK DE MALETÍN -->
                   <td class="px-5 py-4 text-right">
                     <button
                       type="button"
-                      [disabled]="item.saldoDisponible <= 0"
-                      (click)="abrirModalConsumo(item)"
-                      class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-end gap-1.5 ml-auto active:scale-95 shadow-xs cursor-pointer"
-                      [ngClass]="item.saldoDisponible > 0 ? 'bg-[#4141a5] hover:bg-[#33338b] text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                      (click)="abrirModalAjuste(item)"
+                      title="Ajustar o devolver stock del maletín"
+                      class="px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 active:scale-95 shadow-xs cursor-pointer bg-slate-100 hover:bg-slate-200 text-[#170B3D] border border-slate-300"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                       </svg>
-                      Formular
+                      Ajustar
                     </button>
                   </td>
 
@@ -409,15 +411,15 @@
 
   </main>
 
-  <!-- MODAL / FORMULARIO DE PRESCRIPCIÓN Y REGISTRO DE CONSUMO DE CAMPO -->
-  @if (modalConsumoAbierto && itemSeleccionadoParaConsumo) {
+  <!-- MODAL DE AJUSTE / RETIRO DIRECTO DE STOCK DEL KIT -->
+  @if (modalAjusteAbierto && itemSeleccionadoParaAjuste) {
     <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden animate-in fade-in duration-200">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-5 sm:p-7 border border-gray-100 relative flex flex-col max-h-[95vh]">
         
         <!-- Botón Cerrar -->
         <button
           type="button"
-          (click)="cerrarModalConsumo()"
+          (click)="cerrarModalAjuste()"
           class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 cursor-pointer"
         >
           ✕
@@ -426,13 +428,13 @@
         <!-- Cabecera del Modal -->
         <div class="mb-4 pr-8 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="p-2 bg-[#4141a5]/10 text-[#4141a5] rounded-xl text-base">💊</span>
+            <span class="p-2 bg-[#4141a5]/10 text-[#4141a5] rounded-xl text-base">⚖️</span>
             <div>
               <h2 class="text-base sm:text-xl font-extrabold text-[#170B3D] uppercase tracking-wider">
-                Formular / Registrar Consumo
+                Ajustar Cantidades en Maletín
               </h2>
               <p class="text-xs text-gray-500 font-medium">
-                Descuento directo del inventario del maletín de campo
+                Retiro por devolución a bodega o ajuste de dotación
               </p>
             </div>
           </div>
@@ -443,146 +445,118 @@
           <!-- FICHA DEL PRODUCTO -->
           <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Producto Seleccionado</span>
-              <span class="text-xs font-black px-2.5 py-0.5 rounded-full border"
-                    [ngClass]="itemSeleccionadoParaConsumo.saldoDisponible <= 10 ? 'bg-[#F1C63C]/20 text-[#170B3D] border-[#F1C63C]' : 'bg-[#4141a5]/10 text-[#4141a5] border-[#4141a5]/20'">
-                Saldo Disponible: {{ itemSeleccionadoParaConsumo.saldoDisponible }} uds
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Producto a Ajustar</span>
+              <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
+                Saldo Actual: {{ itemSeleccionadoParaAjuste.saldoDisponible }} uds
               </span>
             </div>
             <h4 class="font-extrabold text-sm sm:text-base text-[#170B3D]">
-              {{ itemSeleccionadoParaConsumo.nombre }}
+              {{ itemSeleccionadoParaAjuste.nombre }}
             </h4>
             <p class="text-xs text-slate-500">
-              {{ itemSeleccionadoParaConsumo.presentacion }} · {{ itemSeleccionadoParaConsumo.tipo }}
+              {{ itemSeleccionadoParaAjuste.presentacion }} · Lote: {{ itemSeleccionadoParaAjuste.lote }}
             </p>
           </div>
 
-          <!-- ALERTA VISUAL DE STOCK BAJO (<= 10 UNIDADES) -->
-          @if (itemSeleccionadoParaConsumo.saldoDisponible <= 10 && itemSeleccionadoParaConsumo.saldoDisponible > 0) {
-            <div class="p-3 rounded-2xl bg-[#F1C63C]/15 border-2 border-[#F1C63C] text-[#170B3D] text-xs flex items-start gap-2.5 shadow-xs animate-in fade-in">
-              <span class="text-base leading-none">⚠️</span>
-              <div>
-                <p class="font-extrabold uppercase text-[10px] text-[#170B3D] tracking-wider">Alerta de Stock Bajo (&le; 10)</p>
-                <!-- MENSAJE TEXTUAL EXACTO EXIGIDO -->
-                <p class="font-bold text-[#170B3D] mt-0.5">
-                  Recuerda que te quedan {{ itemSeleccionadoParaConsumo.saldoDisponible }} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
-                </p>
-              </div>
+          <!-- TIPO DE OPERACIÓN: RETIRO (RESTAR) O INCREMENTAR (SUMAR) -->
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase mb-2">
+              Tipo de Operación <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                (click)="tipoOperacionAjuste = 'RETIRO'"
+                class="py-2.5 px-3 rounded-xl text-xs font-extrabold uppercase tracking-wider border-2 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                [ngClass]="tipoOperacionAjuste === 'RETIRO' ? 'bg-[#170B3D] text-[#F1C63C] border-[#170B3D] shadow-xs' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'"
+              >
+                <span>−</span> Retirar / Devolver
+              </button>
+              <button
+                type="button"
+                (click)="tipoOperacionAjuste = 'ASIGNAR'"
+                class="py-2.5 px-3 rounded-xl text-xs font-extrabold uppercase tracking-wider border-2 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                [ngClass]="tipoOperacionAjuste === 'ASIGNAR' ? 'bg-[#4141a5] text-white border-[#4141a5] shadow-xs' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'"
+              >
+                <span>＋</span> Incrementar / Dotar
+              </button>
             </div>
-          }
+          </div>
 
-          <!-- INPUT DE CANTIDAD A FORMULAR/CONSUMIR CON VALIDACIÓN EN TIEMPO REAL -->
+          <!-- INPUT DE CANTIDAD A AJUSTAR -->
           <div>
             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
-              Cantidad a Formular / Administrar <span class="text-red-500">*</span>
+              Cantidad a {{ tipoOperacionAjuste === 'RETIRO' ? 'descontar / devolver' : 'sumar al maletín' }} <span class="text-red-500">*</span>
             </label>
             <div class="flex items-center gap-3">
               <input
                 type="number"
                 min="1"
-                [(ngModel)]="cantidadConsumo"
-                (ngModelChange)="validarCantidadConsumo()"
-                class="w-32 border-2 rounded-xl px-4 py-2.5 text-base font-extrabold text-center outline-none transition"
-                [ngClass]="validacionConsumo && !validacionConsumo.valido ? 'border-red-500 bg-red-50 text-red-900 focus:ring-2 focus:ring-red-200' : 'border-gray-200 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 bg-white text-slate-800'"
+                [max]="tipoOperacionAjuste === 'RETIRO' ? itemSeleccionadoParaAjuste.saldoDisponible : 9999"
+                [(ngModel)]="cantidadAjuste"
+                class="w-32 border-2 border-gray-200 focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 rounded-xl px-4 py-2.5 text-base font-extrabold text-center outline-none bg-white text-slate-800 transition"
               />
-              <span class="text-xs font-bold text-gray-500">unidades de campo</span>
+              <span class="text-xs font-bold text-gray-500">unidades</span>
             </div>
           </div>
 
-          <!-- MENSAJE DE ERROR CLARO Y BLOQUEO DE ACCIÓN (SI CANTIDAD > SALDO) -->
-          @if (validacionConsumo && !validacionConsumo.valido) {
-            <div class="p-3.5 rounded-2xl bg-red-50 border-2 border-red-300 text-red-900 text-xs space-y-1 shadow-xs animate-in shake">
-              <div class="flex items-center gap-1.5 font-extrabold uppercase text-[11px] text-red-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>Acción Bloqueada: Stock Insuficiente</span>
-              </div>
-              <!-- MENSAJE DE ERROR TEXTUAL EXACTO -->
-              <p class="font-bold text-red-900 leading-relaxed">
-                {{ validacionConsumo.mensajeError }}
-              </p>
+          <!-- SIMULACIÓN DE RESULTADO LÓGICO EXACTO (EJ. 50 - 10 = 40) -->
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">Saldo resultante en maletín:</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs line-through text-slate-400 font-bold">{{ itemSeleccionadoParaAjuste.saldoDisponible }} uds</span>
+              <span class="text-xs font-bold text-slate-400">➔</span>
+              <span class="text-sm font-black px-2.5 py-0.5 rounded-lg text-[#170B3D] bg-[#F1C63C]/30 border border-[#F1C63C]">
+                {{ calcularSaldoAjuste() }} uds
+              </span>
             </div>
+          </div>
 
-            <!-- PRODUCTOS ALTERNATIVOS DISPONIBLES EN STOCK -->
-            @if (validacionConsumo.alternativasDisponibles.length > 0) {
-              <div class="mt-3 p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-extrabold text-[#4141a5] uppercase tracking-wider flex items-center gap-1">
-                    🔄 Alternativas disponibles en tu stock:
-                  </span>
-                  <span class="text-[10px] text-indigo-700 font-bold bg-white px-2 py-0.5 rounded-md border border-indigo-200">
-                    {{ validacionConsumo.alternativasDisponibles.length }} opciones
-                  </span>
-                </div>
-                <p class="text-[11px] text-indigo-800">
-                  Puedes seleccionar una de las siguientes opciones que sí cuentan con saldo en tu maletín:
-                </p>
-
-                <div class="grid grid-cols-1 gap-2 pt-1">
-                  @for (alt of validacionConsumo.alternativasDisponibles; track alt.id_medicamento) {
-                    <div class="bg-white border border-indigo-100 hover:border-[#4141a5] rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-xs transition">
-                      <div class="min-w-0">
-                        <div class="font-bold text-xs text-[#170B3D] truncate">{{ alt.nombre }}</div>
-                        <div class="text-[10px] text-gray-500">{{ alt.tipo }} · {{ alt.presentacion }}</div>
-                      </div>
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-[11px] font-black px-2 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
-                          {{ alt.saldoDisponible }} uds
-                        </span>
-                        <button
-                          type="button"
-                          (click)="seleccionarAlternativa(alt)"
-                          class="px-2.5 py-1 text-xs font-bold text-white bg-[#4141a5] hover:bg-[#33338b] rounded-lg transition active:scale-95 cursor-pointer"
-                        >
-                          Usar esta
-                        </button>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
+          <!-- ALERTA SI INTENTA RETIRAR MÁS DE LO QUE TIENE -->
+          @if (tipoOperacionAjuste === 'RETIRO' && cantidadAjuste > itemSeleccionadoParaAjuste.saldoDisponible) {
+            <div class="p-3 rounded-xl bg-red-50 border border-red-300 text-red-800 text-xs font-bold flex items-center gap-2">
+              <span>⚠️</span>
+              <span>No puedes retirar más de las {{ itemSeleccionadoParaAjuste.saldoDisponible }} unidades disponibles en el maletín.</span>
+            </div>
           }
 
-          <!-- OBSERVACIONES ADICIONALES -->
+          <!-- MOTIVO DEL AJUSTE -->
           <div>
             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
-              Observaciones / Animal Tratado (Opcional)
+              Motivo del Ajuste <span class="text-red-500">*</span>
             </label>
-            <textarea
-              rows="2"
-              [(ngModel)]="observacionesConsumo"
-              placeholder="Ej. Rescate canino callejero, herida infectada en miembro posterior..."
+            <input
+              type="text"
+              [(ngModel)]="motivoAjuste"
+              placeholder="Ej. Devolución de stock no utilizado a bodega general CBA"
               class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 bg-gray-50/50 outline-none focus:border-[#4141a5] focus:bg-white transition"
-            ></textarea>
+            />
           </div>
 
         </div>
 
-        <!-- BOTONES DE ACCIÓN (EL BOTÓN GUARDAR SE DESACTIVA CUANDO LA VALIDACIÓN NO ES VÁLIDA) -->
+        <!-- BOTONES DE ACCIÓN -->
         <div class="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-gray-100 shrink-0">
           <button
             type="button"
-            (click)="cerrarModalConsumo()"
+            (click)="cerrarModalAjuste()"
             class="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider cursor-pointer"
           >
             Cancelar
           </button>
           
-          <!-- BOTÓN GUARDAR: BLOQUEADO Y DESACTIVADO SI SUPERA EL STOCK DISPONIBLE -->
           <button
             type="button"
-            [disabled]="!validacionConsumo || !validacionConsumo.valido || guardandoConsumo"
-            (click)="confirmarConsumo()"
+            [disabled]="cantidadAjuste <= 0 || (tipoOperacionAjuste === 'RETIRO' && cantidadAjuste > itemSeleccionadoParaAjuste.saldoDisponible) || guardandoAjuste"
+            (click)="confirmarAjuste()"
             class="px-5 py-2.5 rounded-xl font-bold transition text-xs uppercase tracking-wider shadow-md flex items-center gap-1.5 cursor-pointer"
-            [ngClass]="validacionConsumo && validacionConsumo.valido && !guardandoConsumo ? 'bg-[#4141a5] hover:bg-[#33338b] text-white active:scale-95' : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60 shadow-none'"
+            [ngClass]="cantidadAjuste > 0 && (tipoOperacionAjuste === 'ASIGNAR' || cantidadAjuste <= itemSeleccionadoParaAjuste.saldoDisponible) && !guardandoAjuste ? 'bg-[#4141a5] hover:bg-[#33338b] text-white active:scale-95' : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60 shadow-none'"
           >
-            @if (guardandoConsumo) {
+            @if (guardandoAjuste) {
               <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
               <span>Guardando...</span>
             } @else {
-              <span>Confirmar y Descontar</span>
+              <span>Confirmar Ajuste</span>
             }
           </button>
         </div>
@@ -591,5 +565,93 @@
     </div>
   }
 
-</div>
 
+  <!-- MODAL: RADICAR NUEVA SOLICITUD DE REPOSICIÓN A FARMACIA CBA -->
+  @if (modalNuevaSolicitudAbierto) {
+    <div class="fixed inset-0 z-50 bg-[#170B3D]/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📦</span>
+            <h3 class="text-base font-extrabold text-[#170B3D]">Solicitar Reposición de Medicamentos</h3>
+          </div>
+          <button (click)="cerrarModalNuevaSolicitud()" class="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 font-bold transition flex items-center justify-center cursor-pointer">✕</button>
+        </div>
+
+        <div class="py-4 space-y-4">
+          <p class="text-xs text-gray-500 font-medium">
+            Radica un requerimiento oficial de dotación para tu kit de campo ante la Farmacia Central CBA Popayán.
+          </p>
+
+          <!-- Selección de Medicamento -->
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Medicamento a Reponer <span class="text-red-500">*</span>
+            </label>
+            <select
+              [(ngModel)]="medicamentoSolicitudId"
+              class="w-full bg-slate-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-[#4141a5] focus:bg-white transition cursor-pointer">
+              <optgroup label="Medicamentos en mi Maletín">
+                <option *ngFor="let item of itemsKit" [value]="item.id_medicamento">
+                  {{ item.nombre }} (Saldo actual: {{ item.saldoDisponible }} un.)
+                </option>
+              </optgroup>
+              <optgroup *ngIf="catalogoMedicamentos.length > 0" label="Catálogo General CBA">
+                <option *ngFor="let med of catalogoMedicamentos" [value]="med.id_medicamento || med.id">
+                  {{ med.nombre }} ({{ med.presentacion || 'General' }})
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Cantidad Solicitada -->
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Cantidad Requerida (Unidades) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="500"
+              [(ngModel)]="cantidadSolicitud"
+              placeholder="Ej. 10"
+              class="w-full bg-slate-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-black text-gray-800 outline-none focus:ring-2 focus:ring-[#4141a5] focus:bg-white transition" />
+            <span class="text-[10px] text-gray-400 mt-1 block">Unidades necesarias para la cobertura de visitas y atenciones.</span>
+          </div>
+
+          <!-- Justificación Operativa -->
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Justificación de la Solicitud
+            </label>
+            <textarea
+              rows="3"
+              [(ngModel)]="justificacionSolicitud"
+              placeholder="Detalla el motivo (stock bajo, alta demanda de esterilizaciones, rescates, etc.)..."
+              class="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 text-xs font-medium text-gray-800 outline-none focus:ring-2 focus:ring-[#4141a5] focus:bg-white transition resize-none"></textarea>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            (click)="cerrarModalNuevaSolicitud()"
+            class="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            [disabled]="guardandoSolicitud || !medicamentoSolicitudId || cantidadSolicitud <= 0"
+            (click)="radicarSolicitudReposicion()"
+            class="px-5 py-2.5 bg-[#4141a5] hover:bg-[#33338b] disabled:bg-gray-300 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5">
+            <span *ngIf="guardandoSolicitud" class="animate-spin">⏳</span>
+            <span>{{ guardandoSolicitud ? 'Radicando...' : 'Radicar ante Farmacia' }}</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>
