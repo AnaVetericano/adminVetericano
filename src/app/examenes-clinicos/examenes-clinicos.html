@@ -1,27 +1,22 @@
 <div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
 
     <!-- ========================================================================= -->
-    <!-- 1. ENCABEZADO INSTITUCIONAL DE CONSULTA                                   -->
+    <!-- 1. ENCABEZADO INSTITUCIONAL DE GESTIÓN                                    -->
     <!-- ========================================================================= -->
     <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
             <div class="flex items-center gap-3.5">
                 <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                 </div>
                 <div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
-                            Catálogo de Exámenes Clínicos
-                        </h1>
-                        <span class="bg-blue-50 text-[#4141a5] text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-blue-200 uppercase tracking-wider">
-                            Solo Consulta
-                        </span>
-                    </div>
+                    <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+                        Exámenes Clínicos
+                    </h1>
                     <p class="text-xs sm:text-sm text-gray-500 font-medium">
-                        Identifica los exámenes y procedimientos disponibles al solicitar pruebas diagnósticas
+                        Crea y administra los exámenes clínicos y procedimientos diagnósticos registrados en el sistema
                     </p>
                 </div>
             </div>
@@ -40,27 +35,91 @@
     <!-- ========================================================================= -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
 
-        <!-- BARRA DE BÚSQUEDA POR NOMBRE (Criterio 2) -->
-        <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300 px-4 gap-3 mb-4 shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input
-                type="text"
-                [(ngModel)]="filtroBusqueda"
-                (input)="filtrarExamenes()"
-                placeholder="Buscar examen clínico por nombre..."
-                class="w-full outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+        <!-- BARRA SUPERIOR: BUSCADOR, FILTROS Y BOTÓN CREAR -->
+        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
 
-            <!-- Botón Limpiar búsqueda -->
-            @if (filtroBusqueda) {
-                <button 
-                    type="button" 
-                    (click)="limpiarBusqueda()" 
-                    class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0">
-                    Limpiar
-                </button>
-            }
+            <!-- BARRA DE BÚSQUEDA Y FILTRO DE ESTADO -->
+            <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full sm:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300">
+                <div class="flex items-center px-4 flex-1 gap-3 min-w-0">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input
+                        id="busqueda-examen-input"
+                        type="text"
+                        [(ngModel)]="filtroBusqueda"
+                        (input)="filtrarExamenes()"
+                        aria-label="Buscar examen clínico por nombre o descripción"
+                        placeholder="Buscar examen clínico por nombre o descripción..."
+                        class="w-full outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+
+                    @if (filtroBusqueda || filtroEstado !== 'todos') {
+                        <button
+                            type="button"
+                            (click)="limpiarBusqueda()"
+                            class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0">
+                            Limpiar
+                        </button>
+                    }
+                </div>
+
+                <div class="h-5 w-px bg-gray-200 shrink-0"></div>
+
+                <!-- BOTÓN Y MENÚ DE FILTROS -->
+                <div class="relative">
+                    <button
+                        type="button"
+                        (click)="toggleMenuFiltro()"
+                        [attr.aria-expanded]="menuFiltroAbierto"
+                        class="px-4 sm:px-5 text-xs sm:text-sm font-bold text-gray-600 hover:text-[#4141a5] transition-colors flex items-center gap-2 shrink-0 h-full">
+                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707v3.172a1 1 0 01-.553.894l-4 2A1 1 0 017 20.172v-9.172a1 1 0 00-.293-.707L.293 7.293A1 1 0 010 6.586V4z"/>
+                        </svg>
+                        <span>Filtros</span>
+                        @if (filtroEstado !== 'todos') {
+                            <span class="w-2 h-2 rounded-full bg-[#4141a5]"></span>
+                        }
+                    </button>
+
+                    @if (menuFiltroAbierto) {
+                        <div class="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                            <button
+                                type="button"
+                                (click)="filtrarPorEstado('todos')"
+                                class="w-full text-left px-4 py-2 text-xs font-bold transition-colors"
+                                [ngClass]="filtroEstado === 'todos' ? 'bg-[#4141a5]/10 text-[#4141a5]' : 'text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5]'">
+                                Todos
+                            </button>
+                            <button
+                                type="button"
+                                (click)="filtrarPorEstado('activo')"
+                                class="w-full text-left px-4 py-2 text-xs font-bold transition-colors"
+                                [ngClass]="filtroEstado === 'activo' ? 'bg-[#4141a5]/10 text-[#4141a5]' : 'text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5]'">
+                                Activos
+                            </button>
+                            <button
+                                type="button"
+                                (click)="filtrarPorEstado('inactivo')"
+                                class="w-full text-left px-4 py-2 text-xs font-bold transition-colors"
+                                [ngClass]="filtroEstado === 'inactivo' ? 'bg-[#4141a5]/10 text-[#4141a5]' : 'text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5]'">
+                                Inactivos
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- BOTÓN CREAR EXAMEN CLÍNICO -->
+            <button
+                type="button"
+                (click)="abrirModalCrear()"
+                class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-5 py-3 rounded-2xl shadow-md transition-all text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap active:scale-95">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Crear Examen Clínico</span>
+            </button>
+
         </div>
 
         <!-- SPINNER DE CARGA INICIAL -->
@@ -71,43 +130,88 @@
             </div>
         }
 
-        <!-- TABLA PAGINADA DE EXÁMENES CLÍNICOS (Criterio 1 y Criterio 3: Read-only) -->
+        <!-- TABLA PAGINADA DE EXÁMENES CLÍNICOS -->
         @if (!cargando && listaFiltrada.length > 0) {
             <div class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
                 <div class="overflow-x-auto overflow-y-auto flex-1">
-                    <table class="w-full text-left border-collapse min-w-[650px]">
+                    <table class="w-full text-left border-collapse min-w-[680px]">
                         <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-xs">
                             <tr>
-                                <th class="px-6 py-4 text-xs font-black tracking-wider text-gray-600 uppercase w-1/3">
+                                <th scope="col" class="px-6 py-4 text-xs font-black tracking-wider text-gray-600 uppercase w-1/4">
                                     Nombre
                                 </th>
-                                <th class="px-6 py-4 text-xs font-black tracking-wider text-gray-600 uppercase w-2/3">
+                                <th scope="col" class="px-6 py-4 text-xs font-black tracking-wider text-gray-600 uppercase w-2/5">
                                     Descripción
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-xs font-black tracking-wider text-gray-600 uppercase text-center">
+                                    Estado
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-xs font-black tracking-wider text-gray-600 uppercase text-center">
+                                    Opciones
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 text-xs sm:text-sm">
                             @for (item of examenesPaginados; track item.id_examen) {
-                                <tr class="hover:bg-[#4141a5]/5 transition-colors">
+                                <tr class="hover:bg-[#4141a5]/5 transition-colors group">
                                     <!-- COLUMNA NOMBRE -->
-                                    <td class="px-6 py-4 align-top">
-                                        <div class="space-y-1">
-                                            <p class="font-extrabold text-[#170B3D] text-xs sm:text-sm leading-snug">
-                                                {{ item.nombre }}
-                                            </p>
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-[#4141a5] border border-blue-100">
-                                                    {{ item.tipo || 'Prueba Diagnóstica' }}
-                                                </span>
-                                            </div>
-                                        </div>
+                                    <td class="px-6 py-4 align-middle">
+                                        <p class="font-extrabold text-[#170B3D] text-xs sm:text-sm leading-snug">
+                                            {{ item.nombre || item.nombre_tipo }}
+                                        </p>
                                     </td>
 
                                     <!-- COLUMNA DESCRIPCIÓN -->
-                                    <td class="px-6 py-4 text-gray-600 text-xs sm:text-sm leading-relaxed align-top">
+                                    <td class="px-6 py-4 text-gray-600 text-xs sm:text-sm leading-relaxed align-middle">
                                         <p class="text-slate-600 font-normal">
-                                            {{ item.descripcion }}
+                                            {{ item.descripcion || 'Sin descripción' }}
                                         </p>
+                                    </td>
+
+                                    <!-- COLUMNA ESTADO -->
+                                    <td class="px-6 py-4 text-center align-middle">
+                                        <span
+                                            class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border"
+                                            [ngClass]="verificarEstadoActivo(item)
+                                                ? 'bg-[#4141a5]/10 text-[#4141a5] border-[#4141a5]/30'
+                                                : 'bg-slate-100 text-slate-500 border-slate-200'">
+                                            <span
+                                                class="w-2 h-2 rounded-full"
+                                                [ngClass]="verificarEstadoActivo(item) ? 'bg-[#4141a5]' : 'bg-slate-400'"></span>
+                                            {{ verificarEstadoActivo(item) ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                    </td>
+
+                                    <!-- COLUMNA OPCIONES (EDITAR + ACTIVAR/DESACTIVAR) -->
+                                    <td class="px-6 py-4 align-middle">
+                                        <div class="flex items-center justify-center gap-3">
+                                            <!-- Botón Editar -->
+                                            <button
+                                                type="button"
+                                                (click)="abrirModalEditar(item)"
+                                                [attr.aria-label]="'Editar examen ' + (item.nombre || item.nombre_tipo)"
+                                                title="Editar examen clínico"
+                                                class="bg-gray-100 hover:bg-[#170B3D] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95">
+                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                                </svg>
+                                            </button>
+
+                                            <!-- Toggle Switch Activar / Inactivar -->
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                [attr.aria-checked]="verificarEstadoActivo(item)"
+                                                [attr.aria-label]="(verificarEstadoActivo(item) ? 'Inactivar ' : 'Activar ') + (item.nombre || item.nombre_tipo)"
+                                                [title]="verificarEstadoActivo(item) ? 'Inactivar examen' : 'Activar examen'"
+                                                (click)="cambiarEstado(item)"
+                                                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                                                [ngClass]="verificarEstadoActivo(item) ? 'bg-[#4141a5]' : 'bg-slate-300'">
+                                                <span
+                                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                                                    [ngClass]="verificarEstadoActivo(item) ? 'translate-x-5' : 'translate-x-0'"></span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -115,7 +219,7 @@
                     </table>
                 </div>
 
-                <!-- PAGINADOR INFERIOR (Criterio 1) -->
+                <!-- PAGINADOR INFERIOR -->
                 <div class="bg-white border-t border-gray-100 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
                     <div class="text-xs text-gray-500 font-medium">
                         Mostrando <span class="font-bold text-gray-800">{{ indiceInicio }}</span> a <span class="font-bold text-gray-800">{{ indiceFin }}</span> de <span class="font-bold text-gray-800">{{ totalRegistros }}</span> exámenes clínicos
@@ -160,35 +264,155 @@
             </div>
         }
 
-        <!-- ESTADO VACÍO (EMPTY STATE) CUANDO LA BÚSQUEDA NO TIENE RESULTADOS (Criterio 4) -->
+        <!-- ESTADO VACÍO CUANDO LA BÚSQUEDA O EL FILTRO NO TIENE RESULTADOS -->
         @if (!cargando && listaFiltrada.length === 0) {
             <div class="bg-white rounded-2xl shadow-xs border border-dashed border-gray-200 flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-3 animate-fade-in">
                 <div class="w-14 h-14 rounded-3xl bg-blue-50 text-[#4141a5] flex items-center justify-center mb-1 shadow-2xs">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                
-                <!-- MENSAJE EXACTO REQUERIDO POR EL CRITERIO 4 -->
+
                 <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
                     No se encontraron exámenes clínicos
                 </h2>
-                
-                <p class="text-xs sm:text-sm text-gray-500 max-w-md">
-                    No existen procedimientos ni pruebas diagnósticas que coincidan con "<span class="font-bold text-gray-700">{{ filtroBusqueda }}</span>".
-                </p>
 
-                <button
-                    type="button"
-                    (click)="limpiarBusqueda()"
-                    class="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-[#4141a5] hover:bg-[#170B3D] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Ver todos los exámenes</span>
-                </button>
+                @if (filtroBusqueda) {
+                    <p class="text-xs sm:text-sm text-gray-500 max-w-md">
+                        No existen procedimientos ni pruebas diagnósticas que coincidan con "<span class="font-bold text-gray-700">{{ filtroBusqueda }}</span>".
+                    </p>
+                } @else {
+                    <p class="text-xs sm:text-sm text-gray-500 max-w-md">
+                        No hay exámenes clínicos registrados bajo el filtro seleccionado.
+                    </p>
+                }
+
+                <div class="flex items-center gap-2 mt-2">
+                    @if (filtroBusqueda || filtroEstado !== 'todos') {
+                        <button
+                            type="button"
+                            (click)="limpiarBusqueda()"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>Ver todos los exámenes</span>
+                        </button>
+                    }
+                    <button
+                        type="button"
+                        (click)="abrirModalCrear()"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4141a5] hover:bg-[#170B3D] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95">
+                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Crear Examen Clínico</span>
+                    </button>
+                </div>
             </div>
         }
 
     </main>
+
+    <!-- ========================================================================= -->
+    <!-- 3. MODAL DE CREACIÓN / EDICIÓN DE EXAMEN CLÍNICO                          -->
+    <!-- ========================================================================= -->
+    @if (modalAbierto) {
+        <div
+            role="dialog"
+            aria-labelledby="modal-examen-titulo"
+            class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-5 sm:p-8 border border-gray-100 relative flex flex-col max-h-[95vh]">
+
+                <!-- Botón cerrar -->
+                <button
+                    type="button"
+                    (click)="cerrarModal()"
+                    aria-label="Cerrar modal"
+                    class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10">
+                    ✕
+                </button>
+
+                <h2 id="modal-examen-titulo" class="text-xl sm:text-2xl font-extrabold text-[#170B3D] mb-4 uppercase tracking-wider pr-8 shrink-0">
+                    {{ esEdicion ? 'Editar Examen Clínico' : 'Crear Examen Clínico' }}
+                </h2>
+
+                <!-- Campos del formulario -->
+                <div class="space-y-3 sm:space-y-4 overflow-y-auto flex-1 pr-1 py-1">
+                    <div>
+                        <label for="examen-nombre" class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Nombre del examen *
+                        </label>
+                        <input
+                            id="examen-nombre"
+                            type="text"
+                            [(ngModel)]="examenActual.nombre_tipo"
+                            placeholder="Ej. Hemograma, Rx columna, Ecografía..."
+                            required
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
+                    </div>
+
+                    <div>
+                        <label for="examen-tipo" class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Tipo de examen
+                        </label>
+                        <select
+                            id="examen-tipo"
+                            [(ngModel)]="examenActual.tipo"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
+                            @for (t of tiposSugeridos; track t) {
+                                <option [value]="t">{{ t }}</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="examen-descripcion" class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Descripción
+                        </label>
+                        <textarea
+                            id="examen-descripcion"
+                            [(ngModel)]="examenActual.descripcion"
+                            placeholder="Describe el propósito o detalles clínicos del examen..."
+                            rows="4"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 resize-none leading-relaxed">
+                        </textarea>
+                    </div>
+
+                    <div>
+                        <label for="examen-estado" class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                            Estado
+                        </label>
+                        <select
+                            id="examen-estado"
+                            [(ngModel)]="examenActual.estado"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex items-center justify-end gap-3 mt-4 pt-3 sm:pt-4 border-t border-gray-100 shrink-0">
+                    <button
+                        type="button"
+                        (click)="cerrarModal()"
+                        [disabled]="guardando"
+                        class="px-4 sm:px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider disabled:opacity-50">
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        (click)="guardarExamen()"
+                        [disabled]="guardando"
+                        class="px-5 sm:px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95 disabled:opacity-50">
+                        {{ guardando ? 'Guardando...' : (esEdicion ? 'Actualizar' : 'Crear') }}
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+
 </div>
