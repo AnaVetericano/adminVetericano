@@ -161,11 +161,6 @@ export class VeterinaryInventoryService {
       if (vetSupervisado && !isNaN(Number(vetSupervisado)) && Number(vetSupervisado) > 0) {
         return Number(vetSupervisado);
       }
-      // Si el admin no ha seleccionado otro, verificar si existe el veterinario de pruebas 41
-      const asignaciones41 = this.obtenerAsignacionesLocales(41);
-      if (asignaciones41.length > 0) {
-        return 41;
-      }
     }
 
     if (sesion?.['id_usuario']) return Number(sesion['id_usuario']);
@@ -174,10 +169,10 @@ export class VeterinaryInventoryService {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return Number(payload['id_usuario'] || payload['user_id'] || payload['id'] || 41);
+        return Number(payload['id_usuario'] || payload['user_id'] || payload['id'] || 0);
       } catch {}
     }
-    return 41;
+    return 0;
   }
 
   /**
@@ -779,10 +774,7 @@ export class VeterinaryInventoryService {
       if (!idNum) return [];
 
       // Aislamiento: leer la clave asignada a este veterinario con fallback al veterinario oficial
-      let data = localStorage.getItem(`${this.STORAGE_ASIGNACIONES_KEY}${idNum}`);
-      if (!data && idNum !== 41) {
-        data = localStorage.getItem(`${this.STORAGE_ASIGNACIONES_KEY}41`);
-      }
+      const data = localStorage.getItem(`${this.STORAGE_ASIGNACIONES_KEY}${idNum}`);
       if (!data) return [];
 
       const items = JSON.parse(data);
@@ -813,8 +805,7 @@ export class VeterinaryInventoryService {
         if (key && (key.startsWith(this.STORAGE_ASIGNACIONES_KEY) || key.startsWith(this.STORAGE_CONSUMOS_KEY))) {
           // Preservar clave si pertenece al veterinario activo actual o al 41
           const esDelActivo = idActivo && key.endsWith(String(idActivo));
-          const esDel41 = key.endsWith('41');
-          if (!esDelActivo && !esDel41) {
+          if (!esDelActivo) {
             keysAEliminar.push(key);
           }
         }

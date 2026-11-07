@@ -36,7 +36,7 @@ export class PerfilComponent implements OnInit {
     tarjeta_profesional: '',
     matricula: '',
     foto: '',
-    rol: 'Veterinario'
+    rol: 'Administrador'
   };
 
   ngOnInit(): void {
@@ -55,6 +55,9 @@ export class PerfilComponent implements OnInit {
       this.authService.obtenerPerfilUsuario(sesion.id_usuario).subscribe({
         next: (res: any) => {
           if (res) {
+            if (res.rol || res.nombre_rol || res.id_rol) {
+              this.usuario.rol = this.authService.normalizarRol(res.rol || res.nombre_rol || res.id_rol);
+            }
             this.usuario.identificacion = res.identificacion ?? this.usuario.identificacion;
             this.usuario.nombre = res.nombre ?? res.first_name ?? this.usuario.nombre;
             this.usuario.apellido = res.apellido ?? res.last_name ?? this.usuario.apellido;
@@ -98,6 +101,7 @@ export class PerfilComponent implements OnInit {
 
   private asignarDatosDesdeSesion(sesion: UserSession): void {
     const sesionAny = sesion as any;
+    const rolActual = sesion.rol || this.authService.userRole() || (this.authService.isAdmin() ? 'Administrador' : 'Veterinario');
     this.usuario = {
       id_usuario: sesion.id_usuario,
       identificacion: sesion.identificacion || '',
@@ -109,7 +113,7 @@ export class PerfilComponent implements OnInit {
       tarjeta_profesional: sesion.tarjeta_profesional || '',
       matricula: sesion.matricula || sesionAny.matricula_profesional || '',
       foto: sesion.foto || sesionAny.foto_perfil || '',
-      rol: sesion.rol || 'Veterinario'
+      rol: rolActual
     };
   }
 
