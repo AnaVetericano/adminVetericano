@@ -472,8 +472,11 @@ export class VeterinaryInventoryService {
             if (tipo === 'ASIGNACION_KIT' && (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')) {
               asignacionesKardexPorMed.set(idM, (asignacionesKardexPorMed.get(idM) || 0) + cant);
             }
-            // Retiro o devolución a bodega
-            else if (tipo.includes('RETIRO') || tipo.includes('DEVOLUCION')) {
+            // Retiro o devolución a bodega (Filtrar exclusivamente el movimiento de salida del kit para no duplicar con la entrada a general)
+            else if (
+              (tipo.includes('RETIRO') || tipo.includes('DEVOLUCION')) &&
+              (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')
+            ) {
               retirosKardexPorMed.set(idM, (retirosKardexPorMed.get(idM) || 0) + cant);
             }
             // Consumo real (desde la app móvil o web en historias / actas)

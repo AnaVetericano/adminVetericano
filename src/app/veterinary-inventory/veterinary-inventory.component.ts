@@ -69,6 +69,17 @@ export class VeterinaryInventoryComponent implements OnInit {
   validacionConsumo: ConsumoValidationResult | null = null;
   guardandoConsumo = false;
 
+  // Centro de Alertas en Barra Superior (Campanita)
+  panelAlertasAbierto = false;
+
+  togglePanelAlertas(): void {
+    this.panelAlertasAbierto = !this.panelAlertasAbierto;
+  }
+
+  cerrarPanelAlertas(): void {
+    this.panelAlertasAbierto = false;
+  }
+
   ngOnInit(): void {
     const sesion: any = this.authService.currentUser();
     const rol = String(sesion?.rol ?? sesion?.['nombre_rol'] ?? '').toLowerCase();

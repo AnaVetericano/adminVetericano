@@ -69,7 +69,8 @@ export class Inventario implements OnInit {
   }
 
   private armar(invs: any[], compras: any[], dets: any[], meds: any[], cata: any[], provs: any[]): void {
-    this.totalCompras = compras.length;
+    const comprasActivas = (compras || []).filter((c: any) => c.estado !== 'ANULADA');
+    this.totalCompras = comprasActivas.length;
     const medMap = new Map<number, any>();
     cata.forEach((c: any) => {
       const id = Number(c.id_medicamento ?? c.id);
@@ -130,9 +131,12 @@ export class Inventario implements OnInit {
 
     // 1. Procesar todos los detalles de compras agrupando por medicamento
     detMap.forEach((d: any) => {
+      const com = comMap.get(Number(d.id_compra));
+      if (com && String(com.estado).toUpperCase() === 'ANULADA') {
+        return; // Excluir compras anuladas del cálculo activo
+      }
       const idMed = this.num(d.id_medicamento);
       const med = idMed !== null ? medMap.get(idMed) : null;
-      const com = comMap.get(Number(d.id_compra));
       const prov = com ? (proMap.get(Number(com.id_proveedor)) || (com.proveedor_nombre ? { nombre: com.proveedor_nombre } : null)) : null;
       const nombre = med?.nombre || (idMed !== null ? `Medicamento #${idMed}` : 'Sin medicamento vinculado');
       const clave = String(idMed ?? nombre);

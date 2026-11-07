@@ -303,7 +303,7 @@ export class Compra implements OnInit {
     this.fechaRegistro = ahora.toISOString().slice(0, 16);
 
     this.filasDetalle = [
-      { id_detalle_compra: null, id_medicamento: null, cantidad: 1, precio_unitario: null, subtotal: 0 }
+      { id_detalle_compra: null, id_medicamento: null, cantidad: 1, precio_unitario: null, subtotal: 0, fecha_vencimiento: '' }
     ];
 
     this.modalRegistroAbierto = true;
@@ -368,7 +368,8 @@ export class Compra implements OnInit {
       id_medicamento: null,
       cantidad: 1,
       precio_unitario: null,
-      subtotal: 0
+      subtotal: 0,
+      fecha_vencimiento: ''
     });
   }
 
@@ -506,7 +507,8 @@ export class Compra implements OnInit {
     const payloadDetalles = this.filasDetalle.map((f) => ({
       id_medicamento: Number(f.id_medicamento),
       cantidad: Number(f.cantidad),
-      precio_unitario: Number(f.precio_unitario) || 0
+      precio_unitario: Number(f.precio_unitario) || 0,
+      fecha_vencimiento: f.fecha_vencimiento || undefined
     }));
 
     this.comprasService
@@ -568,45 +570,88 @@ export class Compra implements OnInit {
     window.print();
   }
 
-  // --- Eliminar Compra Segura ---
+  // --- Anulación Segura de Compras ---
 
   eliminarCompra(c: CompraModel): void {
     const idCompra = c.id_compra;
     if (!idCompra) return;
 
-    const detallesIds = (c.detalles || [])
-      .map((d) => d.id_detalle_compra)
-      .filter((id): id is number => typeof id === 'number');
+    if (c.estado === 'ANULADA') {
+      Swal.fire({
+        title: 'Factura Anulada',
+        text: `La compra #${idCompra} ya se encuentra anulada en el sistema.`,
+        icon: 'info',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    }
+
+    const cantidadDetalles = c.detalles?.length || 0;
 
     Swal.fire({
-      title: `¿Eliminar Compra #${idCompra}?`,
-      text: `Se desvinculará del inventario y se eliminará la compra junto con sus ${detallesIds.length} medicamentos detallados.`,
+      title: `¿Anular Factura de Compra #${idCompra}?`,
+      text: `Se verificará el stock en bodega y se registrará el contra-asiento de auditoría para los ${cantidadDetalles} medicamentos asociados.`,
+      input: 'text',
+      inputPlaceholder: 'Ingresa el motivo de anulación (ej. Error de digitación, devolución al proveedor)...',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#64748b',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: 'Sí, anular factura',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (valor) => {
+        if (!valor || !valor.trim()) {
+          return 'Debes especificar un motivo para la anulación.';
+        }
+        return null;
+      }
     }).then((resultado) => {
-      if (!resultado.isConfirmed) return;
+      if (!resultado.isConfirmed || !resultado.value) return;
 
-      this.comprasService.eliminarCompraConDetalles(idCompra, detallesIds).subscribe({
+      const motivo = resultado.value.trim();
+
+      Swal.fire({
+        title: 'Procesando anulación...',
+        text: 'Validando existencias y registrando movimientos en Kardex...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      this.comprasService.anularCompra(idCompra, motivo).subscribe({
         next: () => {
           Swal.fire({
-            title: '¡Eliminada!',
-            text: `La compra #${idCompra} fue eliminada correctamente.`,
+            title: '¡Factura Anulada!',
+            text: `La compra #${idCompra} fue anulada y los inventarios han sido compensados correctamente.`,
             icon: 'success',
-            timer: 1800,
-            showConfirmButton: false
+            confirmButtonColor: '#4141A5'
           });
           this.obtenerDatos();
         },
         error: (err) => {
-          console.error('Error al eliminar compra:', err);
-          const msj = err?.error?.detail || 'No se pudo eliminar la compra.';
+          console.error('Error al anular compra:', err);
+          let msj = 'No se pudo completar la anulación de la compra.';
+          if (err?.error) {
+            if (typeof err.error === 'string') msj = err.error;
+            else if (err.error.detail) msj = err.error.detail;
+            else if (err.error.message) msj = err.error.message;
+            else if (err.error.error) msj = err.error.error;
+          } else if (err?.message) {
+            msj = err.message;
+          }
+
           Swal.fire({
-            title: 'Error',
-            text: msj,
+            title: 'Anulación Rechazada',
+            html: `
+              <div class="text-left text-sm space-y-2">
+                <p class="font-semibold text-rose-600">La base de datos o el sistema rechazó la anulación:</p>
+                <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-mono">
+                  ${msj}
+                </div>
+                <p class="text-xs text-gray-500">Si los medicamentos ya fueron asignados a maletines o formulados, debes reintegrarlos antes de anular la factura.</p>
+              </div>
+            `,
             icon: 'error',
             confirmButtonColor: '#d33'
           });
