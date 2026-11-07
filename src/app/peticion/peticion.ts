@@ -3,15 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
-import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
 
+
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-peticion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, DashboardJuridicoComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'
 })
@@ -49,6 +51,9 @@ export class Peticion implements OnInit {
     this.vistaJuridica = vista;
     if (vista === 'peticiones') {
       this.mostrarLista = true;
+      if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     }
     this.cdr.detectChanges();
   }
@@ -135,15 +140,26 @@ export class Peticion implements OnInit {
     return this.funcionarios;
   }
 
+  get puedeAsignarOReasignar(): boolean {
+    return this.authService.isAdmin() || this.authService.isJuridico();
+  }
+
+  get esVeterinario(): boolean {
+    return this.authService.isVeterinario();
+  }
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
     private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    public authService: AuthService
+  ) { }
 
   ngOnInit(): void {
-    if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
+    if (this.esVeterinario) {
+      this.vistaJuridica = 'peticiones';
+    } else if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
       this.vistaJuridica = 'dashboard';
     }
     this.reporteForm = this.fb.group({
@@ -817,7 +833,7 @@ export class Peticion implements OnInit {
     const tipo = String(p.tipo || this.tipoLabel(p) || '').toLowerCase();
     const est = String(p.estado || '').toLowerCase();
     return prio.includes('urgente') || prio.includes('alta') || prio.includes('crit') ||
-           tipo.includes('herido') || est.includes('urgente');
+      tipo.includes('herido') || est.includes('urgente');
   }
 
   diasTranscurridos(p: any): number | null {
@@ -980,24 +996,24 @@ export class Peticion implements OnInit {
       return 'bg-amber-50 text-amber-700 border-amber-200';
     }
     if (est.includes('asignad')) {
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'bg-blue-50 text-blue-700 border-blue-200 font-bold';
     }
     if (est.includes('proces')) {
       return 'bg-purple-50 text-purple-700 border-purple-200';
     }
     if (est.includes('atendid') || est.includes('resuelt')) {
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold';
     }
     if (est.includes('tratamient') || est.includes('observac')) {
       return 'bg-cyan-50 text-cyan-700 border-cyan-200';
     }
     if (est.includes('adopci')) {
-      return 'bg-pink-50 text-pink-700 border-pink-200';
+      return 'bg-pink-50 text-pink-700 border-pink-200 font-bold';
     }
     if (est.includes('finaliz') || est.includes('alta') || est.includes('cerrad')) {
       return 'bg-slate-100 text-slate-700 border-slate-300';
     }
-    return 'bg-gray-100 text-gray-700 border-gray-200';
+    return 'bg-gray-50 text-gray-700 border-gray-200';
   }
 
   prioridadClase(prioridad: any, esUrg: boolean = false): string {

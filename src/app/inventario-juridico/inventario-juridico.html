@@ -102,26 +102,26 @@
         </div>
 
         <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-[#F1C63C]/20 text-[#170B3D] flex items-center justify-center shrink-0">
+          <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Disponibles</p>
-            <p class="text-lg sm:text-xl font-extrabold text-[#4141a5]">{{ totalDisp }}</p>
+            <p class="text-lg sm:text-xl font-extrabold text-emerald-600">{{ totalDisp }}</p>
           </div>
         </div>
 
         <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+          <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           </div>
           <div>
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Agotados</p>
-            <p class="text-lg sm:text-xl font-extrabold text-slate-700">{{ totalAgot }}</p>
+            <p class="text-lg sm:text-xl font-extrabold text-rose-600">{{ totalAgot }}</p>
           </div>
         </div>
       </div>
@@ -382,26 +382,26 @@
         </div>
 
         <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-[#F1C63C]/20 text-[#170B3D] flex items-center justify-center shrink-0">
+          <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
           <div>
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Consumo en Consultas</p>
-            <p class="text-lg sm:text-xl font-extrabold text-[#170B3D]">{{ totalUnidadesConsumidasVet }} uds</p>
+            <p class="text-lg sm:text-xl font-extrabold text-amber-600">{{ totalUnidadesConsumidasVet }} uds</p>
           </div>
         </div>
 
         <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-          <div class="w-11 h-11 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0">
+          <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
           <div>
             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Saldo Disponible</p>
-            <p class="text-lg sm:text-xl font-extrabold text-[#4141a5]">{{ totalSaldoDisponibleVet }} uds</p>
+            <p class="text-lg sm:text-xl font-extrabold text-emerald-600">{{ totalSaldoDisponibleVet }} uds</p>
           </div>
         </div>
       </div>
@@ -484,22 +484,22 @@
                 <td class="px-4 py-3 text-center font-bold text-gray-600">
                   {{ item.cantidadEntregada || 0 }} uds
                 </td>
-                <td class="px-4 py-3 text-center font-bold text-[#170B3D]">
-                  {{ item.cantidadConsumida || 0 }} uds
-                </td>
+                <td class="px-4 py-3 text-center font-bold text-amber-600">
+                    {{ item.cantidadConsumida || 0 }} uds
+                  </td>
                 <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-extrabold text-[#4141a5]">
+                  <span class="text-sm font-extrabold" [class.text-rose-600]="item.saldoDisponible <= 0" [class.text-amber-600]="item.saldoDisponible > 0 && item.saldoDisponible <= 10" [class.text-emerald-600]="item.saldoDisponible > 10">
                     {{ item.saldoDisponible || 0 }} uds
                   </span>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <span *ngIf="item.saldoDisponible > 10" class="px-2.5 py-1 rounded-full bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20 text-[11px] font-bold">
+                  <span *ngIf="item.saldoDisponible > 10" class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
                     Disponible
                   </span>
-                  <span *ngIf="item.saldoDisponible > 0 && item.saldoDisponible <= 10" class="px-2.5 py-1 rounded-full bg-[#F1C63C]/20 text-[#170B3D] border border-[#F1C63C] text-[11px] font-bold">
+                  <span *ngIf="item.saldoDisponible > 0 && item.saldoDisponible <= 10" class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold">
                     Stock bajo ({{ item.saldoDisponible }})
                   </span>
-                  <span *ngIf="item.saldoDisponible <= 0" class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 border border-slate-300 text-[11px] font-bold">
+                  <span *ngIf="item.saldoDisponible <= 0" class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold">
                     Agotado
                   </span>
                 </td>
