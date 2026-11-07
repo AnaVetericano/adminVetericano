@@ -157,8 +157,12 @@
             <tr *ngFor="let c of compras" class="hover:bg-[#4141a5]/5 transition-colors group">
               <!-- N° Factura -->
               <td class="px-6 py-3.5 font-extrabold text-[#170B3D]">
-                <span class="px-2.5 py-1 rounded-lg bg-gray-100 text-xs font-mono tracking-wide text-gray-700 border border-gray-200">
+                <span class="px-2.5 py-1 rounded-lg text-xs font-mono tracking-wide border"
+                  [ngClass]="c.estado === 'ANULADA' ? 'bg-rose-50 text-rose-700 border-rose-200 line-through' : 'bg-gray-100 text-gray-700 border-gray-200'">
                   #{{ c.id_compra }}
+                </span>
+                <span *ngIf="c.estado === 'ANULADA'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                  ANULADA
                 </span>
               </td>
 
@@ -186,7 +190,7 @@
 
               <!-- Opciones -->
               <td class="px-6 py-3.5">
-                <div class="flex items-center justify-center gap-2">
+                <div class="flex items-center justify-center">
                   <!-- Ver Detalle -->
                   <button 
                     (click)="abrirModalDetalle(c)" 
@@ -196,28 +200,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.257-5.064 7-9.542 7-4.477 0-8.268-2.743-9.542-7z" />
-                    </svg>
-                  </button>
-
-                  <!-- Editar Compra -->
-                  <button 
-                    (click)="abrirModalEditar(c)" 
-                    type="button" 
-                    class="bg-gray-100 hover:bg-[#170B3D] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95" 
-                    title="Editar factura y medicamentos">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                    </svg>
-                  </button>
-
-                  <!-- Eliminar Compra -->
-                  <button 
-                    (click)="eliminarCompra(c)" 
-                    type="button" 
-                    class="bg-gray-100 hover:bg-rose-600 hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95" 
-                    title="Eliminar compra">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
@@ -328,13 +310,14 @@
 
           <!-- TABLA DINÁMICA -->
           <div class="overflow-x-auto rounded-xl border border-gray-200">
-            <table class="w-full text-left border-collapse min-w-[620px]">
+            <table class="w-full text-left border-collapse min-w-[720px]">
               <thead class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
                 <tr>
                   <th class="w-10 px-3 py-2.5 text-center">#</th>
-                  <th class="px-3 py-2.5 w-5/12">Medicamento *</th>
-                  <th class="px-3 py-2.5 w-4/12">Descripción</th>
+                  <th class="px-3 py-2.5 w-4/12">Medicamento *</th>
+                  <th class="px-3 py-2.5 w-3/12">Descripción</th>
                   <th class="px-3 py-2.5 w-2/12 text-center">Cantidad *</th>
+                  <th class="px-3 py-2.5 w-2/12 text-center">Fecha Vencimiento (F.V.)</th>
                   <th class="w-12 px-3 py-2.5 text-center">Quitar</th>
                 </tr>
               </thead>
@@ -375,6 +358,16 @@
                       [(ngModel)]="fila.cantidad" 
                       placeholder="1"
                       class="w-20 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white" 
+                    />
+                  </td>
+
+                  <!-- Fecha de Vencimiento (F.V.) -->
+                  <td class="px-3 py-2 text-center">
+                    <input 
+                      type="date" 
+                      [(ngModel)]="fila.fecha_vencimiento" 
+                      title="Fecha de Vencimiento"
+                      class="w-36 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white text-gray-700" 
                     />
                   </td>
 

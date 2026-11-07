@@ -34,6 +34,8 @@ export interface Compra {
   id_compra?: number;
   id_proveedor: number;
   fecha?: string;
+  estado?: string;
+  motivo_anulacion?: string;
   // Propiedades calculadas para la interfaz
   proveedor?: Proveedor;
   detalles?: DetalleCompraConMedicamento[];
@@ -61,6 +63,7 @@ export interface DetalleRegistroFila {
   cantidad: number | null;
   precio_unitario: number | null;
   subtotal?: number;
+  fecha_vencimiento?: string | null;
 }
 
 export interface ResultadoRegistroCompra {
@@ -303,7 +306,7 @@ export class ComprasService {
 
   registrarCompraCompleta(
     id_proveedor: number,
-    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number }>,
+    detalles: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number; fecha_vencimiento?: string | null }>,
     listaMedicamentos: MedicamentoItem[] = []
   ): Observable<ResultadoRegistroCompra> {
     const obsMedicamentos = (listaMedicamentos && listaMedicamentos.length > 0)
@@ -320,7 +323,8 @@ export class ComprasService {
           this.asegurarIdMedicamentoParaDetalle(d.id_medicamento, medicamentos, catalogo).pipe(
             map(idValido => ({
               id_medicamento: idValido,
-              cantidad: Number(d.cantidad)
+              cantidad: Number(d.cantidad),
+              fecha_vencimiento: d.fecha_vencimiento || null
             }))
           )
         );
@@ -331,10 +335,16 @@ export class ComprasService {
           switchMap(detallesAsegurados => {
             const payloadBackend = {
               id_proveedor: Number(id_proveedor),
-              detalles: detallesAsegurados.map(d => ({
-                id_medicamento: Number(d.id_medicamento),
-                cantidad: Number(d.cantidad)
-              }))
+              detalles: detallesAsegurados.map(d => {
+                const item: any = {
+                  id_medicamento: Number(d.id_medicamento),
+                  cantidad: Number(d.cantidad)
+                };
+                if (d.fecha_vencimiento) {
+                  item.fecha_vencimiento = d.fecha_vencimiento;
+                }
+                return item;
+              })
             };
 
             // Enviamos la compra con sus detalles directamente al endpoint nativo del backend (/api/inventario/compras/)
@@ -343,20 +353,30 @@ export class ComprasService {
               map((compraCreada: any) => {
                 const idCompra = Number(compraCreada.id_compra ?? compraCreada.id);
                 const detallesRetornados = (compraCreada.detalles && compraCreada.detalles.length > 0)
-                  ? compraCreada.detalles
+                  ? compraCreada.detalles.map((cd: any, idx: number) => ({
+                      ...cd,
+                      fecha_vencimiento: cd.fecha_vencimiento || detallesAsegurados[idx]?.fecha_vencimiento
+                    }))
                   : detallesAsegurados.map((d, idx) => ({
                       id_detalle_compra: idx + 1,
                       id_compra: idCompra,
                       id_medicamento: d.id_medicamento,
                       cantidad: d.cantidad,
-                      precio_unitario: 0
+                      precio_unitario: 0,
+                      fecha_vencimiento: d.fecha_vencimiento
                     }));
 
                 return {
                   compra: { ...compraCreada, id_compra: idCompra },
                   detalles: detallesRetornados
                 };
-              })
+              }),
+              switchMap(res =>
+                this.sincronizarInventariosParaDetalles(res.detalles).pipe(
+                  map(() => res),
+                  catchError(() => of(res))
+                )
+              )
             );
           })
         );
@@ -477,11 +497,15 @@ export class ComprasService {
   private payloadEntrada(detalle: any): any {
     // Campos reales tabla inventarios: id_detalle_compra, cantidad_actual, fecha_vencimiento, estado
     const cantidad = Number(detalle?.cantidad) || 0;
-    return {
+    const base: any = {
       id_detalle_compra: Number(detalle?.id_detalle_compra ?? detalle?.id),
       cantidad_actual: cantidad,
       estado: 'Disponible'
     };
+    if (detalle?.fecha_vencimiento) {
+      base.fecha_vencimiento = detalle.fecha_vencimiento;
+    }
+    return base;
   }
 
   private crearEntradaConFallback(detalle: any): Observable<any> {
@@ -490,7 +514,9 @@ export class ComprasService {
     return this.crearInventario(base).pipe(
       switchMap((creado) => {
         if (creado) return of(creado);
-        return this.crearInventario({ id_detalle_compra: base.id_detalle_compra, cantidad_actual: base.cantidad_actual });
+        const fallback: any = { id_detalle_compra: base.id_detalle_compra, cantidad_actual: base.cantidad_actual };
+        if (base.fecha_vencimiento) fallback.fecha_vencimiento = base.fecha_vencimiento;
+        return this.crearInventario(fallback);
       }),
       catchError(() => of(null))
     );
@@ -507,7 +533,11 @@ export class ComprasService {
         if (existente) {
           const idInv = Number(existente.id_inventario ?? existente.id);
           const cantidad = Number(detalle?.cantidad) || 0;
-          return this.actualizarInventario(idInv, { cantidad_actual: cantidad });
+          const patchData: any = { cantidad_actual: cantidad };
+          if (detalle?.fecha_vencimiento) {
+            patchData.fecha_vencimiento = detalle.fecha_vencimiento;
+          }
+          return this.actualizarInventario(idInv, patchData);
         }
         return this.crearEntradaConFallback(detalle);
       }),
@@ -524,12 +554,37 @@ export class ComprasService {
     return forkJoin(peticiones).pipe(catchError(() => of([])));
   }
 
-  // --- Eliminación Segura: Desvincula inventarios y elimina compra y detalles ---
+  // --- Anulación Lógica y Segura de Compras ---
 
-  eliminarCompraConDetalles(idCompra: number, detallesIds: number[]): Observable<any> {
-    return this.desvincularYLimpiarDetalles(detallesIds).pipe(
-      switchMap(() => this.eliminarCompra(idCompra))
+  /**
+   * Anulación lógica y compensatoria de compra:
+   * Llama al endpoint de anulación atómica del backend o ejecuta PATCH con estado = 'ANULADA'.
+   * Si la base de datos o el trigger rechaza la anulación (por existencias asignadas o consumidas),
+   * propaga el error con la causa exacta.
+   */
+  anularCompra(idCompra: number, motivo: string = 'Anulación solicitada por administración', idUsuario?: number): Observable<any> {
+    const payload = {
+      motivo,
+      id_usuario: idUsuario || 18,
+      estado: 'ANULADA'
+    };
+    return this.http.post<any>(`${this.baseUrlInventario}compras/${idCompra}/anular/`, payload).pipe(
+      catchError((err) => {
+        // Si el backend no tiene el endpoint /anular/, intenta PATCH de estado
+        if (err.status === 404 || err.status === 405) {
+          return this.http.patch<any>(`${this.baseUrlInventario}compras/${idCompra}/`, {
+            estado: 'ANULADA',
+            motivo_anulacion: motivo
+          });
+        }
+        return throwError(() => err);
+      })
     );
+  }
+
+  eliminarCompraConDetalles(idCompra: number, detallesIds: number[], motivo?: string): Observable<any> {
+    // Redirige al flujo seguro de anulación lógica para prevenir desajustes en el kardex
+    return this.anularCompra(idCompra, motivo);
   }
 
   // --- Consulta y Descuento Real de Stock para Administración de Medicamentos ---
