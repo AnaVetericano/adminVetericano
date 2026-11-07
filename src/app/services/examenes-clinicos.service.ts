@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 /**
@@ -9,11 +9,14 @@ import { environment } from '../../environments/environment';
  */
 export interface ExamenClinico {
   id_examen: number;
+  id_procedimiento_catalogo?: number;
   nombre: string;
   descripcion: string;
   nombre_tipo?: string;
   nombre_tipo_examen?: string;
   descripcion_hallazgos?: string;
+  ruta_archivo_resultado?: string;
+  resultado?: string;
   tipo?: string;
   estado?: string;
   solicitado?: boolean;
@@ -101,6 +104,117 @@ export class ExamenesClinicosService {
     );
   }
 
+  private readonly storageKeyTipos = 'vetericano_examenes_tipos_map';
+
+  /**
+   * Guarda localmente y sincroniza el tipo de examen para respaldo inmediato en el cliente
+   */
+  guardarTipoLocal(id: number | null | undefined, nombre: string | null | undefined, tipo: string): void {
+    if (typeof localStorage === 'undefined' || !tipo) return;
+    try {
+      const raw = localStorage.getItem(this.storageKeyTipos);
+      const mapa: Record<string, string> = raw ? JSON.parse(raw) : {};
+      const tipoLimpio = tipo.trim();
+      if (id) {
+        mapa[`id:${id}`] = tipoLimpio;
+      }
+      if (nombre && nombre.trim()) {
+        mapa[`nombre:${nombre.trim().toLowerCase()}`] = tipoLimpio;
+      }
+      localStorage.setItem(this.storageKeyTipos, JSON.stringify(mapa));
+    } catch {
+      // Ignorar errores de almacenamiento local
+    }
+  }
+
+  private obtenerTipoLocal(id: number | null | undefined, nombre: string | null | undefined): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(this.storageKeyTipos);
+      if (!raw) return null;
+      const mapa: Record<string, string> = JSON.parse(raw);
+      if (id && mapa[`id:${id}`]) {
+        return mapa[`id:${id}`];
+      }
+      if (nombre && nombre.trim()) {
+        const keyNombre = `nombre:${nombre.trim().toLowerCase()}`;
+        if (mapa[keyNombre]) {
+          return mapa[keyNombre];
+        }
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  private esTipoValidoDesdeCampoAuxiliar(valor: any): boolean {
+    if (!valor || typeof valor !== 'string') return false;
+    const limpio = valor.trim();
+    if (!limpio || limpio.length > 80) return false;
+    if (limpio.includes('/') || limpio.includes('\\') || /^https?:/i.test(limpio)) return false;
+    return true;
+  }
+
+  /**
+   * Crea un nuevo examen clínico en el catálogo del backend
+   */
+  crearExamen(payload: Partial<ExamenClinico>): Observable<any> {
+    const tipoLimpio = (payload.tipo || 'Prueba Diagnóstica').trim();
+    const nombreLimpio = (payload.nombre || payload.nombre_tipo || payload.nombre_tipo_examen || '').trim();
+    const body = {
+      ...payload,
+      tipo: tipoLimpio,
+      ruta_archivo_resultado: tipoLimpio
+    };
+    this.guardarTipoLocal(null, nombreLimpio, tipoLimpio);
+    return this.http.post<any>(this.baseUrl, body, { headers: this.getHeaders() }).pipe(
+      tap((res: any) => {
+        const nuevoId = res?.id_examen || res?.id_procedimiento_catalogo || res?.id;
+        this.guardarTipoLocal(nuevoId, nombreLimpio, tipoLimpio);
+      })
+    );
+  }
+
+  /**
+   * Actualiza un examen clínico existente en el catálogo del backend
+   */
+  actualizarExamen(id: number, payload: Partial<ExamenClinico>): Observable<any> {
+    const tipoLimpio = (payload.tipo || 'Prueba Diagnóstica').trim();
+    const nombreLimpio = (payload.nombre || payload.nombre_tipo || payload.nombre_tipo_examen || '').trim();
+    const body = {
+      ...payload,
+      tipo: tipoLimpio,
+      ruta_archivo_resultado: tipoLimpio
+    };
+    this.guardarTipoLocal(id, nombreLimpio, tipoLimpio);
+    return this.http.patch<any>(`${this.baseUrl}${id}/`, body, { headers: this.getHeaders() }).pipe(
+      tap(() => {
+        this.guardarTipoLocal(id, nombreLimpio, tipoLimpio);
+      })
+    );
+  }
+
+  /**
+   * Cambia el estado (activo / inactivo) de un examen clínico
+   */
+  cambiarEstadoExamen(id: number, estado: 'activo' | 'inactivo', itemActual?: Partial<ExamenClinico>): Observable<any> {
+    const tipoConservar = (
+      itemActual?.tipo ||
+      this.obtenerTipoLocal(id, itemActual?.nombre || itemActual?.nombre_tipo) ||
+      'Prueba Diagnóstica'
+    ).trim();
+    const payload = {
+      ...(itemActual || {}),
+      id_examen: id,
+      id_procedimiento_catalogo: id,
+      tipo: tipoConservar,
+      ruta_archivo_resultado: tipoConservar,
+      estado
+    };
+    return this.http.patch<any>(`${this.baseUrl}${id}/`, payload, { headers: this.getHeaders() });
+  }
+
   /**
    * Normaliza la respuesta según la estructura recibida del backend (results paginados o array plano)
    */
@@ -134,14 +248,36 @@ export class ExamenesClinicosService {
       return this.getMockExamenesPaginados(page, pageSize, busqueda);
     }
 
-    const itemsNormalizados: ExamenClinico[] = rawList.map((item: any, idx: number) => ({
-      id_examen: item.id_examen || item.id_procedimiento_catalogo || item.id || (idx + 1),
-      nombre: item.nombre || item.nombre_tipo || item.nombre_tipo_examen || 'Examen Clínico',
-      descripcion: item.descripcion || item.descripcion_hallazgos || 'Sin descripción clínica registrada en el sistema.',
-      tipo: item.tipo || 'Prueba Diagnóstica',
-      estado: item.estado || 'activo',
-      solicitado: item.solicitado ?? true
-    }));
+    const itemsNormalizados: ExamenClinico[] = rawList.map((item: any, idx: number) => {
+      const id = item.id_examen || item.id_procedimiento_catalogo || item.id || (idx + 1);
+      const nombre = item.nombre || item.nombre_tipo || item.nombre_tipo_examen || 'Examen Clínico';
+      const descripcion = item.descripcion || item.descripcion_hallazgos || 'Sin descripción clínica registrada en el sistema.';
+
+      const tipoAuxiliar = this.esTipoValidoDesdeCampoAuxiliar(item.ruta_archivo_resultado)
+        ? String(item.ruta_archivo_resultado).trim()
+        : null;
+      const tipoDirecto = (item.tipo && String(item.tipo).trim()) || tipoAuxiliar;
+      const tipoLocal = this.obtenerTipoLocal(id, nombre);
+      const tipoResuelto = tipoDirecto || tipoLocal || 'Prueba Diagnóstica';
+
+      if (tipoDirecto) {
+        this.guardarTipoLocal(id, nombre, tipoDirecto);
+      }
+
+      return {
+        id_examen: id,
+        id_procedimiento_catalogo: id,
+        nombre,
+        nombre_tipo: nombre,
+        nombre_tipo_examen: nombre,
+        descripcion,
+        descripcion_hallazgos: descripcion,
+        ruta_archivo_resultado: tipoResuelto,
+        tipo: tipoResuelto,
+        estado: item.estado ? String(item.estado).toLowerCase().trim() : 'activo',
+        solicitado: item.solicitado ?? true
+      };
+    });
 
     return {
       count,
