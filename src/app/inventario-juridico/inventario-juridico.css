@@ -1,0 +1,5 @@
+/* Estilos complementarios para Inventario Jurídico */
+:host {
+  display: block;
+  width: 100%;
+}
