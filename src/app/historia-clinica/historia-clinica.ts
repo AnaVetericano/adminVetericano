@@ -2693,7 +2693,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       })
       .filter((m: any) => m.id_medicamento > 0 && m.unidades > 0);
 
-    const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
+      const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
     const idAnimalEfectivo = Number(
       idAnimalQuery ||
       this.idAnimal ||
