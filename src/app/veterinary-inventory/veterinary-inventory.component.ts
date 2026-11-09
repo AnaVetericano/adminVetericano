@@ -241,15 +241,15 @@ export class VeterinaryInventoryComponent implements OnInit {
       title: '¡Alerta de Stock Bajo!',
       html: `
         <div class="text-left text-sm space-y-3 font-sans">
-          <div class="p-3 bg-[#F1C63C]/15 border-l-4 border-[#F1C63C] rounded-r-xl">
-            <p class="font-bold text-[#170B3D]">
+          <div class="p-3 bg-[#FFF4E5] border-l-4 border-[#FCD9A6] rounded-r-xl">
+            <p class="font-bold text-[#9A5B13]">
               Recuerda que te quedan ${item.saldoDisponible} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
             </p>
           </div>
           <div class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <p><b>Producto:</b> ${item.nombre}</p>
             <p><b>Presentación:</b> ${item.presentacion || 'Unidad de campo'}</p>
-            <p><b>Saldo Actual:</b> <span class="font-extrabold text-[#170B3D] bg-[#F1C63C]/30 px-2 py-0.5 rounded-md">${item.saldoDisponible} uds</span></p>
+            <p><b>Saldo Actual:</b> <span class="font-extrabold text-[#9A5B13] bg-[#FFF4E5] border border-[#FCD9A6] px-2 py-0.5 rounded-md">${item.saldoDisponible} uds</span></p>
             <p><b>Kit / Lote:</b> ${item.lote || 'Kit de Campo'}</p>
           </div>
         </div>

@@ -392,28 +392,34 @@
       <!-- COLUMNA IZQUIERDA (AMPLIA): FICHA Y CONTENIDO PRINCIPAL DE LA HISTORIA CLÍNICA -->
       <div class="lg:col-span-2 space-y-6">
 
-        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA -->
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LIMPIA INSTITUCIONAL -->
         <div
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-200">
           <div class="flex items-center gap-3 flex-wrap">
             <!-- BOTÓN PRINCIPAL DE RETORNO -->
             <button type="button" (click)="deseleccionarPaciente()"
-              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-white/20"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl shadow-2xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-slate-200"
               title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
               <span
-                class="w-7 h-7 rounded-lg bg-[#170B3D] text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
-                ←
+                class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-[#4141a5] group-hover:border-[#4141a5]/30 flex items-center justify-center transition-all shadow-2xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </span>
-              <span class="tracking-wide uppercase font-bold">VOLVER A LA LISTA DE ANIMALES</span>
+              <span class="tracking-wide uppercase font-bold text-[11px] sm:text-xs">Volver a la lista de animales</span>
             </button>
 
-            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+            <span class="hidden sm:inline-block text-slate-300 text-lg font-light">|</span>
 
+            <!-- BADGE DEL PACIENTE ACTIVO -->
             <div
-              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-xs text-white/80">
-                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+              class="flex items-center gap-2 bg-[#4141a5]/5 px-3 py-1.5 rounded-xl border border-[#4141a5]/15">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-slate-600">
+                Atendiendo a: <strong class="text-[#170B3D] font-black tracking-wide">{{
                   seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
               </span>
             </div>
@@ -425,11 +431,11 @@
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer border border-[#4141a5]/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
             </button>
@@ -1016,28 +1022,34 @@
       <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL (HOJAS 3 Y 4) -->
       <div class="lg:col-span-2 space-y-6 min-w-0">
 
-        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA (IDÉNTICA AL PASO 1) -->
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LIMPIA INSTITUCIONAL (PASO 2) -->
         <div *ngIf="seguimientoSeleccionado"
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-200">
           <div class="flex items-center gap-3 flex-wrap">
             <!-- BOTÓN PRINCIPAL DE RETORNO -->
             <button type="button" (click)="deseleccionarPaciente()"
-              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-white/20"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl shadow-2xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-slate-200"
               title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
               <span
-                class="w-7 h-7 rounded-lg bg-[#170B3D] text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
-                ←
+                class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-[#4141a5] group-hover:border-[#4141a5]/30 flex items-center justify-center transition-all shadow-2xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </span>
-              <span class="tracking-wide uppercase font-bold">VOLVER A LA LISTA DE ANIMALES</span>
+              <span class="tracking-wide uppercase font-bold text-[11px] sm:text-xs">Volver a la lista de animales</span>
             </button>
 
-            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+            <span class="hidden sm:inline-block text-slate-300 text-lg font-light">|</span>
 
+            <!-- BADGE DEL PACIENTE ACTIVO -->
             <div
-              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-xs text-white/80">
-                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+              class="flex items-center gap-2 bg-[#4141a5]/5 px-3 py-1.5 rounded-xl border border-[#4141a5]/15">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-slate-600">
+                Atendiendo a: <strong class="text-[#170B3D] font-black tracking-wide">{{
                   seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
               </span>
             </div>
@@ -1049,11 +1061,11 @@
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer border border-[#4141a5]/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
             </button>
@@ -1873,28 +1885,34 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       <div class="lg:col-span-2 space-y-6 min-w-0">
 
-        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA (IDÉNTICA AL PASO 1) -->
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LIMPIA INSTITUCIONAL (PASO 2) -->
         <div *ngIf="seguimientoSeleccionado"
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-200">
           <div class="flex items-center gap-3 flex-wrap">
             <!-- BOTÓN PRINCIPAL DE RETORNO -->
             <button type="button" (click)="deseleccionarPaciente()"
-              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-white/20"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl shadow-2xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-slate-200"
               title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
               <span
-                class="w-7 h-7 rounded-lg bg-[#170B3D] text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
-                ←
+                class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-[#4141a5] group-hover:border-[#4141a5]/30 flex items-center justify-center transition-all shadow-2xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </span>
-              <span class="tracking-wide uppercase font-bold">VOLVER A LA LISTA DE ANIMALES</span>
+              <span class="tracking-wide uppercase font-bold text-[11px] sm:text-xs">Volver a la lista de animales</span>
             </button>
 
-            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+            <span class="hidden sm:inline-block text-slate-300 text-lg font-light">|</span>
 
+            <!-- BADGE DEL PACIENTE ACTIVO -->
             <div
-              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-xs text-white/80">
-                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+              class="flex items-center gap-2 bg-[#4141a5]/5 px-3 py-1.5 rounded-xl border border-[#4141a5]/15">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-slate-600">
+                Atendiendo a: <strong class="text-[#170B3D] font-black tracking-wide">{{
                   seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
               </span>
             </div>
@@ -1906,11 +1924,11 @@
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer border border-[#4141a5]/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
             </button>
