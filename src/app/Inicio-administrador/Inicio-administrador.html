@@ -134,8 +134,8 @@
 
       }
 
-      <!-- 3. PATOLOGÍA (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 3. PATOLOGÍA (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="patologias"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -152,8 +152,8 @@
         </a>
       }
 
-      <!-- 4. EXÁMENES CLÍNICOS (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 4. EXÁMENES CLÍNICOS (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="examenes-clinicos"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -168,8 +168,8 @@
         </a>
       }
 
-      <!-- 5. MEDICAMENTOS (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 5. MEDICAMENTOS (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="listarmedicamentos"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -184,8 +184,8 @@
         </a>
       }
 
-      <!-- 6. ESPECIES (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 6. ESPECIES (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="especies"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"

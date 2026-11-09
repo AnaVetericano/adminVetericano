@@ -463,6 +463,158 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   opcionesGanglios: string[] = ['Normales', 'Aumentados', 'Reactivos', 'Dolorosos'];
   opcionesActitud: string[] = ['Alerta / Responsivo', 'Deprimido / Decaído', 'Dócil / Tranquilo', 'Agresivo / Alerta', 'Estuporoso / Comatoso'];
 
+  // Opciones rápidas de captura inmediata (estilo Acta de Seres Sintientes)
+  opcionesPulso: string[] = [
+    'Fuerte y regular',
+    'Normal',
+    'Débil / Filiforme',
+    'Arrítmico / Irregular',
+    'Saltón / Hipercinético'
+  ];
+
+  opcionesTllc: string[] = [
+    '< 2 seg (Normal)',
+    '1-2 seg (Normal)',
+    '2 - 3 seg (Retardado)',
+    '> 3 seg (Grave / Shock)'
+  ];
+
+  motivosFrecuentes: string[] = [
+    'Consulta médica general',
+    'Control post-quirúrgico / Esterilización',
+    'Urgencia / Atropellamiento',
+    'Herida por mordedura / Traumatismo',
+    'Cuadro gastroentérico (Vómito/Diarrea)',
+    'Problema dermatológico / Prurito',
+    'Control sanitario / Vacunación',
+    'Sospecha de intoxicación'
+  ];
+
+  sintomasFrecuentes: string[] = [
+    'Vómito',
+    'Diarrea',
+    'Inapetencia / Anorexia',
+    'Decaimiento / Letargia',
+    'Cojera / Claudicación',
+    'Prurito intenso / Rascado',
+    'Dificultad respiratoria / Tos',
+    'Secreción ocular / nasal'
+  ];
+
+  opcionesDiagnosticoRapido: string[] = [
+    'Paciente clínicamente sano / Control preventivo',
+    'Gastroenteritis aguda / Síndrome emético',
+    'Dermatitis alérgica / Escabiosis / Miasis',
+    'Traumatismo / Herida por mordedura',
+    'Infección respiratoria alta (Complejo respiratorio)',
+    'Sospecha de hemoparásitos / Anaplasmosis'
+  ];
+
+  opcionesAlimentacion: string[] = [
+    'Concentrado seco balanceado',
+    'Dieta blanda / Gastrointestinal',
+    'Alimento húmedo (Lata / Sobre)',
+    'Dieta casera mixta',
+    'Prescripción veterinaria especial'
+  ];
+
+  opcionesDesparasitante: string[] = [
+    'Fenbendazol / Albendazol',
+    'Praziquantel + Pirantel',
+    'Ivermectina',
+    'Antiparasitario externo (Fluralaner / Nexgard)',
+    'Sin desparasitación reciente'
+  ];
+
+  opcionesVacunas: string[] = [
+    'Esquema completo al día (Rabia + Polivalente)',
+    'Solo Rabia vigente',
+    'Pendiente por vacunar / Cachorro',
+    'Sin esquema conocido / En evaluación'
+  ];
+
+  opcionesEnfermedadesAnteriores: string[] = [
+    'Sin antecedentes reportados',
+    'Parvovirosis canina superada',
+    'Traumatismo / Fractura previa',
+    'Alergia alimentaria / Dermatitis',
+    'TVT tratado / En remisión'
+  ];
+
+  insumosFrecuentes: string[] = [
+    'Guantes de manejo',
+    'Jeringa 3ml',
+    'Jeringa 5ml',
+    'Aguja 21G',
+    'Gasas estériles',
+    'Clorhexidina antiséptica',
+    'Algodón',
+    'Catéter venoso'
+  ];
+
+  plantillasTratamiento: Array<{ label: string; texto: string }> = [
+    {
+      label: 'Ambulatorio estándar',
+      texto: 'Tratamiento ambulatorio en hogar, reposo relativo, dieta blanda e hidratación a voluntad. Control en 8 días.'
+    },
+    {
+      label: 'Curación de herida',
+      texto: 'Limpieza diaria de herida con antiséptico (Clorhexidina), curación tópica y administración de analgésico según prescripción.'
+    },
+    {
+      label: 'Post-quirúrgico',
+      texto: 'Reposo en espacio limpio y seco, uso estricto de collar isabelino, cura diaria de herida quirúrgica y retiro de puntos en 10-12 días.'
+    },
+    {
+      label: 'Observación CBA',
+      texto: 'Ingreso a canil de observación médica en CBA, aislamiento preventivo, dieta balanceada y monitoreo de constantes vitales c/12h.'
+    }
+  ];
+
+  seleccionarMotivoRapido(motivo: string): void {
+    const actual = (this.formHistoria?.get('motivo_consulta')?.value || this.motivo_consulta || '').trim();
+    const nuevo = actual ? `${actual}. ${motivo}` : motivo;
+    this.motivo_consulta = nuevo;
+    this.formHistoria?.patchValue({ motivo_consulta: nuevo });
+    this.cdr.detectChanges();
+  }
+
+  agregarSintomaAnamnesis(sintoma: string): void {
+    const actual = (this.formHistoria?.get('anamnesis')?.value || this.anamnesis || '').trim();
+    const etiqueta = `• ${sintoma}`;
+    if (actual.includes(sintoma)) return;
+    const nuevo = actual ? `${actual}\n${etiqueta}` : etiqueta;
+    this.anamnesis = nuevo;
+    this.formHistoria?.patchValue({ anamnesis: nuevo });
+    this.cdr.detectChanges();
+  }
+
+  seleccionarDiagnosticoRapido(diag: string): void {
+    this.diagnosticoFinal = diag;
+    this.formHistoria?.patchValue({ diagnosticoPrincipal: diag });
+    this.formHistoria?.get('diagnosticoPrincipal')?.markAsDirty();
+    this.cdr.detectChanges();
+  }
+
+  aplicarPlantillaTratamiento(texto: string): void {
+    const actual = (this.formHistoria?.get('planTratamiento')?.value || this.planProcedimientos || '').trim();
+    const nuevo = actual ? `${actual}\n${texto}` : texto;
+    this.planProcedimientos = nuevo;
+    this.plan_procedimientos = nuevo;
+    this.formHistoria?.patchValue({ planTratamiento: nuevo });
+    this.cdr.detectChanges();
+  }
+
+  agregarInsumoRapido(insumo: string): void {
+    const actual = (this.materialesUtilizados || '').trim();
+    if (actual.includes(insumo)) return;
+    const nuevo = actual ? `${actual}, ${insumo}` : insumo;
+    this.materialesUtilizados = nuevo;
+    this.materiales_utilizados = nuevo;
+    this.formHistoria?.patchValue({ materiales_utilizados: nuevo });
+    this.cdr.detectChanges();
+  }
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -1521,6 +1673,16 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             }
           }
 
+          if (sistemasParseados?.['_anamnesis'] || data.anamnesis || raw.anamnesis || data.evolucion) {
+            this.anamnesis = sistemasParseados?.['_anamnesis'] || data.anamnesis || raw.anamnesis || data.evolucion;
+          }
+          if (sistemasParseados?.['_veterinario_responsable'] || data.nombre_veterinario) {
+            this.nombreVeterinario = sistemasParseados?.['_veterinario_responsable'] || data.nombre_veterinario || this.nombreVeterinario;
+          }
+          if (sistemasParseados?.['_tarjeta_profesional'] || data.tarjeta_profesional) {
+            this.tarjetaProfesional = sistemasParseados?.['_tarjeta_profesional'] || data.tarjeta_profesional || this.tarjetaProfesional;
+          }
+
           if (data.alimento_marca || sistemasParseados?.['_alimento_marca']) {
             this.alimento_marca = data.alimento_marca || sistemasParseados['_alimento_marca'] || '';
           }
@@ -1593,22 +1755,27 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
           this.tratamientosEliminadosIds = [];
           if (Array.isArray(data.tratamientos) && data.tratamientos.length > 0) {
-            this.medicamentosSeleccionados = data.tratamientos.map((t: any) => ({
-              id: t.id_medicamento || t.id || null,
-              id_tratamiento: t.id_tratamiento || null,
-              nombre: t.nombre || t.productoBase || t.producto_base || t.nombre_medicamento || 'Medicamento',
-              principio_activo: t.principio_activo || '',
-              concentracion: t.concentracion || '',
-              presentacion: t.presentacion || '',
-              dosis: t.dosis || t.dosisBasica || t.dosis_basica || '',
-              via: t.via || t.via_administracion || '',
-              frecuencia: t.frecuencia || t.frecuenciaDuracion || t.frecuencia_duracion || '',
-              descripcion: t.descripcion || t.posologia || '',
-              stockDisponible: t.stockDisponible ?? 10,
-              cantidadAAdministrar: t.cantidadAAdministrar ?? 1,
-              administrado: !!t.administrado || !!t.suministrado_clinica,
-              cantidadEfectivaAdministrada: t.cantidad_administrada || t.cantidadEfectivaAdministrada || 0
-            }));
+            this.medicamentosSeleccionados = data.tratamientos.map((t: any) => {
+              const yaEnBd = Boolean(t.id_tratamiento && Number(t.id_tratamiento) > 0);
+              const yaAdministrado = Boolean(t.administrado || t.suministrado_clinica || yaEnBd);
+              const cantAdmin = Number(t.cantidad_administrada || t.cantidadEfectivaAdministrada || (yaAdministrado ? 1 : 0));
+              return {
+                id: t.id_medicamento || t.id || null,
+                id_tratamiento: t.id_tratamiento || null,
+                nombre: t.nombre || t.productoBase || t.producto_base || t.nombre_medicamento || 'Medicamento',
+                principio_activo: t.principio_activo || '',
+                concentracion: t.concentracion || '',
+                presentacion: t.presentacion || '',
+                dosis: t.dosis || t.dosisBasica || t.dosis_basica || '',
+                via: t.via || t.via_administracion || '',
+                frecuencia: t.frecuencia || t.frecuenciaDuracion || t.frecuencia_duracion || '',
+                descripcion: t.descripcion || t.posologia || '',
+                stockDisponible: t.stockDisponible ?? 10,
+                cantidadAAdministrar: t.cantidadAAdministrar ?? (cantAdmin || 1),
+                administrado: yaAdministrado,
+                cantidadEfectivaAdministrada: cantAdmin
+              };
+            });
           }
 
           if (data.nombre_acudiente || data.paciente?.tenedor_nombre) {
@@ -1618,6 +1785,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             this.cedulaAcudiente = data.cedula_acudiente || data.paciente?.tenedor_documento || this.cedulaAcudiente;
           }
         }
+
+        const evolucionInicial = (data.organos_sistemas?.['_evolucion'] || data.evolucion || this.anamnesis || this.formHistoria.get('evolucion')?.value || '');
 
         // Parcheo del formulario reactivo sin perder los valores de acta
         this.formHistoria.patchValue({
@@ -1648,7 +1817,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             ? data.diagnostico_diferencial
             : (this.formHistoria.get('diagnosticoDiferencial')?.value || ''),
           listaProblemas: data.lista_problemas || this.formHistoria.get('listaProblemas')?.value || '',
-          evolucion: data.evolucion || this.anamnesis || this.formHistoria.get('evolucion')?.value || '',
+          evolucion: evolucionInicial,
           pronostico: this.pronostico || data.pronostico || 'Favorable',
           plan_procedimientos: this.plan_procedimientos,
           planTratamiento: data.plan_tratamiento || this.plan_procedimientos || this.formHistoria.get('planTratamiento')?.value || '',
@@ -2491,12 +2660,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     // Sincronizar y asegurar valores válidos para todos los campos clínicos
     const diag = (this.diagnosticoFinal || this.formHistoria.get('diagnosticoPrincipal')?.value || this.historiaOriginal?.diagnostico_principal || 'Consulta médica general').trim();
-    const evo = (this.formHistoria.get('evolucion')?.value || this.anamnesis || this.historiaOriginal?.evolucion || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.').trim();
-    const plan = (this.materialesUtilizados || this.planProcedimientos || this.formHistoria.get('planTratamiento')?.value || this.historiaOriginal?.plan_tratamiento || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.').trim();
+    const evo = (this.formHistoria.get('evolucion')?.value || this.historiaOriginal?.evolucion || this.anamnesis || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.').trim();
+    const anam = (this.formHistoria.get('anamnesis')?.value || this.anamnesis || evo).trim();
+    const plan = (this.formHistoria.get('planTratamiento')?.value || this.planProcedimientos || this.historiaOriginal?.plan_tratamiento || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.').trim();
     const motivo = (this.formHistoria.get('motivoModificacion')?.value || 'Actualización y sincronización de datos clínicos desde módulo oficial.').trim();
     const pron = this.pronostico || this.formHistoria.get('pronostico')?.value || 'Favorable';
 
+    this.anamnesis = anam;
+    this.planProcedimientos = plan;
+    this.plan_procedimientos = plan;
+
     this.formHistoria.patchValue({
+      anamnesis: anam,
       diagnosticoPrincipal: diag || 'Consulta médica general',
       evolucion: evo || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.',
       planTratamiento: plan || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.',
@@ -2504,7 +2679,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       pronostico: pron,
       prioridad: this.prioridad || this.formHistoria.get('prioridad')?.value || 'Normal',
       resultadoEstado: this.resultado_estado || this.formHistoria.get('resultadoEstado')?.value || 'Estable',
-      materiales_utilizados: this.materialesUtilizados || plan
+      materiales_utilizados: this.materialesUtilizados
     });
 
     // Limpiar cualquier error residual para garantizar guardado inmediato sin bloqueos fantasma
@@ -2589,6 +2764,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     const dto: ActualizarHistoriaDto = {
       motivo_consulta: (this.formHistoria.get('motivo_consulta')?.value || this.motivo_consulta || 'Consulta General').trim(),
+      anamnesis: anam,
       diagnostico_principal: formVal.diagnosticoPrincipal,
       diagnostico_diferencial: (formVal.diagnosticoDiferencial || '').trim(),
       hallazgos_examen: (this.descripcionHallazgos || formVal.hallazgos_examen || '').trim(),
@@ -2637,6 +2813,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         id_medicamento: m.id,
         nombre: m.nombre,
         principio_activo: m.principio_activo,
+        concentracion: m.concentracion || '',
         presentacion: m.presentacion,
         dosis: m.dosis,
         via: m.via,
@@ -2673,25 +2850,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       esterilizado_opcion: this.esterilizado_opcion || 'No',
       condicion_corporal: this.condicion_corporal || '3/5 (Ideal)',
       proxima_visita_fecha: this.proxima_visita_fecha || '',
-      proxima_visita_notas: this.proxima_visita_notas || ''
+      proxima_visita_notas: this.proxima_visita_notas || '',
+      nombre_veterinario: this.nombreVeterinario || '',
+      tarjeta_profesional: this.tarjetaProfesional || ''
     };
 
-    (dto as any).medicamentos_usados = (this.medicamentosSeleccionados || [])
-      .map((m: any) => {
-        let idMed = Number(m.id || m.id_medicamento);
-        if ((isNaN(idMed) || idMed <= 0) && m.nombre) {
-          const matchMaletin = this.medicamentosMaletin.find(k => k.nombre && k.nombre.trim().toLowerCase() === m.nombre.trim().toLowerCase());
-          idMed = Number(matchMaletin?.id_medicamento || matchMaletin?.id || 0);
-        }
-        const unidades = Number(m.cantidadEfectivaAdministrada || m.cantidadAAdministrar) || 1;
-        return {
-          client_uuid: m.client_uuid || generarUUID(),
-          id_medicamento: idMed,
-          unidades: unidades,
-          nombre: m.nombre
-        };
-      })
-      .filter((m: any) => m.id_medicamento > 0 && m.unidades > 0);
+    // El descuento de inventario y maletín ya se ejecutó arriba mediante vetInvSvc.registrarConsumo()
+    // y comprasService.descontarStockMedicamento(); enviamos medicamentos_usados vacío para evitar doble descuento.
+    (dto as any).medicamentos_usados = [];
 
       const idAnimalQuery = this.route.snapshot.queryParamMap.get('id_animal');
     const idAnimalEfectivo = Number(
@@ -2711,13 +2877,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       paciente: this.paciente
     } as any);
 
-    const eraNuevaConsulta = this.esNuevaConsulta;
+    const eraNuevaConsulta = this.esNuevaConsulta || this.tieneDatosDesdeActa;
 
     this.historiaService.actualizarHistoria(this.idHistoria, dto, historiaBase, this.esNuevaConsulta).subscribe({
       next: (resp) => {
         this.guardando = false;
         this.formularioEnviado = false;
         this.esNuevaConsulta = false;
+        this.tieneDatosDesdeActa = false;
         this.tratamientosEliminadosIds = [];
         this.mensajeExito = resp.mensaje || (eraNuevaConsulta ? 'Nueva consulta clínica guardada exitosamente.' : 'Historia clínica actualizada con éxito.');
 
@@ -2814,6 +2981,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           customClass: {
             popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
             confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
+          }
+        }).then(() => {
+          if (eraNuevaConsulta) {
+            this.volverAlDetalle();
           }
         });
 

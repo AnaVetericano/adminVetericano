@@ -530,22 +530,43 @@
                     <span>Texto enriquecido</span>
                   </button>
                 </div>
+
+                <!-- Chips rápidos de motivos frecuentes (Captura rápida) -->
+                <div class="flex items-center gap-1.5 flex-wrap pb-1">
+                  <span class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wide flex items-center gap-1">
+                    <span>⚡ Motivos Frecuentes:</span>
+                  </span>
+                  <button type="button" *ngFor="let mot of motivosFrecuentes"
+                    (click)="seleccionarMotivoRapido(mot)"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-[#4141a5] hover:text-white text-slate-700 transition cursor-pointer border border-slate-200 shadow-2xs active:scale-95">
+                    + {{ mot }}
+                  </button>
+                </div>
+
                 <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] focus-within:ring-1 focus-within:ring-[#4141a5]/20 transition-all">
                   <textarea rows="3" [ngModel]="formHistoria.get('motivo_consulta')?.value"
                     (ngModelChange)="formHistoria.patchValue({ motivo_consulta: $event }); motivo_consulta = $event"
-                    placeholder="Descripción detallada del motivo de la visita..."
+                    placeholder="Descripción detallada del motivo de la visita o selecciona uno arriba..."
                     class="w-full bg-transparent border-0 outline-none resize-none text-xs text-slate-800 font-semibold leading-relaxed"></textarea>
                 </div>
               </div>
 
               <!-- Marca o tipo de alimento -->
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
                   <span>Marca o tipo de alimento</span>
+                  <span class="text-[10px] font-normal text-slate-400">Escribe o selecciona de la lista</span>
                 </label>
-                <input type="text" [(ngModel)]="alimento_marca"
-                  placeholder="Ej. Dog Chow, Hill's, Royal Canin..."
-                  class="w-full bg-slate-50/60 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 font-semibold focus:bg-white focus:border-[#4141a5] focus:ring-1 focus:ring-[#4141a5]/20 outline-none transition" />
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input type="text" [(ngModel)]="alimento_marca"
+                    placeholder="Ej. Dog Chow, Concentrado seco balanceado..."
+                    class="flex-1 bg-slate-50/60 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-semibold focus:bg-white focus:border-[#4141a5] focus:ring-1 focus:ring-[#4141a5]/20 outline-none transition" />
+                  <select (change)="alimento_marca = $any($event.target).value"
+                    class="p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none cursor-pointer hover:bg-slate-200/80 transition">
+                    <option value="">⚡ Seleccionar dieta...</option>
+                    <option *ngFor="let opt of opcionesAlimentacion" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
               </div>
 
               <!-- ¿Esterilizado? -->
@@ -587,9 +608,25 @@
             <div class="space-y-4">
               <!-- Anamnesis Reportada -->
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span>Anamnesis y Síntomas Reportados</span>
-                </label>
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <span>Anamnesis y Síntomas Reportados</span>
+                  </label>
+                  <span class="text-[10px] text-slate-400">Clic en síntomas para agregar</span>
+                </div>
+
+                <!-- Chips rápidos de síntomas frecuentes -->
+                <div class="flex items-center gap-1.5 flex-wrap pb-1">
+                  <span class="text-[10px] font-extrabold text-rose-600 uppercase tracking-wide flex items-center gap-1">
+                    <span>⚡ Síntomas:</span>
+                  </span>
+                  <button type="button" *ngFor="let sint of sintomasFrecuentes"
+                    (click)="agregarSintomaAnamnesis(sint)"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-700 transition cursor-pointer border border-slate-200 shadow-2xs active:scale-95">
+                    + {{ sint }}
+                  </button>
+                </div>
+
                 <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] focus-within:ring-1 focus-within:ring-[#4141a5]/20 transition-all">
                   <textarea rows="3" [ngModel]="formHistoria.get('anamnesis')?.value"
                     (ngModelChange)="formHistoria.patchValue({ anamnesis: $event }); anamnesis = $event"
@@ -702,19 +739,23 @@
               <!-- Pulso Arterial -->
               <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
                 <span class="text-[10px] font-bold text-slate-500 uppercase block">Pulso Arterial</span>
-                <input type="text" [ngModel]="pulso"
+                <select [ngModel]="pulso || 'Fuerte y regular'"
                   (ngModelChange)="actualizarConstante('pulso', $event)"
-                  placeholder="Fuerte y regular"
-                  class="w-full font-bold text-[#170B3D] text-xs bg-transparent outline-none focus:text-rose-600" />
+                  class="w-full font-bold text-[#170B3D] text-xs bg-transparent outline-none cursor-pointer">
+                  <option *ngIf="pulso && !opcionesPulso.includes(pulso)" [value]="pulso">{{ pulso }} (Actual)</option>
+                  <option *ngFor="let opt of opcionesPulso" [value]="opt">{{ opt }}</option>
+                </select>
               </div>
 
               <!-- TLLC -->
               <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                <span class="text-[10px] font-bold text-slate-500 uppercase block">TLLC (segundos)</span>
-                <input type="text" [ngModel]="tllc"
+                <span class="text-[10px] font-bold text-slate-500 uppercase block">TLLC</span>
+                <select [ngModel]="tllc || '< 2 seg (Normal)'"
                   (ngModelChange)="actualizarConstante('tllc', $event)"
-                  placeholder="2 seg"
-                  class="w-full font-bold text-[#170B3D] text-xs bg-transparent outline-none focus:text-rose-600" />
+                  class="w-full font-bold text-[#170B3D] text-xs bg-transparent outline-none cursor-pointer">
+                  <option *ngIf="tllc && !opcionesTllc.includes(tllc)" [value]="tllc">{{ tllc }} (Actual)</option>
+                  <option *ngFor="let opt of opcionesTllc" [value]="opt">{{ opt }}</option>
+                </select>
               </div>
 
               <!-- Mucosas -->
@@ -951,12 +992,28 @@
 
               <!-- Diagnóstico Principal * -->
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span>Diagnóstico Principal <span class="text-rose-500">*</span></span>
-                </label>
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <span>Diagnóstico Principal <span class="text-rose-500">*</span></span>
+                  </label>
+                  <span class="text-[10px] text-slate-400">Escribe o usa una opción rápida</span>
+                </div>
+
+                <!-- Chips de diagnósticos frecuentes -->
+                <div class="flex items-center gap-1.5 flex-wrap pb-1">
+                  <span class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wide flex items-center gap-1">
+                    <span>⚡ Frecuentes:</span>
+                  </span>
+                  <button type="button" *ngFor="let diag of opcionesDiagnosticoRapido"
+                    (click)="seleccionarDiagnosticoRapido(diag)"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-[#4141a5] hover:text-white text-slate-700 transition cursor-pointer border border-slate-200 shadow-2xs active:scale-95">
+                    + {{ diag }}
+                  </button>
+                </div>
+
                 <input type="text" [ngModel]="formHistoria.get('diagnosticoPrincipal')?.value || diagnosticoFinal"
                   (ngModelChange)="formHistoria.patchValue({ diagnosticoPrincipal: $event }); diagnosticoFinal = $event"
-                  placeholder="Ej. Gastroenteritis infecciosa canina / Dermatitis atópica"
+                  placeholder="Ej. Gastroenteritis infecciosa canina / Dermatitis atópica o selecciona arriba..."
                   class="w-full p-3 bg-slate-50/60 border border-slate-200 rounded-xl text-xs font-black text-[#170B3D] outline-none focus:bg-white focus:border-[#4141a5]" />
               </div>
 
@@ -969,6 +1026,19 @@
                   <textarea rows="2" [ngModel]="formHistoria.get('diagnosticoDiferencial')?.value"
                     (ngModelChange)="formHistoria.patchValue({ diagnosticoDiferencial: $event })"
                     placeholder="Patologías descartadas o en evaluación diferencial..."
+                    class="w-full bg-transparent border-0 outline-none resize-none text-xs text-slate-800 font-semibold leading-relaxed"></textarea>
+                </div>
+              </div>
+
+              <!-- Lista de Problemas Clínicos -->
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <span>Lista de Problemas Clínicos</span>
+                </label>
+                <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
+                  <textarea rows="2" [ngModel]="formHistoria.get('listaProblemas')?.value"
+                    (ngModelChange)="formHistoria.patchValue({ listaProblemas: $event })"
+                    placeholder="1. Problema clínico identificado...&#10;2. Hallazgo asociado..."
                     class="w-full bg-transparent border-0 outline-none resize-none text-xs text-slate-800 font-semibold leading-relaxed"></textarea>
                 </div>
               </div>
@@ -1094,6 +1164,7 @@
                       <th class="py-2.5 px-3">Dosis</th>
                       <th class="py-2.5 px-3">Vía</th>
                       <th class="py-2.5 px-3">Frecuencia</th>
+                      <th class="py-2.5 px-3">Indicaciones</th>
                       <th class="py-2.5 px-3 text-center">Descuento de Maletín</th>
                       <th class="py-2.5 px-3 text-right">Acción</th>
                     </tr>
@@ -1127,6 +1198,10 @@
                         <input type="text" [(ngModel)]="med.frecuencia" placeholder="C/12h x 5d"
                           class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-24 outline-none focus:border-[#4141a5]" />
                       </td>
+                      <td class="py-2.5 px-3">
+                        <input type="text" [(ngModel)]="med.descripcion" placeholder="Con alimento / notas..."
+                          class="p-1.5 bg-white border border-slate-200 rounded-lg text-xs w-32 outline-none focus:border-[#4141a5]" />
+                      </td>
                       <td class="py-2.5 px-3 text-center">
                         <div *ngIf="med.administrado" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
                           <span>✓</span>
@@ -1157,9 +1232,25 @@
             <!-- Plan de Tratamiento y Materiales -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span>Plan de Tratamiento / Posología</span>
-                </label>
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <span>Plan de Tratamiento / Posología</span>
+                  </label>
+                  <span class="text-[10px] text-slate-400">Clic para insertar plantilla</span>
+                </div>
+
+                <!-- Chips rápidos de plantillas de tratamiento -->
+                <div class="flex items-center gap-1.5 flex-wrap pb-1">
+                  <span class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wide flex items-center gap-1">
+                    <span>⚡ Plantillas:</span>
+                  </span>
+                  <button type="button" *ngFor="let plan of plantillasTratamiento"
+                    (click)="aplicarPlantillaTratamiento(plan.texto)"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-[#4141a5] hover:text-white text-slate-700 transition cursor-pointer border border-slate-200 shadow-2xs active:scale-95">
+                    + {{ plan.label }}
+                  </button>
+                </div>
+
                 <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="3" [ngModel]="formHistoria.get('planTratamiento')?.value || planProcedimientos"
                     (ngModelChange)="formHistoria.patchValue({ planTratamiento: $event }); planProcedimientos = $event"
@@ -1169,9 +1260,25 @@
               </div>
 
               <div class="space-y-1.5">
-                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span>Materiales e Insumos Utilizados</span>
-                </label>
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <span>Materiales e Insumos Utilizados</span>
+                  </label>
+                  <span class="text-[10px] text-slate-400">Clic para agregar insumo</span>
+                </div>
+
+                <!-- Chips rápidos de insumos comunes -->
+                <div class="flex items-center gap-1.5 flex-wrap pb-1">
+                  <span class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wide flex items-center gap-1">
+                    <span>⚡ Insumos:</span>
+                  </span>
+                  <button type="button" *ngFor="let ins of insumosFrecuentes"
+                    (click)="agregarInsumoRapido(ins)"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-[#4141a5] hover:text-white text-slate-700 transition cursor-pointer border border-slate-200 shadow-2xs active:scale-95">
+                    + {{ ins }}
+                  </button>
+                </div>
+
                 <div class="bg-slate-50/60 border border-slate-200 rounded-xl p-3 focus-within:bg-white focus-within:border-[#4141a5] transition-all">
                   <textarea rows="3" [(ngModel)]="materialesUtilizados"
                     (ngModelChange)="formHistoria.patchValue({ materiales_utilizados: $event })"
@@ -1625,13 +1732,20 @@
               </div>
 
               <!-- Registro detallado de vacunas en anamnésicos -->
-              <div class="pt-1">
-                <label class="block text-[11px] font-extrabold text-slate-700 mb-1">Vacunas registradas / Observaciones de inmunización:</label>
+              <div class="pt-1 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="block text-[11px] font-extrabold text-slate-700">Vacunas registradas / Observaciones de inmunización:</label>
+                  <select (change)="planSanitario.vacunas = $any($event.target).value"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200 bg-slate-100 text-slate-700 cursor-pointer">
+                    <option value="">⚡ Seleccionar esquema rápido...</option>
+                    <option *ngFor="let opt of opcionesVacunas" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
                 <input
                   type="text"
                   [(ngModel)]="planSanitario.vacunas"
                   [ngModelOptions]="{standalone: true}"
-                  placeholder="Ej: Antirrábica y Polivalente aplicadas, lote y fecha..."
+                  placeholder="Ej: Esquema completo al día, lote y fecha..."
                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:border-[#4141a5] focus:outline-hidden font-semibold text-slate-800" />
               </div>
             </div>
@@ -1664,7 +1778,14 @@
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Producto antiparasitario:</label>
+                  <div class="flex items-center justify-between mb-0.5">
+                    <label class="block text-[10px] font-bold text-slate-500">Producto antiparasitario:</label>
+                    <select (change)="planSanitario.productoDesparasitacion = $any($event.target).value"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200 bg-slate-100 text-slate-700 cursor-pointer">
+                      <option value="">⚡ Seleccionar antiparasitario...</option>
+                      <option *ngFor="let opt of opcionesDesparasitante" [value]="opt">{{ opt }}</option>
+                    </select>
+                  </div>
                   <input
                     type="text"
                     [(ngModel)]="planSanitario.productoDesparasitacion"
@@ -1775,7 +1896,11 @@
               <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
                 <div class="flex items-center justify-between">
                   <span class="font-bold text-slate-700">Alimentación actual / recomendada:</span>
-                  <span class="font-extrabold text-slate-900">{{ alimento_marca || 'Concentrado seco balanceado' }}</span>
+                  <select (change)="alimento_marca = $any($event.target).value"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200 bg-white text-slate-700 cursor-pointer">
+                    <option value="">⚡ Seleccionar dieta...</option>
+                    <option *ngFor="let opt of opcionesAlimentacion" [value]="opt">{{ opt }}</option>
+                  </select>
                 </div>
                 <input
                   type="text"
@@ -1800,6 +1925,22 @@
               <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span class="font-bold text-slate-700">Acceso a agua potable:</span>
                 <span class="font-extrabold text-slate-900">A voluntad (permanente)</span>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-700">Enfermedades anteriores / Antecedentes patológicos:</span>
+                  <select (change)="planSanitario.enfermedadesAnteriores = $any($event.target).value"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200 bg-white text-slate-700 cursor-pointer">
+                    <option value="">⚡ Seleccionar antecedente...</option>
+                    <option *ngFor="let opt of opcionesEnfermedadesAnteriores" [value]="opt">{{ opt }}</option>
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  [(ngModel)]="planSanitario.enfermedadesAnteriores"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="Ej: Parvovirosis superada, alergia alimentaria, cirugías previas..."
+                  class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-semibold text-slate-700" />
               </div>
             </div>
           </div>

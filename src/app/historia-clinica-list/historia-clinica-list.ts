@@ -993,31 +993,54 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.guardandoEnHistorial = true;
 
     const motivoTexto = (this.nuevoRegistroHistorial.motivo || this.nuevoRegistroHistorial.tipo || 'Consulta General').trim();
+    const diagTexto = (this.nuevoRegistroHistorial.diagnostico || 'Evaluación médica registrada con éxito.').trim();
+    const planTexto = (this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.').trim();
     const payload = {
       id_animal: this.historiaSeleccionada.id_animal,
+      animal: {
+        id_animal: this.historiaSeleccionada.id_animal,
+        nombre: this.historiaSeleccionada.animal_nombre || 'Paciente',
+        especie: this.historiaSeleccionada.animal_especie || 'Canino',
+        raza: this.historiaSeleccionada.animal_raza || 'Mestizo',
+        sexo: this.historiaSeleccionada.animal_sexo || 'Macho',
+        peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada.animal_peso) || 3.0
+      },
       motivoConsulta: motivoTexto,
       prioridad: this.nuevoRegistroHistorial.prioridad || 'Normal',
+      anamnesicos: {
+        evolucion: `Atención clínica de ${this.nuevoRegistroHistorial.tipo}.`,
+        tratamientos: planTexto
+      },
       examenClinico: {
         temperatura: this.nuevoRegistroHistorial.temperatura,
         peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada.animal_peso) || 3.0,
+        frecuenciaCardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca,
         frecuencia_cardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca,
+        frecuenciaRespiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria,
         frecuencia_respiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria,
+        actitudTemperamento: 'Alerta / Responsivo',
         actitud_temperamento: 'Alerta / Responsivo',
+        condicionCorporal: 'Estable',
         resultado_estado: 'Estable'
       },
       hoja2: {
-        diagnosticoPrincipal: this.nuevoRegistroHistorial.diagnostico || 'Evaluación médica registrada con éxito.',
+        diagnosticoFinal: diagTexto,
+        diagnosticoPresuntivo: diagTexto,
+        diagnosticoPrincipal: diagTexto,
         diagnosticoDiferencial: '',
         listaProblemas: '',
         evolucion: `Atención clínica de ${this.nuevoRegistroHistorial.tipo}.`,
         pronostico: 'Favorable',
-        planProcedimientos: this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.',
+        planProcedimientos: planTexto,
         materialesUtilizados: '',
         tratamientos: []
       },
       hoja3: {
-        plan_procedimientos: this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.',
+        planProcedimientos: planTexto,
+        plan_procedimientos: planTexto,
+        materialesUtilizados: '',
         materiales_utilizados: '',
+        ingresaCBA: 'NO',
         ingresa_cba: false
       }
     };
