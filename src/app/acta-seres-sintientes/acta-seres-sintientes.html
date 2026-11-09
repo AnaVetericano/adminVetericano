@@ -37,9 +37,9 @@
     </div>
   </header>
 
-  <!-- BARRA DE PESTAÑAS (3 PASOS OFICIALES) -->
-  <nav
-    class="bg-white p-2 sm:p-2.5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-2.5 shadow-xs border border-slate-200/90 max-w-7xl mx-auto relative">
+  <!-- BARRA DE PESTAÑAS (3 PASOS OFICIALES - SOLO VISIBLE AL SELECCIONAR UN ANIMAL) -->
+  <nav *ngIf="seguimientoSeleccionado"
+    class="animate-slide-up bg-white p-2 sm:p-2.5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-2.5 shadow-xs border border-slate-200/90 max-w-7xl mx-auto relative">
 
     <!-- PASO 1: CONSULTA -->
     <button type="button" (click)="cambiarPestana('consulta')"
@@ -160,7 +160,7 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 1: CONSULTA (Agrupa Hoja 1: Espera y Hoja 2: Ficha/Motivo)  -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'consulta'" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="pestanaActiva === 'consulta' || !seguimientoSeleccionado" class="space-y-6 max-w-7xl mx-auto">
 
     <!-- ================================================================= -->
     <!-- VISTA INICIAL: CUADRÍCULA DE ANIMALES LISTOS (SIN PACIENTE SELECCIONADO) -->
@@ -1010,7 +1010,7 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 2: EXÁMENES (Agrupa Hoja 3: Pruebas y Hoja 4: 12 Sistemas)  -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'examenes'" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="seguimientoSeleccionado && pestanaActiva === 'examenes'" class="space-y-6 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
       <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL (HOJAS 3 Y 4) -->
@@ -1869,7 +1869,7 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 3: TRATAMIENTOS (Terapéutica, Rescate y Cierre Legal)       -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'tratamientos'" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="seguimientoSeleccionado && pestanaActiva === 'tratamientos'" class="space-y-6 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       <div class="lg:col-span-2 space-y-6 min-w-0">
 

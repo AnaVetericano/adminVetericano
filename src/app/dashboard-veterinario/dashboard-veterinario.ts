@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef,
 import { Chart } from 'chart.js/auto';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
@@ -70,6 +70,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Pestaña activa principal: 'peticiones' | 'maletin' | 'solicitudes'
   pestanaActiva: 'peticiones' | 'maletin' | 'solicitudes' = 'peticiones';
@@ -198,6 +199,20 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   solicitudesFiltradas: any[] = [];
   filtroEstadoSolicitud: 'TODAS' | 'PENDIENTES' | 'APROBADAS' | 'ENTREGADAS' = 'TODAS';
 
+  // Modal de Solicitudes a Farmacia CBA (Ventana Flotante)
+  modalSolicitudesAbierto = false;
+
+  abrirModalSolicitudes(): void {
+    this.modalSolicitudesAbierto = true;
+    if (this.solicitudesKit.length === 0) {
+      this.cargarSolicitudes();
+    }
+  }
+
+  cerrarModalSolicitudes(): void {
+    this.modalSolicitudesAbierto = false;
+  }
+
   // Modal Nueva Solicitud
   modalNuevaSolicitudAbierto = false;
   medicamentoSolicitudId: number | null = null;
@@ -222,6 +237,16 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.establecerDatosVeterinario();
     this.cargarDashboardCompleto();
+    this.route.queryParams.subscribe(params => {
+      if (params['tab'] === 'maletin') {
+        this.pestanaActiva = 'maletin';
+        if (params['buscar']) {
+          this.busquedaMedicamento = params['buscar'];
+          this.filtroStockMaletin = 'TODOS';
+          this.filtrarMaletin();
+        }
+      }
+    });
   }
 
   establecerDatosVeterinario(): void {
@@ -242,6 +267,10 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   }
 
   cambiarPestana(pestana: 'peticiones' | 'maletin' | 'solicitudes'): void {
+    if (pestana === 'solicitudes') {
+      this.abrirModalSolicitudes();
+      return;
+    }
     this.pestanaActiva = pestana;
     if (pestana === 'peticiones') {
       setTimeout(() => {
@@ -254,8 +283,6 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       }, 40);
     } else if (pestana === 'maletin' && this.medicamentosMaletin.length === 0) {
       this.cargarDatosMaletin();
-    } else if (pestana === 'solicitudes' && this.solicitudesKit.length === 0) {
-      this.cargarSolicitudes();
     }
   }
 
@@ -710,6 +737,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
     this.totalProximosVencer = alertas?.proximos_a_vencer?.length || this.medicamentosMaletin.filter(m => m.proximoAVencer).length;
 
     this.filtrarMaletin();
+    this.inventoryService.setAlertasMaletin(this.medicamentosConAlerta);
   }
 
   filtrarMaletin(): void {
