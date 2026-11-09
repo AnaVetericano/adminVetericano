@@ -24,11 +24,13 @@ export class ExamenesClinicos implements OnInit {
   guardando: boolean = false;
   filtroBusqueda: string = '';
   filtroEstado: 'todos' | 'activo' | 'inactivo' = 'todos';
+  filtroCategoria: 'todos' | 'examenes' | 'tests' = 'todos';
   menuFiltroAbierto: boolean = false;
 
   // Control del modal de creación / edición
   modalAbierto: boolean = false;
   esEdicion: boolean = false;
+  categoriaModal: 'examen' | 'test' = 'examen';
 
   tiposSugeridos: string[] = [
     'Prueba Diagnóstica',
@@ -111,7 +113,40 @@ export class ExamenesClinicos implements OnInit {
   }
 
   /**
-   * Búsqueda reactiva por nombre, tipo o descripción y filtro por estado
+   * Identifica si un registro corresponde a un Test Rápido / Kit diagnóstico
+   */
+  esTest(item: any): boolean {
+    if (!item) return false;
+    const nombre = (item.nombre || item.nombre_tipo || item.nombre_tipo_examen || '').toLowerCase();
+    const tipo = (item.tipo || item.ruta_archivo_resultado || '').toLowerCase();
+    return (
+      nombre.includes('test') ||
+      tipo.includes('test') ||
+      tipo.includes('inmuno') ||
+      nombre.includes('kit') ||
+      nombre.includes('prueba rápida') ||
+      nombre.includes('prueba rapida') ||
+      tipo.includes('punto de atención') ||
+      tipo.includes('poc')
+    );
+  }
+
+  get totalExamenesCount(): number {
+    return this.listaCatalogo.filter(item => !this.esTest(item)).length;
+  }
+
+  get totalTestsCount(): number {
+    return this.listaCatalogo.filter(item => this.esTest(item)).length;
+  }
+
+  filtrarPorCategoria(categoria: 'todos' | 'examenes' | 'tests'): void {
+    this.filtroCategoria = categoria;
+    this.paginaActual = 1;
+    this.filtrarExamenes();
+  }
+
+  /**
+   * Búsqueda reactiva por nombre, tipo o descripción y filtro por estado y categoría
    */
   filtrarExamenes(): void {
     const texto = (this.filtroBusqueda || '').toLowerCase().trim();
@@ -130,7 +165,13 @@ export class ExamenesClinicos implements OnInit {
         (this.filtroEstado === 'activo' && activo) ||
         (this.filtroEstado === 'inactivo' && !activo);
 
-      return coincideTexto && coincideEstado;
+      const esItemTest = this.esTest(item);
+      const coincideCategoria =
+        this.filtroCategoria === 'todos' ||
+        (this.filtroCategoria === 'tests' && esItemTest) ||
+        (this.filtroCategoria === 'examenes' && !esItemTest);
+
+      return coincideTexto && coincideEstado && coincideCategoria;
     });
 
     this.totalRegistros = this.listaFiltrada.length;
@@ -157,6 +198,7 @@ export class ExamenesClinicos implements OnInit {
   limpiarBusqueda(): void {
     this.filtroBusqueda = '';
     this.filtroEstado = 'todos';
+    this.filtroCategoria = 'todos';
     this.paginaActual = 1;
     this.filtrarExamenes();
   }
@@ -165,13 +207,27 @@ export class ExamenesClinicos implements OnInit {
   // CREAR, EDITAR, ACTIVAR Y DESACTIVAR EXÁMENES CLÍNICOS
   // =========================================================================
 
+  setCategoriaModal(cat: 'examen' | 'test'): void {
+    this.categoriaModal = cat;
+    if (cat === 'test') {
+      if (!this.examenActual.tipo || this.examenActual.tipo === 'Prueba Diagnóstica') {
+        this.examenActual.tipo = 'Inmunodiagnóstico Rápido';
+      }
+    } else {
+      if (this.examenActual.tipo === 'Inmunodiagnóstico Rápido' || this.examenActual.tipo === 'Inmunodiagnóstico Felino') {
+        this.examenActual.tipo = 'Prueba Diagnóstica';
+      }
+    }
+  }
+
   abrirModalCrear(): void {
     this.esEdicion = false;
+    this.categoriaModal = this.filtroCategoria === 'tests' ? 'test' : 'examen';
     this.examenActual = {
       id_examen: null,
       id_procedimiento_catalogo: null,
       nombre_tipo: '',
-      tipo: 'Prueba Diagnóstica',
+      tipo: this.categoriaModal === 'test' ? 'Inmunodiagnóstico Rápido' : 'Prueba Diagnóstica',
       descripcion: '',
       estado: 'activo'
     };
@@ -181,6 +237,7 @@ export class ExamenesClinicos implements OnInit {
 
   abrirModalEditar(item: ExamenClinico): void {
     this.esEdicion = true;
+    this.categoriaModal = this.esTest(item) ? 'test' : 'examen';
     const id = item.id_procedimiento_catalogo || item.id_examen || (item as any).id || null;
     const esActivo = this.verificarEstadoActivo(item);
     const tipoActual = (item.tipo || 'Prueba Diagnóstica').trim();
@@ -227,7 +284,12 @@ export class ExamenesClinicos implements OnInit {
         : 'activo';
 
     const descripcionLimpia = (this.examenActual.descripcion || '').trim() || '.';
-    const tipoLimpio = (this.examenActual.tipo || '').trim() || 'Prueba Diagnóstica';
+    let tipoLimpio = (this.examenActual.tipo || '').trim();
+    if (this.categoriaModal === 'test' && (!tipoLimpio || tipoLimpio === 'Prueba Diagnóstica')) {
+      tipoLimpio = 'Inmunodiagnóstico Rápido';
+    } else if (!tipoLimpio) {
+      tipoLimpio = 'Prueba Diagnóstica';
+    }
     const idARecuperar = this.examenActual.id_procedimiento_catalogo || this.examenActual.id_examen;
 
     const payload: Partial<ExamenClinico> = {
@@ -367,12 +429,10 @@ export class ExamenesClinicos implements OnInit {
   // =========================================================================
 
   /**
-   * Obtiene la porción de exámenes correspondientes a la página activa
+   * Obtiene la totalidad de exámenes filtrados para visualización continua
    */
   get examenesPaginados(): ExamenClinico[] {
-    const inicio = (this.paginaActual - 1) * this.tamanoPagina;
-    const fin = inicio + this.tamanoPagina;
-    return this.listaFiltrada.slice(inicio, fin);
+    return this.listaFiltrada;
   }
 
   cambiarPagina(nuevaPagina: number): void {
