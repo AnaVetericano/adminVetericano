@@ -400,19 +400,21 @@
                             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                     </div>
 
-                    <div>
-                        <label for="examen-tipo" class="block text-xs font-bold text-gray-600 uppercase mb-1">
-                            Tipo / Especialidad
-                        </label>
-                        <select
-                            id="examen-tipo"
-                            [(ngModel)]="examenActual.tipo"
-                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
-                            @for (t of tiposSugeridos; track t) {
-                                <option [value]="t">{{ t }}</option>
-                            }
-                        </select>
-                    </div>
+                    @if (categoriaModal === 'examen') {
+                        <div>
+                            <label for="examen-tipo" class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                                Tipo / Especialidad
+                            </label>
+                            <select
+                                id="examen-tipo"
+                                [(ngModel)]="examenActual.tipo"
+                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
+                                @for (t of tiposSugeridos; track t) {
+                                    <option [value]="t">{{ t }}</option>
+                                }
+                            </select>
+                        </div>
+                    }
 
                     <div>
                         <label for="examen-descripcion" class="block text-xs font-bold text-gray-600 uppercase mb-1">
