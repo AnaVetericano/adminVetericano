@@ -157,11 +157,7 @@ export class Peticion implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    if (this.esVeterinario) {
-      this.vistaJuridica = 'peticiones';
-    } else if (typeof window !== 'undefined' && (window.location.search.includes('dashboard') || window.location.hash.includes('dashboard'))) {
-      this.vistaJuridica = 'dashboard';
-    }
+    this.vistaJuridica = 'peticiones';
     this.reporteForm = this.fb.group({
       tipoPeticion: ['maltrato', Validators.required],
       otroEspecificacion: [''],
