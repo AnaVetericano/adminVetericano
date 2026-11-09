@@ -30,19 +30,6 @@
 
       <!-- Acciones de Cabecera -->
       <div class="flex items-center gap-2.5 self-end sm:self-center">
-        <!-- Botón Recargar -->
-        <button
-          type="button"
-          (click)="recargarLista()"
-          [disabled]="cargando || recargando"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
-          title="Recargar listado desde el backend">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" [ngClass]="{'animate-spin': recargando}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span class="hidden sm:inline">Actualizar</span>
-        </button>
-
         <!-- Botón Rápido: + Registrar Paciente (Estilo CP-Vet) -->
         <button
           type="button"
@@ -209,7 +196,6 @@
             <tr>
               <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">N° Historia</th>
               <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Paciente / ID</th>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Estado General</th>
               <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Fecha Apertura</th>
               <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Desparasitación</th>
               <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Vacunas</th>
@@ -231,7 +217,15 @@
                     {{ historia.numero_historia }}
                   </span>
                 </div>
-                <span class="text-[10px] text-gray-400 block font-mono pl-4">ID #{{ historia.id_historia }}</span>
+                <div class="pl-4 space-y-0.5 mt-0.5">
+                  <span class="text-[10px] text-gray-400 block font-mono">ID #{{ historia.id_historia }}</span>
+                  <span
+                    *ngIf="historia.numero_radicado"
+                    class="inline-flex items-center gap-1 text-[10px] font-bold text-[#4141a5] bg-[#4141a5]/10 px-1.5 py-0.5 rounded border border-[#4141a5]/20"
+                    title="Número de radicado vinculado">
+                    Radicado: {{ historia.numero_radicado }}
+                  </span>
+                </div>
               </td>
 
               <!-- Paciente / Animal -->
@@ -255,16 +249,6 @@
                     </p>
                   </div>
                 </div>
-              </td>
-
-              <!-- Estado General -->
-              <td class="px-5 py-3.5 whitespace-nowrap">
-                <span
-                  [ngClass]="obtenerClaseEstado(historia.estado_general)"
-                  class="px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1">
-                  <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                  {{ historia.estado_general || 'Estable' }}
-                </span>
               </td>
 
               <!-- Fecha de Apertura -->
@@ -299,26 +283,32 @@
 
               <!-- Acciones -->
               <td class="px-5 py-3.5 whitespace-nowrap text-center">
-                <div class="flex items-center justify-center gap-1.5">
+                <div class="flex items-center justify-center gap-2">
+                  <!-- Ver historias clínicas guardadas (Ojo) -->
                   <button
                     type="button"
                     (click)="abrirModalDetalle(historia)"
-                    class="p-1.5 rounded-lg text-[#4141a5] hover:bg-[#4141a5]/10 transition-colors cursor-pointer"
-                    title="Ver detalle del expediente">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white border border-[#4141a5]/20 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    title="Ver historias clínicas guardadas"
+                    aria-label="Ver historias clínicas guardadas">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
+                    <span>Ver historias clínicas guardadas</span>
                   </button>
 
+                  <!-- Editar el animal (Editar) -->
                   <button
                     type="button"
                     (click)="abrirModalEditarAnimal(historia)"
-                    class="p-1.5 rounded-lg text-[#4141a5] hover:bg-[#4141a5]/10 transition-colors cursor-pointer"
-                    title="Editar ficha del paciente">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#170B3D]/5 hover:bg-[#170B3D] text-[#170B3D] hover:text-white border border-[#170B3D]/20 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    title="Editar el animal"
+                    aria-label="Editar el animal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
+                    <span>Editar el animal</span>
                   </button>
                 </div>
               </td>
@@ -342,8 +332,16 @@
             <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
               <div>
                 <span class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wider block">Historia Clínica</span>
-                <h3 class="text-base font-extrabold text-[#170B3D]">{{ historia.numero_historia }}</h3>
-                <span class="text-[10px] text-gray-400">Apertura: {{ formatearFecha(historia.fecha_apertura) }}</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-base font-extrabold text-[#170B3D]">{{ historia.numero_historia }}</h3>
+                  <span
+                    *ngIf="historia.numero_radicado"
+                    class="text-[10px] font-bold text-[#4141a5] bg-[#4141a5]/10 px-1.5 py-0.5 rounded border border-[#4141a5]/20"
+                    title="Número de radicado vinculado">
+                    Rad: {{ historia.numero_radicado }}
+                  </span>
+                </div>
+                <span class="text-[10px] text-gray-400 block mt-0.5">Apertura: {{ formatearFecha(historia.fecha_apertura) }}</span>
               </div>
               <span
                 [ngClass]="obtenerClaseEstado(historia.estado_general)"
@@ -398,14 +396,16 @@
             <button
               type="button"
               (click)="abrirModalDetalle(historia)"
-              class="flex-1 py-2 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all border border-gray-200 cursor-pointer text-center">
-              Ver Detalle
+              class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white border border-[#4141a5]/20 text-xs font-bold transition-all cursor-pointer text-center"
+              title="Ver historias clínicas guardadas">
+              Ver historias clínicas guardadas
             </button>
             <button
               type="button"
               (click)="abrirModalEditarAnimal(historia)"
-              class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition-all shadow-xs cursor-pointer text-center">
-              Editar Paciente
+              class="flex-1 py-2 px-3 rounded-xl bg-[#170B3D]/5 hover:bg-[#170B3D] text-[#170B3D] hover:text-white border border-[#170B3D]/20 text-xs font-bold transition-all shadow-xs cursor-pointer text-center"
+              title="Editar el animal">
+              Editar el animal
             </button>
           </div>
 
@@ -471,6 +471,12 @@
               </h2>
               <span class="text-[11px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
                 N.H.C {{ historiaSeleccionada.numero_historia }}
+              </span>
+              <span
+                *ngIf="historiaSeleccionada.numero_radicado"
+                class="text-[11px] font-bold text-[#4141a5] bg-[#4141a5]/10 px-2 py-0.5 rounded-md border border-[#4141a5]/20"
+                title="Radicado de origen">
+                Rad: {{ historiaSeleccionada.numero_radicado }}
               </span>
               <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                 {{ historiaSeleccionada.estado_general || 'Estable' }}
@@ -786,6 +792,9 @@
                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Número de Historia</span>
                 <span class="font-black text-[#170B3D] text-xs sm:text-sm mt-1 block">
                   {{ historiaSeleccionada.numero_historia || ('HC-' + (historiaSeleccionada.id_historia || '001')) }}
+                </span>
+                <span *ngIf="historiaSeleccionada.numero_radicado" class="text-[10px] text-[#4141a5] font-bold block mt-0.5">
+                  Rad: {{ historiaSeleccionada.numero_radicado }}
                 </span>
               </div>
               <div>
