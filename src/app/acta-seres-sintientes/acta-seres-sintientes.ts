@@ -2035,6 +2035,7 @@ export class ActaSeresSintientes implements OnInit {
   iniciarNuevoAnimal(): void {
     this.reiniciarFormularioClinico();
     this.reiniciarSistemas('NE');
+    this.pestanaActiva = 'consulta';
     this.esNuevoAnimal = true;
     this.archivosMultimedia = [];
 
@@ -3289,6 +3290,9 @@ export class ActaSeresSintientes implements OnInit {
   }
 
   cambiarPestana(pestana: 'consulta' | 'examenes' | 'tratamientos'): void {
+    if (!this.seguimientoSeleccionado && pestana !== 'consulta') {
+      return;
+    }
     this.pestanaActiva = pestana;
     if (pestana === 'examenes' && this.examenesClinicos.length === 0) {
       this.cargarExamenesClinicos();
@@ -3594,6 +3598,7 @@ export class ActaSeresSintientes implements OnInit {
   seleccionarSeguimiento(seguimiento: any): void {
     // 1. Limpiar por completo el estado del paciente anterior antes de cargar el nuevo
     this.reiniciarFormularioClinico();
+    this.pestanaActiva = 'consulta';
     this.esNuevoAnimal = false;
     this.archivosMultimedia = [];
 
@@ -3739,6 +3744,7 @@ export class ActaSeresSintientes implements OnInit {
   deseleccionarPaciente(): void {
     this.reiniciarFormularioClinico();
     this.seguimientoSeleccionado = null;
+    this.pestanaActiva = 'consulta';
     this.esNuevoAnimal = false;
     this.archivosMultimedia = [];
     this.numeroRadicadoActual = '';

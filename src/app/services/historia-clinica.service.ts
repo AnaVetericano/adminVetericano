@@ -114,6 +114,7 @@ export interface HistoriaClinicaEdicion {
 
 export interface ActualizarHistoriaDto {
   motivo_consulta?: string;
+  anamnesis?: string;
   diagnostico_principal: string;
   diagnostico_diferencial?: string;
   hallazgos_examen?: string;
@@ -148,6 +149,8 @@ export interface ActualizarHistoriaDto {
   condicion_corporal?: string;
   proxima_visita_fecha?: string;
   proxima_visita_notas?: string;
+  nombre_veterinario?: string;
+  tarjeta_profesional?: string;
 }
 
 /**
@@ -851,6 +854,30 @@ export class HistoriaClinicaService {
       tratamientos = [...tratRaw];
     }
 
+    // Enriquecer tratamientos con detalles persistidos en _tratamientos_detalle (principio_activo, concentracion, descripcion, etc.)
+    const detalleGuardado = Array.isArray(orgObj._tratamientos_detalle) ? orgObj._tratamientos_detalle : [];
+    if (detalleGuardado.length > 0 && tratamientos.length > 0) {
+      tratamientos = tratamientos.map((t: any) => {
+        const nomT = String(t.producto_base || t.productoBase || t.nombre || t.nombre_medicamento || '').trim().toLowerCase();
+        const idT = Number(t.id_tratamiento || t.id || 0);
+        const matchDet = detalleGuardado.find((d: any) =>
+          (idT > 0 && Number(d.id_tratamiento) === idT) ||
+          (nomT && String(d.nombre || d.producto_base || '').trim().toLowerCase() === nomT)
+        );
+        if (!matchDet) return t;
+        return {
+          ...matchDet,
+          ...t,
+          id_medicamento: t.id_medicamento || matchDet.id_medicamento || null,
+          principio_activo: t.principio_activo || matchDet.principio_activo || '',
+          concentracion: t.concentracion || matchDet.concentracion || '',
+          descripcion: t.descripcion || t.posologia || matchDet.descripcion || '',
+          cantidad_administrada: t.cantidad_administrada || matchDet.cantidad_administrada || 1,
+          administrado: t.administrado !== undefined ? t.administrado : (matchDet.administrado ?? true)
+        };
+      });
+    }
+
     // Integrar historial de tratamientos de consultas anteriores del animal (atenciones móviles o de campo)
     if (Array.isArray(raw.consultas_anteriores)) {
       raw.consultas_anteriores.forEach((cAnt: any) => {
@@ -892,7 +919,8 @@ export class HistoriaClinicaService {
     const idAnimalNum = Number(raw.id_animal || animal.id_animal || ultimaConsulta.id_animal || 1);
     const hallazgosStr = hoja2Obj.descripcionHallazgos || hoja2Obj.hallazgos_pruebas || ultimaConsulta.hallazgos_examen || raw.hallazgos_examen || raw.descripcion_hallazgos || '';
     const planProcStr = hoja2Obj.planProcedimientos || ultimaConsulta.plan_procedimientos || raw.plan_procedimientos || anamnesicos.tratamientos || raw.plan_tratamiento || '';
-    const anamnesisStr = ultimaConsulta.anamnesis || raw.anamnesis || anamnesicos.evolucion || anamnesicos.evolucionPrevia || ultimaConsulta.evolucion || raw.evolucion || '';
+    const anamnesisStr = orgObj._anamnesis || ultimaConsulta.anamnesis || raw.anamnesis || anamnesicos.evolucion || anamnesicos.evolucionPrevia || ultimaConsulta.evolucion || raw.evolucion || '';
+    const evolucionStr = orgObj._evolucion || anamnesicos.evolucion || anamnesicos.evolucionPrevia || raw.evolucion || ultimaConsulta.evolucion || anamnesisStr || hallazgosStr;
     const ingresaCbaBool =
       hoja3Obj.ingresaCBA === 'SI' ||
       hoja3Obj.ingresaCBA === true ||
@@ -946,7 +974,7 @@ export class HistoriaClinicaService {
         ? orgObj._diagnostico_diferencial
         : (hoja2Obj.diagnosticoDiferencial || ultimaConsulta.diagnostico_diferencial || raw.diagnostico_diferencial || ''),
       lista_problemas: listaProblemasStr,
-      evolucion: anamnesisStr || hallazgosStr,
+      evolucion: evolucionStr,
       pronostico: hoja2Obj.pronostico || ultimaConsulta.pronostico || raw.pronostico || 'Favorable',
       plan_procedimientos: planProcStr,
       plan_tratamiento: planProcStr,
@@ -1483,14 +1511,40 @@ export class HistoriaClinicaService {
     // 1. Preparar payload para PATCH /api/clinica/expediente-completo/
     // Nota: El endpoint PATCH de Django asigna data.get('diagnostico_diferencial') a consulta.hallazgos_examen,
     // por lo que enviamos hallazgos_examen allí y guardamos diagnostico_diferencial en su campo propio.
+    const tratamientosDetallePersistible = Array.isArray(dto.tratamientos)
+      ? dto.tratamientos.map((t: any) => ({
+          id_tratamiento: t.id_tratamiento || null,
+          id_medicamento: t.id_medicamento || t.id || null,
+          nombre: t.nombre || t.producto_base || t.productoBase || '',
+          principio_activo: t.principio_activo || '',
+          concentracion: t.concentracion || '',
+          presentacion: t.presentacion || '',
+          dosis: t.dosis || '',
+          via: t.via || '',
+          frecuencia: t.frecuencia || '',
+          descripcion: t.descripcion || t.posologia || '',
+          cantidad_administrada: t.cantidad_administrada || 1,
+          administrado: !!t.administrado,
+          responsable_admin: t.responsable_admin || dto.nombre_veterinario || ''
+        }))
+      : [];
+
     const organosEnriquecidos: Record<string, any> = {
       ...(dto.organos_sistemas || {}),
+      _anamnesis: dto.anamnesis ?? dto.evolucion ?? '',
+      _evolucion: dto.evolucion ?? '',
       _diagnostico_diferencial: dto.diagnostico_diferencial ?? '',
       _alimento_marca: dto.alimento_marca ?? '',
       _esterilizado_opcion: dto.esterilizado_opcion ?? '',
       _condicion_corporal: dto.condicion_corporal ?? '',
       _proxima_visita_fecha: dto.proxima_visita_fecha ?? '',
-      _proxima_visita_notas: dto.proxima_visita_notas ?? ''
+      _proxima_visita_notas: dto.proxima_visita_notas ?? '',
+      _veterinario_responsable: dto.nombre_veterinario || dto.organos_sistemas?.['_veterinario_responsable'] || '',
+      _tarjeta_profesional: dto.tarjeta_profesional || dto.organos_sistemas?.['_tarjeta_profesional'] || '',
+      _acudiente_nombre: dto.tenedor?.['nombres'] || dto.organos_sistemas?.['_acudiente_nombre'] || '',
+      _acudiente_cedula: dto.tenedor?.['documentoIdentidad'] || dto.organos_sistemas?.['_acudiente_cedula'] || '',
+      _acudiente_telefono: dto.tenedor?.['telefono'] || dto.organos_sistemas?.['_acudiente_telefono'] || '',
+      _tratamientos_detalle: tratamientosDetallePersistible
     };
 
     const payloadPatch: any = {
@@ -1628,11 +1682,15 @@ export class HistoriaClinicaService {
         const auditoria = resp?.auditoria || this.generarAuditoriaDesdeCambios(idHistoriaEfectiva, dto, historiaActual, idConsultaEfectiva);
         const historialModificaciones = resp?.historial_modificaciones || [auditoria];
 
-        if (idConsultaEfectiva) {
-          this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoriaEfectiva, idAnimal);
-        }
-
         const sincronizacionesDirectas: Observable<any>[] = [];
+
+        if (idConsultaEfectiva) {
+          sincronizacionesDirectas.push(
+            this.sincronizarDiagnosticoYTratamientos(idConsultaEfectiva, dto, idHistoriaEfectiva, idAnimal).pipe(
+              catchError(() => of(null))
+            )
+          );
+        }
 
         // Sincronización directa contra /api/clinica/consultas/:id/ (ModelViewSet con fields='__all__')
         // Garantiza que los 12 Sistemas Orgánicos, signos cualitativos, exámenes, hallazgos_examen y CBA queden persistidos en PostgreSQL
@@ -1642,7 +1700,7 @@ export class HistoriaClinicaService {
             motivo_consulta: payloadPatch.motivo_consulta,
             prioridad: payloadPatch.prioridad,
             resultado_estado: payloadPatch.resultado_estado,
-            anamnesis: payloadPatch.evolucion,
+            anamnesis: (dto.anamnesis || payloadPatch.evolucion || '').trim(),
             hallazgos_examen: dto.hallazgos_examen !== undefined ? dto.hallazgos_examen : '',
             frecuencia_cardiaca: payloadPatch.frecuencia_cardiaca,
             frecuencia_respiratoria: payloadPatch.frecuencia_respiratoria,
@@ -1677,6 +1735,7 @@ export class HistoriaClinicaService {
         if (idHistoriaEfectiva && Number(idHistoriaEfectiva) > 0) {
           const urlHistoriaDirecta = `${this.baseUrlClinica}historias/${idHistoriaEfectiva}/`;
           const bodyHistoriaCompleta: any = {
+            estado_general: dto.resultado_estado || 'Estable',
             evolucion_previa: dto.evolucion,
             tratamientos_anteriores: dto.plan_tratamiento
           };
@@ -1694,6 +1753,12 @@ export class HistoriaClinicaService {
           }
           if (dto.anamnesicos?.['enfermedadesAnteriores'] !== undefined) {
             bodyHistoriaCompleta.enfermedades_anteriores = dto.anamnesicos['enfermedadesAnteriores'];
+          }
+          const fechaDesparRaw = String(dto.anamnesicos?.['ultimaDesparasitacion'] || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(fechaDesparRaw)) {
+            bodyHistoriaCompleta.fecha_ultima_desparasitacion = fechaDesparRaw;
+          } else if (dto.anamnesicos?.['ultimaDesparasitacion'] === '') {
+            bodyHistoriaCompleta.fecha_ultima_desparasitacion = null;
           }
           sincronizacionesDirectas.push(
             this.http.patch<any>(urlHistoriaDirecta, bodyHistoriaCompleta, { headers: this.authHeaders }).pipe(
@@ -1728,6 +1793,7 @@ export class HistoriaClinicaService {
     const headers = this.authHeaders;
 
     if (idConsulta && (payload.diagnostico_principal !== undefined || payload.diagnostico_diferencial !== undefined || payload.lista_problemas !== undefined)) {
+      const tipoDiagSeguro = String(payload.diagnostico_diferencial || 'Final').substring(0, 50);
       const opDiag = this.http.get<any>(`${this.baseUrlClinica}diagnosticos/?id_consulta=${idConsulta}`, { headers }).pipe(
         switchMap((resDiag) => {
           const list = this.extraerLista(resDiag).filter(
@@ -1736,7 +1802,7 @@ export class HistoriaClinicaService {
           const bodyDiag = {
             id_consulta: idConsulta,
             descripcion: payload.diagnostico_principal ?? '',
-            tipo_diagnostico: payload.diagnostico_diferencial ?? '',
+            tipo_diagnostico: tipoDiagSeguro,
             lista_problemas: payload.lista_problemas ?? ''
           };
           if (list.length > 0 && list[0].id_diagnostico) {
@@ -1756,60 +1822,109 @@ export class HistoriaClinicaService {
   }
 
   /**
-   * Sincroniza diagnósticos, tratamientos y antecedentes en los endpoints correspondientes
+   * Sincroniza diagnósticos, tratamientos, vínculo tratamiento-medicamentos, peso/esterilizado y tenedor en los endpoints correspondientes
    */
   private sincronizarDiagnosticoYTratamientos(
     idConsulta: number | undefined,
     dto: ActualizarHistoriaDto,
     idHistoria: number,
     idAnimal?: number
-  ): void {
-    if (!idConsulta) return;
+  ): Observable<any> {
+    if (!idConsulta) return of(null);
 
-    // 1. Sincronizar Diagnóstico en /api/clinica/diagnosticos/
-    // CORRECCIÓN 2: Filtrado estricto en el cliente por id_consulta
-    if (dto.diagnostico_principal || dto.lista_problemas) {
+    const tareas$: Observable<any>[] = [];
+    const apiRoot = this.baseUrlClinica.replace(/\/clinica\/?$/, '/');
+    const urlTratMed = `${apiRoot}tratamiento-medicamentos/`;
+
+    // 1. Sincronizar Diagnóstico en /api/clinica/diagnosticos/ y /api/clinica/diagnostico-patologias/
+    if (dto.diagnostico_principal || dto.lista_problemas || dto.diagnostico_diferencial !== undefined) {
       const urlDiagnosticos = `${this.baseUrlClinica}diagnosticos/`;
-      this.http.get<any>(`${urlDiagnosticos}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).subscribe({
-        next: (resp) => {
+      const urlDiagPatologias = `${this.baseUrlClinica}diagnostico-patologias/`;
+      // Truncar tipo_diagnostico a 50 caracteres para respetar CharField(max_length=50) en PostgreSQL
+      const tipoDiagSeguro = String(dto.diagnostico_diferencial || 'Final').substring(0, 50);
+
+      const syncDiag$ = this.http.get<any>(`${urlDiagnosticos}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
+        switchMap((resp) => {
           const list = this.extraerLista(resp).filter((d: any) => Number(d.id_consulta) === Number(idConsulta));
-          if (list.length > 0 && list[0]?.id_diagnostico) {
-            this.http.patch<any>(`${urlDiagnosticos}${list[0].id_diagnostico}/`, {
-              descripcion: dto.diagnostico_principal,
-              tipo_diagnostico: dto.diagnostico_diferencial || 'Final',
-              lista_problemas: dto.lista_problemas
-            }, { headers: this.authHeaders }).subscribe({ error: () => {} });
-          } else {
-            this.http.post<any>(urlDiagnosticos, {
-              id_consulta: idConsulta,
-              descripcion: dto.diagnostico_principal,
-              tipo_diagnostico: dto.diagnostico_diferencial || 'Final',
-              lista_problemas: dto.lista_problemas
-            }, { headers: this.authHeaders }).subscribe({ error: () => {} });
-          }
-        },
-        error: () => {}
-      });
+          const bodyDiag = {
+            id_consulta: idConsulta,
+            descripcion: dto.diagnostico_principal || 'Consulta médica general',
+            tipo_diagnostico: tipoDiagSeguro,
+            lista_problemas: dto.lista_problemas || ''
+          };
+          const reqDiag$ = (list.length > 0 && list[0]?.id_diagnostico)
+            ? this.http.patch<any>(`${urlDiagnosticos}${list[0].id_diagnostico}/`, bodyDiag, { headers: this.authHeaders })
+            : this.http.post<any>(urlDiagnosticos, bodyDiag, { headers: this.authHeaders });
+
+          return reqDiag$.pipe(
+            switchMap((diagResp) => {
+              const idDiag = diagResp?.id_diagnostico || list[0]?.id_diagnostico;
+              if (idDiag && dto.id_patologia && Number(dto.id_patologia) > 0) {
+                return this.http.get<any>(`${urlDiagPatologias}?id_diagnostico=${idDiag}`, { headers: this.authHeaders }).pipe(
+                  switchMap((resDp) => {
+                    const dpList = this.extraerLista(resDp).filter((dp: any) => Number(dp.id_diagnostico) === Number(idDiag));
+                    const bodyDp = {
+                      id_diagnostico: Number(idDiag),
+                      id_patologia: Number(dto.id_patologia),
+                      es_principal: true,
+                      hallazgos_pruebas: dto.hallazgos_examen || dto.diagnostico_diferencial || ''
+                    };
+                    if (dpList.length > 0 && dpList[0]?.id_diagnostico_patologia) {
+                      return this.http.patch<any>(`${urlDiagPatologias}${dpList[0].id_diagnostico_patologia}/`, bodyDp, { headers: this.authHeaders });
+                    }
+                    return this.http.post<any>(urlDiagPatologias, bodyDp, { headers: this.authHeaders });
+                  }),
+                  catchError(() => of(null))
+                );
+              }
+              return of(diagResp);
+            }),
+            catchError(() => of(null))
+          );
+        }),
+        catchError(() => of(null))
+      );
+      tareas$.push(syncDiag$);
     }
 
-    // 2. Sincronizar Tratamientos en /api/clinica/tratamientos/ (con soporte de actualización y eliminación sin duplicar)
+    // 2. Sincronizar Tratamientos en /api/clinica/tratamientos/ y su puente en /api/tratamiento-medicamentos/
     const urlTratamientos = `${this.baseUrlClinica}tratamientos/`;
     const eliminadosExplicito = Array.isArray(dto.tratamientos_eliminados)
       ? dto.tratamientos_eliminados.filter(id => Number(id) > 0).map(id => Number(id))
       : [];
 
-    eliminadosExplicito.forEach(idElim => {
-      this.http.delete<any>(`${urlTratamientos}${idElim}/`, { headers: this.authHeaders }).subscribe({ error: () => {} });
-    });
+    if (eliminadosExplicito.length > 0 || Array.isArray(dto.tratamientos)) {
+      const syncTrat$ = forkJoin({
+        existentesEnBd: this.http.get<any>(`${urlTratamientos}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
+          map(res => this.extraerLista(res).filter((tr: any) => Number(tr.id_consulta) === Number(idConsulta))),
+          catchError(() => of([]))
+        ),
+        puentesEnBd: this.http.get<any>(urlTratMed, { headers: this.authHeaders }).pipe(
+          map(res => this.extraerLista(res)),
+          catchError(() => of([]))
+        )
+      }).pipe(
+        switchMap(({ existentesEnBd, puentesEnBd }) => {
+          const opsTratamiento: Observable<any>[] = [];
 
-    if (Array.isArray(dto.tratamientos)) {
-      this.http.get<any>(`${urlTratamientos}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
-        map(res => this.extraerLista(res).filter((tr: any) => Number(tr.id_consulta) === Number(idConsulta))),
-        catchError(() => of([]))
-      ).subscribe({
-        next: (existentesEnBd: any[]) => {
+          // 2a. Eliminar primero los puentes en /api/tratamiento-medicamentos/ y luego el tratamiento en /api/clinica/tratamientos/
+          eliminadosExplicito.forEach(idElim => {
+            const puentesDeElim = puentesEnBd.filter((pm: any) => Number(pm.id_tratamiento) === Number(idElim));
+            const delPuentes$: Observable<any> = puentesDeElim.length > 0
+              ? forkJoin(puentesDeElim.map((pm: any) =>
+                  this.http.delete<any>(`${urlTratMed}${pm.id_tratamiento_medicamento || pm.id}/`, { headers: this.authHeaders }).pipe(catchError(() => of(null)))
+                ))
+              : of(null);
+
+            opsTratamiento.push(
+              delPuentes$.pipe(
+                switchMap(() => this.http.delete<any>(`${urlTratamientos}${idElim}/`, { headers: this.authHeaders }).pipe(catchError(() => of(null))))
+              )
+            );
+          });
+
+          // 2b. Crear o actualizar tratamientos activos y su registro en tratamiento_medicamentos
           const idsConservados = new Set<number>();
-
           (dto.tratamientos || []).forEach(t => {
             const nombreProd = (t.nombre || t.producto_base || t.productoBase || '').trim();
             let idTrat = t.id_tratamiento && Number(t.id_tratamiento) > 0 ? Number(t.id_tratamiento) : null;
@@ -1832,7 +1947,31 @@ export class HistoriaClinicaService {
               presentacion: t.presentacion || '',
               via_administracion: t.via || t.via_administracion || '',
               frecuencia_duracion: t.frecuencia || t.frecuencia_duracion || t.frecuenciaDuracion || '',
+              descripcion: t.descripcion || t.posologia || '',
               materiales_utilizados: dto.materiales_utilizados || ''
+            };
+
+            const sincronizarPuenteMedicamento = (idTratEfectivo: number): Observable<any> => {
+              const idMed = Number(t.id_medicamento || t.id || 0);
+              if (!idTratEfectivo || isNaN(idMed) || idMed <= 0) {
+                return of(null);
+              }
+              const puenteExistente = puentesEnBd.find((pm: any) => Number(pm.id_tratamiento) === Number(idTratEfectivo));
+              const hoyIso = new Date().toISOString().split('T')[0];
+              const bodyPuente = {
+                id_tratamiento: Number(idTratEfectivo),
+                id_medicamento: idMed,
+                dosis: bodyTrat.dosis_basica,
+                via: bodyTrat.via_administracion,
+                fecha_aplicacion: puenteExistente?.fecha_aplicacion || hoyIso,
+                responsable_admin: t.responsable_admin || dto.nombre_veterinario || 'Veterinario CBA',
+                reaccion_comentarios: t.reaccion_comentarios || bodyTrat.descripcion || ''
+              };
+              const idPuente = puenteExistente?.id_tratamiento_medicamento || puenteExistente?.id;
+              if (idPuente) {
+                return this.http.patch<any>(`${urlTratMed}${idPuente}/`, bodyPuente, { headers: this.authHeaders }).pipe(catchError(() => of(null)));
+              }
+              return this.http.post<any>(urlTratMed, bodyPuente, { headers: this.authHeaders }).pipe(catchError(() => of(null)));
             };
 
             if (idTrat && idTrat > 0) {
@@ -1841,40 +1980,106 @@ export class HistoriaClinicaService {
               if (t._ref) {
                 t._ref.id_tratamiento = idTrat;
               }
-              this.http.patch<any>(`${urlTratamientos}${idTrat}/`, bodyTrat, { headers: this.authHeaders }).subscribe({ error: () => {} });
+              opsTratamiento.push(
+                this.http.patch<any>(`${urlTratamientos}${idTrat}/`, bodyTrat, { headers: this.authHeaders }).pipe(
+                  switchMap(() => sincronizarPuenteMedicamento(idTrat!)),
+                  catchError(() => of(null))
+                )
+              );
             } else if (nombreProd) {
-              this.http.post<any>(urlTratamientos, bodyTrat, { headers: this.authHeaders }).subscribe({
-                next: (creado) => {
-                  const nuevoId = creado?.id_tratamiento || creado?.id;
-                  if (nuevoId) {
-                    t.id_tratamiento = Number(nuevoId);
-                    if (t._ref) {
-                      t._ref.id_tratamiento = Number(nuevoId);
+              opsTratamiento.push(
+                this.http.post<any>(urlTratamientos, bodyTrat, { headers: this.authHeaders }).pipe(
+                  switchMap((creado) => {
+                    const nuevoId = Number(creado?.id_tratamiento || creado?.id || 0);
+                    if (nuevoId > 0) {
+                      t.id_tratamiento = nuevoId;
+                      if (t._ref) {
+                        t._ref.id_tratamiento = nuevoId;
+                      }
+                      return sincronizarPuenteMedicamento(nuevoId);
                     }
-                  }
-                },
-                error: () => {}
-              });
+                    return of(creado);
+                  }),
+                  catchError(() => of(null))
+                )
+              );
             }
           });
-        }
-      });
+
+          return opsTratamiento.length > 0 ? forkJoin(opsTratamiento) : of(null);
+        }),
+        catchError(() => of(null))
+      );
+
+      tareas$.push(syncTrat$);
     }
 
-    // 3. Sincronizar evolución e historial en HistoriaClinica
-    if (idHistoria && (dto.evolucion || dto.plan_tratamiento)) {
-      const urlHistoria = `${this.baseUrlClinica}historias/${idHistoria}/`;
-      this.http.patch<any>(urlHistoria, {
-        evolucion_previa: dto.evolucion,
-        tratamientos_anteriores: dto.plan_tratamiento
-      }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+    // 3. Actualizar peso y estado esterilizado del animal en /api/animales/animales/:id/
+    if (idAnimal && Number(idAnimal) > 0) {
+      const bodyAnimalPatch: any = {};
+      if (dto.peso !== null && dto.peso !== undefined && !isNaN(Number(dto.peso))) {
+        bodyAnimalPatch.peso = Number(dto.peso);
+      }
+      if (dto.esterilizado_opcion !== undefined) {
+        bodyAnimalPatch.esterilizado = dto.esterilizado_opcion === 'Sí';
+      }
+      if (Object.keys(bodyAnimalPatch).length > 0) {
+        const baseAnimales = (environment.apiUrlAnimales || `${apiRoot}animales/animales/`).replace(/\/?$/, '/');
+        const urlAnimal = `${baseAnimales}${idAnimal}/`;
+        tareas$.push(
+          this.http.patch<any>(urlAnimal, bodyAnimalPatch, { headers: this.authHeaders }).pipe(
+            catchError(() => of(null))
+          )
+        );
+      }
     }
 
-    // 4. Actualizar peso del animal si fue modificado
-    if (idAnimal && dto.peso !== null && dto.peso !== undefined) {
-      const urlAnimal = `${environment.apiUrlAnimales || (this.baseUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnimal}/`;
-      this.http.patch<any>(urlAnimal, { peso: Number(dto.peso) }, { headers: this.authHeaders }).subscribe({ error: () => {} });
+    // 4. Sincronizar datos del tenedor / responsable en /api/animales/responsables/ si se aportan nombres o documento
+    const docTenedor = String(dto.tenedor?.['documentoIdentidad'] || '').trim();
+    const nomTenedor = String(dto.tenedor?.['nombres'] || '').trim();
+    if (idAnimal && Number(idAnimal) > 0 && (docTenedor || nomTenedor)) {
+      const urlResponsables = `${apiRoot}animales/responsables/`;
+      const urlAnimalResp = `${apiRoot}animales/animal-responsables/`;
+      const syncTenedor$ = this.http.get<any>(`${urlAnimalResp}?id_animal=${idAnimal}`, { headers: this.authHeaders }).pipe(
+        switchMap((resAr) => {
+          const vinculos = this.extraerLista(resAr).filter((v: any) => Number(v.id_animal) === Number(idAnimal));
+          if (vinculos.length > 0 && vinculos[0]?.id_responsable) {
+            const idResp = vinculos[0].id_responsable;
+            const patchResp: any = {};
+            if (nomTenedor) patchResp.nombres = nomTenedor;
+            if (docTenedor) patchResp.documento_identidad = docTenedor;
+            if (dto.tenedor?.['telefono']) patchResp.telefono = String(dto.tenedor['telefono']).trim();
+            return this.http.patch<any>(`${urlResponsables}${idResp}/`, patchResp, { headers: this.authHeaders }).pipe(catchError(() => of(null)));
+          } else if (docTenedor && nomTenedor) {
+            return this.http.post<any>(urlResponsables, {
+              nombres: nomTenedor,
+              apellidos: '',
+              documento_identidad: docTenedor,
+              telefono: String(dto.tenedor?.['telefono'] || '').trim() || null
+            }, { headers: this.authHeaders }).pipe(
+              switchMap((nuevoResp) => {
+                const idNuevoResp = nuevoResp?.id_responsable || nuevoResp?.id;
+                if (idNuevoResp) {
+                  return this.http.post<any>(urlAnimalResp, {
+                    id_animal: Number(idAnimal),
+                    id_responsable: Number(idNuevoResp),
+                    tipo_vinculo: 'Tenedor',
+                    fecha_asignacion: new Date().toISOString().split('T')[0]
+                  }, { headers: this.authHeaders }).pipe(catchError(() => of(null)));
+                }
+                return of(null);
+              }),
+              catchError(() => of(null))
+            );
+          }
+          return of(null);
+        }),
+        catchError(() => of(null))
+      );
+      tareas$.push(syncTenedor$);
     }
+
+    return tareas$.length > 0 ? forkJoin(tareas$) : of(null);
   }
 
   /**

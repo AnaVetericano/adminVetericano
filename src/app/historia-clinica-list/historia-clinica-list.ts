@@ -13,6 +13,7 @@ export interface HistoriaClinicaItem {
   id_historia: number;
   id_animal: number;
   numero_historia: string;
+  numero_radicado?: string;
   fecha_apertura: string;
   estado_general: string;
   fecha_ultima_desparasitacion?: string | null;
@@ -50,7 +51,6 @@ export class HistoriaClinicaListComponent implements OnInit {
   // Estados de carga e interfaz
   cargando: boolean = true;
   errorCarga: string = '';
-  recargando: boolean = false;
 
   // Filtros y búsqueda
   filtroBusqueda: string = '';
@@ -222,7 +222,6 @@ export class HistoriaClinicaListComponent implements OnInit {
           console.error('Error cargando historias clínicas:', errFinal);
           this.errorCarga = 'No fue posible obtener las historias clínicas desde el servidor en la nube. Verifica tu conexión.';
           this.cargando = false;
-          this.recargando = false;
           this.cdr.detectChanges();
         }
       });
@@ -246,9 +245,16 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.historias = items.map((h: any) => {
       const idAnimNum = Number(h.id_animal);
       const animalInfo = this.mapaAnimales.get(idAnimNum) || {};
-      const numHistStr = h.numero_historia || `HC-${h.id_historia}`;
-      const radKey = String(numHistStr).trim().toLowerCase();
+      const rawNumHist = String(h.numero_historia || '').trim();
+      const radKey = rawNumHist.toLowerCase();
       const segPorRadicado = this.mapaPorRadicado.get(radKey) || null;
+
+      // Número secuencial oficial correlativo con el ID de historia clínica
+      const numSecuencial = `HC-${h.id_historia}`;
+
+      // Si el registro original contiene un radicado de visita/acta (ej. RAD-VIS-...), lo preservamos
+      const esRadicado = rawNumHist.toUpperCase().startsWith('RAD') || rawNumHist.toUpperCase().includes('VIS');
+      const numRadicado = esRadicado ? rawNumHist : '';
 
       const nombreResuelto =
         animalInfo.nombre ||
@@ -294,7 +300,8 @@ export class HistoriaClinicaListComponent implements OnInit {
         id_historia: h.id_historia,
         id_animal: h.id_animal,
         id_consulta: h.id_consulta || h.ultima_consulta?.id_consulta || h.consulta?.id_consulta || null,
-        numero_historia: numHistStr,
+        numero_historia: numSecuencial,
+        numero_radicado: numRadicado,
         fecha_apertura: h.fecha_apertura,
         estado_general: h.estado_general || 'Estable',
         fecha_ultima_desparasitacion: h.fecha_ultima_desparasitacion || null,
@@ -326,7 +333,6 @@ export class HistoriaClinicaListComponent implements OnInit {
 
     this.aplicarFiltros();
     this.cargando = false;
-    this.recargando = false;
     this.cdr.detectChanges();
 
     // Hidratar en segundo plano cualquier historia a la que aún le falte foto
@@ -594,7 +600,7 @@ export class HistoriaClinicaListComponent implements OnInit {
 
     sinFoto.forEach((historia) => {
       const idAnimNum = Number(historia.id_animal);
-      const radKey = String(historia.numero_historia || '').trim().toLowerCase();
+      const radKey = String(historia.numero_radicado || historia.numero_historia || '').trim().toLowerCase();
       const nomKey = String(historia.animal_nombre || '').trim().toLowerCase();
 
       const infoSeg =
@@ -648,6 +654,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       if (!q) return true;
 
       const numHist = String(h.numero_historia || '').toLowerCase();
+      const numRad = String(h.numero_radicado || '').toLowerCase();
+      const idHist = String(h.id_historia || '').toLowerCase();
       const idAnimal = String(h.id_animal || '').toLowerCase();
       const nombre = String(h.animal_nombre || '').toLowerCase();
       const especie = String(h.animal_especie || '').toLowerCase();
@@ -657,6 +665,8 @@ export class HistoriaClinicaListComponent implements OnInit {
 
       return (
         numHist.includes(q) ||
+        numRad.includes(q) ||
+        idHist === q ||
         idAnimal.includes(q) ||
         nombre.includes(q) ||
         especie.includes(q) ||
@@ -680,11 +690,6 @@ export class HistoriaClinicaListComponent implements OnInit {
   limpiarBusqueda(): void {
     this.filtroBusqueda = '';
     this.aplicarFiltros();
-  }
-
-  recargarLista(): void {
-    this.recargando = true;
-    this.cargarHistorias();
   }
 
   // =========================================================================
@@ -993,31 +998,54 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.guardandoEnHistorial = true;
 
     const motivoTexto = (this.nuevoRegistroHistorial.motivo || this.nuevoRegistroHistorial.tipo || 'Consulta General').trim();
+    const diagTexto = (this.nuevoRegistroHistorial.diagnostico || 'Evaluación médica registrada con éxito.').trim();
+    const planTexto = (this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.').trim();
     const payload = {
       id_animal: this.historiaSeleccionada.id_animal,
+      animal: {
+        id_animal: this.historiaSeleccionada.id_animal,
+        nombre: this.historiaSeleccionada.animal_nombre || 'Paciente',
+        especie: this.historiaSeleccionada.animal_especie || 'Canino',
+        raza: this.historiaSeleccionada.animal_raza || 'Mestizo',
+        sexo: this.historiaSeleccionada.animal_sexo || 'Macho',
+        peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada.animal_peso) || 3.0
+      },
       motivoConsulta: motivoTexto,
       prioridad: this.nuevoRegistroHistorial.prioridad || 'Normal',
+      anamnesicos: {
+        evolucion: `Atención clínica de ${this.nuevoRegistroHistorial.tipo}.`,
+        tratamientos: planTexto
+      },
       examenClinico: {
         temperatura: this.nuevoRegistroHistorial.temperatura,
         peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada.animal_peso) || 3.0,
+        frecuenciaCardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca,
         frecuencia_cardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca,
+        frecuenciaRespiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria,
         frecuencia_respiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria,
+        actitudTemperamento: 'Alerta / Responsivo',
         actitud_temperamento: 'Alerta / Responsivo',
+        condicionCorporal: 'Estable',
         resultado_estado: 'Estable'
       },
       hoja2: {
-        diagnosticoPrincipal: this.nuevoRegistroHistorial.diagnostico || 'Evaluación médica registrada con éxito.',
+        diagnosticoFinal: diagTexto,
+        diagnosticoPresuntivo: diagTexto,
+        diagnosticoPrincipal: diagTexto,
         diagnosticoDiferencial: '',
         listaProblemas: '',
         evolucion: `Atención clínica de ${this.nuevoRegistroHistorial.tipo}.`,
         pronostico: 'Favorable',
-        planProcedimientos: this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.',
+        planProcedimientos: planTexto,
         materialesUtilizados: '',
         tratamientos: []
       },
       hoja3: {
-        plan_procedimientos: this.nuevoRegistroHistorial.planTratamiento || 'Tratamiento y seguimiento.',
+        planProcedimientos: planTexto,
+        plan_procedimientos: planTexto,
+        materialesUtilizados: '',
         materiales_utilizados: '',
+        ingresaCBA: 'NO',
         ingresa_cba: false
       }
     };

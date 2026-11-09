@@ -134,8 +134,8 @@
 
       }
 
-      <!-- 3. PATOLOGÍA (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 3. PATOLOGÍA (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="patologias"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -152,8 +152,8 @@
         </a>
       }
 
-      <!-- 4. EXÁMENES CLÍNICOS (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 4. EXÁMENES CLÍNICOS (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="examenes-clinicos"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -168,8 +168,8 @@
         </a>
       }
 
-      <!-- 5. MEDICAMENTOS (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 5. MEDICAMENTOS (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="listarmedicamentos"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -184,8 +184,8 @@
         </a>
       }
 
-      <!-- 6. ESPECIES (Compartido) -->
-      @if (authService.hasRole(['Administrador', 'Veterinario'])) {
+      <!-- 6. ESPECIES (Solo Administrador) -->
+      @if (authService.isAdmin()) {
         <a
           routerLink="especies"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
@@ -411,99 +411,201 @@
           </a>
         </div>
       }
-      <!-- BOTÓN DEL PERFIL (FOTO CIRCULAR + NOMBRE) EN LA DERECHA -->
-      <div class="relative">
-        <button
-          type="button"
-          (click)="toggleMenuPerfil()"
-          class="flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-slate-100 border border-slate-200/80 transition-all focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 cursor-pointer shadow-2xs"
-        >
-          <!-- Foto circular -->
-          <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-[#4141A5] bg-slate-100 flex items-center justify-center shrink-0">
-            <img
-              [src]="authService.currentUser()?.foto || logoVetWhite.avatarUrl"
-              alt="Foto de perfil"
-              class="w-full h-full object-cover object-center"
-            />
-          </div>
 
-          <!-- Nombre y Rol -->
-          <div class="hidden sm:flex flex-col text-left leading-tight">
-            <span class="text-xs font-extrabold text-[#170B3D] max-w-[140px] truncate">
-              {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : (authService.isAdmin() ? 'Administrador' : (authService.isJuridico() ? 'Jurídico' : 'Veterinario')) }}
-            </span>
-            <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
-              {{ authService.userRole() || 'En línea' }}
-            </span>
-          </div>
+      <!-- ACCIONES DERECHA: ALERTAS DE MEDICAMENTOS + BOTÓN DE PERFIL -->
+      <div class="flex items-center gap-2.5 sm:gap-3">
 
-          <!-- Flecha indicadora -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 transition-transform duration-200" [class.rotate-180]="menuPerfilAbierto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        <!-- MENÚ DESPLEGABLE -->
-        @if (menuPerfilAbierto) {
-          <!-- Backdrop transparente para cerrar al dar clic afuera -->
-          <div (click)="cerrarMenuPerfil()" class="fixed inset-0 z-30"></div>
-
-          <div class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-40">
-            <!-- Info usuario -->
-            <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full overflow-hidden border border-[#4141A5]/30 shrink-0 bg-slate-50 flex items-center justify-center shadow-xs">
-                <img
-                  [src]="authService.currentUser()?.foto || logoVetWhite.avatarUrl"
-                  alt="Avatar"
-                  class="w-full h-full object-cover object-center"
-                />
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sesión Activa</p>
-                <p class="text-xs font-extrabold text-[#170B3D] truncate mt-0.5">
-                  {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : 'Usuario' }}
-                </p>
-                <p class="text-[11px] text-slate-500 truncate">{{ authService.currentUser()?.email }}</p>
-              </div>
-            </div>
-            <div class="px-4 py-1.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
-              <span class="text-[10px] font-bold text-slate-400 uppercase">Rol</span>
-              <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-                   [ngClass]="authService.isAdmin() ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
-                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
-                {{ authService.userRole() }} (Web & Móvil)
-              </div>
-            </div>
-
-            <!-- Acciones -->
-            <div class="py-1">
-              <a
-                routerLink="perfil"
-                (click)="cerrarMenuPerfil()"
-                class="flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 hover:text-[#4141A5] hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
+        @if (authService.isVeterinario() || authService.isAdmin()) {
+          <div class="relative">
+            <button
+              type="button"
+              (click)="toggleMenuAlertas()"
+              class="relative p-2 sm:px-3 sm:py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-full border transition-all flex items-center gap-2 cursor-pointer shadow-2xs active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#F1C63C]/50"
+              [ngClass]="totalMedicamentosAlertas > 0 ? 'border-[#F1C63C] bg-amber-50/20' : 'border-slate-200/80'"
+              title="Alertas de Medicamentos y Stock de Maletín">
+              
+              <div class="relative flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                <span>Mi Perfil y Credenciales</span>
-              </a>
-            </div>
+                <span *ngIf="totalMedicamentosAlertas > 0"
+                  class="absolute -top-1.5 -right-2 flex h-4 min-w-4 px-1 rounded-full bg-[#F1C63C] text-[#170B3D] text-[10px] font-black items-center justify-center shadow-xs ring-2 ring-white">
+                  {{ totalMedicamentosAlertas }}
+                </span>
+              </div>
+              <span class="text-xs font-bold text-[#170B3D] hidden md:inline">Alertas</span>
+            </button>
 
-            <div class="pt-1 border-t border-slate-100">
-              <button
-                type="button"
-                (click)="onLogout()"
-                class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Cerrar Sesión</span>
-              </button>
-            </div>
+            <!-- MENÚ DESPLEGABLE DE ALERTAS -->
+            @if (menuAlertasAbierto) {
+              <div (click)="cerrarMenuAlertas()" class="fixed inset-0 z-40"></div>
+
+              <div class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 animate-fade-in">
+                <!-- Encabezado -->
+                <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F1C63C]"></span>
+                    <span class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider">Alertas de Maletín</span>
+                    <span *ngIf="totalMedicamentosAlertas > 0" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C] text-[#170B3D]">
+                      {{ totalMedicamentosAlertas }}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="cerrarMenuAlertas()"
+                    class="w-6 h-6 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 text-xs font-bold transition flex items-center justify-center cursor-pointer">
+                    ✕
+                  </button>
+                </div>
+
+                <!-- Lista de alertas -->
+                <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
+                  @if (medicamentosAlertas.length === 0) {
+                    <div class="p-6 text-center text-xs text-slate-400">
+                      <span class="text-2xl block mb-1">✅</span>
+                      <p class="font-bold text-slate-600">Maletín en estado óptimo</p>
+                      <p class="text-[10px] text-slate-400 mt-0.5">Todos los medicamentos cuentan con saldo adecuado.</p>
+                    </div>
+                  } @else {
+                    @for (m of medicamentosAlertas; track m.id_medicamento) {
+                      <div class="p-3 rounded-xl transition hover:bg-slate-50 border border-transparent"
+                           [ngClass]="m.nivelStock === 'AGOTADO' ? 'hover:border-rose-200 bg-rose-50/20' : 'hover:border-[#F1C63C] bg-amber-50/10'">
+                        <div class="flex items-start justify-between gap-2">
+                          <div class="min-w-0 flex-1">
+                            <h5 class="text-xs font-extrabold text-[#170B3D] truncate uppercase tracking-wide">{{ m.nombre }}</h5>
+                            <p class="text-[11px] text-slate-600 font-medium mt-0.5">
+                              Existencias: <strong [ngClass]="m.saldo_disponible === 0 ? 'text-rose-600 font-extrabold' : 'text-[#78350F] font-extrabold'">{{ m.saldo_disponible }} unidades</strong>
+                            </p>
+                          </div>
+                          <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0"
+                                [ngClass]="m.nivelStock === 'AGOTADO' ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-[#F1C63C]/20 text-[#78350F] border border-[#F1C63C]'">
+                            {{ m.nivelStock === 'AGOTADO' ? 'Agotado' : 'Stock Bajo' }}
+                          </span>
+                        </div>
+                        <div class="mt-2 flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            (click)="irAMaletinConMedicamento(m)"
+                            class="px-2.5 py-1 text-[11px] font-bold text-[#4141A5] hover:bg-slate-100 rounded-lg transition cursor-pointer">
+                            Ver en maletín →
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  }
+                </div>
+
+                <!-- Pie -->
+                <div class="px-4 py-2 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400 font-medium">Kit de campo CBA</span>
+                  <button
+                    type="button"
+                    (click)="irAMaletinConMedicamento()"
+                    class="text-[11px] font-bold text-[#4141A5] hover:underline cursor-pointer">
+                    Ver Maletín Completo →
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         }
+
+        <!-- BOTÓN DEL PERFIL (FOTO CIRCULAR + NOMBRE) EN LA DERECHA -->
+        <div class="relative">
+          <button
+            type="button"
+            (click)="toggleMenuPerfil()"
+            class="flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-slate-100 border border-slate-200/80 transition-all focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 cursor-pointer shadow-2xs"
+          >
+            <!-- Foto circular -->
+            <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-[#4141A5] bg-slate-100 flex items-center justify-center shrink-0">
+              <img
+                [src]="authService.currentUser()?.foto || logoVetWhite.avatarUrl"
+                alt="Foto de perfil"
+                class="w-full h-full object-cover object-center"
+              />
+            </div>
+
+            <!-- Nombre y Rol -->
+            <div class="hidden sm:flex flex-col text-left leading-tight">
+              <span class="text-xs font-extrabold text-[#170B3D] max-w-[140px] truncate">
+                {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : (authService.isAdmin() ? 'Administrador' : (authService.isJuridico() ? 'Jurídico' : 'Veterinario')) }}
+              </span>
+              <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
+                {{ authService.userRole() || 'En línea' }}
+              </span>
+            </div>
+
+            <!-- Flecha indicadora -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 transition-transform duration-200" [class.rotate-180]="menuPerfilAbierto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <!-- MENÚ DESPLEGABLE -->
+          @if (menuPerfilAbierto) {
+            <!-- Backdrop transparente para cerrar al dar clic afuera -->
+            <div (click)="cerrarMenuPerfil()" class="fixed inset-0 z-40"></div>
+
+            <div class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+              <!-- Info usuario -->
+              <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full overflow-hidden border border-[#4141A5]/30 shrink-0 bg-slate-50 flex items-center justify-center shadow-xs">
+                  <img
+                    [src]="authService.currentUser()?.foto || logoVetWhite.avatarUrl"
+                    alt="Avatar"
+                    class="w-full h-full object-cover object-center"
+                  />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sesión Activa</p>
+                  <p class="text-xs font-extrabold text-[#170B3D] truncate mt-0.5">
+                    {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : 'Usuario' }}
+                  </p>
+                  <p class="text-[11px] text-slate-500 truncate">{{ authService.currentUser()?.email }}</p>
+                </div>
+              </div>
+              <div class="px-4 py-1.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Rol</span>
+                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                     [ngClass]="authService.isAdmin() ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
+                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
+                  {{ authService.userRole() }} (Web & Móvil)
+                </div>
+              </div>
+
+              <!-- Acciones -->
+              <div class="py-1">
+                <a
+                  routerLink="perfil"
+                  (click)="cerrarMenuPerfil()"
+                  class="flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 hover:text-[#4141A5] hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Mi Perfil y Credenciales</span>
+                </a>
+              </div>
+
+              <div class="pt-1 border-t border-slate-100">
+                <button
+                  type="button"
+                  (click)="onLogout()"
+                  class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
       </div>
 
     </header>

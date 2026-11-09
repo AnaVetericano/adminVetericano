@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef,
 import { Chart } from 'chart.js/auto';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
@@ -70,6 +70,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Pestaña activa principal: 'peticiones' | 'maletin' | 'solicitudes'
   pestanaActiva: 'peticiones' | 'maletin' | 'solicitudes' = 'peticiones';
@@ -198,6 +199,20 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   solicitudesFiltradas: any[] = [];
   filtroEstadoSolicitud: 'TODAS' | 'PENDIENTES' | 'APROBADAS' | 'ENTREGADAS' = 'TODAS';
 
+  // Modal de Solicitudes a Farmacia CBA (Ventana Flotante)
+  modalSolicitudesAbierto = false;
+
+  abrirModalSolicitudes(): void {
+    this.modalSolicitudesAbierto = true;
+    if (this.solicitudesKit.length === 0) {
+      this.cargarSolicitudes();
+    }
+  }
+
+  cerrarModalSolicitudes(): void {
+    this.modalSolicitudesAbierto = false;
+  }
+
   // Modal Nueva Solicitud
   modalNuevaSolicitudAbierto = false;
   medicamentoSolicitudId: number | null = null;
@@ -222,6 +237,16 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.establecerDatosVeterinario();
     this.cargarDashboardCompleto();
+    this.route.queryParams.subscribe(params => {
+      if (params['tab'] === 'maletin') {
+        this.pestanaActiva = 'maletin';
+        if (params['buscar']) {
+          this.busquedaMedicamento = params['buscar'];
+          this.filtroStockMaletin = 'TODOS';
+          this.filtrarMaletin();
+        }
+      }
+    });
   }
 
   establecerDatosVeterinario(): void {
@@ -242,6 +267,10 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   }
 
   cambiarPestana(pestana: 'peticiones' | 'maletin' | 'solicitudes'): void {
+    if (pestana === 'solicitudes') {
+      this.abrirModalSolicitudes();
+      return;
+    }
     this.pestanaActiva = pestana;
     if (pestana === 'peticiones') {
       setTimeout(() => {
@@ -254,8 +283,6 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       }, 40);
     } else if (pestana === 'maletin' && this.medicamentosMaletin.length === 0) {
       this.cargarDatosMaletin();
-    } else if (pestana === 'solicitudes' && this.solicitudesKit.length === 0) {
-      this.cargarSolicitudes();
     }
   }
 
@@ -292,20 +319,23 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       ? Object.values(this.distribucionEstados)
       : [this.totalPendientes, this.totalEnProceso, this.totalAtendidas];
 
+    // Mapeo semántico de colores con acentos de la paleta oficial
+    const backgroundColors = labels.map(lbl => {
+      const lower = lbl.toLowerCase();
+      if (lower.includes('urgent') || lower.includes('crit')) return '#D92D20'; // Acento Crítico
+      if (lower.includes('pend') || lower.includes('atender')) return '#DC6803'; // Acento Preventivo
+      if (lower.includes('proceso') || lower.includes('tratam')) return '#2E90FA'; // Acento Informativo
+      if (lower.includes('atendid') || lower.includes('finaliz') || lower.includes('alta') || lower.includes('resuelt')) return '#12B76A'; // Acento Exitoso
+      return '#667085'; // Acento Neutro
+    });
+
     this.chartPeticiones = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels,
         datasets: [{
           data,
-          backgroundColor: [
-            '#170B3D', // Deep Navy institucional
-            '#4141a5', // Índigo corporativo
-            '#2563EB', // Azul real vibrante
-            '#3B82F6', // Azul primario
-            '#60A5FA', // Azul cielo
-            '#93C5FD'  // Azul suave
-          ],
+          backgroundColor: backgroundColors,
           borderWidth: 2,
           borderColor: '#ffffff',
           hoverOffset: 6
@@ -350,20 +380,25 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       ? Object.values(this.distribucionTipos)
       : [this.totalUrgentes, Math.max(0, this.totalAsignadas - this.totalUrgentes)];
 
+    const standardPalette = ['#4141A5', '#170B3D', '#2E90FA', '#667085', '#344054'];
+    let stdIndex = 0;
+    const backgroundColorsTipos = labels.map(lbl => {
+      const lower = lbl.toLowerCase();
+      if (lower.includes('urgent') || lower.includes('crític') || lower.includes('critic')) {
+        return '#D92D20'; // Acento Crítico correspondiente a Urgencias
+      }
+      const color = standardPalette[stdIndex % standardPalette.length];
+      stdIndex++;
+      return color;
+    });
+
     this.chartTipos = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels,
         datasets: [{
           data,
-          backgroundColor: [
-            '#1E1B4B', // Azul marino profundo
-            '#312E81', // Índigo oscuro
-            '#4338CA', // Índigo vibrante
-            '#3B82F6', // Azul intermedio
-            '#60A5FA', // Azul celeste
-            '#BFDBFE'  // Azul claro
-          ],
+          backgroundColor: backgroundColorsTipos,
           borderWidth: 2,
           borderColor: '#ffffff',
           hoverOffset: 6
@@ -524,29 +559,29 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   obtenerClaseBadgeEstado(estado?: string): string {
     const st = (estado || '').toLowerCase();
     if (st.includes('finaliz') || st.includes('atendid') || st.includes('alta') || st.includes('resuelt')) {
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'badge-status-success';
     }
     if (st.includes('proceso') || st.includes('tratam') || st.includes('curso')) {
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'badge-status-info';
     }
     if (st.includes('observaci') || st.includes('evalua')) {
-      return 'bg-purple-50 text-purple-700 border-purple-200';
+      return 'badge-status-info';
     }
     if (st.includes('asignad') || st.includes('revis') || st.includes('pendiente')) {
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'badge-status-warning';
     }
-    return 'bg-slate-100 text-slate-700 border-slate-200';
+    return 'badge-status-neutral';
   }
 
   obtenerClaseBadgePrioridad(prioridad?: string): string {
     const pr = (prioridad || '').toLowerCase();
-    if (pr.includes('urgent') || pr.includes('alta') || pr.includes('critica')) {
-      return 'bg-red-50 text-red-700 border-red-200 font-black animate-pulse';
+    if (pr.includes('urgent') || pr.includes('alta') || pr.includes('critica') || pr.includes('emergencia')) {
+      return 'badge-status-critical font-black animate-pulse';
     }
     if (pr.includes('media')) {
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'badge-status-warning';
     }
-    return 'bg-slate-100 text-slate-600 border-slate-200';
+    return 'badge-status-neutral';
   }
 
   abrirDetallePeticion(p: PeticionItem): void {
@@ -710,6 +745,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
     this.totalProximosVencer = alertas?.proximos_a_vencer?.length || this.medicamentosMaletin.filter(m => m.proximoAVencer).length;
 
     this.filtrarMaletin();
+    this.inventoryService.setAlertasMaletin(this.medicamentosConAlerta);
   }
 
   filtrarMaletin(): void {
@@ -876,8 +912,8 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: 'Sí, cancelar',
       cancelButtonText: 'Volver',
-      confirmButtonColor: '#E11D48',
-      cancelButtonColor: '#94A3B8'
+      confirmButtonColor: '#D92D20',
+      cancelButtonColor: '#667085'
     }).then(res => {
       if (res.isConfirmed) {
         this.inventoryService.cancelarSolicitudKit(id).subscribe({
@@ -902,14 +938,14 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   obtenerClaseBadgeSolicitud(estado?: string): string {
     const st = (estado || '').toUpperCase();
     if (st.includes('ENTREG') || st.includes('APROB')) {
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'badge-status-success';
     }
     if (st.includes('PEND')) {
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'badge-status-warning';
     }
     if (st.includes('RECHAZ') || st.includes('CANCEL')) {
-      return 'bg-rose-50 text-rose-700 border-rose-200';
+      return 'badge-status-critical';
     }
-    return 'bg-slate-100 text-slate-700 border-slate-200';
+    return 'badge-status-neutral';
   }
 }

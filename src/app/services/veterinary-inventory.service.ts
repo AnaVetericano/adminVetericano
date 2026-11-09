@@ -101,6 +101,18 @@ export class VeterinaryInventoryService {
   private inventarioActual$ = new BehaviorSubject<VeterinaryKitItem[]>([]);
   public inventario$ = this.inventarioActual$.asObservable();
 
+  // Alertas reactivas de maletín compartidas entre barra superior y dashboard
+  private _alertasMaletin = new BehaviorSubject<any[]>([]);
+  public readonly alertasMaletin$ = this._alertasMaletin.asObservable();
+
+  public setAlertasMaletin(alertas: any[]): void {
+    this._alertasMaletin.next(alertas);
+  }
+
+  public get alertasMaletinActuales(): any[] {
+    return this._alertasMaletin.value;
+  }
+
   /**
    * URL base de Inventario general: https://.../api/inventario/
    */

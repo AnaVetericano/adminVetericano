@@ -23,8 +23,8 @@
 
             <!-- Contador de registros cargados -->
             <div class="self-end sm:self-center">
-                <span class="text-xs font-bold text-gray-500 bg-gray-50 border border-gray-200 px-3.5 py-1.5 rounded-xl shadow-2xs">
-                    {{ totalRegistros }} exámenes disponibles
+                <span class="text-xs font-bold text-[#4141a5] bg-[#4141a5]/10 border border-[#4141a5]/25 px-3.5 py-1.5 rounded-xl shadow-2xs">
+                    {{ totalRegistros }} {{ filtroCategoria === 'tests' ? 'tests' : (filtroCategoria === 'examenes' ? 'exámenes' : 'disponibles') }}
                 </span>
             </div>
         </div>
@@ -34,6 +34,63 @@
     <!-- 2. CONTENIDO PRINCIPAL                                                    -->
     <!-- ========================================================================= -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+
+        <!-- SELECTOR DE PESTAÑAS (TABS) EN EL TONO MORADITO INSTITUCIONAL -->
+        <div class="flex items-center gap-2 mb-3.5 shrink-0 overflow-x-auto pb-1 sm:pb-0">
+            <!-- Pestaña Todos -->
+            <button
+                type="button"
+                (click)="filtrarPorCategoria('todos')"
+                class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 flex items-center gap-2 shadow-xs active:scale-95 shrink-0"
+                [ngClass]="filtroCategoria === 'todos'
+                    ? 'bg-[#4141a5] text-white shadow-md shadow-[#4141a5]/20'
+                    : 'bg-white text-gray-600 hover:text-[#4141a5] hover:bg-[#4141a5]/5 border border-gray-200'">
+                <span>Todos</span>
+                <span
+                    class="px-2 py-0.5 rounded-full text-2xs font-black transition-colors"
+                    [ngClass]="filtroCategoria === 'todos' ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-600'">
+                    {{ listaCatalogo.length }}
+                </span>
+            </button>
+
+            <!-- Pestaña Exámenes Clínicos -->
+            <button
+                type="button"
+                (click)="filtrarPorCategoria('examenes')"
+                class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 flex items-center gap-2 shadow-xs active:scale-95 shrink-0"
+                [ngClass]="filtroCategoria === 'examenes'
+                    ? 'bg-[#4141a5] text-white shadow-md shadow-[#4141a5]/20'
+                    : 'bg-white text-gray-600 hover:text-[#4141a5] hover:bg-[#4141a5]/5 border border-gray-200'">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span>Exámenes Clínicos</span>
+                <span
+                    class="px-2 py-0.5 rounded-full text-2xs font-black transition-colors"
+                    [ngClass]="filtroCategoria === 'examenes' ? 'bg-white/25 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'">
+                    {{ totalExamenesCount }}
+                </span>
+            </button>
+
+            <!-- Pestaña Tests Rápidos -->
+            <button
+                type="button"
+                (click)="filtrarPorCategoria('tests')"
+                class="px-4 py-2 rounded-2xl text-xs sm:text-sm font-extrabold transition-all duration-200 flex items-center gap-2 shadow-xs active:scale-95 shrink-0"
+                [ngClass]="filtroCategoria === 'tests'
+                    ? 'bg-[#4141a5] text-white shadow-md shadow-[#4141a5]/20'
+                    : 'bg-white text-gray-600 hover:text-[#4141a5] hover:bg-[#4141a5]/5 border border-gray-200'">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <span>Tests Rápidos</span>
+                <span
+                    class="px-2 py-0.5 rounded-full text-2xs font-black transition-colors"
+                    [ngClass]="filtroCategoria === 'tests' ? 'bg-white/25 text-white' : 'bg-[#4141a5]/10 text-[#4141a5]'">
+                    {{ totalTestsCount }}
+                </span>
+            </button>
+        </div>
 
         <!-- BARRA SUPERIOR: BUSCADOR, FILTROS Y BOTÓN CREAR -->
         <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
@@ -49,8 +106,8 @@
                         type="text"
                         [(ngModel)]="filtroBusqueda"
                         (input)="filtrarExamenes()"
-                        aria-label="Buscar examen clínico por nombre o descripción"
-                        placeholder="Buscar examen clínico por nombre o descripción..."
+                        aria-label="Buscar por nombre o descripción"
+                        [placeholder]="filtroCategoria === 'tests' ? 'Buscar test rápido por nombre o descripción...' : (filtroCategoria === 'examenes' ? 'Buscar examen clínico por nombre o descripción...' : 'Buscar examen o test por nombre o descripción...')"
                         class="w-full outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
 
                     @if (filtroBusqueda || filtroEstado !== 'todos') {
@@ -109,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- BOTÓN CREAR EXAMEN CLÍNICO -->
+            <!-- BOTÓN CREAR DINÁMICO -->
             <button
                 type="button"
                 (click)="abrirModalCrear()"
@@ -117,7 +174,7 @@
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span>Crear Examen Clínico</span>
+                <span>{{ filtroCategoria === 'tests' ? 'Crear Test Rápido' : (filtroCategoria === 'examenes' ? 'Crear Examen Clínico' : 'Crear Registro') }}</span>
             </button>
 
         </div>
@@ -152,7 +209,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 text-xs sm:text-sm">
-                            @for (item of examenesPaginados; track item.id_examen) {
+                            @for (item of listaFiltrada; track item.id_examen) {
                                 <tr class="hover:bg-[#4141a5]/5 transition-colors group">
                                     <!-- COLUMNA NOMBRE -->
                                     <td class="px-6 py-4 align-middle">
@@ -218,77 +275,34 @@
                         </tbody>
                     </table>
                 </div>
-
-                <!-- PAGINADOR INFERIOR -->
-                <div class="bg-white border-t border-gray-100 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                    <div class="text-xs text-gray-500 font-medium">
-                        Mostrando <span class="font-bold text-gray-800">{{ indiceInicio }}</span> a <span class="font-bold text-gray-800">{{ indiceFin }}</span> de <span class="font-bold text-gray-800">{{ totalRegistros }}</span> exámenes clínicos
-                    </div>
-
-                    <div class="flex items-center gap-1.5">
-                        <!-- Botón Anterior -->
-                        <button
-                            type="button"
-                            (click)="paginaAnterior()"
-                            [disabled]="paginaActual === 1"
-                            class="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs">
-                            Anterior
-                        </button>
-
-                        <!-- Números de página -->
-                        <div class="flex items-center gap-1">
-                            @for (p of paginasDisponibles; track p) {
-                                <button
-                                    type="button"
-                                    (click)="cambiarPagina(p)"
-                                    class="w-8 h-8 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center justify-center"
-                                    [ngClass]="{
-                                        'bg-[#4141a5] text-white shadow-xs': paginaActual === p,
-                                        'border border-gray-200 text-gray-600 hover:bg-gray-50': paginaActual !== p
-                                    }">
-                                    {{ p }}
-                                </button>
-                            }
-                        </div>
-
-                        <!-- Botón Siguiente -->
-                        <button
-                            type="button"
-                            (click)="paginaSiguiente()"
-                            [disabled]="paginaActual === totalPaginas"
-                            class="px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs">
-                            Siguiente
-                        </button>
-                    </div>
-                </div>
             </div>
         }
 
         <!-- ESTADO VACÍO CUANDO LA BÚSQUEDA O EL FILTRO NO TIENE RESULTADOS -->
         @if (!cargando && listaFiltrada.length === 0) {
             <div class="bg-white rounded-2xl shadow-xs border border-dashed border-gray-200 flex-1 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-3 animate-fade-in">
-                <div class="w-14 h-14 rounded-3xl bg-blue-50 text-[#4141a5] flex items-center justify-center mb-1 shadow-2xs">
+                <div class="w-14 h-14 rounded-3xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center mb-1 shadow-2xs">
                     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
 
                 <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
-                    No se encontraron exámenes clínicos
+                    No se encontraron {{ filtroCategoria === 'tests' ? 'tests rápidos' : (filtroCategoria === 'examenes' ? 'exámenes clínicos' : 'registros') }}
                 </h2>
 
                 @if (filtroBusqueda) {
                     <p class="text-xs sm:text-sm text-gray-500 max-w-md">
-                        No existen procedimientos ni pruebas diagnósticas que coincidan con "<span class="font-bold text-gray-700">{{ filtroBusqueda }}</span>".
+                        No existen elementos que coincidan con "<span class="font-bold text-gray-700">{{ filtroBusqueda }}</span>".
                     </p>
                 } @else {
                     <p class="text-xs sm:text-sm text-gray-500 max-w-md">
-                        No hay exámenes clínicos registrados bajo el filtro seleccionado.
+                        No hay elementos registrados bajo los filtros seleccionados.
                     </p>
                 }
 
                 <div class="flex items-center gap-2 mt-2">
-                    @if (filtroBusqueda || filtroEstado !== 'todos') {
+                    @if (filtroBusqueda || filtroEstado !== 'todos' || filtroCategoria !== 'todos') {
                         <button
                             type="button"
                             (click)="limpiarBusqueda()"
@@ -296,17 +310,17 @@
                             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
-                            <span>Ver todos los exámenes</span>
+                            <span>Ver todo</span>
                         </button>
                     }
                     <button
                         type="button"
                         (click)="abrirModalCrear()"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4141a5] hover:bg-[#170B3D] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95">
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95">
                         <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                         </svg>
-                        <span>Crear Examen Clínico</span>
+                        <span>{{ filtroCategoria === 'tests' ? 'Crear Test Rápido' : (filtroCategoria === 'examenes' ? 'Crear Examen Clínico' : 'Crear Registro') }}</span>
                     </button>
                 </div>
             </div>
@@ -315,7 +329,7 @@
     </main>
 
     <!-- ========================================================================= -->
-    <!-- 3. MODAL DE CREACIÓN / EDICIÓN DE EXAMEN CLÍNICO                          -->
+    <!-- 3. MODAL DE CREACIÓN / EDICIÓN (ADAPTADO A EXÁMENES Y TESTS)              -->
     <!-- ========================================================================= -->
     @if (modalAbierto) {
         <div
@@ -334,37 +348,73 @@
                 </button>
 
                 <h2 id="modal-examen-titulo" class="text-xl sm:text-2xl font-extrabold text-[#170B3D] mb-4 uppercase tracking-wider pr-8 shrink-0">
-                    {{ esEdicion ? 'Editar Examen Clínico' : 'Crear Examen Clínico' }}
+                    {{ esEdicion ? (categoriaModal === 'test' ? 'Editar Test Rápido' : 'Editar Examen Clínico') : (categoriaModal === 'test' ? 'Crear Test Rápido' : 'Crear Examen Clínico') }}
                 </h2>
 
                 <!-- Campos del formulario -->
                 <div class="space-y-3 sm:space-y-4 overflow-y-auto flex-1 pr-1 py-1">
+
+                    <!-- SELECTOR DE CATEGORÍA DEL MODAL -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">
+                            Tipo de Registro *
+                        </label>
+                        <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-2xl border border-gray-200/60">
+                            <button
+                                type="button"
+                                (click)="setCategoriaModal('examen')"
+                                class="py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5"
+                                [ngClass]="categoriaModal === 'examen'
+                                    ? 'bg-white text-[#4141a5] shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-800'">
+                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                <span>Examen Clínico</span>
+                            </button>
+                            <button
+                                type="button"
+                                (click)="setCategoriaModal('test')"
+                                class="py-2 px-3 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5"
+                                [ngClass]="categoriaModal === 'test'
+                                    ? 'bg-white text-[#4141a5] shadow-xs'
+                                    : 'text-gray-500 hover:text-gray-800'">
+                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                </svg>
+                                <span>Test Rápido</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div>
                         <label for="examen-nombre" class="block text-xs font-bold text-gray-600 uppercase mb-1">
-                            Nombre del examen *
+                            {{ categoriaModal === 'test' ? 'Nombre del test rápido *' : 'Nombre del examen *' }}
                         </label>
                         <input
                             id="examen-nombre"
                             type="text"
                             [(ngModel)]="examenActual.nombre_tipo"
-                            placeholder="Ej. Hemograma, Rx columna, Ecografía..."
+                            [placeholder]="categoriaModal === 'test' ? 'Ej. Test Parvovirus, Test Moquillo, FeLV / FIV...' : 'Ej. Hemograma, Rx columna, Ecografía abdominal, ECG...'"
                             required
                             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50">
                     </div>
 
-                    <div>
-                        <label for="examen-tipo" class="block text-xs font-bold text-gray-600 uppercase mb-1">
-                            Tipo de examen
-                        </label>
-                        <select
-                            id="examen-tipo"
-                            [(ngModel)]="examenActual.tipo"
-                            class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
-                            @for (t of tiposSugeridos; track t) {
-                                <option [value]="t">{{ t }}</option>
-                            }
-                        </select>
-                    </div>
+                    @if (categoriaModal === 'examen') {
+                        <div>
+                            <label for="examen-tipo" class="block text-xs font-bold text-gray-600 uppercase mb-1">
+                                Tipo / Especialidad
+                            </label>
+                            <select
+                                id="examen-tipo"
+                                [(ngModel)]="examenActual.tipo"
+                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 cursor-pointer">
+                                @for (t of tiposSugeridos; track t) {
+                                    <option [value]="t">{{ t }}</option>
+                                }
+                            </select>
+                        </div>
+                    }
 
                     <div>
                         <label for="examen-descripcion" class="block text-xs font-bold text-gray-600 uppercase mb-1">
@@ -373,7 +423,7 @@
                         <textarea
                             id="examen-descripcion"
                             [(ngModel)]="examenActual.descripcion"
-                            placeholder="Describe el propósito o detalles clínicos del examen..."
+                            [placeholder]="categoriaModal === 'test' ? 'Describe los reactivos, tiempo de resultado o detalles clínicos del test...' : 'Describe el propósito, preparación previa o detalles clínicos del examen...'"
                             rows="4"
                             class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 resize-none leading-relaxed">
                         </textarea>
@@ -407,7 +457,7 @@
                         (click)="guardarExamen()"
                         [disabled]="guardando"
                         class="px-5 sm:px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95 disabled:opacity-50">
-                        {{ guardando ? 'Guardando...' : (esEdicion ? 'Actualizar' : 'Crear') }}
+                        {{ guardando ? 'Guardando...' : (esEdicion ? 'Actualizar' : (categoriaModal === 'test' ? 'Crear Test' : 'Crear Examen')) }}
                     </button>
                 </div>
 

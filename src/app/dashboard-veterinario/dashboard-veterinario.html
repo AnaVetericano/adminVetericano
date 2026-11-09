@@ -3,25 +3,17 @@
   <!-- ========================================================================= -->
   <!-- 1. CABECERA PRINCIPAL DEL DASHBOARD VETERINARIO                           -->
   <!-- ========================================================================= -->
-  <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-2xs">
+  <header class="bg-white border-b border-gray-200 relative z-10 shadow-2xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
 
       <!-- Saludo e Información del Médico Veterinario -->
       <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#170B3D] to-[#4141a5] text-white flex items-center justify-center font-black text-xl shadow-md shrink-0">
-          🩺
-        </div>
         <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-base sm:text-xl font-black text-[#170B3D] tracking-tight">
-              {{ saludoHorario }}, {{ veterinarioNombre }}
-            </h1>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Médico Veterinario
-            </span>
-          </div>
+          <h1 class="text-base sm:text-xl font-bold text-[#170B3D] tracking-tight">
+            {{ saludoHorario }}, {{ veterinarioNombre }}
+          </h1>
           <p class="text-xs text-gray-500 font-medium mt-0.5">
-            Centro de Bienestar Animal (CBA) Popayán · Gestión Clínica, Maletín de Insumos y Peticiones Asignadas
+            Gestión clínica, Maletín de insumos y peticiones asignadas
           </p>
         </div>
       </div>
@@ -32,7 +24,7 @@
         <button
           type="button"
           (click)="cargarDashboardCompleto()"
-          class="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition btn-levitate active:scale-95 cursor-pointer"
           title="Actualizar datos del servidor">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]" [ngClass]="{'animate-spin': cargandoPeticiones || cargandoMaletin}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -40,12 +32,10 @@
           <span class="hidden sm:inline">Actualizar</span>
         </button>
 
-
-
         <!-- Botón Ir a Nueva Historia Clínica (Flujo Oficial Web) -->
         <a
           [routerLink]="['/inicio-admin/acta-seres-sintientes']"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#170B3D] hover:bg-[#25155c] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-xs active:scale-95 cursor-pointer">
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#170B3D] hover:bg-[#25155c] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition btn-levitate active:scale-95 cursor-pointer">
           <span>+ Nueva Historia Clínica</span>
         </a>
       </div>
@@ -61,15 +51,15 @@
           <button
             type="button"
             (click)="cambiarPestana('peticiones')"
-            [ngClass]="pestanaActiva === 'peticiones' ? 'bg-[#4141a5] text-white shadow-xs font-black' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 font-bold'"
-            class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer shrink-0">
+            [ngClass]="pestanaActiva === 'peticiones' ? 'bg-[#4141a5] text-white font-bold' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 font-semibold'"
+            class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition btn-levitate cursor-pointer shrink-0">
             <span>📋 Mis Peticiones Asignadas</span>
             <span
-              class="px-2 py-0.5 rounded-full text-[10px]"
+              class="px-2 py-0.5 rounded-full text-[10px] font-bold"
               [ngClass]="pestanaActiva === 'peticiones' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'">
               {{ totalAsignadas }}
             </span>
-            <span *ngIf="totalUrgentes > 0" class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-600 text-white animate-pulse">
+            <span *ngIf="totalUrgentes > 0" class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[var(--status-critical-accent)] text-white animate-pulse">
               {{ totalUrgentes }} urgentes
             </span>
           </button>
@@ -78,32 +68,13 @@
           <button
             type="button"
             (click)="cambiarPestana('maletin')"
-            [ngClass]="pestanaActiva === 'maletin' ? 'bg-[#4141a5] text-white shadow-xs font-black' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 font-bold'"
-            class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer shrink-0">
+            [ngClass]="pestanaActiva === 'maletin' ? 'bg-[#4141a5] text-white font-bold' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 font-semibold'"
+            class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition btn-levitate cursor-pointer shrink-0">
             <span>🩺 Mi Maletín de Medicamentos</span>
             <span
-              class="px-2 py-0.5 rounded-full text-[10px]"
+              class="px-2 py-0.5 rounded-full text-[10px] font-bold"
               [ngClass]="pestanaActiva === 'maletin' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'">
               {{ totalMedicamentosMaletin }}
-            </span>
-            <!-- Badge dorado #F1C63C cuando hay stock bajo -->
-            <span *ngIf="totalMedicamentosConAlerta > 0"
-              class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-[#F1C63C] text-[#170B3D] shadow-2xs">
-              ⚠️ {{ totalMedicamentosConAlerta }} alertas
-            </span>
-          </button>
-
-          <!-- Pestaña 3: Solicitudes de Reposición -->
-          <button
-            type="button"
-            (click)="cambiarPestana('solicitudes')"
-            [ngClass]="pestanaActiva === 'solicitudes' ? 'bg-[#4141a5] text-white shadow-xs font-black' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 font-bold'"
-            class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer shrink-0">
-            <span>📦 Solicitudes a Farmacia CBA</span>
-            <span
-              class="px-2 py-0.5 rounded-full text-[10px]"
-              [ngClass]="pestanaActiva === 'solicitudes' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'">
-              {{ solicitudesKit.length }}
             </span>
           </button>
         </div>
@@ -111,7 +82,7 @@
         <!-- Acceso directo a Historias Clínicas -->
         <a
           [routerLink]="['/inicio-admin/historias-clinicas']"
-          class="text-xs font-extrabold text-[#4141a5] hover:text-[#170B3D] transition flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl hover:bg-slate-200/50">
+          class="text-xs font-extrabold text-[#4141a5] hover:text-[#170B3D] transition flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl hover:bg-slate-200/50 btn-levitate">
           <span>Ver Historias Clínicas →</span>
         </a>
 
@@ -120,148 +91,30 @@
   </header>
 
   <!-- ========================================================================= -->
-  <!-- 2. BARRA DE CONTROL SUPERIOR CON CAMPANITA DE ALERTAS (PARTE IZQUIERDA)    -->
+  <!-- 2. BARRA DE CONTROL SUB-CABECERA                                          -->
   <!-- ========================================================================= -->
   <div class="max-w-7xl w-full mx-auto px-4 sm:px-6 pt-5 pb-1">
     <div class="flex items-center justify-between gap-4">
 
-      <!-- CAMPANITA DISCRETA DE NOTIFICACIONES DE MEDICAMENTOS (EN LA IZQUIERDA) -->
-      <div class="relative inline-block">
+      <!-- Si la pestaña activa es maletín: botón para abrir la ventana flotante de Solicitudes -->
+      <div *ngIf="pestanaActiva === 'maletin'" class="flex items-center gap-3">
         <button
           type="button"
-          (click)="togglePanelAlertas()"
-          class="relative p-2.5 sm:px-4 sm:py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-2xl border transition-all flex items-center gap-2.5 cursor-pointer shadow-2xs active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#F1C63C]/50"
-          [ngClass]="totalMedicamentosConAlerta > 0 ? 'border-[#F1C63C]/70 bg-amber-50/20' : 'border-slate-200'"
-          title="Campana de alertas de medicamentos y stock de maletín">
-          
-          <!-- Icono de Campana con Indicador Numérico en #F1C63C -->
-          <div class="relative flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <!-- Punto / Badge indicador en #F1C63C con total real -->
-            <span *ngIf="totalMedicamentosConAlerta > 0"
-              class="absolute -top-2 -right-2.5 flex h-4 min-w-4 px-1 rounded-full bg-[#F1C63C] text-[#170B3D] text-[10px] font-black items-center justify-center shadow-xs ring-2 ring-white">
-              {{ totalMedicamentosConAlerta }}
-            </span>
-          </div>
-
-          <span class="text-xs font-black text-[#170B3D]">Alertas de Medicamentos</span>
-
-          <span *ngIf="totalMedicamentosConAlerta > 0"
-            class="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C]/30 text-[#78350F] border border-[#F1C63C]">
-            {{ totalMedicamentosConAlerta }} requieren atención
+          (click)="abrirModalSolicitudes()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-[#170B3D] rounded-xl border border-gray-200 hover:border-[#4141a5]/40 text-xs font-bold transition btn-levitate active:scale-95 cursor-pointer">
+          <span class="text-sm">📦</span>
+          <span>Solicitudes a Farmacia CBA</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold badge-status-info">
+            {{ solicitudesKit.length }}
           </span>
         </button>
-
-        <!-- ===================================================================== -->
-        <!-- PANEL FLOTANTE DE NOTIFICACIONES (POPOVER EMERGENTE)                  -->
-        <!-- ===================================================================== -->
-        <div *ngIf="panelAlertasAbierto"
-          class="absolute left-0 mt-2 w-80 sm:w-96 md:w-[420px] bg-white rounded-3xl shadow-2xl border border-slate-200 py-3 z-50 animate-fade-in">
-          
-          <!-- Encabezado del Panel -->
-          <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#F1C63C]"></span>
-              <span class="text-xs font-black text-[#170B3D] uppercase tracking-wider">Centro de Alertas de Maletín</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C] text-[#170B3D]">
-                {{ totalMedicamentosConAlerta }}
-              </span>
-            </div>
-            <button
-              type="button"
-              (click)="cerrarPanelAlertas()"
-              class="w-6 h-6 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 text-xs font-bold transition flex items-center justify-center cursor-pointer">
-              ✕
-            </button>
-          </div>
-
-          <!-- Contenido de Alertas -->
-          <div class="max-h-84 overflow-y-auto divide-y divide-gray-100 p-2 space-y-1">
-            <!-- Estado sin alertas -->
-            <div *ngIf="medicamentosConAlerta.length === 0" class="p-6 text-center text-xs text-gray-400">
-              <span class="text-3xl block mb-1">✅</span>
-              <p class="font-bold text-gray-600">Maletín en estado óptimo</p>
-              <p class="text-[10px] text-gray-400 mt-0.5">Todos los medicamentos asignados cuentan con saldo adecuado para atención.</p>
-            </div>
-
-            <!-- Lista de medicamentos con alertas reales -->
-            <div *ngFor="let m of medicamentosConAlerta"
-              class="p-3.5 rounded-2xl transition hover:bg-slate-50 border border-transparent"
-              [ngClass]="m.nivelStock === 'AGOTADO' ? 'hover:border-rose-200 bg-rose-50/20' : 'hover:border-[#F1C63C] bg-amber-50/10'">
-              
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <h5 class="text-xs font-black text-[#170B3D] uppercase tracking-wide">
-                    {{ m.nombre }}
-                  </h5>
-                  <p class="text-[11px] text-gray-600 font-medium mt-0.5">
-                    Existencias: <strong [ngClass]="m.saldo_disponible === 0 ? 'text-rose-600 font-black' : 'text-[#78350F] font-black'">{{ m.saldo_disponible }} unidades</strong>
-                  </p>
-                </div>
-
-                <!-- Badges de Estado diferenciados -->
-                <span *ngIf="m.nivelStock === 'AGOTADO'"
-                  class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
-                  Agotado
-                </span>
-                <span *ngIf="m.nivelStock !== 'AGOTADO'"
-                  class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#F1C63C]/20 text-[#78350F] border border-[#F1C63C] shrink-0">
-                  Stock Bajo
-                </span>
-              </div>
-
-              <!-- Lote y Vencimiento si aplica -->
-              <div *ngIf="m.lotes && m.lotes.length > 0" class="mt-1 text-[10px] text-gray-500 flex items-center gap-1.5 flex-wrap">
-                <span class="font-bold text-gray-700">Lote #{{ m.lotes[0].id_kit_lote }}</span>
-                <span *ngIf="m.lotes[0].fecha_vencimiento" [ngClass]="m.lotes[0].vencido ? 'text-rose-600 font-bold' : 'text-gray-500'">
-                  · {{ m.lotes[0].vencido ? 'Vencido: ' : 'Vence: ' }} {{ m.lotes[0].fecha_vencimiento | date:'dd/MM/yyyy' }}
-                </span>
-              </div>
-
-              <!-- Descripción concisa del motivo de la alerta -->
-              <p class="text-[11px] text-gray-600 mt-1.5 leading-relaxed">
-                {{ obtenerDescripcionAlerta(m) }}
-              </p>
-
-              <!-- Acciones directas por alerta -->
-              <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  (click)="verMedicamentoEnMaletin(m)"
-                  class="px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:text-[#4141a5] hover:bg-slate-100 rounded-lg transition cursor-pointer">
-                  Ver detalle →
-                </button>
-                <button
-                  type="button"
-                  (click)="solicitarReposicionDesdeAlerta(m)"
-                  class="px-2.5 py-1 text-[11px] font-bold bg-[#4141a5] hover:bg-[#33338b] text-white rounded-lg transition shadow-2xs cursor-pointer flex items-center gap-1">
-                  <span>Pedir Reposición</span>
-                </button>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Pie del Panel -->
-          <div class="px-4 py-2 border-t border-gray-100 bg-gray-50/60 rounded-b-3xl flex items-center justify-between">
-            <span class="text-[10px] text-gray-400 font-medium">Información sincronizada del kit</span>
-            <button
-              type="button"
-              (click)="cerrarPanelAlertas(); abrirModalNuevaSolicitud()"
-              class="text-[11px] font-bold text-[#4141a5] hover:underline cursor-pointer">
-              + Solicitar Reposición General
-            </button>
-          </div>
-        </div>
       </div>
+      <div *ngIf="pestanaActiva !== 'maletin'"></div>
 
       <!-- Leyenda sutil de estado a la derecha -->
       <div class="text-[11px] text-gray-500 font-medium hidden sm:block">
         <span *ngIf="pestanaActiva === 'peticiones'">Bandeja operativa de casos y seguimiento de atenciones</span>
         <span *ngIf="pestanaActiva === 'maletin'">Insumos y dotación farmacéutica de campo CBA</span>
-        <span *ngIf="pestanaActiva === 'solicitudes'">Trámites de dotación radicados ante farmacia central</span>
       </div>
 
     </div>
@@ -283,70 +136,55 @@
         <!-- KPI 1: Total Asignadas -->
         <div (click)="setFiltroPeticion('TODAS')"
           [ngClass]="filtroEstadoPeticion === 'TODAS' ? 'ring-2 ring-[#4141a5]' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Total Asignadas</span>
-            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-[#4141a5] flex items-center justify-center font-bold">📋</div>
-          </div>
-          <div class="mt-2.5">
-            <div class="text-3xl font-black text-[#170B3D]">{{ totalAsignadas }}</div>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Bandeja de casos asignados</p>
+          class="bg-[var(--status-neutral-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-neutral-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-neutral-accent)] block">Total Asignadas</span>
+          <div class="mt-2">
+            <div class="text-3xl font-black text-[var(--status-neutral-text)]">{{ totalAsignadas }}</div>
+            <p class="text-[11px] text-[var(--status-neutral-text)] opacity-80 font-medium mt-0.5">Bandeja de casos asignados</p>
           </div>
         </div>
 
         <!-- KPI 2: Pendientes -->
         <div (click)="setFiltroPeticion('PENDIENTES')"
-          [ngClass]="filtroEstadoPeticion === 'PENDIENTES' ? 'ring-2 ring-[#F1C63C]' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-700">Por Atender</span>
-            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">⏳</div>
-          </div>
-          <div class="mt-2.5">
-            <div class="text-3xl font-black text-amber-800">{{ totalPendientes }}</div>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Pendientes de consulta clínica</p>
+          [ngClass]="filtroEstadoPeticion === 'PENDIENTES' ? 'ring-2 ring-[#4141a5]' : ''"
+          class="bg-[var(--status-warning-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-warning-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-warning-text)] block">Por Atender</span>
+          <div class="mt-2">
+            <div class="text-3xl font-black text-[var(--status-warning-text)]">{{ totalPendientes }}</div>
+            <p class="text-[11px] text-[var(--status-warning-text)] opacity-90 font-medium mt-0.5">Pendientes de consulta clínica</p>
           </div>
         </div>
 
         <!-- KPI 3: En Proceso -->
         <div (click)="setFiltroPeticion('PROCESO')"
-          [ngClass]="filtroEstadoPeticion === 'PROCESO' ? 'ring-2 ring-blue-400' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">En Tratamiento</span>
-            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">🩺</div>
-          </div>
-          <div class="mt-2.5">
-            <div class="text-3xl font-black text-blue-700">{{ totalEnProceso }}</div>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Evaluación o tratamiento activo</p>
+          [ngClass]="filtroEstadoPeticion === 'PROCESO' ? 'ring-2 ring-[#4141a5]' : ''"
+          class="bg-[var(--status-info-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-info-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-info-text)] block">En Tratamiento</span>
+          <div class="mt-2">
+            <div class="text-3xl font-black text-[var(--status-info-text)]">{{ totalEnProceso }}</div>
+            <p class="text-[11px] text-[var(--status-info-text)] opacity-90 font-medium mt-0.5">Evaluación o tratamiento activo</p>
           </div>
         </div>
 
         <!-- KPI 4: Atendidas / Finalizadas -->
         <div (click)="setFiltroPeticion('ATENDIDAS')"
-          [ngClass]="filtroEstadoPeticion === 'ATENDIDAS' ? 'ring-2 ring-emerald-400' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600">Atendidas</span>
-            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✅</div>
-          </div>
-          <div class="mt-2.5">
-            <div class="text-3xl font-black text-emerald-700">{{ totalAtendidas }}</div>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Casos resueltos o cerrados</p>
+          [ngClass]="filtroEstadoPeticion === 'ATENDIDAS' ? 'ring-2 ring-[#4141a5]' : ''"
+          class="bg-[var(--status-success-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-success-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-success-text)] block">Atendidas</span>
+          <div class="mt-2">
+            <div class="text-3xl font-black text-[var(--status-success-text)]">{{ totalAtendidas }}</div>
+            <p class="text-[11px] text-[var(--status-success-text)] opacity-90 font-medium mt-0.5">Casos resueltos o cerrados</p>
           </div>
         </div>
 
         <!-- KPI 5: Urgentes -->
         <div (click)="setFiltroPeticion('URGENTES')"
-          [ngClass]="filtroEstadoPeticion === 'URGENTES' ? 'ring-2 ring-red-400' : ''"
-          class="col-span-2 lg:col-span-1 bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-red-600">Atención Urgente</span>
-            <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold animate-pulse">🚨</div>
-          </div>
-          <div class="mt-2.5">
-            <div class="text-3xl font-black text-red-600">{{ totalUrgentes }}</div>
-            <p class="text-[11px] text-red-700 font-medium mt-0.5">Prioridad alta o maltrato</p>
+          [ngClass]="filtroEstadoPeticion === 'URGENTES' ? 'ring-2 ring-[#4141a5]' : ''"
+          class="col-span-2 lg:col-span-1 bg-[var(--status-critical-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-critical-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-critical-text)] block">Atención Urgente</span>
+          <div class="mt-2">
+            <div class="text-3xl font-black text-[var(--status-critical-text)]">{{ totalUrgentes }}</div>
+            <p class="text-[11px] text-[var(--status-critical-text)] opacity-90 font-medium mt-0.5">Prioridad alta o maltrato</p>
           </div>
         </div>
 
@@ -362,9 +200,8 @@
           <div>
             <div class="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <h2 class="text-sm sm:text-base font-extrabold text-[#170B3D] tracking-wide flex items-center gap-2">
-                  <span>📊</span>
-                  <span>Distribución de Casos Asignados</span>
+                <h2 class="text-sm sm:text-base font-extrabold text-[#170B3D] tracking-wide">
+                  Distribución de Casos Asignados
                 </h2>
                 <p class="text-[11px] text-gray-400 font-medium">
                   Proporción porcentual de peticiones según su estado actual
@@ -383,17 +220,17 @@
 
           <!-- Desglose de estados en tarjetas pequeñas -->
           <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-gray-100 text-center">
-            <div class="bg-amber-50/70 rounded-xl p-2 border border-amber-100">
-              <div class="text-[10px] font-bold text-amber-700 uppercase">Por Atender</div>
-              <div class="text-base font-black text-amber-800">{{ totalPendientes }}</div>
+            <div class="bg-[var(--status-warning-bg)] rounded-xl p-2 border border-[var(--status-warning-border)]">
+              <div class="text-[10px] font-bold text-[var(--status-warning-text)] uppercase">Por Atender</div>
+              <div class="text-base font-black text-[var(--status-warning-text)]">{{ totalPendientes }}</div>
             </div>
-            <div class="bg-blue-50/70 rounded-xl p-2 border border-blue-100">
-              <div class="text-[10px] font-bold text-blue-700 uppercase">En Proceso</div>
-              <div class="text-base font-black text-blue-800">{{ totalEnProceso }}</div>
+            <div class="bg-[var(--status-info-bg)] rounded-xl p-2 border border-[var(--status-info-border)]">
+              <div class="text-[10px] font-bold text-[var(--status-info-text)] uppercase">En Proceso</div>
+              <div class="text-base font-black text-[var(--status-info-text)]">{{ totalEnProceso }}</div>
             </div>
-            <div class="bg-emerald-50/70 rounded-xl p-2 border border-emerald-100">
-              <div class="text-[10px] font-bold text-emerald-700 uppercase">Atendidas</div>
-              <div class="text-base font-black text-emerald-800">{{ totalAtendidas }}</div>
+            <div class="bg-[var(--status-success-bg)] rounded-xl p-2 border border-[var(--status-success-border)]">
+              <div class="text-[10px] font-bold text-[var(--status-success-text)] uppercase">Atendidas</div>
+              <div class="text-base font-black text-[var(--status-success-text)]">{{ totalAtendidas }}</div>
             </div>
           </div>
         </div>
@@ -403,15 +240,14 @@
           <div>
             <div class="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <h2 class="text-sm sm:text-base font-extrabold text-[#170B3D] tracking-wide flex items-center gap-2">
-                  <span>🎯</span>
-                  <span>Tipología y Prioridad Clínica</span>
+                <h2 class="text-sm sm:text-base font-extrabold text-[#170B3D] tracking-wide">
+                  Tipología y Prioridad Clínica
                 </h2>
                 <p class="text-[11px] text-gray-400 font-medium">
                   Clasificación de atenciones requeridas y urgencias asignadas
                 </p>
               </div>
-              <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg border border-blue-100">
+              <span class="px-2.5 py-1 badge-status-critical text-[10px] font-black rounded-lg">
                 {{ totalUrgentes }} urgentes
               </span>
             </div>
@@ -424,13 +260,13 @@
 
           <!-- Resumen en tarjetas pequeñas -->
           <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-gray-100 text-center">
-            <div class="bg-rose-50/70 rounded-xl p-2 border border-rose-100">
-              <div class="text-[10px] font-bold text-rose-700 uppercase">🚨 Urgencias / Críticos</div>
-              <div class="text-base font-black text-rose-800">{{ totalUrgentes }}</div>
+            <div class="bg-[var(--status-critical-bg)] rounded-xl p-2 border border-[var(--status-critical-border)]">
+              <div class="text-[10px] font-bold text-[var(--status-critical-text)] uppercase">🚨 Urgencias / Críticos</div>
+              <div class="text-base font-black text-[var(--status-critical-text)]">{{ totalUrgentes }}</div>
             </div>
-            <div class="bg-indigo-50/70 rounded-xl p-2 border border-indigo-100">
-              <div class="text-[10px] font-bold text-[#4141a5] uppercase">📋 Atención Estándar</div>
-              <div class="text-base font-black text-[#170B3D]">{{ totalAsignadas - totalUrgentes >= 0 ? totalAsignadas - totalUrgentes : 0 }}</div>
+            <div class="bg-[var(--status-neutral-bg)] rounded-xl p-2 border border-[var(--status-neutral-border)]">
+              <div class="text-[10px] font-bold text-[var(--status-neutral-accent)] uppercase">📋 Atención Estándar</div>
+              <div class="text-base font-black text-[var(--status-neutral-text)]">{{ totalAsignadas - totalUrgentes >= 0 ? totalAsignadas - totalUrgentes : 0 }}</div>
             </div>
           </div>
         </div>
@@ -455,29 +291,29 @@
         <!-- Filtros Rápidos de Estado -->
         <div class="flex items-center gap-1.5 flex-wrap w-full md:w-auto">
           <button type="button" (click)="setFiltroPeticion('TODAS')"
-            [ngClass]="filtroEstadoPeticion === 'TODAS' ? 'bg-[#170B3D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroEstadoPeticion === 'TODAS' ? 'bg-[#170B3D] text-white' : 'filter-btn-neutral'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Todas ({{ totalAsignadas }})
           </button>
           <button type="button" (click)="setFiltroPeticion('URGENTES')"
-            [ngClass]="filtroEstadoPeticion === 'URGENTES' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1">
+            [ngClass]="filtroEstadoPeticion === 'URGENTES' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-critical-accent)]' : 'filter-btn-critical'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer flex items-center gap-1">
             <span>🚨 Urgentes</span>
             <span *ngIf="totalUrgentes > 0">({{ totalUrgentes }})</span>
           </button>
           <button type="button" (click)="setFiltroPeticion('PENDIENTES')"
-            [ngClass]="filtroEstadoPeticion === 'PENDIENTES' ? 'bg-[#F1C63C] text-[#170B3D] font-black' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroEstadoPeticion === 'PENDIENTES' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-warning-accent)]' : 'filter-btn-warning'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Por Atender ({{ totalPendientes }})
           </button>
           <button type="button" (click)="setFiltroPeticion('PROCESO')"
-            [ngClass]="filtroEstadoPeticion === 'PROCESO' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroEstadoPeticion === 'PROCESO' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-info-accent)]' : 'filter-btn-info'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             En Proceso ({{ totalEnProceso }})
           </button>
           <button type="button" (click)="setFiltroPeticion('ATENDIDAS')"
-            [ngClass]="filtroEstadoPeticion === 'ATENDIDAS' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroEstadoPeticion === 'ATENDIDAS' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-success-accent)]' : 'filter-btn-success'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Atendidas ({{ totalAtendidas }})
           </button>
         </div>
@@ -502,7 +338,7 @@
       <div *ngIf="!cargandoPeticiones && peticionesFiltradas.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div *ngFor="let p of peticionesFiltradas; trackBy: trackByPeticionId"
           class="bg-white rounded-2xl p-5 border shadow-2xs hover:shadow-md transition flex flex-col justify-between space-y-4"
-          [ngClass]="esUrgente(p) ? 'border-red-200 ring-1 ring-red-100' : 'border-gray-100 hover:border-indigo-200'">
+          [ngClass]="esUrgente(p) ? 'border-[var(--status-critical-border)] ring-1 ring-[var(--status-critical-border)]' : 'border-gray-100 hover:border-indigo-200'">
 
           <div class="space-y-3">
             <!-- Encabezado de la Tarjeta: Radicado y Badges -->
@@ -555,7 +391,7 @@
             <button
               type="button"
               (click)="abrirDetallePeticion(p)"
-              class="flex-1 py-2 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition border border-gray-200 cursor-pointer text-center">
+              class="flex-1 py-2 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition border border-gray-200 btn-levitate cursor-pointer text-center">
               Ver Detalle
             </button>
 
@@ -563,7 +399,7 @@
             <button
               type="button"
               (click)="abrirModalCambiarEstado(p)"
-              class="py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-[#4141a5] text-xs font-bold transition border border-indigo-200 cursor-pointer"
+              class="py-2 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-[#4141a5] text-xs font-bold transition border border-indigo-200 btn-levitate cursor-pointer"
               title="Actualizar estado del caso">
               Estado
             </button>
@@ -572,7 +408,7 @@
             <button
               type="button"
               (click)="irAHistoriaClinica(p)"
-              class="py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition shadow-2xs cursor-pointer flex items-center gap-1"
+              class="py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition btn-levitate cursor-pointer flex items-center gap-1"
               title="Registrar atención en Historia Clínica">
               <span>🩺 Historia Clínica</span>
             </button>
@@ -588,62 +424,60 @@
     <!-- ======================================================================= -->
     <div [class.hidden]="pestanaActiva !== 'maletin'" class="space-y-6 animate-fade-in">
 
-      <!-- Indicadores de Stock del Maletín (Paleta Institucional con #F1C63C en Alertas) -->
+      <!-- Indicadores de Stock del Maletín (Semántica Centralizada) -->
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
         <!-- KPI 1: Total Medicamentos Asignados -->
         <div (click)="setFiltroStock('TODOS')"
           [ngClass]="filtroStockMaletin === 'TODOS' ? 'ring-2 ring-[#4141a5]' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
+          class="bg-[var(--status-neutral-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-neutral-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Fármacos en Maletín</span>
-            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-[#4141a5] flex items-center justify-center font-bold">💊</div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-neutral-accent)]">Fármacos en Maletín</span>
+            <div class="w-8 h-8 rounded-xl bg-white/80 border border-[var(--status-neutral-border)] text-[var(--status-neutral-text)] flex items-center justify-center font-bold">💊</div>
           </div>
           <div class="mt-2.5">
-            <div class="text-3xl font-black text-[#170B3D]">{{ totalMedicamentosMaletin }}</div>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Tipos de medicamentos en kit</p>
+            <div class="text-3xl font-black text-[var(--status-neutral-text)]">{{ totalMedicamentosMaletin }}</div>
+            <p class="text-[11px] text-[var(--status-neutral-text)] opacity-80 font-medium mt-0.5">Tipos de medicamentos en kit</p>
           </div>
         </div>
 
         <!-- KPI 2: Unidades Físicas Disponibles -->
-        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs">
+        <div class="bg-[var(--status-neutral-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-neutral-border)] shadow-2xs">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Total Unidades</span>
-            <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">📦</div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-neutral-accent)]">Total Unidades</span>
+            <div class="w-8 h-8 rounded-xl bg-white/80 border border-[var(--status-neutral-border)] text-[var(--status-neutral-text)] flex items-center justify-center font-bold">📦</div>
           </div>
           <div class="mt-2.5">
-            <div class="text-3xl font-black text-[#170B3D]">{{ totalUnidadesDisponibles }}</div>
-            <p class="text-[11px] text-gray-500 font-medium mt-0.5">Unidades listas para uso</p>
+            <div class="text-3xl font-black text-[var(--status-neutral-text)]">{{ totalUnidadesDisponibles }}</div>
+            <p class="text-[11px] text-[var(--status-neutral-text)] opacity-80 font-medium mt-0.5">Unidades listas para uso</p>
           </div>
         </div>
 
-        <!-- KPI 3: Stock Bajo / Crítico (Destacado en #F1C63C) -->
+        <!-- KPI 3: Stock Bajo / Preventivo -->
         <div (click)="setFiltroStock('BAJO')"
-          [ngClass]="filtroStockMaletin === 'BAJO' ? 'ring-2 ring-[#F1C63C]' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer"
-          [style.borderColor]="totalCriticosStock > 0 ? '#F1C63C' : '#F1F5F9'">
+          [ngClass]="filtroStockMaletin === 'BAJO' ? 'ring-2 ring-[#4141a5]' : ''"
+          class="bg-[var(--status-warning-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-warning-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#78350F]">Stock Bajo (≤ 10 uds)</span>
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-bold shadow-2xs"
-              style="background-color: #FEF9C3; color: #78350F;">⚠️</div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-warning-text)]">Stock Bajo (≤ 10 uds)</span>
+            <div class="w-8 h-8 rounded-xl bg-white/80 border border-[var(--status-warning-border)] text-[var(--status-warning-text)] flex items-center justify-center font-bold shadow-2xs">⚠️</div>
           </div>
           <div class="mt-2.5">
-            <div class="text-3xl font-black text-[#78350F]">{{ totalCriticosStock }}</div>
-            <p class="text-[11px] text-[#854D0E] font-medium mt-0.5">Fármacos bajo cuota óptima</p>
+            <div class="text-3xl font-black text-[var(--status-warning-text)]">{{ totalCriticosStock }}</div>
+            <p class="text-[11px] text-[var(--status-warning-text)] opacity-90 font-medium mt-0.5">Fármacos bajo cuota óptima</p>
           </div>
         </div>
 
-        <!-- KPI 4: Agotados -->
+        <!-- KPI 4: Agotados / Crítico -->
         <div (click)="setFiltroStock('AGOTADOS')"
-          [ngClass]="filtroStockMaletin === 'AGOTADOS' ? 'ring-2 ring-rose-400' : ''"
-          class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs hover:shadow-sm transition cursor-pointer">
+          [ngClass]="filtroStockMaletin === 'AGOTADOS' ? 'ring-2 ring-[#4141a5]' : ''"
+          class="bg-[var(--status-critical-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--status-critical-border)] shadow-2xs hover:shadow-sm transition cursor-pointer">
           <div class="flex items-center justify-between">
-            <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-600">Agotados (0 uds)</span>
-            <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">🚫</div>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[var(--status-critical-text)]">Agotados (0 uds)</span>
+            <div class="w-8 h-8 rounded-xl bg-white/80 border border-[var(--status-critical-border)] text-[var(--status-critical-text)] flex items-center justify-center font-bold">🚫</div>
           </div>
           <div class="mt-2.5">
-            <div class="text-3xl font-black text-rose-700">{{ totalAgotados }}</div>
-            <p class="text-[11px] text-rose-800 font-medium mt-0.5">Sin saldo disponible en campo</p>
+            <div class="text-3xl font-black text-[var(--status-critical-text)]">{{ totalAgotados }}</div>
+            <p class="text-[11px] text-[var(--status-critical-text)] opacity-90 font-medium mt-0.5">Sin saldo disponible en campo</p>
           </div>
         </div>
 
@@ -664,33 +498,32 @@
           </svg>
         </div>
 
-        <!-- Filtros Rápidos de Nivel -->
+        <!-- Filtros Rápidos de Nivel (con elevación btn-levitate y semántica) -->
         <div class="flex items-center gap-1.5 flex-wrap w-full md:w-auto">
           <button type="button" (click)="setFiltroStock('TODOS')"
-            [ngClass]="filtroStockMaletin === 'TODOS' ? 'bg-[#170B3D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroStockMaletin === 'TODOS' ? 'bg-[#170B3D] text-white' : 'filter-btn-neutral'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Todos ({{ totalMedicamentosMaletin }})
           </button>
           <button type="button" (click)="setFiltroStock('ALERTAS')"
-            [ngClass]="filtroStockMaletin === 'ALERTAS' ? 'bg-[#170B3D] text-[#F1C63C] font-black' : 'hover:bg-amber-100 text-[#78350F]'"
-            style="background-color: #FEF9C3; border: 1px solid #F1C63C;"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1">
+            [ngClass]="filtroStockMaletin === 'ALERTAS' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-warning-accent)]' : 'filter-btn-warning'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer flex items-center gap-1">
             <span>⚠️ Con Alerta</span>
             <span>({{ totalMedicamentosConAlerta }})</span>
           </button>
           <button type="button" (click)="setFiltroStock('BAJO')"
-            [ngClass]="filtroStockMaletin === 'BAJO' ? 'bg-[#F1C63C] text-[#170B3D] font-black' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroStockMaletin === 'BAJO' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-warning-accent)]' : 'filter-btn-warning'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Stock Bajo ({{ totalCriticosStock }})
           </button>
           <button type="button" (click)="setFiltroStock('AGOTADOS')"
-            [ngClass]="filtroStockMaletin === 'AGOTADOS' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroStockMaletin === 'AGOTADOS' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-critical-accent)]' : 'filter-btn-critical'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Agotados ({{ totalAgotados }})
           </button>
           <button type="button" (click)="setFiltroStock('OPTIMOS')"
-            [ngClass]="filtroStockMaletin === 'OPTIMOS' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
-            class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            [ngClass]="filtroStockMaletin === 'OPTIMOS' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-success-accent)]' : 'filter-btn-success'"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
             Óptimos
           </button>
         </div>
@@ -715,8 +548,7 @@
       <div *ngIf="!cargandoMaletin && medicamentosFiltrados.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div *ngFor="let m of medicamentosFiltrados; trackBy: trackByMedicamentoId"
           class="bg-white rounded-2xl p-5 border shadow-2xs hover:shadow-md transition flex flex-col justify-between space-y-4"
-          [style.borderColor]="m.nivelStock === 'CRITICO' || m.nivelStock === 'BAJO' ? '#F1C63C' : (m.nivelStock === 'AGOTADO' ? '#FDA4AF' : '#F1F5F9')"
-          [ngClass]="m.nivelStock === 'AGOTADO' ? 'ring-1 ring-rose-100' : (m.nivelStock === 'CRITICO' || m.nivelStock === 'BAJO' ? 'ring-1 ring-amber-100' : '')">
+          [ngClass]="m.nivelStock === 'AGOTADO' ? 'border-[var(--status-critical-border)] ring-1 ring-[var(--status-critical-border)]/40' : ((m.nivelStock === 'CRITICO' || m.nivelStock === 'BAJO') ? 'border-[var(--status-warning-border)] ring-1 ring-[var(--status-warning-border)]/40' : 'border-slate-200/80')">
 
           <div class="space-y-3">
             <!-- Encabezado Fármaco -->
@@ -729,18 +561,22 @@
                   {{ m.nombre }}
                 </h4>
               </div>
-              <!-- Badge de Stock con #F1C63C para bajo -->
+              <!-- Badges de Stock Semánticos -->
               <span *ngIf="m.nivelStock === 'AGOTADO'"
-                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 bg-rose-100 text-rose-800 border border-rose-200">
-                Agotado
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 badge-status-critical flex items-center gap-1">
+                <span>🚫</span> Agotado
               </span>
-              <span *ngIf="m.nivelStock === 'CRITICO' || m.nivelStock === 'BAJO'"
-                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 bg-[#F1C63C]/20 text-[#78350F] border border-[#F1C63C]">
-                {{ m.nivelStock === 'CRITICO' ? 'Crítico' : 'Stock Bajo' }}
+              <span *ngIf="m.nivelStock === 'CRITICO'"
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 badge-status-critical flex items-center gap-1">
+                <span>⚠️</span> Crítico
+              </span>
+              <span *ngIf="m.nivelStock === 'BAJO'"
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 badge-status-warning flex items-center gap-1">
+                <span>⚠️</span> Stock Bajo
               </span>
               <span *ngIf="m.nivelStock === 'OPTIMO'"
-                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">
-                Óptimo
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 badge-status-success flex items-center gap-1">
+                <span>✓</span> Óptimo
               </span>
             </div>
 
@@ -749,16 +585,16 @@
               <div class="flex items-center justify-between text-xs">
                 <span class="text-gray-500 font-medium">Saldo Disponible:</span>
                 <span class="font-black text-sm"
-                  [ngClass]="m.saldo_disponible <= 10 ? 'text-[#78350F]' : 'text-emerald-700'">
+                  [ngClass]="m.saldo_disponible <= 0 ? 'text-[var(--status-critical-text)]' : (m.saldo_disponible <= 10 ? 'text-[var(--status-warning-text)]' : 'text-[var(--status-success-text)]')">
                   {{ m.saldo_disponible }} unidades
                 </span>
               </div>
-              <!-- Barra de Progreso Visual de Existencias con #F1C63C -->
-              <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <!-- Barra de Progreso Visual de Existencias con Semántica Centralizada -->
+              <div class="w-full bg-[var(--status-neutral-bg)] border border-[var(--status-neutral-border)]/60 rounded-full h-2 overflow-hidden">
                 <div
                   class="h-2 rounded-full transition-all duration-500"
-                  [style.backgroundColor]="m.saldo_disponible <= 5 ? '#E11D48' : (m.saldo_disponible <= 10 ? '#F1C63C' : '#059669')"
-                  [style.width.%]="m.saldo_disponible > 30 ? 100 : (m.saldo_disponible * 100 / 30)">
+                  [style.backgroundColor]="m.saldo_disponible <= 0 ? 'transparent' : (m.saldo_disponible <= 5 ? 'var(--status-critical-accent)' : (m.saldo_disponible <= 10 ? 'var(--status-warning-accent)' : 'var(--status-success-accent)'))"
+                  [style.width.%]="m.saldo_disponible <= 0 ? 0 : (m.saldo_disponible > 30 ? 100 : (m.saldo_disponible * 100 / 30))">
                 </div>
               </div>
             </div>
@@ -783,7 +619,7 @@
               <div class="space-y-1 max-h-24 overflow-y-auto pr-1">
                 <div *ngFor="let l of m.lotes" class="flex items-center justify-between text-[10px] bg-white p-1.5 rounded-lg border border-gray-100">
                   <span class="font-bold text-gray-700">Cant: {{ l.cantidad_actual }}</span>
-                  <span [ngClass]="l.vencido ? 'text-rose-600 font-black' : 'text-gray-500'">
+                  <span [ngClass]="l.vencido ? 'text-[var(--status-critical-text)] font-black' : 'text-gray-500'">
                     {{ l.vencido ? 'Vencido: ' : 'Vence: ' }} {{ l.fecha_vencimiento | date:'dd/MM/yyyy' }}
                   </span>
                 </div>
@@ -791,13 +627,13 @@
             </div>
           </div>
 
-          <!-- Acción: Solicitar Reposición Directa -->
+          <!-- Acción: Solicitar Reposición Directa (con elevación btn-levitate) -->
           <div class="pt-3 border-t border-gray-100">
             <button
               type="button"
               (click)="abrirModalNuevaSolicitud(m.id_medicamento)"
-              class="w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-              [ngClass]="m.saldo_disponible <= 10 ? 'bg-[#170B3D] text-[#F1C63C] hover:bg-[#25155c]' : 'bg-indigo-50 hover:bg-indigo-100 text-[#4141a5]'">
+              class="w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer btn-levitate"
+              [ngClass]="m.saldo_disponible <= 10 ? 'bg-[#170B3D] text-[#FFF4E5] hover:bg-[#25155c]' : 'bg-[var(--status-info-bg)] hover:bg-slate-200/80 text-[var(--status-info-text)]'">
               <span>📦 Solicitar Reposición</span>
             </button>
           </div>
@@ -807,137 +643,169 @@
 
     </div>
 
-    <!-- ======================================================================= -->
-    <!-- ÁREA C: PESTAÑA DE SOLICITUDES ANTE FARMACIA CBA                        -->
-    <!-- ======================================================================= -->
-    <div [class.hidden]="pestanaActiva !== 'solicitudes'" class="space-y-6 animate-fade-in">
+  </main>
 
-      <!-- Cabecera de Solicitudes -->
-      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-base font-extrabold text-[#170B3D]">
-            Historial de Solicitudes de Insumos
-          </h2>
-          <p class="text-xs text-gray-500 font-medium mt-0.5">
-            Radicación y seguimiento de pedidos de reposición o devolución ante Farmacia CBA
-          </p>
+  <!-- ========================================================================= -->
+  <!-- VENTANA FLOTANTE: SOLICITUDES A FARMACIA CBA (SUPERPUESTA SOBRE MALETÍN)   -->
+  <!-- ========================================================================= -->
+  <div *ngIf="modalSolicitudesAbierto"
+    class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[88vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+      
+      <!-- Cabecera de la Ventana Flotante -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-[#4141a5] flex items-center justify-center text-lg font-bold">
+            📦
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-extrabold text-[#170B3D]">Solicitudes a Farmacia CBA</h3>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-[#4141a5] border border-indigo-100">
+                {{ solicitudesKit.length }} solicitudes
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">
+              Radicación y seguimiento de pedidos de reposición o devolución de insumos
+            </p>
+          </div>
         </div>
-
-        <button
-          type="button"
-          (click)="abrirModalNuevaSolicitud()"
-          class="px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-xs active:scale-95 cursor-pointer flex items-center gap-2">
-          <span>+ Nueva Solicitud</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="abrirModalNuevaSolicitud()"
+            class="px-3.5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition btn-levitate active:scale-95 cursor-pointer flex items-center gap-1.5">
+            <span>+ Nueva Solicitud</span>
+          </button>
+          <button
+            type="button"
+            (click)="cerrarModalSolicitudes()"
+            class="w-8 h-8 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 text-sm font-bold transition flex items-center justify-center cursor-pointer">
+            ✕
+          </button>
+        </div>
       </div>
 
-      <!-- Filtros de Solicitudes -->
-      <div class="flex items-center gap-2 flex-wrap">
+      <!-- Barra de Filtros de Solicitudes -->
+      <div class="px-6 py-3 border-b border-gray-100 bg-white flex items-center gap-2 flex-wrap">
         <button type="button" (click)="setFiltroSolicitud('TODAS')"
-          [ngClass]="filtroEstadoSolicitud === 'TODAS' ? 'bg-[#170B3D] text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
-          class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+          [ngClass]="filtroEstadoSolicitud === 'TODAS' ? 'bg-[#170B3D] text-white' : 'filter-btn-neutral'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
           Todas ({{ solicitudesKit.length }})
         </button>
         <button type="button" (click)="setFiltroSolicitud('PENDIENTES')"
-          [ngClass]="filtroEstadoSolicitud === 'PENDIENTES' ? 'bg-amber-600 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
-          class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+          [ngClass]="filtroEstadoSolicitud === 'PENDIENTES' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-warning-accent)]' : 'filter-btn-warning'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
           Pendientes
         </button>
         <button type="button" (click)="setFiltroSolicitud('APROBADAS')"
-          [ngClass]="filtroEstadoSolicitud === 'APROBADAS' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
-          class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+          [ngClass]="filtroEstadoSolicitud === 'APROBADAS' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-success-accent)]' : 'filter-btn-success'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
           Aprobadas
         </button>
         <button type="button" (click)="setFiltroSolicitud('ENTREGADAS')"
-          [ngClass]="filtroEstadoSolicitud === 'ENTREGADAS' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
-          class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+          [ngClass]="filtroEstadoSolicitud === 'ENTREGADAS' ? 'bg-[#170B3D] text-white ring-2 ring-[var(--status-info-accent)]' : 'filter-btn-info'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
           Entregadas
         </button>
       </div>
 
-      <!-- Estado de Carga -->
-      <div *ngIf="cargandoSolicitudes" class="p-12 text-center bg-white rounded-3xl border border-gray-100">
-        <div class="inline-block animate-spin w-8 h-8 border-3 border-[#4141a5] border-t-transparent rounded-full mb-3"></div>
-        <p class="text-xs text-gray-500 font-bold">Consultando solicitudes ante Farmacia CBA...</p>
-      </div>
+      <!-- Contenido de Solicitudes (Scroll) -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- Estado de Carga -->
+        <div *ngIf="cargandoSolicitudes" class="p-12 text-center bg-white rounded-3xl border border-gray-100">
+          <div class="inline-block animate-spin w-8 h-8 border-3 border-[#4141a5] border-t-transparent rounded-full mb-3"></div>
+          <p class="text-xs text-gray-500 font-bold">Consultando solicitudes ante Farmacia CBA...</p>
+        </div>
 
-      <!-- Lista Vacía -->
-      <div *ngIf="!cargandoSolicitudes && solicitudesFiltradas.length === 0" class="p-12 text-center bg-white rounded-3xl border border-gray-100">
-        <span class="text-4xl block mb-2">📋</span>
-        <h3 class="text-sm font-bold text-gray-700">No hay solicitudes registradas</h3>
-        <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-          No tienes pedidos en curso con el filtro seleccionado.
-        </p>
-      </div>
+        <!-- Lista Vacía -->
+        <div *ngIf="!cargandoSolicitudes && solicitudesFiltradas.length === 0" class="p-12 text-center bg-white rounded-3xl border border-gray-100">
+          <span class="text-4xl block mb-2">📋</span>
+          <h3 class="text-sm font-bold text-gray-700">No hay solicitudes registradas</h3>
+          <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+            No tienes pedidos en curso con el filtro seleccionado.
+          </p>
+        </div>
 
-      <!-- Tabla de Solicitudes -->
-      <div *ngIf="!cargandoSolicitudes && solicitudesFiltradas.length > 0" class="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-gray-50/70 border-b border-gray-100 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                <th class="py-3 px-4">Código</th>
-                <th class="py-3 px-3">Fecha</th>
-                <th class="py-3 px-3">Tipo</th>
-                <th class="py-3 px-4">Medicamento / Cantidad</th>
-                <th class="py-3 px-4">Justificación</th>
-                <th class="py-3 px-3 text-center">Estado</th>
-                <th class="py-3 px-3 text-right">Acción</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 text-xs text-gray-700">
-              <tr *ngFor="let s of solicitudesFiltradas" class="hover:bg-slate-50/70 transition">
-                <td class="py-3 px-4 font-black text-[#170B3D]">
-                  #{{ s.id_solicitud || s.id }}
-                </td>
-                <td class="py-3 px-3 text-gray-500 whitespace-nowrap">
-                  {{ (s.fecha_solicitud || s.fecha || s.created_at) | date:'dd/MM/yyyy HH:mm' }}
-                </td>
-                <td class="py-3 px-3">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase"
-                    [ngClass]="s.tipo === 'REPOSICION' ? 'bg-indigo-50 text-[#4141a5]' : 'bg-amber-50 text-amber-700'">
-                    {{ s.tipo || 'REPOSICION' }}
-                  </span>
-                </td>
-                <td class="py-3 px-4">
-                  <div *ngIf="s.items && s.items.length > 0" class="space-y-1">
-                    <div *ngFor="let it of s.items" class="font-bold text-gray-800">
-                      • {{ it.nombre_medicamento || it.medicamento_nombre || ('Fármaco #' + it.id_medicamento) }}:
-                      <span class="text-[#4141a5]">{{ it.cantidad_solicitada || it.cantidad }} uds</span>
+        <!-- Tabla de Solicitudes -->
+        <div *ngIf="!cargandoSolicitudes && solicitudesFiltradas.length > 0" class="bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-gray-50/70 border-b border-gray-100 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+                  <th class="py-3 px-4">Código</th>
+                  <th class="py-3 px-3">Fecha</th>
+                  <th class="py-3 px-3">Tipo</th>
+                  <th class="py-3 px-4">Medicamento / Cantidad</th>
+                  <th class="py-3 px-4">Justificación</th>
+                  <th class="py-3 px-3 text-center">Estado</th>
+                  <th class="py-3 px-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50 text-xs text-gray-700">
+                <tr *ngFor="let s of solicitudesFiltradas" class="hover:bg-slate-50/70 transition">
+                  <td class="py-3 px-4 font-black text-[#170B3D]">
+                    #{{ s.id_solicitud || s.id }}
+                  </td>
+                  <td class="py-3 px-3 text-gray-500 whitespace-nowrap">
+                    {{ (s.fecha_solicitud || s.fecha || s.created_at) | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase"
+                      [ngClass]="s.tipo === 'REPOSICION' ? 'badge-status-info' : 'badge-status-warning'">
+                      {{ s.tipo || 'REPOSICION' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div *ngIf="s.items && s.items.length > 0" class="space-y-1">
+                      <div *ngFor="let it of s.items" class="font-bold text-gray-800">
+                        • {{ it.nombre_medicamento || it.medicamento_nombre || ('Fármaco #' + it.id_medicamento) }}:
+                        <span class="text-[#4141a5]">{{ it.cantidad_solicitada || it.cantidad }} uds</span>
+                      </div>
                     </div>
-                  </div>
-                  <span *ngIf="!s.items || s.items.length === 0" class="text-gray-400 italic">Sin items especificados</span>
-                </td>
-                <td class="py-3 px-4 max-w-xs text-gray-600 truncate" [title]="s.justificacion">
-                  {{ s.justificacion || 'Sin justificación' }}
-                </td>
-                <td class="py-3 px-3 text-center">
-                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
-                    [ngClass]="obtenerClaseBadgeSolicitud(s.estado)">
-                    {{ s.estado || 'PENDIENTE' }}
-                  </span>
-                </td>
-                <td class="py-3 px-3 text-right">
-                  <button
-                    *ngIf="(s.estado || '').toUpperCase() === 'PENDIENTE'"
-                    type="button"
-                    (click)="cancelarSolicitud(s)"
-                    class="px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition cursor-pointer">
-                    Cancelar
-                  </button>
-                  <span *ngIf="(s.estado || '').toUpperCase() !== 'PENDIENTE'" class="text-gray-400 text-[11px] italic">
-                    Concluida
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    <span *ngIf="!s.items || s.items.length === 0" class="text-gray-400 italic">Sin items especificados</span>
+                  </td>
+                  <td class="py-3 px-4 max-w-xs text-gray-600 truncate" [title]="s.justificacion">
+                    {{ s.justificacion || 'Sin justificación' }}
+                  </td>
+                  <td class="py-3 px-3 text-center">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
+                      [ngClass]="obtenerClaseBadgeSolicitud(s.estado)">
+                      {{ s.estado || 'PENDIENTE' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button
+                      *ngIf="(s.estado || '').toUpperCase() === 'PENDIENTE'"
+                      type="button"
+                      (click)="cancelarSolicitud(s)"
+                      class="px-2.5 py-1 text-[11px] font-bold text-[var(--status-critical-text)] hover:bg-[var(--status-critical-bg)] rounded-lg transition btn-levitate cursor-pointer">
+                      Cancelar
+                    </button>
+                    <span *ngIf="(s.estado || '').toUpperCase() !== 'PENDIENTE'" class="text-gray-400 text-[11px] italic">
+                      Concluida
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-    </div>
+      <!-- Pie del Modal -->
+      <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between">
+        <span class="text-xs text-gray-400 font-medium">CBA Popayán · Sistema de Gestión de Insumos</span>
+        <button
+          type="button"
+          (click)="cerrarModalSolicitudes()"
+          class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
+          Cerrar
+        </button>
+      </div>
 
-  </main>
+    </div>
+  </div>
 
   <!-- ========================================================================= -->
   <!-- 4. MODAL DE DETALLE DE PETICIÓN (PARA VETERINARIO - FLUJO CLÍNICO)       -->
@@ -1023,18 +891,18 @@
       <!-- Pie del Modal con Acciones Clínicas para el Veterinario -->
       <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2.5">
         <button type="button" (click)="cerrarModalDetalle()"
-          class="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer">
+          class="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition btn-levitate cursor-pointer">
           Cerrar
         </button>
 
         <button type="button" (click)="cerrarModalDetalle(); abrirModalCambiarEstado(peticionSeleccionada)"
-          class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-[#4141a5] border border-indigo-200 rounded-xl text-xs font-bold transition cursor-pointer">
+          class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-[#4141a5] border border-indigo-200 rounded-xl text-xs font-bold transition btn-levitate cursor-pointer">
           Actualizar Estado
         </button>
 
         <!-- Redirige al módulo oficial web de Historia Clínica -->
         <button type="button" (click)="irAHistoriaClinica(peticionSeleccionada)"
-          class="px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5">
+          class="px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition btn-levitate cursor-pointer flex items-center gap-1.5">
           <span>🩺 Registrar Historia Clínica</span>
         </button>
       </div>
@@ -1077,11 +945,11 @@
 
       <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
         <button (click)="cerrarModalCambiarEstado()"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 cursor-pointer">
+          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 btn-levitate cursor-pointer">
           Cancelar
         </button>
         <button (click)="guardarCambioEstado()" [disabled]="guardandoEstado"
-          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold uppercase disabled:opacity-50 cursor-pointer shadow-xs">
+          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold uppercase disabled:opacity-50 btn-levitate cursor-pointer">
           {{ guardandoEstado ? 'Guardando...' : 'Guardar Estado' }}
         </button>
       </div>
@@ -1141,11 +1009,11 @@
 
       <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
         <button (click)="cerrarModalNuevaSolicitud()"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 cursor-pointer">
+          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 btn-levitate cursor-pointer">
           Cancelar
         </button>
         <button (click)="radicarSolicitudReposicion()" [disabled]="guardandoSolicitud || !medicamentoSolicitudId || cantidadSolicitud <= 0"
-          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold uppercase disabled:opacity-50 cursor-pointer shadow-xs">
+          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold uppercase disabled:opacity-50 btn-levitate cursor-pointer">
           {{ guardandoSolicitud ? 'Radicando...' : 'Confirmar Solicitud' }}
         </button>
       </div>
