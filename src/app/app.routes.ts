@@ -29,6 +29,7 @@ import { VeterinaryInventoryComponent } from './veterinary-inventory/veterinary-
 import { DashboardJuridicoComponent } from './dashboard-juridico/dashboard-juridico';
 import { InventarioJuridicoComponent } from './inventario-juridico/inventario-juridico';
 import { DashboardVeterinarioComponent } from './dashboard-veterinario/dashboard-veterinario';
+import { SedesComponent } from './sedes/sedes.component';
 import { AuthService } from './services/auth';
 
 export const routes: Routes = [
@@ -81,6 +82,9 @@ export const routes: Routes = [
       { path: 'historia-clinica2', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica/editar/:id', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica/editar', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
+
+      // Módulo Super Administrador (Exclusivo)
+      { path: 'sedes', component: SedesComponent, canActivate: [roleGuard], data: { roles: ['Super Administrador'] } },
 
       // Módulos compartidos / Catálogos clínicos
       { path: 'patologias', component: Patologias, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
