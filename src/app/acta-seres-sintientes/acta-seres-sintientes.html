@@ -27,9 +27,9 @@
       <button 
         type="button"
         (click)="irAHistoriasGuardadas()"
-        class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer tracking-wide"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer tracking-wide"
         title="Ver listado de historias clínicas y expedientes archivados">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
         <span>Historias Guardadas</span>
@@ -37,43 +37,43 @@
     </div>
   </header>
 
-  <!-- BARRA DE PESTAÑAS (3 PASOS OFICIALES) -->
-  <nav
-    class="bg-gradient-to-r from-[#170B3D] via-[#1a0e44] to-[#170B3D] p-2 sm:p-2.5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-2.5 shadow-xl border border-white/10 max-w-7xl mx-auto relative overflow-hidden backdrop-blur-md">
+  <!-- BARRA DE PESTAÑAS (3 PASOS OFICIALES - SOLO VISIBLE AL SELECCIONAR UN ANIMAL) -->
+  <nav *ngIf="seguimientoSeleccionado"
+    class="animate-slide-up bg-white p-2 sm:p-2.5 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-2.5 shadow-xs border border-slate-200/90 max-w-7xl mx-auto relative">
 
     <!-- PASO 1: CONSULTA -->
     <button type="button" (click)="cambiarPestana('consulta')"
       [ngClass]="pestanaActiva === 'consulta'
-        ? 'bg-[#4141A5] text-white shadow-lg ring-1 ring-white/20'
-        : 'bg-white/5 hover:bg-white/10 text-white/75 hover:text-white border border-white/5 hover:border-white/15'"
+        ? 'bg-[#4141A5]/5 text-[#170B3D] border border-[#4141A5]/30 shadow-xs'
+        : 'bg-slate-50/80 hover:bg-slate-100/90 text-slate-500 hover:text-slate-800 border border-slate-200/60'"
       class="relative flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-left transition-all duration-200 cursor-pointer group active:scale-[0.98] overflow-hidden">
 
-      <!-- Indicador dorado activo inferior -->
+      <!-- Indicador morado activo inferior -->
       <div *ngIf="pestanaActiva === 'consulta'"
-        class="absolute bottom-0 left-3 right-3 h-1 bg-[#F1C63C] rounded-full shadow-[0_0_10px_rgba(241,198,60,0.8)]"></div>
+        class="absolute bottom-0 left-3 right-3 h-0.5 bg-[#4141A5] rounded-full"></div>
 
       <!-- Número / Bubble -->
       <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-xs transition-all duration-200"
         [ngClass]="pestanaActiva === 'consulta'
-          ? 'bg-[#F1C63C] text-[#170B3D] shadow-md ring-2 ring-white/25 scale-105'
-          : 'bg-white/10 text-white/70 group-hover:bg-white/20 group-hover:text-white'">
+          ? 'bg-[#4141A5] text-white shadow-xs scale-105'
+          : 'bg-slate-200/80 text-slate-500 group-hover:bg-slate-300/80 group-hover:text-slate-700'">
         1
       </div>
 
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between gap-1">
           <span class="text-sm font-extrabold tracking-wide truncate"
-            [ngClass]="pestanaActiva === 'consulta' ? 'text-white' : 'text-white/85 group-hover:text-white'">
+            [ngClass]="pestanaActiva === 'consulta' ? 'text-[#170B3D]' : 'text-slate-600 group-hover:text-slate-900'">
             1. Consulta
           </span>
           <span *ngIf="pestanaActiva === 'consulta'"
-            class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-white/15 text-[#F1C63C] border border-[#F1C63C]/30 shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#F1C63C] animate-pulse"></span>
+            class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#4141A5]/10 text-[#4141A5] border border-[#4141A5]/25 shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5] animate-pulse"></span>
             Paso Actual
           </span>
         </div>
         <div class="text-[11px] truncate font-medium mt-0.5"
-          [ngClass]="pestanaActiva === 'consulta' ? 'text-white/90' : 'text-white/50 group-hover:text-white/75'">
+          [ngClass]="pestanaActiva === 'consulta' ? 'text-[#4141A5] font-semibold' : 'text-slate-400 group-hover:text-slate-500'">
           Paciente, Tutor y Ubicación
         </div>
       </div>
@@ -82,36 +82,36 @@
     <!-- PASO 2: EXÁMENES -->
     <button type="button" (click)="cambiarPestana('examenes')"
       [ngClass]="pestanaActiva === 'examenes'
-        ? 'bg-[#4141A5] text-white shadow-lg ring-1 ring-white/20'
-        : 'bg-white/5 hover:bg-white/10 text-white/75 hover:text-white border border-white/5 hover:border-white/15'"
+        ? 'bg-[#4141A5]/5 text-[#170B3D] border border-[#4141A5]/30 shadow-xs'
+        : 'bg-slate-50/80 hover:bg-slate-100/90 text-slate-500 hover:text-slate-800 border border-slate-200/60'"
       class="relative flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-left transition-all duration-200 cursor-pointer group active:scale-[0.98] overflow-hidden">
 
-      <!-- Indicador dorado activo inferior -->
+      <!-- Indicador morado activo inferior -->
       <div *ngIf="pestanaActiva === 'examenes'"
-        class="absolute bottom-0 left-3 right-3 h-1 bg-[#F1C63C] rounded-full shadow-[0_0_10px_rgba(241,198,60,0.8)]"></div>
+        class="absolute bottom-0 left-3 right-3 h-0.5 bg-[#4141A5] rounded-full"></div>
 
       <!-- Número / Bubble -->
       <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-xs transition-all duration-200"
         [ngClass]="pestanaActiva === 'examenes'
-          ? 'bg-[#F1C63C] text-[#170B3D] shadow-md ring-2 ring-white/25 scale-105'
-          : 'bg-white/10 text-white/70 group-hover:bg-white/20 group-hover:text-white'">
+          ? 'bg-[#4141A5] text-white shadow-xs scale-105'
+          : 'bg-slate-200/80 text-slate-500 group-hover:bg-slate-300/80 group-hover:text-slate-700'">
         2
       </div>
 
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between gap-1">
           <span class="text-sm font-extrabold tracking-wide truncate"
-            [ngClass]="pestanaActiva === 'examenes' ? 'text-white' : 'text-white/85 group-hover:text-white'">
+            [ngClass]="pestanaActiva === 'examenes' ? 'text-[#170B3D]' : 'text-slate-600 group-hover:text-slate-900'">
             2. Exámenes
           </span>
           <span *ngIf="pestanaActiva === 'examenes'"
-            class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-white/15 text-[#F1C63C] border border-[#F1C63C]/30 shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#F1C63C] animate-pulse"></span>
+            class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#4141A5]/10 text-[#4141A5] border border-[#4141A5]/25 shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5] animate-pulse"></span>
             Paso Actual
           </span>
         </div>
         <div class="text-[11px] truncate font-medium mt-0.5"
-          [ngClass]="pestanaActiva === 'examenes' ? 'text-white/90' : 'text-white/50 group-hover:text-white/75'">
+          [ngClass]="pestanaActiva === 'examenes' ? 'text-[#4141A5] font-semibold' : 'text-slate-400 group-hover:text-slate-500'">
           Constantes, Sistemas y Diagnóstico
         </div>
       </div>
@@ -120,36 +120,36 @@
     <!-- PASO 3: TRATAMIENTOS -->
     <button type="button" (click)="cambiarPestana('tratamientos')"
       [ngClass]="pestanaActiva === 'tratamientos'
-        ? 'bg-[#4141A5] text-white shadow-lg ring-1 ring-white/20'
-        : 'bg-white/5 hover:bg-white/10 text-white/75 hover:text-white border border-white/5 hover:border-white/15'"
+        ? 'bg-[#4141A5]/5 text-[#170B3D] border border-[#4141A5]/30 shadow-xs'
+        : 'bg-slate-50/80 hover:bg-slate-100/90 text-slate-500 hover:text-slate-800 border border-slate-200/60'"
       class="relative flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-left transition-all duration-200 cursor-pointer group active:scale-[0.98] overflow-hidden">
 
-      <!-- Indicador dorado activo inferior -->
+      <!-- Indicador morado activo inferior -->
       <div *ngIf="pestanaActiva === 'tratamientos'"
-        class="absolute bottom-0 left-3 right-3 h-1 bg-[#F1C63C] rounded-full shadow-[0_0_10px_rgba(241,198,60,0.8)]"></div>
+        class="absolute bottom-0 left-3 right-3 h-0.5 bg-[#4141A5] rounded-full"></div>
 
       <!-- Número / Bubble -->
       <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-xs transition-all duration-200"
         [ngClass]="pestanaActiva === 'tratamientos'
-          ? 'bg-[#F1C63C] text-[#170B3D] shadow-md ring-2 ring-white/25 scale-105'
-          : 'bg-white/10 text-white/70 group-hover:bg-white/20 group-hover:text-white'">
+          ? 'bg-[#4141A5] text-white shadow-xs scale-105'
+          : 'bg-slate-200/80 text-slate-500 group-hover:bg-slate-300/80 group-hover:text-slate-700'">
         3
       </div>
 
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between gap-1">
           <span class="text-sm font-extrabold tracking-wide truncate"
-            [ngClass]="pestanaActiva === 'tratamientos' ? 'text-white' : 'text-white/85 group-hover:text-white'">
+            [ngClass]="pestanaActiva === 'tratamientos' ? 'text-[#170B3D]' : 'text-slate-600 group-hover:text-slate-900'">
             3. Tratamientos
           </span>
           <span *ngIf="pestanaActiva === 'tratamientos'"
-            class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-white/15 text-[#F1C63C] border border-[#F1C63C]/30 shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#F1C63C] animate-pulse"></span>
+            class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#4141A5]/10 text-[#4141A5] border border-[#4141A5]/25 shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5] animate-pulse"></span>
             Paso Actual
           </span>
         </div>
         <div class="text-[11px] truncate font-medium mt-0.5"
-          [ngClass]="pestanaActiva === 'tratamientos' ? 'text-white/90' : 'text-white/50 group-hover:text-white/75'">
+          [ngClass]="pestanaActiva === 'tratamientos' ? 'text-[#4141A5] font-semibold' : 'text-slate-400 group-hover:text-slate-500'">
           Terapéutica, Rescate y Cierre
         </div>
       </div>
@@ -160,7 +160,7 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 1: CONSULTA (Agrupa Hoja 1: Espera y Hoja 2: Ficha/Motivo)  -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'consulta'" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="pestanaActiva === 'consulta' || !seguimientoSeleccionado" class="space-y-6 max-w-7xl mx-auto">
 
     <!-- ================================================================= -->
     <!-- VISTA INICIAL: CUADRÍCULA DE ANIMALES LISTOS (SIN PACIENTE SELECCIONADO) -->
@@ -191,21 +191,21 @@
         <!-- ========================================================================= -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-3 border-b border-slate-100">
           <div class="inline-flex p-1 bg-slate-100/90 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <!-- PESTAÑA: PENDIENTES (COLOR AMARILLO OFICIAL #F1C63C) -->
+            <!-- PESTAÑA: PENDIENTES -->
             <button
               type="button"
               (click)="cambiarFiltroEstadoAtencion('pendientes')"
               [ngClass]="filtroEstadoAtencion === 'pendientes'
-                ? 'bg-[#F1C63C] text-[#170B3D] shadow-md font-black border border-[#e5ba34]'
-                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/60'"
+                ? 'bg-white text-[#170B3D] shadow-xs font-bold border border-slate-200/90'
+                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/50 border border-transparent'"
               class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer">
               <span class="flex items-center justify-center w-5 h-5 rounded-lg text-xs"
-                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#170B3D]/15 text-[#170B3D]' : 'bg-slate-200/70 text-slate-500'">
+                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#4141a5]/10 text-[#4141a5]' : 'bg-slate-200/70 text-slate-500'">
                 ⏳
               </span>
               <span>Pendientes</span>
               <span
-                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#170B3D] text-white' : 'bg-slate-200 text-slate-600'"
+                [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20' : 'bg-slate-200 text-slate-600 border border-transparent'"
                 class="px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
                 {{ totalPendientes }}
               </span>
@@ -216,16 +216,16 @@
               type="button"
               (click)="cambiarFiltroEstadoAtencion('atendidos')"
               [ngClass]="filtroEstadoAtencion === 'atendidos'
-                ? 'bg-[#4141a5] text-white shadow-md font-black border border-[#33338b]'
-                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/60'"
+                ? 'bg-white text-[#4141a5] shadow-xs font-bold border border-slate-200/90'
+                : 'text-slate-600 hover:text-slate-900 font-semibold hover:bg-white/50 border border-transparent'"
               class="px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all duration-200 cursor-pointer">
               <span class="flex items-center justify-center w-5 h-5 rounded-lg text-xs"
-                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-500'">
+                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]/10 text-[#4141a5]' : 'bg-slate-200/70 text-slate-500'">
                 ✓
               </span>
               <span>Completados</span>
               <span
-                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-white text-[#4141a5]' : 'bg-slate-200 text-slate-600'"
+                [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20' : 'bg-slate-200 text-slate-600 border border-transparent'"
                 class="px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
                 {{ totalAtendidos }}
               </span>
@@ -233,8 +233,8 @@
           </div>
 
           <div class="text-xs text-slate-500 font-medium flex items-center gap-2">
-            <span class="inline-block w-2.5 h-2.5 rounded-full"
-              [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]' : 'bg-[#F1C63C] animate-pulse'"></span>
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#4141a5]"
+              [ngClass]="filtroEstadoAtencion === 'pendientes' ? 'animate-pulse' : ''"></span>
             <span>Mostrando: <strong class="text-slate-800">{{ seguimientosFiltrados.length }}</strong> {{ seguimientosFiltrados.length === 1 ? 'animal' : 'animales' }}</span>
           </div>
         </div>
@@ -258,16 +258,16 @@
           <div class="flex flex-wrap gap-2 text-xs font-semibold">
             <!-- BOTÓN PARA OCULTAR O MOSTRAR LAS TARJETAS -->
             <button type="button" (click)="alternarNuevosCasos()" [attr.aria-expanded]="mostrarNuevosCasos"
-              class="px-3.5 py-2 bg-[#4141a5] text-white rounded-xl hover:bg-[#33338b] flex items-center gap-2 font-bold shadow-xs transition active:scale-95 cursor-pointer">
+              class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 rounded-xl flex items-center gap-2 font-bold shadow-2xs transition active:scale-95 cursor-pointer">
               <span>Nuevos Casos</span>
-              <span class="text-[10px]">{{ mostrarNuevosCasos ? '▲' : '▼' }}</span>
+              <span class="text-[10px] text-slate-400">{{ mostrarNuevosCasos ? '▲' : '▼' }}</span>
             </button>
 
             <!-- TODOS -->
             <button type="button" (click)="filtrarPorEspecie('Todos')" [ngClass]="
         filtroEspecie === 'Todos'
-          ? 'px-3.5 py-2 bg-[#4141a5] text-white rounded-xl font-bold shadow-xs'
-          : 'px-3.5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-semibold'
+          ? 'px-3.5 py-2 bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/30 rounded-xl font-bold shadow-2xs'
+          : 'px-3.5 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 font-semibold'
       ">
               Todos
             </button>
@@ -275,8 +275,8 @@
             <!-- CANINO -->
             <button type="button" (click)="filtrarPorEspecie('Canino')" [ngClass]="
         filtroEspecie === 'Canino'
-          ? 'px-3.5 py-2 bg-[#4141a5] text-white rounded-xl font-bold shadow-xs'
-          : 'px-3.5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-semibold'
+          ? 'px-3.5 py-2 bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/30 rounded-xl font-bold shadow-2xs'
+          : 'px-3.5 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 font-semibold'
       ">
               Canino
             </button>
@@ -284,8 +284,8 @@
             <!-- FELINO -->
             <button type="button" (click)="filtrarPorEspecie('Felino')" [ngClass]="
         filtroEspecie === 'Felino'
-          ? 'px-3.5 py-2 bg-[#4141a5] text-white rounded-xl font-bold shadow-xs'
-          : 'px-3.5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-semibold'
+          ? 'px-3.5 py-2 bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/30 rounded-xl font-bold shadow-2xs'
+          : 'px-3.5 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 font-semibold'
       ">
               Felino
             </button>
@@ -293,8 +293,8 @@
             <!-- EQUINO -->
             <button type="button" (click)="filtrarPorEspecie('Equino')" [ngClass]="
         filtroEspecie === 'Equino'
-          ? 'px-3.5 py-2 bg-[#4141a5] text-white rounded-xl font-bold shadow-xs'
-          : 'px-3.5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-semibold'
+          ? 'px-3.5 py-2 bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/30 rounded-xl font-bold shadow-2xs'
+          : 'px-3.5 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 font-semibold'
       ">
               Equino
             </button>
@@ -315,8 +315,7 @@
           <!-- SIN DATOS / ESTADO VACÍO -->
           <div *ngIf="!cargando && !error && seguimientosFiltrados.length === 0"
             class="col-span-full text-center py-12 px-4 text-slate-500 text-sm bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
-            <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-xl shadow-2xs"
-              [ngClass]="filtroEstadoAtencion === 'atendidos' ? 'bg-[#4141a5]/10 text-[#4141a5]' : (filtroEstadoAtencion === 'pendientes' ? 'bg-[#F1C63C]/25 text-[#170B3D]' : 'bg-slate-100 text-slate-500')">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-xl shadow-2xs bg-[#4141a5]/10 text-[#4141a5]">
               {{ filtroEstadoAtencion === 'atendidos' ? '✓' : (filtroEstadoAtencion === 'pendientes' ? '⏳' : '🐾') }}
             </div>
             <p class="font-bold text-slate-700 text-sm">
@@ -393,28 +392,34 @@
       <!-- COLUMNA IZQUIERDA (AMPLIA): FICHA Y CONTENIDO PRINCIPAL DE LA HISTORIA CLÍNICA -->
       <div class="lg:col-span-2 space-y-6">
 
-        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA -->
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LIMPIA INSTITUCIONAL -->
         <div
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-200">
           <div class="flex items-center gap-3 flex-wrap">
-            <!-- BOTÓN PRINCIPAL DE RETORNO: HOVER CON COLOR #F1C63C -->
+            <!-- BOTÓN PRINCIPAL DE RETORNO -->
             <button type="button" (click)="deseleccionarPaciente()"
-              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-[#F1C63C] text-slate-900 hover:text-slate-950 font-black text-xs rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 cursor-pointer group border border-white/20"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl shadow-2xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-slate-200"
               title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
               <span
-                class="w-7 h-7 rounded-lg bg-slate-900 group-hover:bg-slate-950 text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
-                ←
+                class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-[#4141a5] group-hover:border-[#4141a5]/30 flex items-center justify-center transition-all shadow-2xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </span>
-              <span class="tracking-wide uppercase font-black">VOLVER A LA LISTA DE ANIMALES</span>
+              <span class="tracking-wide uppercase font-bold text-[11px] sm:text-xs">Volver a la lista de animales</span>
             </button>
 
-            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+            <span class="hidden sm:inline-block text-slate-300 text-lg font-light">|</span>
 
+            <!-- BADGE DEL PACIENTE ACTIVO -->
             <div
-              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-xs text-white/80">
-                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+              class="flex items-center gap-2 bg-[#4141a5]/5 px-3 py-1.5 rounded-xl border border-[#4141a5]/15">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-slate-600">
+                Atendiendo a: <strong class="text-[#170B3D] font-black tracking-wide">{{
                   seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
               </span>
             </div>
@@ -426,11 +431,11 @@
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer border border-[#4141a5]/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
             </button>
@@ -1011,34 +1016,40 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 2: EXÁMENES (Agrupa Hoja 3: Pruebas y Hoja 4: 12 Sistemas)  -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'examenes'" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="seguimientoSeleccionado && pestanaActiva === 'examenes'" class="space-y-6 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
       <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL (HOJAS 3 Y 4) -->
       <div class="lg:col-span-2 space-y-6 min-w-0">
 
-        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA (IDÉNTICA AL PASO 1) -->
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LIMPIA INSTITUCIONAL (PASO 2) -->
         <div *ngIf="seguimientoSeleccionado"
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-200">
           <div class="flex items-center gap-3 flex-wrap">
-            <!-- BOTÓN PRINCIPAL DE RETORNO: HOVER CON COLOR #F1C63C -->
+            <!-- BOTÓN PRINCIPAL DE RETORNO -->
             <button type="button" (click)="deseleccionarPaciente()"
-              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-[#F1C63C] text-slate-900 hover:text-slate-950 font-black text-xs rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 cursor-pointer group border border-white/20"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl shadow-2xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-slate-200"
               title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
               <span
-                class="w-7 h-7 rounded-lg bg-slate-900 group-hover:bg-slate-950 text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
-                ←
+                class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-[#4141a5] group-hover:border-[#4141a5]/30 flex items-center justify-center transition-all shadow-2xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </span>
-              <span class="tracking-wide uppercase font-black">VOLVER A LA LISTA DE ANIMALES</span>
+              <span class="tracking-wide uppercase font-bold text-[11px] sm:text-xs">Volver a la lista de animales</span>
             </button>
 
-            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+            <span class="hidden sm:inline-block text-slate-300 text-lg font-light">|</span>
 
+            <!-- BADGE DEL PACIENTE ACTIVO -->
             <div
-              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-xs text-white/80">
-                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+              class="flex items-center gap-2 bg-[#4141a5]/5 px-3 py-1.5 rounded-xl border border-[#4141a5]/15">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-slate-600">
+                Atendiendo a: <strong class="text-[#170B3D] font-black tracking-wide">{{
                   seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
               </span>
             </div>
@@ -1050,11 +1061,11 @@
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer border border-[#4141a5]/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
             </button>
@@ -1870,32 +1881,38 @@
   <!-- ================================================================= -->
   <!-- PESTAÑA 3: TRATAMIENTOS (Terapéutica, Rescate y Cierre Legal)       -->
   <!-- ================================================================= -->
-  <div *ngIf="pestanaActiva === 'tratamientos'" class="space-y-6 max-w-7xl mx-auto">
+  <div *ngIf="seguimientoSeleccionado && pestanaActiva === 'tratamientos'" class="space-y-6 max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       <div class="lg:col-span-2 space-y-6 min-w-0">
 
-        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LLAMATIVA (IDÉNTICA AL PASO 1) -->
+        <!-- BARRA SUPERIOR DE ACCIÓN / RETORNO LIMPIA INSTITUCIONAL (PASO 2) -->
         <div *ngIf="seguimientoSeleccionado"
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#170B3D] rounded-2xl p-4 sm:p-4.5 shadow-md border border-white/10 text-white">
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-2xl p-3.5 sm:p-4 shadow-xs border border-slate-200">
           <div class="flex items-center gap-3 flex-wrap">
-            <!-- BOTÓN PRINCIPAL DE RETORNO: HOVER CON COLOR #F1C63C -->
+            <!-- BOTÓN PRINCIPAL DE RETORNO -->
             <button type="button" (click)="deseleccionarPaciente()"
-              class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-[#F1C63C] text-slate-900 hover:text-slate-950 font-black text-xs rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 cursor-pointer group border border-white/20"
+              class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl shadow-2xs hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer group border border-slate-200"
               title="Cerrar historia clínica y volver a la cuadrícula de animales listos">
               <span
-                class="w-7 h-7 rounded-lg bg-slate-900 group-hover:bg-slate-950 text-white flex items-center justify-center text-sm font-black transition-all group-hover:-translate-x-0.5 shadow-2xs">
-                ←
+                class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-[#4141a5] group-hover:border-[#4141a5]/30 flex items-center justify-center transition-all shadow-2xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
               </span>
-              <span class="tracking-wide uppercase font-black">VOLVER A LA LISTA DE ANIMALES</span>
+              <span class="tracking-wide uppercase font-bold text-[11px] sm:text-xs">Volver a la lista de animales</span>
             </button>
 
-            <span class="hidden sm:inline-block text-white/30 text-lg font-light">|</span>
+            <span class="hidden sm:inline-block text-slate-300 text-lg font-light">|</span>
 
+            <!-- BADGE DEL PACIENTE ACTIVO -->
             <div
-              class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-xs text-white/80">
-                Atendiendo a: <strong class="text-white font-bold tracking-wide">{{
+              class="flex items-center gap-2 bg-[#4141a5]/5 px-3 py-1.5 rounded-xl border border-[#4141a5]/15">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs text-slate-600">
+                Atendiendo a: <strong class="text-[#170B3D] font-black tracking-wide">{{
                   seguimientoSeleccionado?.nombre_paciente || 'Paciente Activo' }}</strong>
               </span>
             </div>
@@ -1907,11 +1924,11 @@
               type="button"
               (click)="generarHistoriaClinicaDirecta(seguimientoSeleccionado, $event)"
               [disabled]="guardandoExpediente"
-              class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 cursor-pointer border border-white/20 uppercase tracking-wider disabled:opacity-50"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all active:scale-95 cursor-pointer border border-[#4141a5]/20 uppercase tracking-wider disabled:opacity-50"
               title="Guarda directamente todo lo enviado desde la móvil como Historia Clínica oficial">
               <span *ngIf="guardandoExpediente" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              <svg *ngIf="!guardandoExpediente" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{{ guardandoExpediente ? 'Generando...' : 'Generar Historia Clínica Directa' }}</span>
             </button>

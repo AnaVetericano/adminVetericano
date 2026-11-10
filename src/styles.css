@@ -7,3 +7,141 @@
   --color-secundary: #4141A5;
   --color-background: #F4F5F7;
 }
+
+:root {
+  /* ========================================================================= */
+  /* TOKENS SEMÁNTICOS DE ESTADO (TEMA CLARO - GESTIÓN E INVENTARIO)           */
+  /* ========================================================================= */
+  /* Crítico / agotado / urgente */
+  --status-critical-bg: #FEECEB;
+  --status-critical-border: #F5B7B1;
+  --status-critical-text: #B42318;
+  --status-critical-accent: #D92D20;
+
+  /* Preventivo / stock bajo / por atender */
+  --status-warning-bg: #FFF4E5;
+  --status-warning-border: #FCD9A6;
+  --status-warning-text: #9A5B13;
+  --status-warning-accent: #DC6803;
+
+  /* Exitoso / disponible / atendido */
+  --status-success-bg: #ECFDF3;
+  --status-success-border: #ABEFC6;
+  --status-success-text: #067647;
+  --status-success-accent: #12B76A;
+
+  /* Neutro / totales / métricas generales */
+  --status-neutral-bg: #F2F4F7;
+  --status-neutral-border: #D0D5DD;
+  --status-neutral-text: #344054;
+  --status-neutral-accent: #667085;
+
+  /* Informativo / en tránsito */
+  --status-info-bg: #EFF4FA;
+  --status-info-border: #C7D7EB;
+  --status-info-text: #175CD3;
+  --status-info-accent: #2E90FA;
+}
+
+/* ========================================================================= */
+/* ELEVACIÓN Y LEVITACIÓN PARA BOTONES (REFERENCIA BUSCADOR HISTORIAS)       */
+/* ========================================================================= */
+.btn-levitate {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-levitate:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+.btn-levitate:active:not(:disabled) {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transform: translateY(0);
+}
+
+/* ========================================================================= */
+/* BADGES SEMÁNTICOS REUTILIZABLES                                           */
+/* ========================================================================= */
+.badge-status-critical {
+  background-color: var(--status-critical-bg) !important;
+  border: 1px solid var(--status-critical-border) !important;
+  color: var(--status-critical-text) !important;
+}
+.badge-status-warning {
+  background-color: var(--status-warning-bg) !important;
+  border: 1px solid var(--status-warning-border) !important;
+  color: var(--status-warning-text) !important;
+}
+.badge-status-success {
+  background-color: var(--status-success-bg) !important;
+  border: 1px solid var(--status-success-border) !important;
+  color: var(--status-success-text) !important;
+}
+.badge-status-neutral {
+  background-color: var(--status-neutral-bg) !important;
+  border: 1px solid var(--status-neutral-border) !important;
+  color: var(--status-neutral-text) !important;
+}
+.badge-status-info {
+  background-color: var(--status-info-bg) !important;
+  border: 1px solid var(--status-info-border) !important;
+  color: var(--status-info-text) !important;
+}
+
+/* ========================================================================= */
+/* TARJETAS RESUMEN / KPI SEMÁNTICAS (FONDO SUAVE, BORDE Y TEXTO OSCURO)     */
+/* ========================================================================= */
+.kpi-card-critical {
+  background-color: var(--status-critical-bg) !important;
+  border-color: var(--status-critical-border) !important;
+  color: var(--status-critical-text) !important;
+}
+.kpi-card-warning {
+  background-color: var(--status-warning-bg) !important;
+  border-color: var(--status-warning-border) !important;
+  color: var(--status-warning-text) !important;
+}
+.kpi-card-success {
+  background-color: var(--status-success-bg) !important;
+  border-color: var(--status-success-border) !important;
+  color: var(--status-success-text) !important;
+}
+.kpi-card-neutral {
+  background-color: var(--status-neutral-bg) !important;
+  border-color: var(--status-neutral-border) !important;
+  color: var(--status-neutral-text) !important;
+}
+.kpi-card-info {
+  background-color: var(--status-info-bg) !important;
+  border-color: var(--status-info-border) !important;
+  color: var(--status-info-text) !important;
+}
+
+/* ========================================================================= */
+/* BOTONES DE FILTRO RÁPIDO SEGÚN ESTADO                                     */
+/* ========================================================================= */
+.filter-btn-critical {
+  background-color: var(--status-critical-bg);
+  border: 1px solid var(--status-critical-border);
+  color: var(--status-critical-text);
+}
+.filter-btn-warning {
+  background-color: var(--status-warning-bg);
+  border: 1px solid var(--status-warning-border);
+  color: var(--status-warning-text);
+}
+.filter-btn-success {
+  background-color: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  color: var(--status-success-text);
+}
+.filter-btn-neutral {
+  background-color: var(--status-neutral-bg);
+  border: 1px solid var(--status-neutral-border);
+  color: var(--status-neutral-text);
+}
+.filter-btn-info {
+  background-color: var(--status-info-bg);
+  border: 1px solid var(--status-info-border);
+  color: var(--status-info-text);
+}

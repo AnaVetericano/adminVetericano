@@ -58,17 +58,17 @@
           <button
             type="button"
             (click)="togglePanelAlertas()"
-            class="h-10 px-3 sm:px-4 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border transition-all flex items-center gap-2 cursor-pointer shadow-xs active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#F1C63C]/50"
-            [ngClass]="productosConStockBajo.length > 0 ? 'border-[#F1C63C]/70 bg-amber-50/20' : 'border-gray-200'"
+            class="h-10 px-3 sm:px-4 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border transition-all flex items-center gap-2 cursor-pointer shadow-xs active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30"
+            [ngClass]="productosConStockBajo.length > 0 ? 'border-[var(--status-warning-border)] bg-[var(--status-warning-bg)]/40' : 'border-gray-200'"
             title="Campana de alertas de stock bajo en kit de campo">
             
-            <!-- Icono de Campana con Badge en #F1C63C -->
+            <!-- Icono de Campana con Badge en Paleta Oficial -->
             <div class="relative flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               <span *ngIf="productosConStockBajo.length > 0"
-                class="absolute -top-2 -right-2.5 flex h-4 min-w-4 px-1 rounded-full bg-[#F1C63C] text-[#170B3D] text-[10px] font-black items-center justify-center shadow-xs ring-2 ring-white">
+                class="absolute -top-2 -right-2.5 flex h-4 min-w-4 px-1 rounded-full badge-status-warning text-[10px] font-black items-center justify-center shadow-xs ring-2 ring-white">
                 {{ productosConStockBajo.length }}
               </span>
             </div>
@@ -76,7 +76,7 @@
             <span class="text-xs font-black text-[#170B3D] hidden sm:inline">Alertas de Stock</span>
 
             <span *ngIf="productosConStockBajo.length > 0"
-              class="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C]/30 text-[#78350F] border border-[#F1C63C]">
+              class="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-black badge-status-warning">
               {{ productosConStockBajo.length }} bajos
             </span>
           </button>
@@ -88,9 +88,9 @@
             <!-- Encabezado del Panel -->
             <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#F1C63C]"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[var(--status-warning-accent)]"></span>
                 <span class="text-xs font-black text-[#170B3D] uppercase tracking-wider">Centro de Alertas de Stock</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#F1C63C] text-[#170B3D]">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black badge-status-warning">
                   {{ productosConStockBajo.length }}
                 </span>
               </div>
@@ -113,17 +113,17 @@
 
               <!-- Lista de productos que requieren reposición -->
               <div *ngFor="let prod of productosConStockBajo"
-                class="p-3 rounded-2xl transition hover:bg-amber-50/30 border border-transparent hover:border-[#F1C63C]/50 bg-amber-50/15">
+                class="p-3 rounded-2xl transition hover:bg-[var(--status-warning-bg)]/70 border border-transparent hover:border-[var(--status-warning-border)] bg-[var(--status-warning-bg)]/30">
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex-1">
                     <div class="flex items-center gap-2">
-                      <span class="w-2 h-2 rounded-full bg-[#F1C63C] shrink-0"></span>
+                      <span class="w-2 h-2 rounded-full bg-[var(--status-warning-accent)] shrink-0"></span>
                       <h5 class="text-xs font-black text-[#170B3D] uppercase tracking-wide">
                         {{ prod.nombre }}
                       </h5>
                     </div>
                     <p class="text-[11px] text-gray-600 font-medium mt-1">
-                      Saldo disponible: <strong class="text-[#78350F] font-black">{{ prod.saldoDisponible }} uds</strong>
+                      Saldo disponible: <strong class="text-[var(--status-warning-text)] font-black">{{ prod.saldoDisponible }} uds</strong>
                     </p>
                     <p class="text-[11px] text-slate-500 italic mt-0.5">
                       "Recuerda que te quedan {{ prod.saldoDisponible }} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general."
@@ -132,7 +132,7 @@
                   <button
                     type="button"
                     (click)="mostrarAlertaStockBajoSweetAlert(prod); cerrarPanelAlertas()"
-                    class="px-2.5 py-1 text-[11px] font-black text-[#170B3D] bg-[#F1C63C] hover:bg-[#e5ba34] rounded-lg shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
+                    class="px-2.5 py-1 text-[11px] font-black text-white bg-[var(--status-warning-accent)] hover:brightness-95 rounded-lg shadow-xs transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
                     Ver Detalle
                   </button>
                 </div>
@@ -156,16 +156,16 @@
 
     <!-- ALERTA DE LOTES VENCIDOS SEGÚN BACKEND -->
     @if (backendAlertas?.vencidos && backendAlertas!.vencidos.length > 0) {
-      <div class="w-full bg-slate-100 border border-slate-300 rounded-2xl p-4 shadow-xs shrink-0 animate-in fade-in">
+      <div class="w-full bg-[var(--status-critical-bg)] border border-[var(--status-critical-border)] rounded-2xl p-4 shadow-xs shrink-0 animate-in fade-in">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center shrink-0 font-bold text-sm">
+          <div class="w-9 h-9 rounded-xl bg-white/80 border border-[var(--status-critical-border)] text-[var(--status-critical-text)] flex items-center justify-center shrink-0 font-bold text-sm">
             ⚠️
           </div>
           <div class="flex-1">
-            <h4 class="text-xs sm:text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+            <h4 class="text-xs sm:text-sm font-extrabold text-[var(--status-critical-text)] uppercase tracking-wider">
               Lotes Vencidos en Kit ({{ backendAlertas!.vencidos.length }} lote(s))
             </h4>
-            <p class="text-xs text-slate-600 mt-0.5">
+            <p class="text-xs text-[var(--status-critical-text)] opacity-90 mt-0.5">
               Existen unidades con fecha de vencimiento cumplida en este maletín. Estas unidades no están disponibles para formular y deben gestionarse mediante devolución o retiro a bodega.
             </p>
           </div>
@@ -176,58 +176,66 @@
     <!-- TARJETAS DE RESUMEN METRICO DEL KIT -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
       
-      <!-- 1. Total Productos en Maletín -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0">
+      <!-- 1. Total Productos en Maletín (Neutro) -->
+      <div class="bg-[var(--status-neutral-bg)] rounded-2xl p-4 border border-[var(--status-neutral-border)] shadow-xs flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-white/80 border border-[var(--status-neutral-border)] text-[var(--status-neutral-text)] flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Productos en Kit</p>
-          <p class="text-lg sm:text-xl font-extrabold text-[#170B3D]">{{ totalProductos }}</p>
+          <p class="text-xs font-bold text-[var(--status-neutral-accent)] uppercase tracking-wider">Productos en Kit</p>
+          <p class="text-lg sm:text-xl font-extrabold text-[var(--status-neutral-text)]">{{ totalProductos }}</p>
         </div>
       </div>
 
-      <!-- 2. Cantidad Entregada -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+      <!-- 2. Cantidad Entregada (Informativo) -->
+      <div class="bg-[var(--status-info-bg)] rounded-2xl p-4 border border-[var(--status-info-border)] shadow-xs flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-white/80 border border-[var(--status-info-border)] text-[var(--status-info-text)] flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cantidad Entregada</p>
-          <p class="text-lg sm:text-xl font-extrabold text-slate-800">{{ totalEntregadas }} uds</p>
+          <p class="text-xs font-bold text-[var(--status-info-text)] uppercase tracking-wider">Cantidad Entregada</p>
+          <p class="text-lg sm:text-xl font-extrabold text-[var(--status-info-text)]">{{ totalEntregadas }} uds</p>
         </div>
       </div>
 
-      <!-- 3. Cantidad Consumida -->
-      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0">
+      <!-- 3. Cantidad Consumida (Neutro) -->
+      <div class="bg-[var(--status-neutral-bg)] rounded-2xl p-4 border border-[var(--status-neutral-border)] shadow-xs flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-white/80 border border-[var(--status-neutral-border)] text-[var(--status-neutral-text)] flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cantidad Consumida</p>
-          <p class="text-lg sm:text-xl font-extrabold text-[#4141a5]">{{ totalConsumidas }} uds</p>
+          <p class="text-xs font-bold text-[var(--status-neutral-accent)] uppercase tracking-wider">Cantidad Consumida</p>
+          <p class="text-lg sm:text-xl font-extrabold text-[var(--status-neutral-text)]">{{ totalConsumidas }} uds</p>
         </div>
       </div>
 
-      <!-- 4. Saldo Disponible (Paleta oficial amarillo #F1C63C) -->
-      <div class="bg-white rounded-2xl p-4 border-2 border-[#F1C63C] shadow-xs flex items-center gap-3.5 relative overflow-hidden">
-        <div class="w-11 h-11 rounded-xl bg-[#F1C63C]/30 text-[#170B3D] flex items-center justify-center shrink-0">
+      <!-- 4. Saldo Disponible (Preventivo si hay alerta, Exitoso si es óptimo) -->
+      <div class="rounded-2xl p-4 border shadow-xs flex items-center gap-3.5 relative overflow-hidden"
+        [ngClass]="productosConStockBajo.length > 0 ? 'bg-[var(--status-warning-bg)] border-2 border-[var(--status-warning-border)]' : 'bg-[var(--status-success-bg)] border border-[var(--status-success-border)]'">
+        <div class="w-11 h-11 rounded-xl bg-white/80 flex items-center justify-center shrink-0 border"
+          [ngClass]="productosConStockBajo.length > 0 ? 'border-[var(--status-warning-border)] text-[var(--status-warning-text)]' : 'border-[var(--status-success-border)] text-[var(--status-success-text)]'">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Saldo Disponible</p>
-          <p class="text-lg sm:text-xl font-black text-[#170B3D]">{{ totalSaldoDisponible }} uds</p>
+          <p class="text-xs font-bold uppercase tracking-wider"
+            [ngClass]="productosConStockBajo.length > 0 ? 'text-[var(--status-warning-text)]' : 'text-[var(--status-success-text)]'">
+            Saldo Disponible
+          </p>
+          <p class="text-lg sm:text-xl font-black"
+            [ngClass]="productosConStockBajo.length > 0 ? 'text-[var(--status-warning-text)]' : 'text-[var(--status-success-text)]'">
+            {{ totalSaldoDisponible }} uds
+          </p>
         </div>
         @if (productosConStockBajo.length > 0) {
-          <span class="absolute top-2 right-2 bg-[#F1C63C] text-[#170B3D] font-black text-[9px] px-1.5 py-0.5 rounded-full uppercase" title="Hay productos con stock bajo">
+          <span class="absolute top-2 right-2 badge-status-warning font-black text-[9px] px-1.5 py-0.5 rounded-full uppercase" title="Hay productos con stock bajo">
             {{ productosConStockBajo.length }} Bajos
           </span>
         }
@@ -309,7 +317,7 @@
                   <td class="px-5 py-4">
                     <div class="flex items-start gap-3">
                       <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs"
-                           [ngClass]="item.saldoDisponible <= 10 && item.saldoDisponible > 0 ? 'bg-[#F1C63C]/30 text-amber-950 border border-[#F1C63C]' : 'bg-[#4141a5]/10 text-[#4141a5]'">
+                           [ngClass]="item.saldoDisponible <= 0 ? 'badge-status-critical' : (item.saldoDisponible <= 10 ? 'badge-status-warning' : 'bg-white border border-slate-200 text-[#4141a5]')">
                         {{ item.nombre.charAt(0).toUpperCase() }}
                       </div>
                       <div class="min-w-0">
@@ -348,39 +356,39 @@
                     <span class="text-[10px] text-purple-400 font-semibold block">Formuladas / Usadas</span>
                   </td>
 
-                  <!-- COLUMNA 4: SALDO DISPONIBLE -->
+                  <!-- COLUMNA 4: SALDO DISPONIBLE (SEMÁNTICA CENTRALIZADA) -->
                   <td class="px-4 py-4 text-center">
                     @if (item.saldoDisponible <= 0) {
                       <div class="inline-flex flex-col items-center">
-                        <span class="px-3 py-1 rounded-full text-xs font-black bg-slate-200 text-slate-700 border border-slate-300">
-                          Agotado (0 uds)
+                        <span class="px-3 py-1 rounded-full text-xs font-black badge-status-critical flex items-center gap-1">
+                          <span>🚫</span> Agotado (0 uds)
                         </span>
-                        <span class="text-[10px] text-slate-500 font-bold mt-0.5">Reabastecer</span>
+                        <span class="text-[10px] text-[var(--status-critical-text)] font-bold mt-0.5">Reabastecer</span>
                       </div>
                     } @else if (item.saldoDisponible <= 10) {
                       <!-- ALERTA VISUAL DE STOCK BAJO (<= 10 UNIDADES) -->
                       <div class="inline-flex flex-col items-center gap-1 cursor-pointer"
                            (click)="mostrarAlertaStockBajoSweetAlert(item)"
                            title="Haz clic para ver la alerta de reaprovisionamiento">
-                        <span class="px-3 py-1 rounded-full text-xs font-black bg-[#F1C63C]/20 text-[#170B3D] border-2 border-[#F1C63C] flex items-center gap-1.5 shadow-xs">
-                          <span class="w-2 h-2 rounded-full bg-[#F1C63C] animate-pulse"></span>
+                        <span class="px-3 py-1 rounded-full text-xs font-black badge-status-warning flex items-center gap-1.5 shadow-xs">
+                          <span class="w-2 h-2 rounded-full bg-[var(--status-warning-accent)] animate-pulse"></span>
                           ⚠️ {{ item.saldoDisponible }} uds disponibles
                         </span>
-                        <span class="text-[10px] font-extrabold text-[#170B3D] bg-[#F1C63C]/30 px-2 py-0.5 rounded-md border border-[#F1C63C]/60">
+                        <span class="text-[10px] font-extrabold badge-status-warning px-2 py-0.5 rounded-md">
                           Stock Bajo (&le; 10)
                         </span>
                       </div>
                     } @else {
                       <div class="inline-flex flex-col items-center">
-                        <span class="px-3 py-1 rounded-full text-xs font-black bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/30">
-                          {{ item.saldoDisponible }} uds disponibles
+                        <span class="px-3 py-1 rounded-full text-xs font-black badge-status-success flex items-center gap-1">
+                          <span>✓</span> {{ item.saldoDisponible }} uds disponibles
                         </span>
-                        <span class="text-[10px] text-slate-500 font-medium mt-0.5">Stock óptimo</span>
+                        <span class="text-[10px] text-[var(--status-success-text)] font-medium mt-0.5">Stock óptimo</span>
                       </div>
                     }
                     @if (item.saldoVencido && item.saldoVencido > 0) {
                       <div class="mt-1">
-                        <span class="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200" title="Unidades no aptas para consumo">
+                        <span class="text-[9px] font-bold badge-status-critical px-1.5 py-0.5 rounded" title="Unidades no aptas para consumo">
                           ⛔ {{ item.saldoVencido }} vencidas
                         </span>
                       </div>
