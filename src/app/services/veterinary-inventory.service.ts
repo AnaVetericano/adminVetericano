@@ -165,7 +165,7 @@ export class VeterinaryInventoryService {
   public getVeterinarioLogueadoId(): number {
     const sesion = this.authService.currentUser();
     const rol = String(sesion?.rol ?? sesion?.['nombre_rol'] ?? '').toLowerCase();
-    const esAdmin = rol.includes('admin') || Number(sesion?.id_rol) === 1;
+    const esAdmin = rol.includes('admin') || rol.includes('jur') || Number(sesion?.id_rol) === 1 || Number(sesion?.id_rol) === 2;
 
     // Si es administrador, verificar si hay un veterinario seleccionado para supervisión activa
     if (esAdmin) {
@@ -407,7 +407,7 @@ export class VeterinaryInventoryService {
   public cargarInventarioVeterinario(idVetParam?: number): Observable<VeterinaryKitItem[]> {
     const sesion: any = this.authService.currentUser();
     const rol = String(sesion?.rol ?? sesion?.['nombre_rol'] ?? '').toLowerCase();
-    const esAdmin = rol.includes('admin') || Number(sesion?.id_rol) === 1;
+    const esAdmin = rol.includes('admin') || rol.includes('jur') || Number(sesion?.id_rol) === 1 || Number(sesion?.id_rol) === 2;
 
     const idVet = idVetParam || this.getVeterinarioLogueadoId();
 
