@@ -29,6 +29,7 @@ export class UsuariosRoles implements OnInit{
 
   usuarioSeleccionadoRol: any = null;
   rolesDisponibles: any[] = [
+    { id_rol: 5, nombre_rol: 'Super Administrador' },
     { id_rol: 1, nombre_rol: 'Administrador' },
     { id_rol: 2, nombre_rol: 'Jurídico' },
     { id_rol: 3, nombre_rol: 'Veterinario' },
@@ -96,7 +97,8 @@ listarUsuarios(): void {
         // Si tenemos texto de rol, normalizamos la presentación
         if (rolTexto && typeof rolTexto === 'string') {
           const n = rolTexto.toLowerCase();
-          if (n.includes('adm')) rolTexto = 'Administrador';
+          if (n.includes('super')) rolTexto = 'Super Administrador';
+          else if (n.includes('adm')) rolTexto = 'Administrador';
           else if (n.includes('jur')) rolTexto = 'Jurídico';
           else if (n.includes('vet')) rolTexto = 'Veterinario';
           else if (n.includes('pet')) rolTexto = 'Peticionario';

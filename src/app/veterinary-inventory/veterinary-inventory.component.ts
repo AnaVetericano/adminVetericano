@@ -459,8 +459,8 @@ export class VeterinaryInventoryComponent implements OnInit {
         this.cargarDatos();
 
         const accionTxt = this.tipoOperacionAjuste === 'RETIRO'
-          ? `Se retiraron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${Math.max(0, item.saldoDisponible - cant)} uds.`
-          : `Se agregaron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible + cant} uds.`;
+          ? `Se retiraron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} uds.`
+          : `Se agregaron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} uds.`;
 
         Swal.fire({
           icon: 'success',

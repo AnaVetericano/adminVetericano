@@ -479,10 +479,10 @@ export class VeterinaryInventoryService {
             if (tipo === 'ASIGNACION_KIT' && (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')) {
               asignacionesKardexPorMed.set(idM, (asignacionesKardexPorMed.get(idM) || 0) + cant);
             }
-            // Retiro o devolución a bodega (Filtrar exclusivamente el movimiento de salida del kit para no duplicar con la entrada a general)
+            // Retiro o devolución a bodega (Filtrar exclusivamente el movimiento de salida del kit para no duplicar con la contrapartida de entrada a bodega)
             else if (
-              (tipo.includes('RETIRO') || tipo.includes('DEVOLUCION')) &&
-              (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')
+              (tipo === 'RETIRO_KIT' || tipo === 'RETIRO' || (tipo.includes('RETIRO') && !tipo.includes('BODEGA') && !tipo.includes('ENTRADA'))) &&
+              ubicacion !== 'BODEGA_GENERAL' && ubicacion !== 'BODEGA'
             ) {
               retirosKardexPorMed.set(idM, (retirosKardexPorMed.get(idM) || 0) + cant);
             }
@@ -747,16 +747,20 @@ export class VeterinaryInventoryService {
 
       return this.retiroDirectoKit(payloadRetiro).pipe(
         tap(() => {
-          this.asignarLoteAVeterinario(idVet, {
-            id_inventario: idMed,
-            id_medicamento: idMed,
-            nombre: `Medicamento #${idMed}`,
-            cantidad: cantNum,
-            tipoOperacion: 'RETIRO',
-            motivo
-          }).subscribe();
+          // Si el backend procesó el retiro exitosamente, solo registramos en historial local
+          this.registrarEnHistorialAsignaciones({
+            id: Date.now(),
+            fecha: new Date().toISOString(),
+            idVet,
+            veterinarioNombre: `Veterinario #${idVet}`,
+            idInventario: idMed,
+            nombreMedicamento: `Medicamento #${idMed}`,
+            cantidad: -cantNum,
+            motivo: motivo || 'Devolución de stock a bodega CBA'
+          });
         }),
         catchError(() => {
+          // Si el backend está desconectado/offline, descontamos exactamente 1 vez en local
           return this.asignarLoteAVeterinario(idVet, {
             id_inventario: idMed,
             id_medicamento: idMed,
@@ -770,14 +774,26 @@ export class VeterinaryInventoryService {
     } else {
       return this.asignarStockKit(idVet, [{ id_medicamento: idMed, cantidad: cantNum }], motivo).pipe(
         tap(() => {
-          this.asignarLoteAVeterinario(idVet, {
+          this.registrarEnHistorialAsignaciones({
+            id: Date.now(),
+            fecha: new Date().toISOString(),
+            idVet,
+            veterinarioNombre: `Veterinario #${idVet}`,
+            idInventario: idMed,
+            nombreMedicamento: `Medicamento #${idMed}`,
+            cantidad: cantNum,
+            motivo: motivo || 'Dotación de maletín de campo'
+          });
+        }),
+        catchError(() => {
+          return this.asignarLoteAVeterinario(idVet, {
             id_inventario: idMed,
             id_medicamento: idMed,
             nombre: `Medicamento #${idMed}`,
             cantidad: cantNum,
             tipoOperacion: 'ASIGNAR',
             motivo
-          }).subscribe();
+          });
         })
       );
     }

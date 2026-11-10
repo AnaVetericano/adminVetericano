@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export type UserRole = 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
+export type UserRole = 'Super Administrador' | 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
 
 export interface UserSession {
   id_usuario?: number;
@@ -219,9 +219,16 @@ export class AuthService {
   public currentUser = this.currentUserSignal.asReadonly();
   public isAuthenticated = computed(() => !!this.currentUserSignal() || !!localStorage.getItem('token'));
   public userRole = computed(() => this.currentUserSignal()?.rol ?? this.obtenerRolDesdeToken());
+  public isSuperAdmin = computed(() => {
+    const rol = (this.userRole() || '').toLowerCase();
+    const sesion = this.currentUserSignal();
+    const isSuperUser = sesion?.['is_superuser'] === true || sesion?.['is_superuser'] === 'true';
+    const idRol = Number(sesion?.id_rol);
+    return rol.includes('super') || isSuperUser || idRol === 5 || idRol === 0;
+  });
   public isAdmin = computed(() => {
     const rol = (this.userRole() || '').toLowerCase();
-    return !rol || rol.includes('admin');
+    return !rol || rol.includes('admin') || this.isSuperAdmin();
   });
   public isVeterinario = computed(() => {
     const rol = (this.userRole() || '').toLowerCase();
@@ -277,6 +284,7 @@ export class AuthService {
     }
 
     const str = String(rolRaw).toLowerCase().trim();
+    if (str.includes('super')) return 'Super Administrador';
     if (str.includes('vet')) return 'Veterinario';
     if (str.includes('jur')) return 'Jurídico';
     if (str.includes('petic')) return 'Peticionario';
@@ -284,6 +292,7 @@ export class AuthService {
 
     const idNum = Number(rolRaw);
     if (!isNaN(idNum)) {
+      if (idNum === 5 || idNum === 0) return 'Super Administrador';
       if (idNum === 1) return 'Administrador';
       if (idNum === 2) return 'Jurídico';
       if (idNum === 3) return 'Veterinario';
@@ -395,7 +404,13 @@ export class AuthService {
     if (!rolActual) return true;
     return allowedRoles.some((r) => {
       const rLower = norm(String(r));
-      return rLower === rolActual || rolActual.includes(rLower) || rLower.includes(rolActual);
+      if (rLower === 'super administrador' || rLower === 'superadmin' || rLower === 'super admin') {
+        return this.isSuperAdmin() || rolActual.includes('super');
+      }
+      if (rLower === 'administrador' || rLower === 'admin') {
+        return rolActual.includes('admin') || this.isSuperAdmin();
+      }
+      return rLower === rolActual || rolActual === rLower;
     });
   }
 
