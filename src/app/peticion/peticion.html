@@ -2,7 +2,7 @@
   class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white relative min-h-screen">
 
   <!-- ========================================================================= -->
-  <!-- ENCABEZADO PRINCIPAL DEL MÓDULO JURÍDICO                                    -->
+  <!-- ENCABEZADO PRINCIPAL DEL MÓDULO JURÍDICO                                  -->
   <!-- ========================================================================= -->
   <header
     class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
@@ -26,12 +26,12 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
-              {{ esVeterinario ? 'Seguimiento de Peticiones Asignadas' : 'Gestión Jurídica y Seguimiento de Peticiones' }}
+              {{ esVeterinario ? 'Seguimiento de Peticiones Asignadas' : 'Gestión y Seguimiento de Peticiones' }}
             </h1>
             <span
-              class="hidden md:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider"
-              [ngClass]="esVeterinario ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[#4141a5]/10 text-[#4141a5]'">
-              {{ esVeterinario ? 'Área Veterinaria' : 'Área Jurídica' }}
+              *ngIf="esVeterinario"
+              class="hidden md:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Área Veterinaria
             </span>
           </div>
           <p class="text-xs sm:text-sm text-gray-500 font-medium">

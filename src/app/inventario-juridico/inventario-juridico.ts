@@ -43,6 +43,16 @@ export class InventarioJuridicoComponent implements OnInit {
   filtroVetTexto = '';
   filtroVetEstado = 'todos';
 
+  // --- ESTADO MODAL DE ASIGNACIÓN DE LOTE A VETERINARIO ---
+  modalAsignarAbierto = false;
+  loteSeleccionado: any = null;
+  idVeterinarioAsignar: number | null = null;
+  cantidadAAsignar: number = 1;
+  tipoOperacionAsignar: 'ASIGNAR' | 'RETIRO' = 'ASIGNAR';
+  motivoAsignacion = 'Dotación para maletín de campo veterinario';
+  guardandoAsignacion = false;
+  errorAsignacion = '';
+
   ngOnInit(): void {
     this.cargarInventarioGeneral();
     this.cargarListaVeterinarios();
@@ -83,7 +93,8 @@ export class InventarioJuridicoComponent implements OnInit {
   }
 
   private armar(invs: any[], compras: any[], dets: any[], meds: any[], cata: any[], provs: any[]): void {
-    this.totalCompras = compras.length;
+    const comprasActivas = (compras || []).filter((c: any) => c.estado !== 'ANULADA');
+    this.totalCompras = comprasActivas.length;
     const medMap = new Map<number, any>();
     cata.forEach((c: any) => {
       const id = Number(c.id_medicamento ?? c.id);
@@ -144,9 +155,12 @@ export class InventarioJuridicoComponent implements OnInit {
 
     // 1. Procesar todos los detalles de compras agrupando por medicamento
     detMap.forEach((d: any) => {
+      const com = comMap.get(Number(d.id_compra));
+      if (com && String(com.estado).toUpperCase() === 'ANULADA') {
+        return; // Excluir compras anuladas del cálculo activo
+      }
       const idMed = this.num(d.id_medicamento);
       const med = idMed !== null ? medMap.get(idMed) : null;
-      const com = comMap.get(Number(d.id_compra));
       const prov = com ? (proMap.get(Number(com.id_proveedor)) || (com.proveedor_nombre ? { nombre: com.proveedor_nombre } : null)) : null;
       const nombre = med?.nombre || (idMed !== null ? `Medicamento #${idMed}` : 'Sin medicamento vinculado');
       const clave = String(idMed ?? nombre);
@@ -361,6 +375,292 @@ export class InventarioJuridicoComponent implements OnInit {
   get totalSinLote(): number { return this.filasBase.filter((f: any) => f.sinLote).length; }
 
   // =========================================================================
+  // LÓGICA DE ASIGNACIÓN DE LOTE / MALETÍN A VETERINARIO
+  // =========================================================================
+
+  abrirModalAsignar(fila: any): void {
+    if (fila.sinLote || (Number(fila.stock) || 0) <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Stock no disponible',
+        text: 'Este registro no cuenta con unidades disponibles en CBA para asignar a un veterinario.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.loteSeleccionado = fila;
+    this.cantidadAAsignar = Math.min(Number(fila.stock) || 1, 5);
+    this.motivoAsignacion = `Dotación de campo: ${fila.nombre}`;
+    this.errorAsignacion = '';
+    if (!this.idVeterinarioAsignar && this.idVeterinarioSeleccionado) {
+      this.idVeterinarioAsignar = this.idVeterinarioSeleccionado;
+    } else if (!this.idVeterinarioAsignar && this.veterinarios.length > 0) {
+      this.idVeterinarioAsignar = Number(this.veterinarios[0].id_usuario ?? this.veterinarios[0].id);
+    }
+    this.modalAsignarAbierto = true;
+
+    if (this.veterinarios.length === 0) {
+      this.cargarListaVeterinarios();
+    }
+  }
+
+  cerrarModalAsignar(): void {
+    this.modalAsignarAbierto = false;
+    this.loteSeleccionado = null;
+    this.guardandoAsignacion = false;
+    this.errorAsignacion = '';
+  }
+
+  confirmarAsignacion(): void {
+    this.errorAsignacion = '';
+
+    if (!this.loteSeleccionado) return;
+
+    if (!this.idVeterinarioAsignar) {
+      this.errorAsignacion = 'Por favor selecciona un médico veterinario de destino.';
+      return;
+    }
+
+    const cant = Number(this.cantidadAAsignar) || 0;
+    const stockActual = Number(this.loteSeleccionado.stock) || 0;
+
+    if (cant <= 0) {
+      this.errorAsignacion = 'La cantidad a asignar debe ser mayor a 0.';
+      return;
+    }
+
+    if (this.tipoOperacionAsignar === 'ASIGNAR' && cant > stockActual) {
+      this.errorAsignacion = `No puedes asignar ${cant} unidades porque solo hay ${stockActual} disponibles en este lote.`;
+      return;
+    }
+
+    const idVetDestino = Number(this.idVeterinarioAsignar);
+    const vet = this.veterinarios.find(v => Number(v.id_usuario ?? v.id) === idVetDestino);
+    const nombreVet = vet ? vet.nombre : `Veterinario #${idVetDestino}`;
+    const idMed = Number(this.loteSeleccionado.idMed) || Number(this.loteSeleccionado.refInv?.id_medicamento) || 0;
+
+    // Si la operación es de RETIRO (devolución de kit a bodega general):
+    if (this.tipoOperacionAsignar === 'RETIRO') {
+      this.guardandoAsignacion = true;
+      this.vetInvSvc.ajustarStockKit(
+        idVetDestino,
+        idMed,
+        cant,
+        'RETIRO',
+        this.motivoAsignacion || 'Devolución de stock a bodega CBA'
+      ).subscribe({
+        next: () => {
+          const nuevoStockBodega = stockActual + cant;
+          const idInventarioReal = this.loteSeleccionado.refInv?.id_inventario ??
+            (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0 ? this.loteSeleccionado.idInvs[0] : null);
+
+          const reintegrar$ = idInventarioReal
+            ? this.svc.actualizarInventario(idInventarioReal, { cantidad_actual: nuevoStockBodega, estado: 'Disponible' })
+            : of(null);
+
+          reintegrar$.subscribe({
+            next: () => {
+              this.guardandoAsignacion = false;
+              const nombreProd = this.loteSeleccionado?.nombre;
+              this.cerrarModalAsignar();
+              Swal.fire({
+                icon: 'success',
+                title: '¡Stock Devuelto a Bodega!',
+                html: `
+                  <div class="text-left text-sm space-y-2">
+                    <p><strong>Producto:</strong> ${nombreProd}</p>
+                    <p><strong>Veterinario origen:</strong> ${nombreVet}</p>
+                    <p><strong>Cantidad retirada:</strong> <span class="text-rose-600 font-extrabold">-${cant} unidades</span></p>
+                    <p><strong>Nuevo stock en Bodega CBA:</strong> <span class="text-[#4141a5] font-extrabold">${nuevoStockBodega} unidades</span></p>
+                  </div>
+                `,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#4141a5'
+              });
+              this.cargarInventarioGeneral();
+              if (this.idVeterinarioSeleccionado === idVetDestino) {
+                this.cargarInventarioDeVeterinario(idVetDestino);
+              }
+            },
+            error: () => {
+              this.guardandoAsignacion = false;
+              this.cerrarModalAsignar();
+              this.cargarInventarioGeneral();
+              if (this.idVeterinarioSeleccionado === idVetDestino) {
+                this.cargarInventarioDeVeterinario(idVetDestino);
+              }
+            }
+          });
+        },
+        error: (err) => {
+          this.guardandoAsignacion = false;
+          this.errorAsignacion = err?.error?.detail || err?.error?.error || 'No se pudo retirar el stock del veterinario.';
+          this.cdr.detectChanges();
+        }
+      });
+      return;
+    }
+
+    this.guardandoAsignacion = true;
+
+    const idInventarioReal = this.loteSeleccionado.refInv?.id_inventario ??
+      (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0 ? this.loteSeleccionado.idInvs[0] : null);
+
+    const idsInvs: number[] = (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0)
+      ? this.loteSeleccionado.idInvs
+      : (idInventarioReal ? [idInventarioReal] : []);
+
+    // Asegurar que el lote en inventarios tenga el id_medicamento asociado para que el backend Django pueda asignar por FIFO
+    const necesitaPatch = idsInvs.length > 0 && idMed > 0 && !this.loteSeleccionado.refInv?.id_medicamento;
+    const prepararLotes$ = necesitaPatch
+      ? forkJoin(idsInvs.map(id => this.svc.actualizarInventario(id, { id_medicamento: idMed }))).pipe(
+          catchError(() => of(null))
+        )
+      : of(null);
+
+    prepararLotes$.subscribe({
+      next: () => {
+        // Llamada al endpoint oficial del backend: POST /api/inventario/kit/asignar/
+        this.vetInvSvc.asignarStockKit(
+          idVetDestino,
+          [{
+            id_medicamento: idMed,
+            cantidad: cant
+          }],
+          this.motivoAsignacion
+        ).subscribe({
+          next: () => {
+            // Guardar en asignaciones locales para sincronización inmediata
+            this.vetInvSvc.asignarLoteAVeterinario(idVetDestino, {
+              id_inventario: idInventarioReal || idMed || Date.now(),
+              id_medicamento: idMed,
+              nombre: this.loteSeleccionado.nombre,
+              tipo: this.loteSeleccionado.tipo,
+              descripcion: this.loteSeleccionado.descripcion,
+              lote: idInventarioReal ? `LOTE-${idInventarioReal}` : 'LOTE-CBA',
+              cantidad: cant,
+              motivo: this.motivoAsignacion,
+              veterinarioNombre: nombreVet
+            }).subscribe();
+
+            const nombreProd = this.loteSeleccionado?.nombre;
+            this.guardandoAsignacion = false;
+            this.cerrarModalAsignar();
+
+            Swal.fire({
+              icon: 'success',
+              title: '¡Stock Asignado al Veterinario!',
+              html: `
+                <div class="text-left text-sm space-y-2">
+                  <p><strong>Producto:</strong> ${nombreProd}</p>
+                  <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
+                  <p><strong>Cantidad transferida:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
+                  <div class="p-2.5 bg-[#4141a5]/10 border border-[#4141a5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
+                    El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
+                  </div>
+                </div>
+              `,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#4141a5'
+            });
+
+            this.cargarInventarioGeneral();
+            if (this.idVeterinarioSeleccionado === idVetDestino) {
+              this.cargarInventarioDeVeterinario(idVetDestino);
+            }
+          },
+          error: (err) => {
+            console.warn('Respuesta en asignación de kit:', err);
+            const errObj = err?.error;
+            const errorCodigo = errObj?.error || errObj?.detail || errObj?.mensaje;
+
+            if (errorCodigo === 'STOCK_INSUFICIENTE_BODEGA') {
+              this.guardandoAsignacion = false;
+              this.errorAsignacion = 'Stock insuficiente en la bodega general para cubrir la cantidad solicitada.';
+              this.cdr.detectChanges();
+              return;
+            }
+
+            if (errorCodigo === 'CANTIDAD_INVALIDA') {
+              this.guardandoAsignacion = false;
+              this.errorAsignacion = 'La cantidad solicitada no es válida.';
+              this.cdr.detectChanges();
+              return;
+            }
+
+            // Fallback: descontar stock en bodega general directamente y registrar en kit de campo
+            const nuevoStock = Math.max(0, stockActual - cant);
+            const nuevoEstado = nuevoStock <= 0 ? 'Agotado' : (nuevoStock <= this.umbralBajo ? 'Stock bajo' : 'Disponible');
+
+            const actualizarInv$ = idInventarioReal
+              ? this.svc.actualizarInventario(idInventarioReal, {
+                  cantidad_actual: nuevoStock,
+                  estado: nuevoEstado
+                })
+              : of(null);
+
+            actualizarInv$.subscribe({
+              next: () => {
+                this.vetInvSvc.asignarLoteAVeterinario(idVetDestino, {
+                  id_inventario: idInventarioReal || idMed || Date.now(),
+                  id_medicamento: idMed,
+                  nombre: this.loteSeleccionado.nombre,
+                  tipo: this.loteSeleccionado.tipo,
+                  descripcion: this.loteSeleccionado.descripcion,
+                  lote: idInventarioReal ? `LOTE-${idInventarioReal}` : 'LOTE-CBA',
+                  cantidad: cant,
+                  motivo: this.motivoAsignacion,
+                  veterinarioNombre: nombreVet
+                }).subscribe({
+                  next: () => {
+                    const nombreProd = this.loteSeleccionado?.nombre;
+                    this.guardandoAsignacion = false;
+                    this.cerrarModalAsignar();
+                    Swal.fire({
+                      icon: 'success',
+                      title: '¡Lote Asignado al Veterinario!',
+                      html: `
+                        <div class="text-left text-sm space-y-2">
+                          <p><strong>Producto:</strong> ${nombreProd}</p>
+                          <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
+                          <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
+                          <p><strong>Nuevo saldo en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
+                        </div>
+                      `,
+                      confirmButtonText: 'Entendido',
+                      confirmButtonColor: '#4141a5'
+                    });
+                    this.cargarInventarioGeneral();
+                    if (this.idVeterinarioSeleccionado === idVetDestino) {
+                      this.cargarInventarioDeVeterinario(idVetDestino);
+                    }
+                  },
+                  error: () => {
+                    this.guardandoAsignacion = false;
+                    this.errorAsignacion = 'Error al registrar la asignación en el kit de campo.';
+                    this.cdr.detectChanges();
+                  }
+                });
+              },
+              error: () => {
+                this.guardandoAsignacion = false;
+                this.errorAsignacion = typeof errorCodigo === 'string' ? errorCodigo : 'No se pudo completar la asignación en el servidor.';
+                this.cdr.detectChanges();
+              }
+            });
+          }
+        });
+      },
+      error: () => {
+        this.guardandoAsignacion = false;
+        this.errorAsignacion = 'No se pudo preparar el lote en bodega antes de asignar.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // =========================================================================
   // HU 2: CONSULTA DE INVENTARIO ACTUALIZADO POR VETERINARIO DEL CBA
   // =========================================================================
 
@@ -372,6 +672,9 @@ export class InventarioJuridicoComponent implements OnInit {
         this.cargandoVeterinarios = false;
         if (this.veterinarios.length > 0 && !this.idVeterinarioSeleccionado) {
           this.seleccionarVeterinario(this.veterinarios[0]);
+        }
+        if (this.veterinarios.length > 0 && !this.idVeterinarioAsignar) {
+          this.idVeterinarioAsignar = Number(this.veterinarios[0].id_usuario ?? this.veterinarios[0].id);
         }
         this.cdr.detectChanges();
       },
