@@ -30,6 +30,9 @@ import { DashboardJuridicoComponent } from './dashboard-juridico/dashboard-jurid
 import { InventarioJuridicoComponent } from './inventario-juridico/inventario-juridico';
 import { DashboardVeterinarioComponent } from './dashboard-veterinario/dashboard-veterinario';
 import { SedesComponent } from './sedes/sedes.component';
+import { SuperAdminDashboardComponent } from './super-admin-dashboard/super-admin-dashboard';
+import { SuperAdminAdministradoresComponent } from './super-admin-administradores/super-admin-administradores';
+import { SuperAdminReportesComponent } from './super-admin-reportes/super-admin-reportes';
 import { AuthService } from './services/auth';
 
 export const routes: Routes = [
@@ -49,6 +52,9 @@ export const routes: Routes = [
         pathMatch: 'full',
         redirectTo: () => {
           const auth = inject(AuthService);
+          if (auth.isSuperAdmin()) {
+            return '/inicio-admin/super-dashboard';
+          }
           if (auth.isJuridico()) {
             return '/inicio-admin/dashboard-juridico';
           }
@@ -83,8 +89,11 @@ export const routes: Routes = [
       { path: 'historia-clinica/editar/:id', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
       { path: 'historia-clinica/editar', component: HistoriaClinica2Component, canActivate: [roleGuard], canDeactivate: [pendingChangesGuard], data: { roles: ['Veterinario', 'Administrador'] } },
 
-      // Módulo Super Administrador (Exclusivo)
+      // Módulo Super Administrador (Exclusivo - Rol 5)
+      { path: 'super-dashboard', component: SuperAdminDashboardComponent, canActivate: [roleGuard], data: { roles: ['Super Administrador'] } },
+      { path: 'administradores', component: SuperAdminAdministradoresComponent, canActivate: [roleGuard], data: { roles: ['Super Administrador'] } },
       { path: 'sedes', component: SedesComponent, canActivate: [roleGuard], data: { roles: ['Super Administrador'] } },
+      { path: 'reportes', component: SuperAdminReportesComponent, canActivate: [roleGuard], data: { roles: ['Super Administrador'] } },
 
       // Módulos compartidos / Catálogos clínicos
       { path: 'patologias', component: Patologias, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
@@ -93,7 +102,7 @@ export const routes: Routes = [
       { path: 'listarmedicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
       { path: 'crear-medicamentos', component: Medicamentos, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario'] } },
       { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } },
-      { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } }
+      { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico', 'Super Administrador'] } }
     ]
   }
 ];

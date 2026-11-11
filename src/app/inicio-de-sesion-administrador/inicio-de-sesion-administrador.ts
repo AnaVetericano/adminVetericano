@@ -69,7 +69,9 @@ export class InicioDeSesionAdministradorComponent {
     this.authService.login(this.usuario).subscribe({
       next: (res: any) => {
         // Redirección inteligente según el rol del usuario autenticado
-        if (this.authService.isJuridico()) {
+        if (this.authService.isSuperAdmin()) {
+          this.router.navigate(['/inicio-admin/super-dashboard']);
+        } else if (this.authService.isJuridico()) {
           this.router.navigate(['/inicio-admin/dashboard-juridico']);
         } else if (this.authService.isVeterinario()) {
           this.router.navigate(['/inicio-admin/dashboard-veterinario']);

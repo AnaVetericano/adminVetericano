@@ -40,22 +40,64 @@
     <!-- ENLACES DE NAVEGACIÓN -->
     <nav class="flex-1 px-2.5 pt-4 space-y-1.5 overflow-y-auto overflow-x-hidden">
 
-      <!-- GESTIÓN DE SEDES (Solo Super Administrador) -->
+      <!-- NAVEGACIÓN EXCLUSIVA SUPERADMINISTRADOR (Rol 5) -->
       @if (authService.isSuperAdmin()) {
+        <!-- 1. Dashboard Superadministrador -->
+        <a
+          routerLink="super-dashboard"
+          routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
+          (click)="menuAbierto = false"
+          class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item relative"
+          title="Dashboard Superadministrador"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Dashboard Superadmin</span>
+        </a>
+
+        <!-- 2. Gestión de Administradores -->
+        <a
+          routerLink="administradores"
+          routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
+          (click)="menuAbierto = false"
+          class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item relative"
+          title="Gestión de Administradores"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Administradores</span>
+        </a>
+
+        <!-- 3. Gestión de Sedes -->
         <a
           routerLink="sedes"
           routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
           (click)="menuAbierto = false"
-          class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item relative bg-indigo-900/30 border-l-2 border-[#F1C63C]"
-          title="Gestión de Sedes (Super Administrador)"
+          class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item relative"
+          title="Gestión de Sedes"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
           <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Gestión de Sedes</span>
-          <span class="hidden group-hover:inline-block px-1.5 py-0.5 rounded text-[9px] font-black bg-[#F1C63C] text-[#170B3D] ml-auto">SUPER</span>
         </a>
-      }
+
+        <!-- 4. Reportes Institucionales -->
+        <a
+          routerLink="reportes"
+          routerLinkActive="bg-indigo-700 text-white shadow-sm ring-1 ring-white/15"
+          (click)="menuAbierto = false"
+          class="flex items-center gap-4 px-3.5 py-3 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all duration-200 cursor-pointer whitespace-nowrap group/item relative"
+          title="Reportes Institucionales"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 shrink-0 transition-transform duration-200 group-hover/item:scale-110 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Reportes</span>
+        </a>
+      } @else {
 
       <!-- 1. DASHBOARD (Administrador) -->
       @if (authService.isAdmin()) {
@@ -360,6 +402,7 @@
           <span class="text-xs font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">Inventario</span>
         </a>
       }
+      }
 
     </nav>
 
@@ -521,10 +564,10 @@
             <!-- Nombre y Rol -->
             <div class="hidden sm:flex flex-col text-left leading-tight">
               <span class="text-xs font-extrabold text-[#170B3D] max-w-[140px] truncate">
-                {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : (authService.isAdmin() ? 'Administrador' : (authService.isJuridico() ? 'Jurídico' : 'Veterinario')) }}
+                {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : (authService.isSuperAdmin() ? 'Super Administrador' : (authService.isAdmin() ? 'Administrador' : (authService.isJuridico() ? 'Jurídico' : 'Veterinario'))) }}
               </span>
               <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isSuperAdmin() ? 'bg-[#F1C63C]' : (authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500'))"></span>
                 {{ authService.userRole() || 'En línea' }}
               </span>
             </div>
@@ -561,8 +604,8 @@
               <div class="px-4 py-1.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
                 <span class="text-[10px] font-bold text-slate-400 uppercase">Rol</span>
                 <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-                     [ngClass]="authService.isAdmin() ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'">
-                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500')"></span>
+                     [ngClass]="authService.isSuperAdmin() ? 'bg-[#F1C63C]/25 text-[#170B3D] border border-[#F1C63C]' : (authService.isAdmin() ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200')">
+                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isSuperAdmin() ? 'bg-[#170B3D]' : (authService.isAdmin() ? 'bg-indigo-500' : (authService.isJuridico() ? 'bg-amber-500' : 'bg-emerald-500'))"></span>
                   {{ authService.userRole() }} (Web & Móvil)
                 </div>
               </div>
@@ -579,21 +622,6 @@
                   </svg>
                   <span>Mi Perfil y Credenciales</span>
                 </a>
-
-                <!-- Alternar Perfil Super Administrador para pruebas de administración -->
-                @if (authService.isAdmin()) {
-                  <button
-                    type="button"
-                    (click)="toggleModoSuperAdmin()"
-                    class="w-full flex items-center gap-3 px-4 py-2 text-xs font-bold transition-colors cursor-pointer text-left"
-                    [ngClass]="authService.isSuperAdmin() ? 'text-amber-700 hover:bg-amber-50' : 'text-indigo-700 hover:bg-indigo-50'"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span>{{ authService.isSuperAdmin() ? 'Desactivar Modo Super Admin' : 'Activar Modo Super Admin' }}</span>
-                  </button>
-                }
               </div>
 
               <div class="pt-1 border-t border-slate-100">

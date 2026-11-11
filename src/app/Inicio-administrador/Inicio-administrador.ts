@@ -122,29 +122,6 @@ export class InicioAdministradorComponent implements OnInit {
     });
   }
 
-  toggleModoSuperAdmin(): void {
-    const esSuper = this.authService.isSuperAdmin();
-    const nuevoRol = esSuper ? 'Administrador' : 'Super Administrador';
-    const nuevoIdRol = esSuper ? 1 : 5;
-    this.authService.actualizarSesion({
-      rol: nuevoRol,
-      id_rol: nuevoIdRol
-    });
-    this.cerrarMenuPerfil();
-    Swal.fire({
-      title: esSuper ? 'Perfil Administrador' : '¡Perfil Super Administrador Activo!',
-      text: esSuper
-        ? 'Has vuelto al perfil de Administrador estándar.'
-        : 'Ahora cuentas con permisos de Super Administrador para gestionar Sedes.',
-      icon: 'success',
-      confirmButtonColor: '#4141A5',
-      timer: 2200
-    });
-    if (esSuper && this.router.url.includes('sedes')) {
-      this.router.navigate(['/inicio-admin/graficas']);
-    }
-  }
-
   onLogout(): void {
     this.cerrarMenuPerfil();
     Swal.fire({
