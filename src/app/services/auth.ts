@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export type UserRole = 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
+export type UserRole = 'Super Administrador' | 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
 
 export interface UserSession {
   id_usuario?: number;
@@ -218,10 +218,38 @@ export class AuthService {
   // Señales públicas de solo lectura
   public currentUser = this.currentUserSignal.asReadonly();
   public isAuthenticated = computed(() => !!this.currentUserSignal() || !!localStorage.getItem('token'));
-  public userRole = computed(() => this.currentUserSignal()?.rol ?? this.obtenerRolDesdeToken());
+  public userRole = computed(() => this.obtenerRolDesdeToken() || this.currentUserSignal()?.rol || '');
+  public isSuperAdmin = computed(() => {
+    const token = localStorage.getItem('token');
+    const payload = this.extraerPayloadToken(token);
+    const sesion = this.currentUserSignal();
+    const idRolToken = payload?.id_rol !== undefined ? Number(payload.id_rol) : undefined;
+    const idRol = idRolToken !== undefined && !isNaN(idRolToken) ? idRolToken : Number(sesion?.id_rol);
+    const nombreRolToken = String(payload?.nombre_rol ?? payload?.rol ?? '').toLowerCase().trim();
+    const rol = (this.userRole() || '').toLowerCase().trim();
+    return (
+      idRol === 5 ||
+      nombreRolToken === 'super_administrador' ||
+      nombreRolToken === 'super administrador' ||
+      nombreRolToken === 'superadministrador' ||
+      rol === 'super administrador' ||
+      rol === 'super_administrador'
+    );
+  });
   public isAdmin = computed(() => {
-    const rol = (this.userRole() || '').toLowerCase();
-    return !rol || rol.includes('admin');
+    if (this.isSuperAdmin()) {
+      return false;
+    }
+    const token = localStorage.getItem('token');
+    const payload = this.extraerPayloadToken(token);
+    const sesion = this.currentUserSignal();
+    const idRolToken = payload?.id_rol !== undefined ? Number(payload.id_rol) : undefined;
+    const idRol = idRolToken !== undefined && !isNaN(idRolToken) ? idRolToken : Number(sesion?.id_rol);
+    if (!isNaN(idRol) && idRol > 0) {
+      return idRol === 1;
+    }
+    const rol = (this.userRole() || '').toLowerCase().trim();
+    return rol === 'administrador' || rol === 'admin';
   });
   public isVeterinario = computed(() => {
     const rol = (this.userRole() || '').toLowerCase();
@@ -257,14 +285,14 @@ export class AuthService {
   }
 
   /**
-   * Obtiene el rol directamente decodificando el token JWT si no está en la señal
+   * Obtiene el rol directamente decodificando el token JWT real del backend
    */
   private obtenerRolDesdeToken(): UserRole {
     const token = localStorage.getItem('token');
-    if (!token) return 'Administrador';
+    if (!token) return '';
     const payload = this.extraerPayloadToken(token);
-    if (!payload) return 'Administrador';
-    const rolRaw = payload.rol ?? payload.nombre_rol ?? payload.role ?? payload.id_rol ?? (payload.is_superuser ? 1 : 2);
+    if (!payload) return '';
+    const rolRaw = payload.id_rol ?? payload.nombre_rol ?? payload.rol ?? payload.role;
     return this.normalizarRol(rolRaw);
   }
 
@@ -273,47 +301,59 @@ export class AuthService {
    */
   public normalizarRol(rolRaw: any): UserRole {
     if (rolRaw === undefined || rolRaw === null || rolRaw === '') {
-      return 'Administrador';
+      return '';
     }
 
-    const str = String(rolRaw).toLowerCase().trim();
-    if (str.includes('vet')) return 'Veterinario';
-    if (str.includes('jur')) return 'Jurídico';
-    if (str.includes('petic')) return 'Peticionario';
-    if (str.includes('admin')) return 'Administrador';
-
     const idNum = Number(rolRaw);
-    if (!isNaN(idNum)) {
+    if (!isNaN(idNum) && String(rolRaw).trim() !== '') {
+      if (idNum === 5) return 'Super Administrador';
       if (idNum === 1) return 'Administrador';
       if (idNum === 2) return 'Jurídico';
       if (idNum === 3) return 'Veterinario';
       if (idNum === 4) return 'Peticionario';
     }
 
-    return 'Administrador';
+    const str = String(rolRaw).toLowerCase().trim();
+    if (str === 'super_administrador' || str.includes('super')) return 'Super Administrador';
+    if (str.includes('vet')) return 'Veterinario';
+    if (str.includes('jur')) return 'Jurídico';
+    if (str.includes('petic')) return 'Peticionario';
+    if (str === 'administrador' || str === 'admin' || str.includes('admin')) return 'Administrador';
+
+    return '';
   }
 
   /**
-   * Obtiene la sesión guardada previamente en localStorage o la reconstruye desde el JWT
+   * Obtiene la sesión guardada previamente en localStorage sincronizada con el JWT real
    */
   private obtenerSesionInicial(): UserSession | null {
     const token = localStorage.getItem('token');
     if (!token) return null;
 
+    const payload = this.extraerPayloadToken(token);
+    const rolToken = this.obtenerRolDesdeToken();
+
     const sesionStr = localStorage.getItem('user_session');
     if (sesionStr) {
       try {
         const sesion = JSON.parse(sesionStr) as UserSession;
-        if (sesion && sesion.rol) {
-          sesion.rol = this.normalizarRol(sesion.rol);
+        if (sesion) {
+          const rolReal = rolToken || this.normalizarRol(sesion.id_rol ?? sesion.rol);
+          const idRolReal = payload?.id_rol ? Number(payload.id_rol) : Number(sesion.id_rol);
+          sesion.rol = rolReal;
+          if (!isNaN(idRolReal) && idRolReal > 0) {
+            sesion.id_rol = idRolReal;
+          }
           return sesion;
         }
       } catch { }
     }
 
     // Si hay token pero no user_session, recuperar desde el token
-    const payload = this.extraerPayloadToken(token);
-    const rolFinal = this.obtenerRolDesdeToken();
+    const rolFinal = rolToken || 'Administrador';
+    const idRolFinal = payload?.id_rol
+      ? Number(payload.id_rol)
+      : (rolFinal === 'Super Administrador' ? 5 : rolFinal === 'Veterinario' ? 3 : rolFinal === 'Jurídico' ? 2 : 1);
     const sesion: UserSession = {
       id_usuario: payload?.id_usuario || payload?.user_id || payload?.id,
       email: payload?.email || payload?.username || 'usuario@vetericano.com',
@@ -325,7 +365,7 @@ export class AuthService {
       tarjeta_profesional: payload?.tarjeta_profesional || '',
       matricula: payload?.matricula || '',
       foto: payload?.foto || payload?.foto_perfil || '',
-      id_rol: payload?.id_rol ? Number(payload.id_rol) : (rolFinal === 'Veterinario' ? 2 : 1),
+      id_rol: idRolFinal,
       rol: rolFinal
     };
     try {
@@ -387,15 +427,27 @@ export class AuthService {
   }
 
   /**
-   * Verifica si el usuario actual tiene alguno de los roles permitidos (insensible a mayúsculas)
+   * Verifica si el usuario actual tiene alguno de los roles permitidos (insensible a mayúsculas).
+   * Garantiza independencia estricta entre Super Administrador (id_rol = 5) y Administrador (id_rol = 1).
    */
   hasRole(allowedRoles: UserRole[]): boolean {
     const norm = (txt: string) => (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
     const rolActual = norm(this.userRole() || '');
-    if (!rolActual) return true;
+    if (!rolActual) return false;
     return allowedRoles.some((r) => {
       const rLower = norm(String(r));
-      return rLower === rolActual || rolActual.includes(rLower) || rLower.includes(rolActual);
+      if (
+        rLower === 'super administrador' ||
+        rLower === 'super_administrador' ||
+        rLower === 'superadmin' ||
+        rLower === 'super admin'
+      ) {
+        return this.isSuperAdmin();
+      }
+      if (rLower === 'administrador' || rLower === 'admin') {
+        return this.isAdmin();
+      }
+      return rLower === rolActual;
     });
   }
 
@@ -456,9 +508,9 @@ export class AuthService {
           decoded?.rol ??
           decoded?.nombre_rol ??
           decoded?.role ??
-          (decoded?.is_superuser ? 'Administrador' : undefined);
+          (decoded?.is_superuser ? 'Super Administrador' : undefined);
 
-        const rolFinal = this.normalizarRol(rolTextoRaw ?? idRolRaw);
+        const rolFinal = this.normalizarRol(idRolRaw ?? rolTextoRaw);
 
         const idUsuarioRaw =
           res.id_usuario ??
@@ -472,6 +524,18 @@ export class AuthService {
           decoded?.id;
 
         const fotoFinal = res.foto || res.usuario?.foto || res.foto_perfil || res.usuario?.foto_perfil || decoded?.foto || decoded?.foto_perfil || '';
+        const idRolNumerico = idRolRaw
+          ? Number(idRolRaw)
+          : rolFinal === 'Super Administrador'
+            ? 5
+            : rolFinal === 'Jurídico'
+              ? 2
+              : rolFinal === 'Veterinario'
+                ? 3
+                : rolFinal === 'Peticionario'
+                  ? 4
+                  : 1;
+
         const sessionData: UserSession = {
           id_usuario: idUsuarioRaw ? Number(idUsuarioRaw) : undefined,
           email: res.email || res.usuario?.email || res['user']?.email || decoded?.email || credenciales.email,
@@ -485,7 +549,7 @@ export class AuthService {
           matricula_profesional: res.matricula_profesional || res.usuario?.matricula_profesional || res['user']?.matricula_profesional || decoded?.matricula_profesional || '',
           foto: fotoFinal,
           foto_perfil: fotoFinal,
-          id_rol: idRolRaw ? Number(idRolRaw) : (rolFinal === 'Veterinario' ? 2 : 1),
+          id_rol: idRolNumerico,
           rol: rolFinal
         };
 
@@ -577,7 +641,8 @@ export class AuthService {
   }
 
   listUsersActive() {
-    return this.http.get<any>(`${this.apiUrl}/usuarios`).pipe(
+    const urlLimpia = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
+    return this.http.get<any>(`${urlLimpia}/usuarios/`).pipe(
       map(usuarios => {
         const lista = Array.isArray(usuarios) ? usuarios : (usuarios?.results || []);
         return lista.map((u: any) => ({

@@ -27,5 +27,7 @@ export const environment = {
   apiUrlespecies: `${BACKEND_CLOUD_URL}/api/especies/`,
   apiUrlMedicamentos: `${BACKEND_CLOUD_URL}/api/medicamentos/`,
   apiUrlInventario: `${BACKEND_CLOUD_URL}/api/inventario/`,
-  apiUrlMedicamentosCatalogo: `${BACKEND_CLOUD_URL}/api/medicamentos-catalogo/`
+  apiUrlMedicamentosCatalogo: `${BACKEND_CLOUD_URL}/api/medicamentos-catalogo/`,
+  apiUrlSedes: `${BACKEND_CLOUD_URL}/api/sedes/`,
+  apiUrlSuperAdmin: `${BACKEND_CLOUD_URL}/api/super-administrador/`
 };

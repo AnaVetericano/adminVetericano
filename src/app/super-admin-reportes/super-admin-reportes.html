@@ -1,0 +1,358 @@
+<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white overflow-hidden relative">
+
+  <!-- ENCABEZADO -->
+  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
+    <div class="flex items-center justify-between gap-4 max-w-7xl mx-auto flex-wrap">
+      <div class="flex items-center gap-3.5">
+        <div class="p-3 bg-[#4141A5]/10 text-[#4141A5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
+              Reportes Institucionales
+            </h1>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#F1C63C] text-[#170B3D] border border-[#170B3D]/10">
+              Super Admin
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-gray-500 font-medium">
+            Auditoría de peticiones atendidas, indicadores de gestión y desempeño veterinario con filtros en tiempo real
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        (click)="consultarReportes()"
+        [disabled]="cargando"
+        class="flex items-center gap-2 bg-[#4141A5] hover:bg-[#170B3D] text-white font-bold px-4 py-2.5 rounded-2xl shadow-md transition-all text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" [class.animate-spin]="cargando" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>Actualizar Reporte</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 overflow-y-auto lg:pl-20 transition-all duration-300 space-y-5">
+
+    <!-- PANEL DE FILTROS -->
+    <section class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-xs">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xs font-extrabold uppercase tracking-wider text-[#170B3D]">
+          Filtros de Consulta (Endpoints /reportes/estadisticas/ y /reportes/atendidas/)
+        </h2>
+        <button
+          type="button"
+          (click)="limpiarFiltros()"
+          class="text-xs font-bold text-[#4141A5] hover:underline cursor-pointer"
+        >
+          Restablecer filtros
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+        <!-- Fecha Exacta -->
+        <div>
+          <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Fecha Exacta</label>
+          <input
+            type="date"
+            [(ngModel)]="filtros.fecha"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 outline-none focus:border-[#4141A5]"
+          />
+        </div>
+
+        <!-- Fecha Desde -->
+        <div>
+          <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Fecha Desde</label>
+          <input
+            type="date"
+            [(ngModel)]="filtros.fecha_desde"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 outline-none focus:border-[#4141A5]"
+          />
+        </div>
+
+        <!-- Fecha Hasta -->
+        <div>
+          <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Fecha Hasta</label>
+          <input
+            type="date"
+            [(ngModel)]="filtros.fecha_hasta"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 outline-none focus:border-[#4141A5]"
+          />
+        </div>
+
+        <!-- Estado -->
+        <div>
+          <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Estado</label>
+          <select
+            [(ngModel)]="filtros.estado"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 outline-none focus:border-[#4141A5] bg-white"
+          >
+            <option value="">Todos los estados</option>
+            @for (est of estadosDisponibles; track est) {
+              <option [value]="est">{{ est }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Veterinario -->
+        <div>
+          <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Veterinario Asignado</label>
+          <select
+            [(ngModel)]="filtros.veterinario"
+            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 outline-none focus:border-[#4141A5] bg-white"
+          >
+            <option value="">Todos los veterinarios</option>
+            @for (vet of veterinariosCatalogo; track vet.id_veterinario) {
+              <option [value]="vet.id_veterinario">
+                {{ vet.nombre_completo || (vet.nombre + ' ' + vet.apellido) }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Botón Aplicar -->
+        <div>
+          <button
+            type="button"
+            (click)="consultarReportes()"
+            [disabled]="cargando"
+            class="w-full py-2 px-4 rounded-xl bg-[#170B3D] hover:bg-[#4141A5] text-[#F1C63C] hover:text-white text-xs font-extrabold uppercase tracking-wider transition cursor-pointer"
+          >
+            Aplicar Filtros
+          </button>
+        </div>
+      </div>
+    </section>
+
+    @if (errorMensaje) {
+      <div class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl text-xs font-bold">
+        ⚠️ {{ errorMensaje }}
+      </div>
+    }
+
+    <!-- TARJETAS KPI DEL REPORTE -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs">
+        <p class="text-[11px] font-bold text-gray-400 uppercase">Total Peticiones</p>
+        <p class="text-2xl font-black text-[#170B3D] mt-1">{{ estadisticas?.total_peticiones ?? 0 }}</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs">
+        <p class="text-[11px] font-bold text-gray-400 uppercase">Casos Atendidos</p>
+        <p class="text-2xl font-black text-emerald-600 mt-1">{{ estadisticas?.casos_atendidos ?? 0 }}</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs">
+        <p class="text-[11px] font-bold text-gray-400 uppercase">Pendientes</p>
+        <p class="text-2xl font-black text-amber-600 mt-1">{{ estadisticas?.pendientes ?? 0 }}</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs">
+        <p class="text-[11px] font-bold text-gray-400 uppercase">En Proceso</p>
+        <p class="text-2xl font-black text-[#4141A5] mt-1">{{ estadisticas?.en_proceso ?? 0 }}</p>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs">
+        <p class="text-[11px] font-bold text-gray-400 uppercase">Finalizadas</p>
+        <p class="text-2xl font-black text-emerald-700 mt-1">{{ estadisticas?.finalizadas ?? 0 }}</p>
+      </div>
+
+      <div class="bg-[#170B3D] text-white rounded-2xl p-4 shadow-xs">
+        <p class="text-[11px] font-bold text-[#F1C63C] uppercase">Tasa de Atención</p>
+        <p class="text-2xl font-black text-white mt-1">{{ estadisticas?.porcentaje_atencion ?? 0 }}%</p>
+      </div>
+    </section>
+
+    <!-- GRÁFICAS COMPARATIVAS -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs">
+        <h3 class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
+          Estado de Peticiones en el Período Filtrado
+        </h3>
+        <p class="text-[11px] text-gray-400 mb-3">Distribución según estado operativo actual</p>
+        <div class="relative h-60 w-full">
+          <canvas #chartEstadosReporte></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs">
+        <h3 class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
+          Comparativo Asignadas vs Atendidas por Veterinario
+        </h3>
+        <p class="text-[11px] text-gray-400 mb-3">Productividad clínica registrada en el backend</p>
+        <div class="relative h-60 w-full">
+          <canvas #chartVeterinariosReporte></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLA DE PETICIONES ATENDIDAS (/api/super-administrador/reportes/atendidas/) -->
+    <section class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+            Listado de Peticiones y Casos Atendidos
+          </h3>
+          <p class="text-xs text-gray-400">
+            Peticiones en proceso, finalizadas o con seguimientos de visita médica registrados
+          </p>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          {{ peticionesAtendidas.length }} casos atendidos
+        </span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[820px]">
+          <thead class="bg-gray-50/90 border-b border-gray-100">
+            <tr>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">ID / Radicado</th>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Fecha</th>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Tipo / Prioridad</th>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Descripción / Ubicación</th>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Veterinario Asignado</th>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Estado</th>
+              <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Detalle</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 text-sm">
+            @if (cargando) {
+              <tr>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-400">
+                  <div class="inline-block animate-spin w-7 h-7 border-3 border-[#4141A5] border-t-transparent rounded-full mb-2"></div>
+                  <p class="text-xs font-bold">Consultando casos atendidos...</p>
+                </td>
+              </tr>
+            }
+
+            @if (!cargando && peticionesAtendidas.length === 0) {
+              <tr>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-400 text-xs font-semibold">
+                  No se encontraron peticiones atendidas con los criterios seleccionados.
+                </td>
+              </tr>
+            }
+
+            @for (caso of peticionesAtendidas; track caso.id_peticion) {
+              <tr class="hover:bg-[#4141A5]/5 transition-colors">
+                <td class="px-6 py-3.5 font-mono text-xs font-extrabold text-[#170B3D]">
+                  {{ caso.numero_radicado || caso.radicado || ('#' + caso.id_peticion) }}
+                </td>
+                <td class="px-6 py-3.5 text-xs text-gray-600">
+                  {{ (caso.fecha || caso.fecha_creacion | date:'yyyy-MM-dd HH:mm') || caso.fecha || caso.fecha_creacion }}
+                </td>
+                <td class="px-6 py-3.5 text-xs">
+                  <p class="font-bold text-gray-800">
+                    {{ caso.tipo || caso.nombre_tipo || 'General' }}
+                  </p>
+                  <p class="text-[11px] font-semibold text-amber-700 uppercase">
+                    Prioridad: {{ caso.prioridad || 'Normal' }}
+                  </p>
+                </td>
+                <td class="px-6 py-3.5 text-xs">
+                  <p class="font-bold text-[#170B3D] truncate max-w-xs">
+                    {{ caso.descripcion || caso.asunto || 'Caso de bienestar animal' }}
+                  </p>
+                  <p class="text-gray-400 truncate max-w-xs">{{ caso.ubicacion_direccion || caso.ubicacion || caso.ciudad || '' }}</p>
+                </td>
+                <td class="px-6 py-3.5 text-xs font-semibold text-[#4141A5]">
+                  {{ caso.nombre_veterinario || (caso.asignado_a ? ('Vet #' + caso.asignado_a) : 'Atención registrada') }}
+                </td>
+                <td class="px-6 py-3.5 text-center">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {{ caso.estado || caso.nombre_estado || 'Atendida' }}
+                  </span>
+                </td>
+                <td class="px-6 py-3.5 text-center">
+                  <button
+                    type="button"
+                    (click)="verDetalleCaso(caso)"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-[#4141A5] text-[#170B3D] hover:text-white transition cursor-pointer"
+                  >
+                    Ver ficha
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DETALLE DE CASO ATENDIDO -->
+  @if (peticionSeleccionada) {
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-y-auto">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 border border-gray-100 relative my-auto">
+        <button
+          type="button"
+          (click)="cerrarDetalleCaso()"
+          class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1.5 rounded-full hover:bg-gray-100 cursor-pointer"
+        >
+          ✕
+        </button>
+
+        <h3 class="text-lg font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
+          Detalle de Caso {{ peticionSeleccionada.radicado || ('#' + peticionSeleccionada.id_peticion) }}
+        </h3>
+        <p class="text-xs text-gray-400 mb-4">
+          Fecha de registro: {{ (peticionSeleccionada.fecha_creacion | date:'medium') || peticionSeleccionada.fecha_creacion }}
+        </p>
+
+        <div class="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div>
+            <span class="font-bold text-gray-500 uppercase">Estado:</span>
+            <span class="ml-2 font-extrabold text-emerald-700">
+              {{ peticionSeleccionada.nombre_estado || peticionSeleccionada.estado || 'Atendida' }}
+            </span>
+          </div>
+          <div>
+            <span class="font-bold text-gray-500 uppercase">Peticionario:</span>
+            <span class="ml-2 font-bold text-gray-800">
+              {{ peticionSeleccionada.nombre_usuario }} {{ peticionSeleccionada.apellido_usuario }}
+              ({{ peticionSeleccionada.email_usuario || 'Sin correo' }})
+            </span>
+          </div>
+          <div>
+            <span class="font-bold text-gray-500 uppercase">Veterinario Asignado:</span>
+            <span class="ml-2 font-bold text-[#4141A5]">
+              {{ peticionSeleccionada.nombre_veterinario || 'Sin especificar' }}
+            </span>
+          </div>
+          <div>
+            <span class="font-bold text-gray-500 uppercase">Ubicación:</span>
+            <span class="ml-2 text-gray-700">
+              {{ peticionSeleccionada.ubicacion || peticionSeleccionada.ciudad || 'No registrada' }}
+            </span>
+          </div>
+          <div>
+            <span class="font-bold text-gray-500 uppercase block mb-1">Descripción / Observaciones:</span>
+            <p class="text-gray-700 bg-white p-3 rounded-xl border border-gray-100">
+              {{ peticionSeleccionada.descripcion || peticionSeleccionada.asunto || 'Sin descripción adicional.' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-5 flex justify-end">
+          <button
+            type="button"
+            (click)="cerrarDetalleCaso()"
+            class="px-5 py-2.5 rounded-xl bg-[#170B3D] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
+

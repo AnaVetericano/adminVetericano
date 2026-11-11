@@ -173,11 +173,6 @@ export class VeterinaryInventoryService {
       if (vetSupervisado && !isNaN(Number(vetSupervisado)) && Number(vetSupervisado) > 0) {
         return Number(vetSupervisado);
       }
-      // Si el admin no ha seleccionado otro, verificar si existe el veterinario de pruebas 41
-      const asignaciones41 = this.obtenerAsignacionesLocales(41);
-      if (asignaciones41.length > 0) {
-        return 41;
-      }
     }
 
     if (sesion?.['id_usuario']) return Number(sesion['id_usuario']);
@@ -186,10 +181,10 @@ export class VeterinaryInventoryService {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return Number(payload['id_usuario'] || payload['user_id'] || payload['id'] || 41);
+        return Number(payload['id_usuario'] || payload['user_id'] || payload['id'] || 0);
       } catch {}
     }
-    return 41;
+    return 0;
   }
 
   /**
@@ -484,10 +479,10 @@ export class VeterinaryInventoryService {
             if (tipo === 'ASIGNACION_KIT' && (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')) {
               asignacionesKardexPorMed.set(idM, (asignacionesKardexPorMed.get(idM) || 0) + cant);
             }
-            // Retiro o devolución a bodega (Filtrar exclusivamente el movimiento de salida del kit para no duplicar con la entrada a general)
+            // Retiro o devolución a bodega (Filtrar exclusivamente el movimiento de salida del kit para no duplicar con la contrapartida de entrada a bodega)
             else if (
-              (tipo.includes('RETIRO') || tipo.includes('DEVOLUCION')) &&
-              (ubicacion === 'KIT_VETERINARIO' || ubicacion === '')
+              (tipo === 'RETIRO_KIT' || tipo === 'RETIRO' || (tipo.includes('RETIRO') && !tipo.includes('BODEGA') && !tipo.includes('ENTRADA'))) &&
+              ubicacion !== 'BODEGA_GENERAL' && ubicacion !== 'BODEGA'
             ) {
               retirosKardexPorMed.set(idM, (retirosKardexPorMed.get(idM) || 0) + cant);
             }
@@ -752,16 +747,20 @@ export class VeterinaryInventoryService {
 
       return this.retiroDirectoKit(payloadRetiro).pipe(
         tap(() => {
-          this.asignarLoteAVeterinario(idVet, {
-            id_inventario: idMed,
-            id_medicamento: idMed,
-            nombre: `Medicamento #${idMed}`,
-            cantidad: cantNum,
-            tipoOperacion: 'RETIRO',
-            motivo
-          }).subscribe();
+          // Si el backend procesó el retiro exitosamente, solo registramos en historial local
+          this.registrarEnHistorialAsignaciones({
+            id: Date.now(),
+            fecha: new Date().toISOString(),
+            idVet,
+            veterinarioNombre: `Veterinario #${idVet}`,
+            idInventario: idMed,
+            nombreMedicamento: `Medicamento #${idMed}`,
+            cantidad: -cantNum,
+            motivo: motivo || 'Devolución de stock a bodega CBA'
+          });
         }),
         catchError(() => {
+          // Si el backend está desconectado/offline, descontamos exactamente 1 vez en local
           return this.asignarLoteAVeterinario(idVet, {
             id_inventario: idMed,
             id_medicamento: idMed,
@@ -775,14 +774,26 @@ export class VeterinaryInventoryService {
     } else {
       return this.asignarStockKit(idVet, [{ id_medicamento: idMed, cantidad: cantNum }], motivo).pipe(
         tap(() => {
-          this.asignarLoteAVeterinario(idVet, {
+          this.registrarEnHistorialAsignaciones({
+            id: Date.now(),
+            fecha: new Date().toISOString(),
+            idVet,
+            veterinarioNombre: `Veterinario #${idVet}`,
+            idInventario: idMed,
+            nombreMedicamento: `Medicamento #${idMed}`,
+            cantidad: cantNum,
+            motivo: motivo || 'Dotación de maletín de campo'
+          });
+        }),
+        catchError(() => {
+          return this.asignarLoteAVeterinario(idVet, {
             id_inventario: idMed,
             id_medicamento: idMed,
             nombre: `Medicamento #${idMed}`,
             cantidad: cantNum,
             tipoOperacion: 'ASIGNAR',
             motivo
-          }).subscribe();
+          });
         })
       );
     }
@@ -794,10 +805,7 @@ export class VeterinaryInventoryService {
       if (!idNum) return [];
 
       // Aislamiento: leer la clave asignada a este veterinario con fallback al veterinario oficial
-      let data = localStorage.getItem(`${this.STORAGE_ASIGNACIONES_KEY}${idNum}`);
-      if (!data && idNum !== 41) {
-        data = localStorage.getItem(`${this.STORAGE_ASIGNACIONES_KEY}41`);
-      }
+      const data = localStorage.getItem(`${this.STORAGE_ASIGNACIONES_KEY}${idNum}`);
       if (!data) return [];
 
       const items = JSON.parse(data);
@@ -828,8 +836,7 @@ export class VeterinaryInventoryService {
         if (key && (key.startsWith(this.STORAGE_ASIGNACIONES_KEY) || key.startsWith(this.STORAGE_CONSUMOS_KEY))) {
           // Preservar clave si pertenece al veterinario activo actual o al 41
           const esDelActivo = idActivo && key.endsWith(String(idActivo));
-          const esDel41 = key.endsWith('41');
-          if (!esDelActivo && !esDel41) {
+          if (!esDelActivo) {
             keysAEliminar.push(key);
           }
         }

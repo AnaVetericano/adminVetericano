@@ -97,13 +97,14 @@ export class VeterinaryInventoryComponent implements OnInit {
         next: (vets) => {
           this.veterinariosDisponibles = vets;
           if (vets.length > 0) {
-            // Priorizar el veterinario 41 (Ana Cano) por defecto al abrir la supervisión
-            const vet41 = vets.find(v => Number(v.id_usuario) === 41);
-            if (vet41) {
-              this.veterinarioSeleccionadoId = 41;
-              this.veterinarioNombre = vet41.nombre;
+            // Seleccionar el veterinario previamente guardado o el primero del equipo CBA
+            const guardado = sessionStorage.getItem('veterinario_seleccionado_supervision') || localStorage.getItem('veterinario_seleccionado_supervision');
+            const vetGuardado = vets.find(v => Number(v.id_usuario) === Number(guardado));
+            if (vetGuardado) {
+              this.veterinarioSeleccionadoId = Number(vetGuardado.id_usuario);
+              this.veterinarioNombre = vetGuardado.nombre;
             } else if (!vets.some(v => Number(v.id_usuario) === Number(this.veterinarioSeleccionadoId))) {
-              this.veterinarioSeleccionadoId = vets[0].id_usuario;
+              this.veterinarioSeleccionadoId = Number(vets[0].id_usuario);
               this.veterinarioNombre = vets[0].nombre;
             } else {
               const current = vets.find(v => Number(v.id_usuario) === Number(this.veterinarioSeleccionadoId));
@@ -458,8 +459,8 @@ export class VeterinaryInventoryComponent implements OnInit {
         this.cargarDatos();
 
         const accionTxt = this.tipoOperacionAjuste === 'RETIRO'
-          ? `Se retiraron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${Math.max(0, item.saldoDisponible - cant)} uds.`
-          : `Se agregaron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible + cant} uds.`;
+          ? `Se retiraron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} uds.`
+          : `Se agregaron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} uds.`;
 
         Swal.fire({
           icon: 'success',
