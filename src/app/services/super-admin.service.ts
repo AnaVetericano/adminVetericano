@@ -177,7 +177,7 @@ export interface PeticionAtendidaReporte {
 })
 export class SuperAdminService {
   private readonly apiUrl =
-    (environment as any).apiUrlSuperAdmin || 'http://127.0.0.1:8000/api/super-administrador/';
+    (environment as any).apiUrlSuperAdmin || `${environment.apiBaseUrl}/super-administrador/`;
 
   constructor(private http: HttpClient) {}
 

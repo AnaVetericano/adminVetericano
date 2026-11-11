@@ -23,7 +23,8 @@ export interface Sede {
 })
 export class SedesService {
   // Endpoint real del backend Django REST Framework (/api/sedes/)
-  private readonly apiUrl = (environment as any).apiUrlSedes || 'http://127.0.0.1:8000/api/sedes/';
+  private readonly apiUrl =
+    (environment as any).apiUrlSedes || `${environment.apiBaseUrl}/sedes/`;
 
   // Caché en memoria de la última respuesta real del backend para validación síncrona de duplicados en UI
   private sedesCache: Sede[] = [];
