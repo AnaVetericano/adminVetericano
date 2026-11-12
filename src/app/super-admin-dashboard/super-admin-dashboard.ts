@@ -196,7 +196,7 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
               data: valores,
               backgroundColor: [
                 '#4141A5',
-                '#F1C63C',
+                '#3B82F6',
                 '#10B981',
                 '#170B3D',
                 '#F43F5E',
@@ -258,9 +258,9 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
                 roles.peticionario || 0
               ],
               backgroundColor: [
-                '#F1C63C',
                 '#170B3D',
                 '#4141A5',
+                '#6366F1',
                 '#10B981',
                 '#64748B'
               ],
