@@ -27,6 +27,11 @@ export interface HistoriaClinicaItem {
   fecha_ultimo_celo?: string | null;
   fecha_ultimo_parto?: string | null;
   id_consulta?: number;
+  // Hospitalización CBA
+  ingresa_cba?: boolean;
+  canil_asignado?: string;
+  motivo_ingreso_cba?: string;
+  funcionario_recibe_cba?: string;
   // Campos enriquecidos para la UI
   animal_nombre?: string;
   animal_especie?: string;
@@ -57,6 +62,7 @@ export class HistoriaClinicaListComponent implements OnInit {
   filtroEstado: string = 'Todos';
   menuFiltroAbierto: boolean = false;
   vistaModo: 'tabla' | 'tarjetas' = 'tabla';
+  mostrarHospitalizados: boolean = false;
 
   // Modal de detalle y Línea de Tiempo (Estilo CP-Vet)
   modalDetalleAbierto: boolean = false;
@@ -127,7 +133,11 @@ export class HistoriaClinicaListComponent implements OnInit {
     fotoUrl: '',
     // Consulta Inicial
     motivoConsulta: 'Apertura de expediente y consulta médica general',
-    estadoGeneral: 'Estable'
+    estadoGeneral: 'Estable',
+    ingresaCBA: 'NO' as 'SI' | 'NO',
+    canilAsignado: '',
+    motivoIngresoCBA: '',
+    funcionarioRecibeCBA: ''
   };
 
   // Modal de edición exclusiva de datos del animal / paciente rescatado
@@ -136,6 +146,7 @@ export class HistoriaClinicaListComponent implements OnInit {
   animalEnEdicion = {
     id_animal: null as number | null,
     id_historia: null as number | null,
+    id_consulta: null as number | null,
     nombre: '',
     especie: 'Canino',
     raza: 'Mestizo',
@@ -150,13 +161,19 @@ export class HistoriaClinicaListComponent implements OnInit {
     observaciones: '',
     foto_url: '',
     estado_general: 'Estable',
-    disponible_adopcion: false
+    disponible_adopcion: false,
+    ingresa_cba: false,
+    canil_asignado: '',
+    motivo_ingreso_cba: '',
+    funcionario_recibe_cba: ''
   };
 
-  // Diccionarios auxiliares de animales y seguimientos (por id_animal, radicado y nombre)
+  // Diccionarios auxiliares de animales, consultas y seguimientos (por id_animal, id_historia, radicado y nombre)
   private mapaAnimales: Map<number, any> = new Map();
   private mapaPorRadicado: Map<string, any> = new Map();
   private mapaPorNombre: Map<string, any> = new Map();
+  private mapaConsultasPorHistoria: Map<number, any> = new Map();
+  private mapaConsultasPorAnimal: Map<number, any> = new Map();
 
   constructor(
     private http: HttpClient,
@@ -296,10 +313,58 @@ export class HistoriaClinicaListComponent implements OnInit {
         especieResuelta = segPorRadicado?.especie || segPorNombre?.especie || 'Canino';
       }
 
+      const idHistNum = Number(h.id_historia);
+      const consultaInfo =
+        this.mapaConsultasPorHistoria.get(idHistNum) ||
+        this.mapaConsultasPorAnimal.get(idAnimNum) ||
+        {};
+      const estadoCbaLocal = this.historiaService.obtenerEstadoCbaLocal(idHistNum, idAnimNum);
+
+      let ingresaCbaResuelto = false;
+      if (estadoCbaLocal !== null) {
+        ingresaCbaResuelto = !!estadoCbaLocal.ingresa_cba;
+      } else if (consultaInfo.ingresa_cba !== undefined) {
+        ingresaCbaResuelto = !!consultaInfo.ingresa_cba;
+      } else if (h.ingresa_cba !== undefined) {
+        ingresaCbaResuelto = h.ingresa_cba === true || String(h.ingresa_cba).toUpperCase() === 'SI';
+      } else if (h.ultima_consulta?.ingresa_cba !== undefined) {
+        ingresaCbaResuelto = h.ultima_consulta.ingresa_cba === true || String(h.ultima_consulta.ingresa_cba).toUpperCase() === 'SI';
+      }
+
+      const canilResuelto =
+        estadoCbaLocal?.canil_asignado ||
+        consultaInfo.canil_asignado ||
+        h.canil_asignado ||
+        h.ultima_consulta?.canil_asignado ||
+        '';
+
+      const motivoCbaResuelto =
+        estadoCbaLocal?.motivo_ingreso_cba ||
+        consultaInfo.motivo_ingreso_cba ||
+        h.motivo_ingreso_cba ||
+        h.ultima_consulta?.motivo_ingreso_cba ||
+        '';
+
+      const funcionarioCbaResuelto =
+        estadoCbaLocal?.funcionario_recibe_cba ||
+        consultaInfo.funcionario_recibe_cba ||
+        h.funcionario_recibe_cba ||
+        h.ultima_consulta?.funcionario_recibe_cba ||
+        '';
+
       return {
         id_historia: h.id_historia,
         id_animal: h.id_animal,
-        id_consulta: h.id_consulta || h.ultima_consulta?.id_consulta || h.consulta?.id_consulta || null,
+        id_consulta:
+          h.id_consulta ||
+          h.ultima_consulta?.id_consulta ||
+          h.consulta?.id_consulta ||
+          consultaInfo.id_consulta ||
+          null,
+        ingresa_cba: ingresaCbaResuelto,
+        canil_asignado: canilResuelto,
+        motivo_ingreso_cba: motivoCbaResuelto,
+        funcionario_recibe_cba: funcionarioCbaResuelto,
         numero_historia: numSecuencial,
         numero_radicado: numRadicado,
         fecha_apertura: h.fecha_apertura,
@@ -443,12 +508,16 @@ export class HistoriaClinicaListComponent implements OnInit {
     const urlAnimales = environment.apiUrlAnimales || `${environment.apiBaseUrl}/animales/animales/`;
     const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
     const urlSeguimientos = `${baseUrl}/api/peticiones/seguimiento/listar/`;
+    const urlConsultas = `${environment.apiUrlClinica}consultas/`;
+    const urlConsultasCba = `${environment.apiUrlClinica}consultas/cba/`;
 
     forkJoin({
       animalesResp: this.http.get<any>(urlAnimales, { headers: this.authHeaders }).pipe(catchError(() => of(null))),
-      seguimientosResp: this.http.get<any>(urlSeguimientos, { headers: this.authHeaders }).pipe(catchError(() => of(null)))
+      seguimientosResp: this.http.get<any>(urlSeguimientos, { headers: this.authHeaders }).pipe(catchError(() => of(null))),
+      consultasResp: this.http.get<any>(urlConsultas, { headers: this.authHeaders }).pipe(catchError(() => of(null))),
+      consultasCbaResp: this.http.get<any>(urlConsultasCba, { headers: this.authHeaders }).pipe(catchError(() => of(null)))
     }).subscribe({
-      next: ({ animalesResp, seguimientosResp }) => {
+      next: ({ animalesResp, seguimientosResp, consultasResp, consultasCbaResp }) => {
         const extraerArray = (r: any): any[] => {
           if (!r) return [];
           if (Array.isArray(r)) return r;
@@ -459,6 +528,71 @@ export class HistoriaClinicaListComponent implements OnInit {
 
         const listaSeguimientos = extraerArray(seguimientosResp);
         const listaAnimales = extraerArray(animalesResp);
+        const listaConsultas = extraerArray(consultasResp);
+        const listaConsultasCba = extraerArray(consultasCbaResp);
+
+        this.mapaConsultasPorHistoria.clear();
+        this.mapaConsultasPorAnimal.clear();
+
+        // Ordenar consultas de más antigua a más reciente para que la última consulta prevalezca
+        const consultasOrdenadas = [...listaConsultas].sort((a, b) => {
+          const idA = Number(a?.id_consulta || a?.id || 0);
+          const idB = Number(b?.id_consulta || b?.id || 0);
+          return idA - idB;
+        });
+
+        const procesarItemConsulta = (c: any, forzarCba: boolean = false) => {
+          if (!c) return;
+          const idHist = Number(c?.id_historia ?? c?.historia?.id_historia ?? c?.id_historia_id ?? 0);
+          const idAnim = Number(c?.id_animal ?? c?.animal?.id_animal ?? c?.historia?.id_animal ?? 0);
+          const idCons = Number(c?.id_consulta ?? c?.id ?? 0);
+
+          let evalSist: any = c?.evaluacion_sistemas || {};
+          if (typeof evalSist === 'string') {
+            try {
+              evalSist = JSON.parse(evalSist);
+            } catch {
+              evalSist = {};
+            }
+          }
+
+          let ingresaCba = forzarCba;
+          if (!forzarCba) {
+            if (typeof c?.ingresa_cba === 'boolean') {
+              ingresaCba = c.ingresa_cba;
+            } else if (typeof evalSist?._ingresa_cba === 'boolean') {
+              ingresaCba = evalSist._ingresa_cba;
+            } else if (evalSist?.ingresaCBA) {
+              ingresaCba = String(evalSist.ingresaCBA).toUpperCase() === 'SI';
+            }
+          }
+
+          const infoConsulta = {
+            id_consulta: idCons || null,
+            id_historia: idHist || null,
+            id_animal: idAnim || null,
+            ingresa_cba: ingresaCba,
+            canil_asignado: c?.canil_asignado || evalSist?._canil_asignado || '',
+            motivo_ingreso_cba: c?.motivo_ingreso_cba || evalSist?._motivo_ingreso_cba || '',
+            funcionario_recibe_cba: c?.funcionario_recibe_cba || evalSist?._funcionario_recibe_cba || ''
+          };
+
+          if (idHist > 0) {
+            const prev = this.mapaConsultasPorHistoria.get(idHist);
+            if (!prev || !forzarCba || (idCons >= Number(prev.id_consulta || 0))) {
+              this.mapaConsultasPorHistoria.set(idHist, infoConsulta);
+            }
+          }
+          if (idAnim > 0) {
+            const prevAnim = this.mapaConsultasPorAnimal.get(idAnim);
+            if (!prevAnim || !forzarCba || (idCons >= Number(prevAnim.id_consulta || 0))) {
+              this.mapaConsultasPorAnimal.set(idAnim, infoConsulta);
+            }
+          }
+        };
+
+        consultasOrdenadas.forEach((c: any) => procesarItemConsulta(c, false));
+        listaConsultasCba.forEach((c: any) => procesarItemConsulta(c, true));
 
         // 1. Indexar seguimientos por id_animal, por número de radicado y por nombre de paciente
         listaSeguimientos.forEach((s: any) => {
@@ -628,8 +762,26 @@ export class HistoriaClinicaListComponent implements OnInit {
           const fotoExp = this.extraerFotoDeRegistro(data?.animal || data);
           if (fotoExp && !historia.animal_foto) {
             historia.animal_foto = fotoExp;
-            this.cdr.detectChanges();
           }
+
+          // Hidratar estado de hospitalización CBA si aún no estaba en caché local ni en consultas precargadas
+          const estadoLocal = this.historiaService.obtenerEstadoCbaLocal(historia.id_historia, idAnimNum);
+          if (estadoLocal === null && !this.mapaConsultasPorHistoria.has(Number(historia.id_historia))) {
+            const rawCons = Array.isArray(data?.consultas_anteriores) ? data.consultas_anteriores : [];
+            const consDeHistoria = rawCons.filter((c: any) => !c?.id_historia || Number(c.id_historia) === Number(historia.id_historia));
+            const ultimaCons = consDeHistoria.length > 0 ? consDeHistoria[0] : (rawCons[0] || null);
+            if (ultimaCons) {
+              const esCba = ultimaCons.ingresa_cba === true || String(ultimaCons.ingresa_cba).toUpperCase() === 'SI';
+              if (esCba !== !!historia.ingresa_cba) {
+                historia.ingresa_cba = esCba;
+                historia.canil_asignado = ultimaCons.canil_asignado || historia.canil_asignado || '';
+                historia.motivo_ingreso_cba = ultimaCons.motivo_ingreso_cba || historia.motivo_ingreso_cba || '';
+                this.aplicarFiltros();
+              }
+            }
+          }
+
+          this.cdr.detectChanges();
         },
         error: () => {}
       });
@@ -637,20 +789,48 @@ export class HistoriaClinicaListComponent implements OnInit {
   }
 
   /**
-   * Aplica filtros de texto y de estado general
+   * Contadores de Hospitalizados CBA vs Historias Normales
+   */
+  get totalHospitalizados(): number {
+    return this.historias.filter(h => !!h.ingresa_cba).length;
+  }
+
+  get totalNormales(): number {
+    return this.historias.filter(h => !h.ingresa_cba).length;
+  }
+
+  cambiarVistaHospitalizados(hospitalizados: boolean): void {
+    this.mostrarHospitalizados = hospitalizados;
+    this.aplicarFiltros();
+    this.cdr.detectChanges();
+  }
+
+  alternarVistaHospitalizados(): void {
+    this.mostrarHospitalizados = !this.mostrarHospitalizados;
+    this.aplicarFiltros();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Aplica filtros de hospitalizados CBA, texto y estado general
    */
   aplicarFiltros(): void {
     const q = (this.filtroBusqueda || '').trim().toLowerCase();
 
     this.historiasFiltradas = this.historias.filter((h) => {
-      // Coincidencia con estado general
+      // 1. Separación estricta entre Hospitalizados (Ingresa al CBA) y Apartado Normal
+      const esHospitalizado = !!h.ingresa_cba;
+      if (this.mostrarHospitalizados && !esHospitalizado) return false;
+      if (!this.mostrarHospitalizados && esHospitalizado) return false;
+
+      // 2. Coincidencia con estado general
       const coincideEstado =
         this.filtroEstado === 'Todos' ||
         h.estado_general?.toLowerCase() === this.filtroEstado.toLowerCase();
 
       if (!coincideEstado) return false;
 
-      // Coincidencia con texto de búsqueda
+      // 3. Coincidencia con texto de búsqueda
       if (!q) return true;
 
       const numHist = String(h.numero_historia || '').toLowerCase();
@@ -662,6 +842,7 @@ export class HistoriaClinicaListComponent implements OnInit {
       const estado = String(h.estado_general || '').toLowerCase();
       const vacunas = String(h.vacunas || '').toLowerCase();
       const producto = String(h.producto_desparasitacion || '').toLowerCase();
+      const canil = String(h.canil_asignado || '').toLowerCase();
 
       return (
         numHist.includes(q) ||
@@ -672,7 +853,8 @@ export class HistoriaClinicaListComponent implements OnInit {
         especie.includes(q) ||
         estado.includes(q) ||
         vacunas.includes(q) ||
-        producto.includes(q)
+        producto.includes(q) ||
+        canil.includes(q)
       );
     });
   }
@@ -857,52 +1039,94 @@ export class HistoriaClinicaListComponent implements OnInit {
     c.expandido = !c.expandido;
   }
 
+  verDetalleCompletoHistoria(historia: HistoriaClinicaItem): void {
+    if (!historia) return;
+    this.historiaSeleccionada = historia;
+    const fechaStr = historia.fecha_apertura || new Date().toISOString();
+
+    const baseConsulta: any = {
+      id_consulta: historia.id_consulta || null,
+      id_historia: historia.id_historia || null,
+      id_animal: historia.id_animal || null,
+      titulo: 'CONSULTA MÉDICA VETERINARIA',
+      motivo_consulta: historia.evolucion_previa || 'Evaluación médica y control clínico general',
+      anamnesis: historia.enfermedades_anteriores || historia.evolucion_previa || '',
+      peso: historia.animal_peso ? Number(historia.animal_peso) : null,
+      temperatura: 38.5,
+      frecuencia_cardiaca: 110,
+      frecuencia_respiratoria: 24,
+      diagnostico: historia.enfermedades_anteriores || 'Evaluación médica general estable.',
+      diagnostico_diferencial: '',
+      plan_tratamiento: historia.tratamientos_anteriores || 'Manejo clínico y seguimiento médico.',
+      fecha_hora: fechaStr,
+      fecha_formateada: this.formatearFechaLarga(fechaStr),
+      hora_formateada: this.formatearHora(fechaStr),
+      mes_ano: this.formatearMesAno(fechaStr),
+      veterinario: this.obtenerVeterinarioSesion(),
+      prioridad: 'Normal',
+      ingresa_cba: historia.ingresa_cba ? 'SI' : 'NO',
+      canil_asignado: historia.canil_asignado || '',
+      motivo_cba: historia.motivo_ingreso_cba || '',
+      funcionario_recibe: historia.funcionario_recibe_cba || ''
+    };
+
+    this.verDetalleCompletoConsulta(baseConsulta);
+  }
+
   verDetalleCompletoConsulta(c: any): void {
     this.consultaDetalleSeleccionada = { ...c };
     this.modalDetalleConsultaIndividual = true;
     this.cargandoDetalleIndividual = true;
 
-    const idCons = c.id_consulta;
-    // Si id_consulta es un ID válido persistido en base de datos
-    if (idCons && typeof idCons === 'number' && idCons < 1000000000) {
-      const urlExp = `${environment.apiUrlExpedienteCompleto || (environment.apiUrlClinica + 'expediente-completo/')}${idCons}/`;
-      this.http.get<any>(urlExp, { headers: this.authHeaders }).subscribe({
-        next: (data) => {
+    const idCons = c.id_consulta && Number(c.id_consulta) < 1000000000 ? Number(c.id_consulta) : null;
+    const idAnim = c.id_animal || this.historiaSeleccionada?.id_animal || null;
+    const idHist = c.id_historia || this.historiaSeleccionada?.id_historia || null;
+    const nombrePac = this.historiaSeleccionada?.animal_nombre || '';
+    const idTarget = idCons || idHist || idAnim;
+
+    if (idTarget) {
+      this.historiaService.obtenerHistoria(idTarget, nombrePac, idAnim).subscribe({
+        next: (data: any) => {
           this.cargandoDetalleIndividual = false;
           if (data) {
             this.consultaDetalleSeleccionada = {
               ...this.consultaDetalleSeleccionada,
               ...data,
-              titulo: this.normalizarTituloConsulta(data.motivoConsulta || this.consultaDetalleSeleccionada.titulo),
-              motivo_consulta: data.motivoConsulta || this.consultaDetalleSeleccionada.titulo,
-              peso: data.examenClinico?.peso ?? data.animal?.peso ?? this.consultaDetalleSeleccionada.peso,
-              temperatura: data.examenClinico?.temperatura ?? this.consultaDetalleSeleccionada.temperatura,
-              frecuencia_cardiaca: data.examenClinico?.frecuenciaCardiaca ?? this.consultaDetalleSeleccionada.frecuencia_cardiaca,
-              frecuencia_respiratoria: data.examenClinico?.frecuenciaRespiratoria ?? this.consultaDetalleSeleccionada.frecuencia_respiratoria,
-              pulso: data.examenClinico?.pulso || 'Normal',
-              tllc: data.examenClinico?.tiempoLlenadoCapilar || '2 seg',
-              mucosas: data.examenClinico?.mucosas || 'Rosadas',
-              ganglios_linfaticos: data.examenClinico?.gangliosLinfaticos || 'Normales',
-              actitud_temperamento: data.examenClinico?.actitudTemperamento || 'Alerta / Responsivo',
-              sistemas: data.organosSistemas || {},
-              observaciones_sistemas: data.organosSistemas?.observaciones || '',
-              diagnostico: data.hoja2?.diagnosticoFinal || this.consultaDetalleSeleccionada.diagnostico,
-              diagnostico_diferencial: data.hoja2?.diagnosticoDiferencial || this.consultaDetalleSeleccionada.diagnostico_diferencial || '',
-              lista_problemas: Array.isArray(data.hoja2?.listaProblemas) ? data.hoja2.listaProblemas : (data.hoja2?.listaProblemas ? [data.hoja2.listaProblemas] : []),
-              pronostico: data.hoja2?.pronostico || 'Favorable',
-              plan_tratamiento: data.hoja2?.planProcedimientos || this.consultaDetalleSeleccionada.plan_tratamiento,
-              materiales_utilizados: data.hoja2?.materialesUtilizados || '',
-              tratamientos: Array.isArray(data.hoja2?.tratamientos) ? data.hoja2.tratamientos : (this.consultaDetalleSeleccionada.tratamientos || []),
-              examenes: data.hoja2?.examenes || {},
-              ingresa_cba: data.hoja3?.ingresaCBA || 'NO',
-              motivo_cba: data.hoja3?.motivoIngresoNoIngreso || '',
-              canil_asignado: data.hoja3?.canilAsignado || '',
-              funcionario_recibe: data.hoja3?.funcionarioRecibeCBA || ''
+              id_consulta: data.id_consulta || idCons || this.consultaDetalleSeleccionada.id_consulta,
+              titulo: this.normalizarTituloConsulta(data.motivo_consulta || data.motivoConsulta || this.consultaDetalleSeleccionada.titulo),
+              motivo_consulta: data.motivo_consulta || data.motivoConsulta || this.consultaDetalleSeleccionada.motivo_consulta || this.consultaDetalleSeleccionada.titulo,
+              anamnesis: data.anamnesis || data.evolucion || data.anamnesicos?.evolucion || this.consultaDetalleSeleccionada.anamnesis || '',
+              peso: data.paciente?.peso ?? data.examenClinico?.peso ?? data.animal?.peso ?? this.consultaDetalleSeleccionada.peso,
+              temperatura: data.temperatura ?? data.constantes?.temperatura ?? data.examenClinico?.temperatura ?? this.consultaDetalleSeleccionada.temperatura,
+              frecuencia_cardiaca: data.frecuencia_cardiaca ?? data.constantes?.frecuencia_cardiaca ?? data.examenClinico?.frecuenciaCardiaca ?? this.consultaDetalleSeleccionada.frecuencia_cardiaca,
+              frecuencia_respiratoria: data.frecuencia_respiratoria ?? data.constantes?.frecuencia_respiratoria ?? data.examenClinico?.frecuenciaRespiratoria ?? this.consultaDetalleSeleccionada.frecuencia_respiratoria,
+              pulso: data.pulso || data.constantes?.pulso || data.examenClinico?.pulso || 'Normal',
+              tllc: data.tllc || data.constantes?.tllc || data.examenClinico?.tiempoLlenadoCapilar || '2 seg',
+              mucosas: data.mucosas || data.constantes?.mucosas || data.examenClinico?.mucosas || 'Rosadas',
+              ganglios_linfaticos: data.ganglios_linfaticos || data.constantes?.ganglios_linfaticos || data.examenClinico?.gangliosLinfaticos || 'Normales',
+              actitud_temperamento: data.actitud_temperamento || data.constantes?.actitud_temperamento || data.examenClinico?.actitudTemperamento || 'Alerta / Responsivo',
+              sistemas: data.organos_sistemas || data.evaluacion_sistemas || data.organosSistemas || {},
+              observaciones_sistemas: data.observaciones_sistemas || data.observaciones_examen || data.organosSistemas?.observaciones || '',
+              diagnostico: data.diagnostico_principal || data.hoja2?.diagnosticoFinal || this.consultaDetalleSeleccionada.diagnostico,
+              diagnostico_diferencial: data.diagnostico_diferencial || data.hoja2?.diagnosticoDiferencial || this.consultaDetalleSeleccionada.diagnostico_diferencial || '',
+              lista_problemas: Array.isArray(data.lista_problemas)
+                ? data.lista_problemas
+                : (data.lista_problemas ? [data.lista_problemas] : []),
+              pronostico: data.pronostico || data.hoja2?.pronostico || 'Favorable',
+              plan_tratamiento: data.plan_tratamiento || data.plan_procedimientos || data.hoja2?.planProcedimientos || this.consultaDetalleSeleccionada.plan_tratamiento,
+              materiales_utilizados: data.materiales_utilizados || data.hoja2?.materialesUtilizados || '',
+              tratamientos: Array.isArray(data.tratamientos) ? data.tratamientos : (this.consultaDetalleSeleccionada.tratamientos || []),
+              examenes: data.examenes_solicitados || data.hoja2?.examenes || {},
+              ingresa_cba: (data.ingresa_cba === true || data.ingresa_cba === 'SI' || this.historiaSeleccionada?.ingresa_cba) ? 'SI' : 'NO',
+              motivo_cba: data.motivo_ingreso_cba || this.historiaSeleccionada?.motivo_ingreso_cba || '',
+              canil_asignado: data.canil_asignado || this.historiaSeleccionada?.canil_asignado || '',
+              funcionario_recibe: data.funcionario_recibe_cba || this.historiaSeleccionada?.funcionario_recibe_cba || '',
+              veterinario: data.nombre_veterinario || this.consultaDetalleSeleccionada.veterinario || this.obtenerVeterinarioSesion()
             };
 
-            // Hidratar foto en historiaSeleccionada si data.animal la aporta
-            if (data.animal) {
-              const fotoDetalle = this.normalizarUrlFoto(data.animal.fotoUrl || data.animal.foto_url || data.animal.foto || data.animal.imagen || '');
+            const fotoRaw = data.paciente?.foto_url || data.animal?.fotoUrl || data.animal?.foto_url || '';
+            if (fotoRaw) {
+              const fotoDetalle = this.normalizarUrlFoto(fotoRaw);
               if (fotoDetalle && this.historiaSeleccionada && !this.historiaSeleccionada.animal_foto) {
                 this.historiaSeleccionada.animal_foto = fotoDetalle;
               }
@@ -1045,8 +1269,11 @@ export class HistoriaClinicaListComponent implements OnInit {
         plan_procedimientos: planTexto,
         materialesUtilizados: '',
         materiales_utilizados: '',
-        ingresaCBA: 'NO',
-        ingresa_cba: false
+        ingresaCBA: this.historiaSeleccionada.ingresa_cba ? 'SI' : 'NO',
+        ingresa_cba: !!this.historiaSeleccionada.ingresa_cba,
+        canilAsignado: this.historiaSeleccionada.canil_asignado || '',
+        motivoIngresoNoIngreso: this.historiaSeleccionada.motivo_ingreso_cba || '',
+        funcionarioRecibeCBA: this.historiaSeleccionada.funcionario_recibe_cba || ''
       }
     };
 
@@ -1212,6 +1439,7 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.animalEnEdicion = {
       id_animal: (idAnim && !isNaN(idAnim)) ? idAnim : null,
       id_historia: historia.id_historia || null,
+      id_consulta: historia.id_consulta || null,
       nombre: historia.animal_nombre || animalCache.nombre || '',
       especie: historia.animal_especie || animalCache.especie || 'Canino',
       raza: historia.animal_raza || animalCache.raza || 'Mestizo',
@@ -1226,7 +1454,11 @@ export class HistoriaClinicaListComponent implements OnInit {
       observaciones: animalCache.observaciones || '',
       foto_url: historia.animal_foto || animalCache.foto_url || '',
       estado_general: historia.estado_general || 'Estable',
-      disponible_adopcion: animalCache.disponible_adopcion ?? false
+      disponible_adopcion: animalCache.disponible_adopcion ?? false,
+      ingresa_cba: !!historia.ingresa_cba,
+      canil_asignado: historia.canil_asignado || '',
+      motivo_ingreso_cba: historia.motivo_ingreso_cba || '',
+      funcionario_recibe_cba: historia.funcionario_recibe_cba || ''
     };
 
     this.modalEditarAnimalAbierto = true;
@@ -1307,6 +1539,35 @@ export class HistoriaClinicaListComponent implements OnInit {
       : null;
 
     const finalizarActualizacion = () => {
+      const ingresaCbaBool = Boolean(this.animalEnEdicion.ingresa_cba);
+      const canilStr = (this.animalEnEdicion.canil_asignado || '').trim();
+      const motivoCbaStr = (this.animalEnEdicion.motivo_ingreso_cba || '').trim();
+      const funcCbaStr = (this.animalEnEdicion.funcionario_recibe_cba || '').trim();
+
+      // Guardar estado de hospitalización CBA en caché local sincronizado y mapa de consultas
+      this.historiaService.guardarEstadoCbaLocal(
+        this.animalEnEdicion.id_historia,
+        idAnim,
+        ingresaCbaBool,
+        {
+          canil_asignado: canilStr,
+          motivo_ingreso_cba: motivoCbaStr,
+          funcionario_recibe_cba: funcCbaStr
+        }
+      );
+
+      if (this.animalEnEdicion.id_historia) {
+        const idHistNum = Number(this.animalEnEdicion.id_historia);
+        const prevCons = this.mapaConsultasPorHistoria.get(idHistNum) || {};
+        this.mapaConsultasPorHistoria.set(idHistNum, {
+          ...prevCons,
+          ingresa_cba: ingresaCbaBool,
+          canil_asignado: canilStr,
+          motivo_ingreso_cba: motivoCbaStr,
+          funcionario_recibe_cba: funcCbaStr
+        });
+      }
+
       // 1. Actualizar historiaSeleccionada si está activa en pantalla
       if (this.historiaSeleccionada) {
         this.historiaSeleccionada.animal_nombre = this.animalEnEdicion.nombre;
@@ -1318,12 +1579,16 @@ export class HistoriaClinicaListComponent implements OnInit {
           this.historiaSeleccionada.animal_foto = this.animalEnEdicion.foto_url;
         }
         this.historiaSeleccionada.estado_general = this.animalEnEdicion.estado_general;
+        this.historiaSeleccionada.ingresa_cba = ingresaCbaBool;
+        this.historiaSeleccionada.canil_asignado = canilStr;
+        this.historiaSeleccionada.motivo_ingreso_cba = motivoCbaStr;
+        this.historiaSeleccionada.funcionario_recibe_cba = funcCbaStr;
       }
 
       // 2. Actualizar en el arreglo de historias de la vista
       const histEnLista = this.historias.find(h =>
-        (idAnim && Number(h.id_animal) === Number(idAnim)) ||
-        (this.animalEnEdicion.id_historia && Number(h.id_historia) === Number(this.animalEnEdicion.id_historia))
+        (this.animalEnEdicion.id_historia && Number(h.id_historia) === Number(this.animalEnEdicion.id_historia)) ||
+        (idAnim && Number(h.id_animal) === Number(idAnim))
       );
       if (histEnLista) {
         histEnLista.animal_nombre = this.animalEnEdicion.nombre;
@@ -1335,6 +1600,10 @@ export class HistoriaClinicaListComponent implements OnInit {
           histEnLista.animal_foto = this.animalEnEdicion.foto_url;
         }
         histEnLista.estado_general = this.animalEnEdicion.estado_general;
+        histEnLista.ingresa_cba = ingresaCbaBool;
+        histEnLista.canil_asignado = canilStr;
+        histEnLista.motivo_ingreso_cba = motivoCbaStr;
+        histEnLista.funcionario_recibe_cba = funcCbaStr;
       }
 
       // 3. Actualizar memoria local en mapaAnimales
@@ -1360,11 +1629,33 @@ export class HistoriaClinicaListComponent implements OnInit {
       });
     };
 
-    // Si tiene historia clínica vinculada y se modificó estado general, actualizamos estado en la historia
+    // Si tiene historia clínica vinculada, actualizamos estado_general e ingresa_cba en sus consultas
     if (this.animalEnEdicion.id_historia) {
       const urlHistoria = `${environment.apiUrlHistorias || (environment.apiUrlClinica + 'historias/')}${this.animalEnEdicion.id_historia}/`;
       this.http.patch<any>(urlHistoria, { estado_general: this.animalEnEdicion.estado_general }, { headers: this.authHeaders }).subscribe({
         error: () => {}
+      });
+
+      const urlConsHist = `${environment.apiUrlClinica}consultas/?id_historia=${this.animalEnEdicion.id_historia}`;
+      this.http.get<any>(urlConsHist, { headers: this.authHeaders }).pipe(catchError(() => of(null))).subscribe({
+        next: (resCons) => {
+          const arrCons = Array.isArray(resCons) ? resCons : (resCons?.results || []);
+          const filtradas = arrCons.filter((c: any) => Number(c?.id_historia) === Number(this.animalEnEdicion.id_historia));
+          filtradas.forEach((c: any) => {
+            if (c?.id_consulta) {
+              this.http.patch(
+                `${environment.apiUrlClinica}consultas/${c.id_consulta}/`,
+                {
+                  ingresa_cba: Boolean(this.animalEnEdicion.ingresa_cba),
+                  canil_asignado: (this.animalEnEdicion.canil_asignado || '').trim(),
+                  motivo_ingreso_cba: (this.animalEnEdicion.motivo_ingreso_cba || '').trim(),
+                  funcionario_recibe_cba: (this.animalEnEdicion.funcionario_recibe_cba || '').trim()
+                },
+                { headers: this.authHeaders }
+              ).pipe(catchError(() => of(null))).subscribe();
+            }
+          });
+        }
       });
     }
 
@@ -1405,7 +1696,11 @@ export class HistoriaClinicaListComponent implements OnInit {
       estadoReproductivo: 'Entero',
       fotoUrl: '',
       motivoConsulta: 'Apertura de expediente y consulta médica general',
-      estadoGeneral: 'Estable'
+      estadoGeneral: 'Estable',
+      ingresaCBA: this.mostrarHospitalizados ? 'SI' : 'NO',
+      canilAsignado: '',
+      motivoIngresoCBA: '',
+      funcionarioRecibeCBA: this.obtenerVeterinarioSesion()
     };
     this.modalNuevoPacienteAbierto = true;
   }
@@ -1472,13 +1767,24 @@ export class HistoriaClinicaListComponent implements OnInit {
         pronostico: 'Favorable'
       },
       hoja3: {
-        ingresaCBA: 'NO'
+        ingresaCBA: this.nuevoPaciente.ingresaCBA,
+        ingresa_cba: this.nuevoPaciente.ingresaCBA === 'SI',
+        canilAsignado: this.nuevoPaciente.ingresaCBA === 'SI' ? (this.nuevoPaciente.canilAsignado || '') : '',
+        motivoIngresoNoIngreso: this.nuevoPaciente.ingresaCBA === 'SI'
+          ? (this.nuevoPaciente.motivoIngresoCBA || this.nuevoPaciente.motivoConsulta || 'Ingreso y hospitalización en el CBA')
+          : 'Atención normal sin ingreso a hospitalización CBA',
+        funcionarioRecibeCBA: this.nuevoPaciente.ingresaCBA === 'SI'
+          ? (this.nuevoPaciente.funcionarioRecibeCBA || this.obtenerVeterinarioSesion())
+          : ''
       }
     };
+
+    const ingresaHospitalizado = this.nuevoPaciente.ingresaCBA === 'SI';
 
     this.historiaService.crearExpedienteCompleto(payload).subscribe({
       next: (resp) => {
         this.guardandoNuevoPaciente = false;
+        this.mostrarHospitalizados = ingresaHospitalizado;
         this.cerrarModalNuevoPaciente();
         this.cargarHistorias();
 

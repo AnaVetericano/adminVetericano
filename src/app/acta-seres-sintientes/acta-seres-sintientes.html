@@ -23,6 +23,18 @@
       </div>
     </div>
     <div class="flex items-center gap-2.5 self-end md:self-center">
+      <!-- Botón: Crear Historia Clínica -->
+      <button 
+        type="button"
+        (click)="abrirModalRegistrarPaciente()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer tracking-wide"
+        title="Crear nueva historia clínica y registro de paciente">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Crear Historia Clinica</span>
+      </button>
+
       <!-- Botón: Historias Guardadas -->
       <button 
         type="button"
@@ -2092,11 +2104,25 @@
               </p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border shadow-2xs"
-              [ngClass]="resolucionCierre.requirioRescate ? 'bg-indigo-50 text-indigo-800 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200'">
-              {{ resolucionCierre.requirioRescate ? '🚨 TRASLADADO AL CBA' : '🏠 CUSTODIA EN SITIO' }}
-            </span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              (click)="toggleRescateCBA(true)"
+              [ngClass]="resolucionCierre.requirioRescate
+                ? 'bg-[#4141a5] text-white border-[#4141a5] shadow-sm'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition cursor-pointer">
+              🚨 SÍ (Ingresa al CBA)
+            </button>
+            <button
+              type="button"
+              (click)="toggleRescateCBA(false)"
+              [ngClass]="!resolucionCierre.requirioRescate
+                ? 'bg-[#170B3D] text-white border-[#170B3D] shadow-sm'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'"
+              class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border transition cursor-pointer">
+              🏠 NO (Custodia en Sitio)
+            </button>
           </div>
         </div>
 
@@ -2471,7 +2497,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-base sm:text-lg font-black text-[#170B3D]">
-                Registrar Paciente
+                Crear Historia Clínica
               </h2>
               <span class="bg-[#4141a5]/10 text-[#4141a5] text-[10px] font-black px-2 py-0.5 rounded-full border border-[#4141a5]/20 uppercase tracking-wider">
                 CBA Popayán
@@ -2726,6 +2752,44 @@
                   <option value="Delicado">Delicado</option>
                   <option value="Crítico">Crítico</option>
                 </select>
+              </div>
+
+              <!-- ¿Ingresa al CBA (Hospitalizado)? -->
+              <div class="pt-2 border-t border-gray-200/80 space-y-2.5">
+                <label class="block text-[11px] font-bold text-[#170B3D]">
+                  ¿El animal ingresó al CBA (Hospitalizado)?
+                </label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    (click)="nuevoPacienteModal.ingresaCBA = 'SI'"
+                    [ngClass]="nuevoPacienteModal.ingresaCBA === 'SI'
+                      ? 'bg-[#4141a5] text-white font-black border-[#4141a5] shadow-xs'
+                      : 'bg-white text-gray-600 border-gray-200 font-bold hover:bg-gray-50'"
+                    class="h-10 rounded-xl border text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <span>🏥</span> SÍ (Hospitalizado)
+                  </button>
+                  <button
+                    type="button"
+                    (click)="nuevoPacienteModal.ingresaCBA = 'NO'"
+                    [ngClass]="nuevoPacienteModal.ingresaCBA === 'NO'
+                      ? 'bg-[#170B3D] text-white font-black border-[#170B3D] shadow-xs'
+                      : 'bg-white text-gray-600 border-gray-200 font-bold hover:bg-gray-50'"
+                    class="h-10 rounded-xl border text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <span>🏠</span> NO (Normal)
+                  </button>
+                </div>
+
+                <div *ngIf="nuevoPacienteModal.ingresaCBA === 'SI'" class="pt-1">
+                  <label class="block text-[10px] font-bold text-gray-600 mb-1 uppercase">
+                    Canil / Jaula Asignada (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    [(ngModel)]="nuevoPacienteModal.canilAsignado"
+                    placeholder="Ej. Canil A-12, Hospitalización 3..."
+                    class="w-full h-9 px-3 rounded-xl border border-gray-200 bg-white text-xs focus:border-[#4141a5] outline-none transition" />
+                </div>
               </div>
             </div>
           </div>

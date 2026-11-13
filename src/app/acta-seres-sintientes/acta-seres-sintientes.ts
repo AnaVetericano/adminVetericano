@@ -1846,6 +1846,22 @@ export class ActaSeresSintientes implements OnInit {
     const urlConsultas = environment.apiUrlConsultas || `${environment.apiUrlClinica}consultas/`;
     const temperatura = this.numeroOpcional(this.signosVitales.temperatura);
 
+    const esIngresoCbaConsulta = this.ingresaCBA === 'SI' || this.ingresa_cba === true || this.resolucionCierre?.requirioRescate === true;
+    const motivoCbaConsulta = this.textoOpcional(this.motivoIngresoNoIngreso) || this.resolucionCierre?.datosRescate?.causal || '';
+    const canilCbaConsulta = esIngresoCbaConsulta ? (this.textoOpcional(this.canilAsignado) || 'Canil CBA') : '';
+    const funcCbaConsulta = esIngresoCbaConsulta ? (this.textoOpcional(this.funcionarioRecibeCBA) || this.resolucionCierre?.datosRescate?.veterinarioReceptor || '') : '';
+
+    this.historiaClinicaService.guardarEstadoCbaLocal(
+      idHistoria,
+      this.resolverIdAnimal(this.seguimientoSeleccionado),
+      esIngresoCbaConsulta,
+      {
+        canil_asignado: canilCbaConsulta,
+        motivo_ingreso_cba: motivoCbaConsulta,
+        funcionario_recibe_cba: funcCbaConsulta
+      }
+    );
+
     const payloadConsulta: any = {
       id_historia: idHistoria,
       motivo_consulta: motivo,
@@ -1864,7 +1880,11 @@ export class ActaSeresSintientes implements OnInit {
         _veterinario_responsable: this.nombreVeterinario?.trim() || '',
         _tarjeta_profesional: this.tarjetaProfesional?.trim() || '',
         _acudiente_nombre: this.nombreAcudiente?.trim() || '',
-        _acudiente_cedula: this.cedulaAcudiente?.trim() || ''
+        _acudiente_cedula: this.cedulaAcudiente?.trim() || '',
+        _ingresa_cba: esIngresoCbaConsulta,
+        _canil_asignado: canilCbaConsulta,
+        _motivo_ingreso_cba: motivoCbaConsulta,
+        _funcionario_recibe_cba: funcCbaConsulta
       },
       hallazgos_examen: this.textoOpcional(this.descripcionHallazgos) || '',
       observaciones_examen: this.textoOpcional(this.observacionesExamen) || '',
@@ -1879,10 +1899,10 @@ export class ActaSeresSintientes implements OnInit {
         resultado: e.resultado || '',
         ruta_archivo_resultado: e.ruta_archivo_resultado || ''
       })),
-      ingresa_cba: this.ingresaCBA === 'SI',
-      motivo_ingreso_cba: this.textoOpcional(this.motivoIngresoNoIngreso) || '',
-      canil_asignado: this.ingresaCBA === 'SI' ? (this.textoOpcional(this.canilAsignado) || '') : '',
-      funcionario_recibe_cba: this.ingresaCBA === 'SI' ? (this.textoOpcional(this.funcionarioRecibeCBA) || '') : ''
+      ingresa_cba: esIngresoCbaConsulta,
+      motivo_ingreso_cba: motivoCbaConsulta,
+      canil_asignado: canilCbaConsulta,
+      funcionario_recibe_cba: funcCbaConsulta
     };
 
     this.http.post<any>(urlConsultas, payloadConsulta, { headers }).pipe(
@@ -2656,7 +2676,11 @@ export class ActaSeresSintientes implements OnInit {
     estadoReproductivo: 'Entero',
     fotoUrl: '',
     motivoConsulta: 'Ingreso y valoración clínica de paciente',
-    estadoGeneral: 'Estable'
+    estadoGeneral: 'Estable',
+    ingresaCBA: 'NO' as 'SI' | 'NO',
+    canilAsignado: '',
+    funcionarioRecibeCBA: '',
+    motivoIngresoCBA: ''
   };
 
   constructor(
@@ -2853,10 +2877,17 @@ export class ActaSeresSintientes implements OnInit {
           tratamientos: []
         },
         hoja3: {
-          ingresaCBA: (this.ingresaCBA === 'SI' || this.ingresa_cba === true) ? 'SI' : 'NO',
-          motivoIngresoNoIngreso: this.motivoIngresoNoIngreso || this.motivo_ingreso_cba || '',
-          canilAsignado: this.canilAsignado || null,
-          funcionarioRecibe: this.funcionarioRecibeCBA || null
+          ingresaCBA: (
+            this.ingresaCBA === 'SI' ||
+            this.ingresa_cba === true ||
+            !!this.resolucionCierre?.datosRescate?.causal ||
+            this.resolucionCierre?.requirioRescate === true ||
+            seguimiento?.sw_requiere_rescate === true ||
+            seguimiento?.requiere_rescate === true
+          ) ? 'SI' : 'NO',
+          motivoIngresoNoIngreso: this.motivoIngresoNoIngreso || this.motivo_ingreso_cba || this.resolucionCierre?.datosRescate?.causal || '',
+          canilAsignado: this.canilAsignado || (this.resolucionCierre?.requirioRescate ? 'Canil CBA' : null),
+          funcionarioRecibe: this.funcionarioRecibeCBA || this.resolucionCierre?.datosRescate?.veterinarioReceptor || null
         }
       };
 
@@ -3791,7 +3822,11 @@ export class ActaSeresSintientes implements OnInit {
       estadoReproductivo: 'Entero',
       fotoUrl: '',
       motivoConsulta: 'Ingreso y valoración clínica de paciente',
-      estadoGeneral: 'Estable'
+      estadoGeneral: 'Estable',
+      ingresaCBA: 'NO',
+      canilAsignado: '',
+      funcionarioRecibeCBA: '',
+      motivoIngresoCBA: ''
     };
     this.modalRegistrarPacienteAbierto = true;
     this.cdr.detectChanges();
@@ -3827,6 +3862,7 @@ export class ActaSeresSintientes implements OnInit {
     }
 
     this.guardandoNuevoPacienteModal = true;
+    const esHospitalizadoCBA = this.nuevoPacienteModal.ingresaCBA === 'SI';
 
     const payload = {
       animal: {
@@ -3862,7 +3898,10 @@ export class ActaSeresSintientes implements OnInit {
         pronostico: 'Favorable'
       },
       hoja3: {
-        ingresaCBA: 'NO'
+        ingresaCBA: esHospitalizadoCBA ? 'SI' : 'NO',
+        motivoIngresoNoIngreso: this.nuevoPacienteModal.motivoIngresoCBA.trim() || this.nuevoPacienteModal.motivoConsulta.trim() || '',
+        canilAsignado: esHospitalizadoCBA ? (this.nuevoPacienteModal.canilAsignado.trim() || 'Canil CBA') : null,
+        funcionarioRecibeCBA: esHospitalizadoCBA ? (this.nuevoPacienteModal.funcionarioRecibeCBA.trim() || this.nombreVeterinario || 'Equipo CBA') : null
       }
     };
 
