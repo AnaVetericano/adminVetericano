@@ -272,6 +272,11 @@
                         class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/25">
                         CBA{{ historia.canil_asignado ? ' · ' + historia.canil_asignado : '' }}
                       </span>
+                      <span
+                        *ngIf="!historia.ingresa_cba && historia.disponible_adopcion"
+                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        En Adopción
+                      </span>
                     </div>
                     <p class="text-[10px] text-gray-400 truncate">
                       {{ historia.animal_especie }} · {{ historia.animal_raza }}
@@ -319,6 +324,20 @@
               <!-- Acciones -->
               <td class="px-5 py-3.5 whitespace-nowrap text-center">
                 <div class="flex items-center justify-center gap-2">
+                  <!-- Enviar a Adopción (Cuando está en Hospitalizados) -->
+                  <button
+                    *ngIf="historia.ingresa_cba"
+                    type="button"
+                    (click)="enviarAAdopcion(historia)"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    title="Dar de alta (fuera de peligro) y enviar al módulo de Adopciones"
+                    aria-label="Enviar a adopción">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span>Enviar a adopción</span>
+                  </button>
+
                   <!-- Nueva consulta (Papel) -->
                   <button
                     type="button"
@@ -405,6 +424,11 @@
                     class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/25">
                     CBA{{ historia.canil_asignado ? ' · ' + historia.canil_asignado : '' }}
                   </span>
+                  <span
+                    *ngIf="!historia.ingresa_cba && historia.disponible_adopcion"
+                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    En Adopción
+                  </span>
                 </div>
                 <p class="text-[11px] text-gray-500 truncate">{{ historia.animal_especie }} · {{ historia.animal_raza }}</p>
               </div>
@@ -438,21 +462,34 @@
           </div>
 
           <!-- Botones de acción -->
-          <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+          <div class="space-y-2 pt-2 border-t border-gray-100">
             <button
+              *ngIf="historia.ingresa_cba"
               type="button"
-              (click)="abrirModalDetalle(historia)"
-              class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white border border-[#4141a5]/20 text-xs font-bold transition-all cursor-pointer text-center"
-              title="Nueva consulta">
-              Nueva consulta
+              (click)="enviarAAdopcion(historia)"
+              class="w-full py-2 px-3 rounded-xl bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 text-xs font-bold transition-all shadow-2xs cursor-pointer flex items-center justify-center gap-1.5"
+              title="Dar de alta y enviar a Adopciones">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              <span>Enviar a adopción</span>
             </button>
-            <button
-              type="button"
-              (click)="abrirModalEditarAnimal(historia)"
-              class="flex-1 py-2 px-3 rounded-xl bg-[#170B3D]/5 hover:bg-[#170B3D] text-[#170B3D] hover:text-white border border-[#170B3D]/20 text-xs font-bold transition-all shadow-xs cursor-pointer text-center"
-              title="Editar animal">
-              Editar animal
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="abrirModalDetalle(historia)"
+                class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white border border-[#4141a5]/20 text-xs font-bold transition-all cursor-pointer text-center"
+                title="Nueva consulta">
+                Nueva consulta
+              </button>
+              <button
+                type="button"
+                (click)="abrirModalEditarAnimal(historia)"
+                class="flex-1 py-2 px-3 rounded-xl bg-[#170B3D]/5 hover:bg-[#170B3D] text-[#170B3D] hover:text-white border border-[#170B3D]/20 text-xs font-bold transition-all shadow-xs cursor-pointer text-center"
+                title="Editar animal">
+                Editar animal
+              </button>
+            </div>
           </div>
 
         </div>

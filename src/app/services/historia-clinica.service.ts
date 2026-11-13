@@ -481,6 +481,13 @@ export class HistoriaClinicaService {
         mapa.porAnimal[String(idAnimNum)] = registro;
       }
       localStorage.setItem('vetericano_cba_hospitalizados_map', JSON.stringify(mapa));
+
+      // Si el animal reingresa a hospitalización CBA (ingresaCba === true), no debe figurar como disponible para adopción mientras esté hospitalizado
+      if (ingresaCba === true && !isNaN(idAnimNum) && idAnimNum > 0) {
+        this.guardarEstadoAdopcionLocal(idAnimNum, false);
+        const urlAnim = `${environment.apiUrlAnimales || (this.baseUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnimNum}/`;
+        this.http.patch(urlAnim, { disponible_adopcion: false }, { headers: this.authHeaders }).pipe(catchError(() => of(null))).subscribe();
+      }
     } catch (e) {
       console.warn('No se pudo guardar estado CBA local:', e);
     }
@@ -504,6 +511,74 @@ export class HistoriaClinicaService {
       }
     } catch { }
     return null;
+  }
+
+  /**
+   * Sincroniza el estado de adopción del paciente cuando recibe el alta médica (fuera de peligro) o cuando reingresa.
+   */
+  guardarEstadoAdopcionLocal(
+    idAnimal?: number | string | null,
+    disponibleAdopcion?: boolean,
+    datos?: {
+      id_historia?: number | null;
+      numero_historia?: string;
+      nombre?: string;
+      especie?: string;
+      raza?: string;
+      imagen?: string;
+      descripcion?: string;
+      estado?: string;
+      fecha?: string;
+    }
+  ): void {
+    const idAnimNum = Number(idAnimal);
+    if (isNaN(idAnimNum) || idAnimNum <= 0 || disponibleAdopcion === undefined) return;
+    try {
+      const raw = localStorage.getItem('vetericano_adopciones_sync_map');
+      const mapa = raw ? JSON.parse(raw) : {};
+      const prev = mapa[String(idAnimNum)] || {};
+      mapa[String(idAnimNum)] = {
+        ...prev,
+        id: idAnimNum,
+        id_animal: idAnimNum,
+        id_historia: datos?.id_historia ?? prev.id_historia ?? null,
+        numero_historia: datos?.numero_historia || prev.numero_historia || '',
+        nombre: datos?.nombre || prev.nombre || '',
+        especie: datos?.especie || prev.especie || 'Canino',
+        raza: datos?.raza || prev.raza || 'Mestizo',
+        imagen: datos?.imagen || prev.imagen || '',
+        descripcion: datos?.descripcion || prev.descripcion || '',
+        disponible_adopcion: !!disponibleAdopcion,
+        estado: disponibleAdopcion ? (datos?.estado || 'Disponible') : 'No Disponible',
+        fecha: datos?.fecha || prev.fecha || new Date().toISOString().split('T')[0],
+        updated_at: Date.now()
+      };
+      localStorage.setItem('vetericano_adopciones_sync_map', JSON.stringify(mapa));
+    } catch (e) {
+      console.warn('No se pudo guardar estado de adopción local:', e);
+    }
+  }
+
+  obtenerEstadoAdopcionLocal(idAnimal?: number | string | null): any | null {
+    const idAnimNum = Number(idAnimal);
+    if (isNaN(idAnimNum) || idAnimNum <= 0) return null;
+    try {
+      const raw = localStorage.getItem('vetericano_adopciones_sync_map');
+      if (!raw) return null;
+      const mapa = JSON.parse(raw);
+      return mapa?.[String(idAnimNum)] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  obtenerTodasAdopcionesLocales(): Record<string, any> {
+    try {
+      const raw = localStorage.getItem('vetericano_adopciones_sync_map');
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
   }
 
   /**

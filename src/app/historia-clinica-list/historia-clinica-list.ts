@@ -27,11 +27,12 @@ export interface HistoriaClinicaItem {
   fecha_ultimo_celo?: string | null;
   fecha_ultimo_parto?: string | null;
   id_consulta?: number;
-  // Hospitalización CBA
+  // Hospitalización CBA y Adopción
   ingresa_cba?: boolean;
   canil_asignado?: string;
   motivo_ingreso_cba?: string;
   funcionario_recibe_cba?: string;
+  disponible_adopcion?: boolean;
   // Campos enriquecidos para la UI
   animal_nombre?: string;
   animal_especie?: string;
@@ -352,6 +353,11 @@ export class HistoriaClinicaListComponent implements OnInit {
         h.ultima_consulta?.funcionario_recibe_cba ||
         '';
 
+      const adopcionLocal = this.historiaService.obtenerEstadoAdopcionLocal(idAnimNum);
+      const disponibleAdopcionResuelto = adopcionLocal !== null
+        ? (!ingresaCbaResuelto && !!adopcionLocal.disponible_adopcion)
+        : (!ingresaCbaResuelto && Boolean(animalInfo.disponible_adopcion ?? h.animal?.disponible_adopcion ?? false));
+
       return {
         id_historia: h.id_historia,
         id_animal: h.id_animal,
@@ -365,6 +371,7 @@ export class HistoriaClinicaListComponent implements OnInit {
         canil_asignado: canilResuelto,
         motivo_ingreso_cba: motivoCbaResuelto,
         funcionario_recibe_cba: funcionarioCbaResuelto,
+        disponible_adopcion: disponibleAdopcionResuelto,
         numero_historia: numSecuencial,
         numero_radicado: numRadicado,
         fecha_apertura: h.fecha_apertura,
@@ -711,7 +718,13 @@ export class HistoriaClinicaListComponent implements OnInit {
               raza: razaAnimal,
               foto_url: fotoFinal,
               sexo: a.sexo || existente.sexo || porNombre.sexo || '',
-              peso: a.peso ?? existente.peso ?? porNombre.peso ?? null
+              peso: a.peso ?? existente.peso ?? porNombre.peso ?? null,
+              color: a.color || existente.color || '',
+              microchip: a.microchip || existente.microchip || '',
+              caracteristicas: a.caracteristicas || existente.caracteristicas || '',
+              observaciones: a.observaciones || existente.observaciones || '',
+              esterilizado: Boolean(a.esterilizado ?? existente.esterilizado ?? false),
+              disponible_adopcion: Boolean(a.disponible_adopcion ?? existente.disponible_adopcion ?? false)
             });
           }
         });
@@ -1518,14 +1531,27 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.guardandoEdicionAnimal = true;
     const idAnim = this.animalEnEdicion.id_animal;
 
+    // Si el animal se envía a adopción, recibe el alta médica (fuera de peligro = Estable y sale de Hospitalizados)
+    if (this.animalEnEdicion.disponible_adopcion) {
+      this.animalEnEdicion.ingresa_cba = false;
+      if (this.animalEnEdicion.estado_general === 'Crítico' || this.animalEnEdicion.estado_general === 'Delicado') {
+        this.animalEnEdicion.estado_general = 'Estable';
+      }
+    }
+
+    const descripcionAdopcion =
+      this.animalEnEdicion.observaciones.trim() ||
+      this.animalEnEdicion.caracteristicas.trim() ||
+      `Paciente ${this.animalEnEdicion.nombre.trim()} (${this.animalEnEdicion.especie} · ${this.animalEnEdicion.raza}), recuperado satisfactoriamente en el CBA, fuera de peligro y apto para adopción responsable.`;
+
     const payloadAnimal: any = {
       nombre: this.animalEnEdicion.nombre.trim(),
       sexo: this.animalEnEdicion.sexo,
       color: this.animalEnEdicion.color.trim(),
       peso: this.animalEnEdicion.peso !== null && this.animalEnEdicion.peso !== undefined ? Number(this.animalEnEdicion.peso) : null,
       esterilizado: Boolean(this.animalEnEdicion.esterilizado),
-      caracteristicas: this.animalEnEdicion.caracteristicas.trim(),
-      observaciones: this.animalEnEdicion.observaciones.trim(),
+      caracteristicas: this.animalEnEdicion.caracteristicas.trim() || (this.animalEnEdicion.disponible_adopcion ? descripcionAdopcion : ''),
+      observaciones: this.animalEnEdicion.observaciones.trim() || (this.animalEnEdicion.disponible_adopcion ? descripcionAdopcion : ''),
       foto_url: this.animalEnEdicion.foto_url.trim() || null,
       disponible_adopcion: Boolean(this.animalEnEdicion.disponible_adopcion)
     };
@@ -1538,13 +1564,31 @@ export class HistoriaClinicaListComponent implements OnInit {
       ? `${environment.apiUrlAnimales || (environment.apiUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnim}/`
       : null;
 
+    // Sincronizar también con el endpoint de Adopciones (/api/adopciones/{id}/)
+    if (idAnim && idAnim > 0) {
+      const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
+      const urlAdopcion = `${baseUrl}/api/adopciones/${idAnim}/`;
+      this.http.put<any>(
+        urlAdopcion,
+        {
+          nombre: payloadAnimal.nombre,
+          raza: this.animalEnEdicion.raza || 'Mestizo',
+          imagen: payloadAnimal.foto_url || '',
+          descripcion: descripcionAdopcion,
+          estado: this.animalEnEdicion.disponible_adopcion ? 'Disponible' : 'No Disponible'
+        },
+        { headers: this.authHeaders }
+      ).pipe(catchError(() => of(null))).subscribe();
+    }
+
     const finalizarActualizacion = () => {
       const ingresaCbaBool = Boolean(this.animalEnEdicion.ingresa_cba);
+      const disponibleAdopBool = !ingresaCbaBool && Boolean(this.animalEnEdicion.disponible_adopcion);
       const canilStr = (this.animalEnEdicion.canil_asignado || '').trim();
       const motivoCbaStr = (this.animalEnEdicion.motivo_ingreso_cba || '').trim();
       const funcCbaStr = (this.animalEnEdicion.funcionario_recibe_cba || '').trim();
 
-      // Guardar estado de hospitalización CBA en caché local sincronizado y mapa de consultas
+      // Guardar estado de hospitalización CBA y adopción en caché local sincronizado
       this.historiaService.guardarEstadoCbaLocal(
         this.animalEnEdicion.id_historia,
         idAnim,
@@ -1555,6 +1599,17 @@ export class HistoriaClinicaListComponent implements OnInit {
           funcionario_recibe_cba: funcCbaStr
         }
       );
+
+      this.historiaService.guardarEstadoAdopcionLocal(idAnim, disponibleAdopBool, {
+        id_historia: this.animalEnEdicion.id_historia,
+        numero_historia: this.animalEnEdicion.id_historia ? `HC-${this.animalEnEdicion.id_historia}` : '',
+        nombre: this.animalEnEdicion.nombre.trim(),
+        especie: this.animalEnEdicion.especie,
+        raza: this.animalEnEdicion.raza || 'Mestizo',
+        imagen: this.animalEnEdicion.foto_url || '',
+        descripcion: descripcionAdopcion,
+        estado: disponibleAdopBool ? 'Disponible' : 'No Disponible'
+      });
 
       if (this.animalEnEdicion.id_historia) {
         const idHistNum = Number(this.animalEnEdicion.id_historia);
@@ -1580,6 +1635,7 @@ export class HistoriaClinicaListComponent implements OnInit {
         }
         this.historiaSeleccionada.estado_general = this.animalEnEdicion.estado_general;
         this.historiaSeleccionada.ingresa_cba = ingresaCbaBool;
+        this.historiaSeleccionada.disponible_adopcion = disponibleAdopBool;
         this.historiaSeleccionada.canil_asignado = canilStr;
         this.historiaSeleccionada.motivo_ingreso_cba = motivoCbaStr;
         this.historiaSeleccionada.funcionario_recibe_cba = funcCbaStr;
@@ -1601,6 +1657,7 @@ export class HistoriaClinicaListComponent implements OnInit {
         }
         histEnLista.estado_general = this.animalEnEdicion.estado_general;
         histEnLista.ingresa_cba = ingresaCbaBool;
+        histEnLista.disponible_adopcion = disponibleAdopBool;
         histEnLista.canil_asignado = canilStr;
         histEnLista.motivo_ingreso_cba = motivoCbaStr;
         histEnLista.funcionario_recibe_cba = funcCbaStr;
@@ -1612,6 +1669,7 @@ export class HistoriaClinicaListComponent implements OnInit {
         this.mapaAnimales.set(Number(idAnim), {
           ...prev,
           ...this.animalEnEdicion,
+          disponible_adopcion: disponibleAdopBool,
           foto_url: this.animalEnEdicion.foto_url || prev.foto_url
         });
       }
@@ -1623,8 +1681,10 @@ export class HistoriaClinicaListComponent implements OnInit {
 
       Swal.fire({
         icon: 'success',
-        title: '¡Ficha del paciente actualizada!',
-        text: `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron exitosamente en el sistema.`,
+        title: disponibleAdopBool ? '¡Enviado a Adopción!' : '¡Ficha del paciente actualizada!',
+        text: disponibleAdopBool
+          ? `${this.animalEnEdicion.nombre} recibió el alta médica (Estable), su historia clínica permanece en el listado normal y ya figura Disponible en el módulo de Adopciones.`
+          : `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron exitosamente en el sistema.`,
         confirmButtonColor: '#4141a5'
       });
     };
@@ -1672,6 +1732,166 @@ export class HistoriaClinicaListComponent implements OnInit {
     } else {
       finalizarActualizacion();
     }
+  }
+
+  /**
+   * Da el alta médica de hospitalización CBA (fuera de peligro = Estable) y envía al animal al módulo de Adopciones,
+   * conservando su Historia Clínica abierta en el apartado normal por si regresa a control o reingreso.
+   */
+  enviarAAdopcion(historia: HistoriaClinicaItem): void {
+    if (!historia) return;
+
+    const idAnim = Number(historia.id_animal);
+    const idHist = Number(historia.id_historia);
+    const animalCache = (idAnim && !isNaN(idAnim)) ? (this.mapaAnimales.get(idAnim) || {}) : {};
+    const descripcionPorDefecto =
+      animalCache.observaciones ||
+      animalCache.caracteristicas ||
+      `${historia.animal_nombre || 'Paciente'} (${historia.animal_especie || 'Canino'} · ${historia.animal_raza || 'Mestizo'}) fue atendido y recuperado satisfactoriamente en el Centro de Bienestar Animal (CBA). Se encuentra fuera de peligro, en estado clínico estable y apto para adopción responsable.`;
+
+    Swal.fire({
+      title: `¿Dar alta y enviar a Adopción a ${historia.animal_nombre}?`,
+      html: `
+        <div style="text-align:left; font-size:13px; color:#334155; line-height:1.5;">
+          <p style="margin-bottom:8px;">
+            • <strong>Alta de Hospitalización CBA:</strong> Pasará a estado <strong>Estable</strong> (fuera de peligro) y saldrá de <em>Hospitalizados</em>.<br/>
+            • <strong>Historia Clínica (${historia.numero_historia}):</strong> Permanecerá abierta en el listado <em>Normal</em> con todo su historial por si vuelve a consulta o reingreso.<br/>
+            • <strong>Módulo de Adopciones:</strong> Quedará publicado inmediatamente como <strong>Disponible</strong>.
+          </p>
+          <label style="display:block; font-weight:700; color:#170B3D; margin-top:10px; margin-bottom:4px;">Descripción para la ficha de Adopción:</label>
+        </div>
+      `,
+      input: 'textarea',
+      inputValue: descripcionPorDefecto,
+      inputPlaceholder: 'Describe el carácter, recuperación y estado del animal para su adopción...',
+      showCancelButton: true,
+      confirmButtonColor: '#4141a5',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Confirmar Alta y Enviar a Adopción',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+
+      const descripcionFinal = String(result.value || descripcionPorDefecto).trim() || descripcionPorDefecto;
+      const fotoAnimal = historia.animal_foto || animalCache.foto_url || '';
+
+      // 1. Actualizar estado en memoria y caché sincronizado
+      historia.ingresa_cba = false;
+      historia.estado_general = 'Estable';
+      historia.disponible_adopcion = true;
+
+      if (this.historiaSeleccionada && Number(this.historiaSeleccionada.id_historia) === idHist) {
+        this.historiaSeleccionada.ingresa_cba = false;
+        this.historiaSeleccionada.estado_general = 'Estable';
+        this.historiaSeleccionada.disponible_adopcion = true;
+      }
+
+      this.historiaService.guardarEstadoCbaLocal(idHist, idAnim, false, {
+        canil_asignado: '',
+        motivo_ingreso_cba: 'Alta médica de hospitalización CBA — Enviado a Adopción',
+        funcionario_recibe_cba: historia.funcionario_recibe_cba || this.obtenerVeterinarioSesion()
+      });
+
+      this.historiaService.guardarEstadoAdopcionLocal(idAnim, true, {
+        id_historia: idHist,
+        numero_historia: historia.numero_historia,
+        nombre: historia.animal_nombre || 'Paciente',
+        especie: historia.animal_especie || 'Canino',
+        raza: historia.animal_raza || 'Mestizo',
+        imagen: fotoAnimal,
+        descripcion: descripcionFinal,
+        estado: 'Disponible'
+      });
+
+      if (idHist > 0) {
+        const prevCons = this.mapaConsultasPorHistoria.get(idHist) || {};
+        this.mapaConsultasPorHistoria.set(idHist, {
+          ...prevCons,
+          ingresa_cba: false
+        });
+      }
+
+      if (idAnim > 0) {
+        const prevAnim = this.mapaAnimales.get(idAnim) || {};
+        this.mapaAnimales.set(idAnim, {
+          ...prevAnim,
+          disponible_adopcion: true,
+          caracteristicas: descripcionFinal,
+          observaciones: descripcionFinal,
+          foto_url: fotoAnimal || prevAnim.foto_url || ''
+        });
+      }
+
+      // 2. Actualizar en PostgreSQL: HistoriaClinica, Consultas, Animal y Adopciones
+      if (idHist > 0) {
+        const urlHistoria = `${environment.apiUrlHistorias || (environment.apiUrlClinica + 'historias/')}${idHist}/`;
+        this.http.patch(urlHistoria, { estado_general: 'Estable' }, { headers: this.authHeaders }).pipe(catchError(() => of(null))).subscribe();
+
+        const urlConsHist = `${environment.apiUrlClinica}consultas/?id_historia=${idHist}`;
+        this.http.get<any>(urlConsHist, { headers: this.authHeaders }).pipe(catchError(() => of(null))).subscribe({
+          next: (resCons) => {
+            const arrCons = Array.isArray(resCons) ? resCons : (resCons?.results || []);
+            const filtradas = arrCons.filter((c: any) => Number(c?.id_historia) === idHist);
+            filtradas.forEach((c: any) => {
+              if (c?.id_consulta) {
+                this.http.patch(
+                  `${environment.apiUrlClinica}consultas/${c.id_consulta}/`,
+                  { ingresa_cba: false, resultado_estado: 'Estable' },
+                  { headers: this.authHeaders }
+                ).pipe(catchError(() => of(null))).subscribe();
+              }
+            });
+          }
+        });
+      }
+
+      if (idAnim > 0) {
+        const urlAnimal = `${environment.apiUrlAnimales || (environment.apiUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnim}/`;
+        this.http.patch(
+          urlAnimal,
+          {
+            disponible_adopcion: true,
+            caracteristicas: descripcionFinal,
+            observaciones: descripcionFinal,
+            ...(fotoAnimal ? { foto_url: fotoAnimal } : {})
+          },
+          { headers: this.authHeaders }
+        ).pipe(catchError(() => of(null))).subscribe();
+
+        const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
+        const urlAdopcion = `${baseUrl}/api/adopciones/${idAnim}/`;
+        this.http.put(
+          urlAdopcion,
+          {
+            nombre: historia.animal_nombre || 'Paciente',
+            raza: historia.animal_raza || 'Mestizo',
+            imagen: fotoAnimal || '',
+            descripcion: descripcionFinal,
+            estado: 'Disponible'
+          },
+          { headers: this.authHeaders }
+        ).pipe(catchError(() => of(null))).subscribe();
+      }
+
+      this.aplicarFiltros();
+      this.cdr.detectChanges();
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Alta médica y enviado a Adopción!',
+        text: `${historia.animal_nombre} ya está disponible en Adopciones y su historia clínica (${historia.numero_historia}) quedó guardada en el apartado normal.`,
+        confirmButtonColor: '#4141a5',
+        showCancelButton: true,
+        confirmButtonText: 'Ir a Adopciones',
+        cancelButtonText: 'Ver en Historias Normales'
+      }).then((resNav) => {
+        if (resNav.isConfirmed) {
+          this.router.navigate(['/inicio-admin/adopciones']);
+        } else {
+          this.cambiarVistaHospitalizados(false);
+        }
+      });
+    });
   }
 
   irANuevaConsulta(): void {
