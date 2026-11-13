@@ -4,7 +4,7 @@
   <!-- 1. ENCABEZADO INSTITUCIONAL                                               -->
   <!-- ========================================================================= -->
   <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-[1600px] mx-auto">
       
       <!-- Marca y Título del Módulo -->
       <div class="flex items-center gap-3.5">
@@ -85,7 +85,7 @@
   <!-- ========================================================================= -->
   <!-- 2. CONTENIDO PRINCIPAL                                                    -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+  <main class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
 
     <!-- BARRA DE BÚSQUEDA Y FILTROS -->
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
@@ -216,15 +216,15 @@
     <!-- VISTA EN TABLA (CUANDO HAY DATOS) -->
     <div *ngIf="!cargando && vistaModo === 'tabla'" class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-2">
       <div class="overflow-x-auto overflow-y-auto flex-1">
-        <table class="w-full text-left border-collapse min-w-[750px]">
+        <table class="w-full text-left border-collapse">
           <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10 backdrop-blur-xs">
             <tr>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">N° Historia</th>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Paciente</th>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Fecha Apertura</th>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Estado Clínico</th>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Expediente</th>
-              <th class="px-5 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Acciones</th>
+              <th class="px-3.5 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase whitespace-nowrap">N° Historia</th>
+              <th class="px-3.5 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase whitespace-nowrap">Paciente</th>
+              <th class="px-3.5 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase whitespace-nowrap">Fecha Apertura</th>
+              <th class="px-3.5 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase whitespace-nowrap">Estado Clínico</th>
+              <th class="px-3.5 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase text-center whitespace-nowrap">Expediente</th>
+              <th class="px-3.5 py-3 text-xs font-bold tracking-wider text-gray-500 uppercase text-center whitespace-nowrap">Acciones</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 text-xs">
@@ -235,7 +235,7 @@
               class="hover:bg-[#4141a5]/5 transition-colors group">
 
               <!-- N° Historia Clínica y Radicado -->
-              <td class="px-5 py-3.5 whitespace-nowrap">
+              <td class="px-3.5 py-3 whitespace-nowrap">
                 <div class="flex items-center gap-2">
                   <span class="w-2 h-2 rounded-full bg-[#4141a5] shrink-0"></span>
                   <span class="font-extrabold text-[#170B3D] text-xs">
@@ -251,7 +251,7 @@
               </td>
 
               <!-- Paciente / Animal -->
-              <td class="px-5 py-3.5">
+              <td class="px-3.5 py-3 whitespace-nowrap">
                 <div class="flex items-center gap-2.5">
                   <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
                     <img
@@ -265,16 +265,16 @@
                     </span>
                   </div>
                   <div class="min-w-0">
-                    <div class="flex items-center gap-1.5 flex-wrap">
+                    <div class="flex items-center gap-1.5">
                       <p class="font-bold text-gray-800 truncate">{{ historia.animal_nombre }}</p>
                       <span
                         *ngIf="historia.ingresa_cba"
-                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/25">
+                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase whitespace-nowrap shrink-0 bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/25">
                         CBA{{ historia.canil_asignado ? ' · ' + historia.canil_asignado : '' }}
                       </span>
                       <span
                         *ngIf="!historia.ingresa_cba && historia.disponible_adopcion"
-                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase whitespace-nowrap shrink-0 bg-emerald-50 text-emerald-700 border border-emerald-200">
                         En Adopción
                       </span>
                     </div>
@@ -286,12 +286,12 @@
               </td>
 
               <!-- Fecha de Apertura -->
-              <td class="px-5 py-3.5 whitespace-nowrap text-gray-600 font-medium">
+              <td class="px-3.5 py-3 whitespace-nowrap text-gray-600 font-medium">
                 {{ formatearFechaHora(historia.fecha_apertura) }}
               </td>
 
               <!-- Estado Clínico -->
-              <td class="px-5 py-3.5 whitespace-nowrap">
+              <td class="px-3.5 py-3 whitespace-nowrap">
                 <div class="flex items-center gap-2">
                   <span
                     [ngClass]="obtenerClaseEstado(historia.estado_general)"
@@ -306,11 +306,11 @@
               </td>
 
               <!-- Expediente / Ver detalle completo -->
-              <td class="px-5 py-3.5 whitespace-nowrap text-center">
+              <td class="px-3.5 py-3 whitespace-nowrap text-center">
                 <button
                   type="button"
                   (click)="verDetalleCompletoHistoria(historia)"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
                   title="Ver detalle completo de la historia clínica"
                   aria-label="Ver detalle completo">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -322,14 +322,14 @@
               </td>
 
               <!-- Acciones -->
-              <td class="px-5 py-3.5 whitespace-nowrap text-center">
-                <div class="flex items-center justify-center gap-2">
+              <td class="px-3.5 py-3 whitespace-nowrap text-center">
+                <div class="flex items-center justify-center gap-1.5">
                   <!-- Enviar a Adopción (Cuando está en Hospitalizados) -->
                   <button
                     *ngIf="historia.ingresa_cba"
                     type="button"
                     (click)="enviarAAdopcion(historia)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border border-[#4141a5]/30 hover:border-[#4141a5]/60 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
                     title="Dar de alta (fuera de peligro) y enviar al módulo de Adopciones"
                     aria-label="Enviar a adopción">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -342,7 +342,7 @@
                   <button
                     type="button"
                     (click)="abrirModalDetalle(historia)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white border border-[#4141a5]/20 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white border border-[#4141a5]/20 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
                     title="Nueva consulta"
                     aria-label="Nueva consulta">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -355,7 +355,7 @@
                   <button
                     type="button"
                     (click)="abrirModalEditarAnimal(historia)"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#170B3D]/5 hover:bg-[#170B3D] text-[#170B3D] hover:text-white border border-[#170B3D]/20 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#170B3D]/5 hover:bg-[#170B3D] text-[#170B3D] hover:text-white border border-[#170B3D]/20 font-bold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer"
                     title="Editar animal"
                     aria-label="Editar animal">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

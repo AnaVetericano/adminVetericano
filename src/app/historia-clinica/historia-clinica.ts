@@ -121,7 +121,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   materialesUtilizados: string = '';
   materiales_utilizados: string = '';
 
-  // Destino CBA
+  // Destino CBA y Seguimiento Hospitalario (/api/clinica/hospitalizaciones/ y /api/clinica/seguimientos-hospitalarios/)
   ingresa_cba: boolean = false;
   ingresaCBA: string = 'NO';
   motivo_ingreso_cba: string = '';
@@ -130,6 +130,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   canilAsignado: string = '';
   funcionario_recibe_cba: string = '';
   funcionarioRecibeCBA: string = '';
+  hojaHospitalizacionNumero: number = 1;
+  hospitalizacionActiva: any = null;
+  seguimientosHospitalarios: any[] = [];
+  nuevaNotaHospitalaria: string = '';
+  guardandoNotaHospitalaria: boolean = false;
+  seguimientosClinicos: any[] = [];
+  nuevaEvolucionRapida: string = '';
+  guardandoEvolucionRapida: boolean = false;
 
   // =========================================================================
   // MODELOS ESTRUCTURADOS DEL ACTA MÓVIL (TRIAJE EN CAMPO Y CIERRE CBA)
@@ -214,7 +222,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     estadoDesparasitacion: 'Suministrada',
     estadoEctoparasitos: 'Tratado',
     enfermedadesAnteriores: '',
-    historiaReproductiva: ''
+    historiaReproductiva: '',
+    ultimoCelo: '',
+    fechaUltimoParto: ''
   };
 
   datosPropietario = {
@@ -631,6 +641,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   ngOnInit(): void {
+    this.inicializarVeterinarioDesdeSesion();
     this.cargarPatologias();
     this.cargarExamenesClinicos();
     this.cargarMedicamentos();
@@ -715,6 +726,174 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   cambiarPestanaPrincipal(p: 'atencion' | 'historial' | 'plan_sanitario' | 'receta' | 'auditoria'): void {
     this.pestanaPrincipal = p;
     this.cdr.detectChanges();
+  }
+
+  private inicializarVeterinarioDesdeSesion(): void {
+    try {
+      const rawUser =
+        localStorage.getItem('user_session') ||
+        localStorage.getItem('user') ||
+        localStorage.getItem('usuario') ||
+        localStorage.getItem('currentUser');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        const nombreCompleto = `${parsed?.nombre || parsed?.nombres || parsed?.full_name || parsed?.username || ''} ${parsed?.apellido || parsed?.apellidos || ''}`.trim();
+        if (nombreCompleto) {
+          this.nombreVeterinario = nombreCompleto;
+          if (!this.funcionarioRecibeCBA) {
+            this.funcionarioRecibeCBA = nombreCompleto;
+            this.funcionario_recibe_cba = nombreCompleto;
+          }
+        }
+        if (parsed?.tarjeta_profesional || parsed?.matricula) {
+          this.tarjetaProfesional = String(parsed.tarjeta_profesional || parsed.matricula);
+        }
+      }
+    } catch {}
+  }
+
+  cargarHospitalizacionYSeguimientos(idConsulta?: number | null): void {
+    const idCons = Number(idConsulta || this.historiaOriginal?.id_consulta || 0);
+    if (!idCons || isNaN(idCons) || idCons <= 0) {
+      return;
+    }
+
+    this.historiaService.obtenerHospitalizacionYSeguimientos(idCons).subscribe({
+      next: ({ hospitalizacion, seguimientos }) => {
+        this.hospitalizacionActiva = hospitalizacion || null;
+        if (hospitalizacion?.hoja_numero) {
+          this.hojaHospitalizacionNumero = Number(hospitalizacion.hoja_numero);
+        }
+        this.seguimientosHospitalarios = Array.isArray(seguimientos) ? seguimientos : [];
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+
+    const idsConsultas = [
+      idCons,
+      ...(this.consultasAnteriores || []).map((c: any) => Number(c?.id_consulta || 0)).filter((n: number) => n > 0)
+    ];
+    this.historiaService.obtenerSeguimientosClinicosPorConsultas(idsConsultas).subscribe({
+      next: (listaSeg) => {
+        this.seguimientosClinicos = Array.isArray(listaSeg) ? listaSeg : [];
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  agregarNotaSeguimientoHospitalario(): void {
+    const nota = (this.nuevaNotaHospitalaria || '').trim();
+    if (!nota) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nota vacía',
+        text: 'Escribe la nota de evolución hospitalaria diaria antes de registrarla.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    const idCons = Number(this.historiaOriginal?.id_consulta || this.idHistoria || 1);
+    this.guardandoNotaHospitalaria = true;
+    this.cdr.detectChanges();
+
+    this.historiaService.registrarSeguimientoHospitalario(idCons, nota, {
+      id_hospitalizacion: this.hospitalizacionActiva?.id_hospitalizacion || null,
+      descripcion_estado: `${this.resultado_estado || 'En observación'} — ${this.motivoIngresoNoIngreso || 'Hospitalizado CBA'}`,
+      diagnostico_presuntivo: (this.formHistoria?.get('diagnosticoPrincipal')?.value || this.diagnosticoFinal || 'En estudio clínico').trim(),
+      responsable_clinico: this.funcionarioRecibeCBA || this.nombreVeterinario || 'Veterinario CBA',
+      hoja_numero: Number(this.hojaHospitalizacionNumero || 1)
+    }).subscribe({
+      next: (creado) => {
+        this.guardandoNotaHospitalaria = false;
+        this.nuevaNotaHospitalaria = '';
+        const nuevoItem = creado?.id_seguimiento_hosp
+          ? creado
+          : {
+              id_seguimiento_hosp: Date.now(),
+              id_hospitalizacion: this.hospitalizacionActiva?.id_hospitalizacion || 1,
+              evolucion: nota,
+              fecha: new Date().toISOString()
+            };
+        this.seguimientosHospitalarios = [nuevoItem, ...this.seguimientosHospitalarios];
+        this.cargarHospitalizacionYSeguimientos(idCons);
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Evolución hospitalaria registrada',
+          text: 'La nota se guardó en el seguimiento hospitalario del CBA.',
+          timer: 1600,
+          showConfirmButton: false
+        });
+      },
+      error: () => {
+        this.guardandoNotaHospitalaria = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  registrarSeguimientoClinicoRapido(): void {
+    const evoTexto = (this.nuevaEvolucionRapida || '').trim();
+    if (!evoTexto) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Evolución requerida',
+        text: 'Ingresa la descripción del seguimiento clínico antes de guardarlo.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    const idCons = Number(this.historiaOriginal?.id_consulta || this.consultasAnteriores?.[0]?.id_consulta || 1);
+    const formVal = this.formHistoria?.value || {};
+    this.guardandoEvolucionRapida = true;
+    this.cdr.detectChanges();
+
+    this.historiaService.crearSeguimientoClinico({
+      id_consulta: idCons,
+      evolucion: evoTexto,
+      temperatura: formVal.temperatura ? Number(formVal.temperatura) : this.temperatura,
+      frecuencia_cardiaca: formVal.frecuenciaCardiaca ? Number(formVal.frecuenciaCardiaca) : this.frecuencia_cardiaca,
+      frecuencia_respiratoria: formVal.frecuenciaRespiratoria ? Number(formVal.frecuenciaRespiratoria) : this.frecuencia_respiratoria,
+      peso: formVal.peso ? Number(formVal.peso) : (this.paciente?.peso ? Number(this.paciente.peso) : null),
+      plan_tratamiento: (formVal.planTratamiento || this.planProcedimientos || 'Control y seguimiento clínico').trim()
+    }).subscribe({
+      next: (segCreado) => {
+        this.guardandoEvolucionRapida = false;
+        this.nuevaEvolucionRapida = '';
+        const item = segCreado?.id_seguimiento
+          ? segCreado
+          : {
+              id_seguimiento: Date.now(),
+              id_consulta: idCons,
+              evolucion: evoTexto,
+              fecha: new Date().toISOString(),
+              temperatura: formVal.temperatura || this.temperatura,
+              frecuencia_cardiaca: formVal.frecuenciaCardiaca || this.frecuencia_cardiaca,
+              frecuencia_respiratoria: formVal.frecuenciaRespiratoria || this.frecuencia_respiratoria,
+              peso: formVal.peso || this.paciente?.peso,
+              plan_tratamiento: formVal.planTratamiento || this.planProcedimientos
+            };
+        this.seguimientosClinicos = [item, ...this.seguimientosClinicos];
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Seguimiento clínico guardado',
+          text: 'Se registró el seguimiento en /api/clinica/seguimientos/.',
+          timer: 1600,
+          showConfirmButton: false
+        });
+      },
+      error: () => {
+        this.guardandoEvolucionRapida = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   iniciarNuevaConsulta(): void {
@@ -1711,8 +1890,13 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             estadoDesparasitacion: sistemasParseados?.['_estado_desparasitacion'] || ((anam.productoDesparasitacion || anam.ultimaDesparasitacion) ? 'Suministrada' : 'En evaluación'),
             estadoEctoparasitos: sistemasParseados?.['_estado_ectoparasitos'] || 'Tratado',
             enfermedadesAnteriores: anam.enfermedadesAnteriores || anam.enfermedadesPrevias || sistemasParseados?.['_enfermedades_anteriores'] || '',
-            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || ''
+            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || '',
+            ultimoCelo: anam.ultimoCelo || raw.fecha_ultimo_celo || sistemasParseados?.['_ultimo_celo'] || '',
+            fechaUltimoParto: anam.fechaUltimoParto || raw.fecha_ultimo_parto || sistemasParseados?.['_fecha_ultimo_parto'] || ''
           };
+          if (sistemasParseados?.['_hoja_hospitalizacion_numero']) {
+            this.hojaHospitalizacionNumero = Number(sistemasParseados['_hoja_hospitalizacion_numero']) || 1;
+          }
 
           if (Array.isArray(data.examenes_solicitados) && data.examenes_solicitados.length > 0) {
             this.examenesSolicitados = data.examenes_solicitados.map((ex: any) => ({
@@ -1883,6 +2067,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         this.formHistoria.markAsPristine();
         this.formHistoria.markAsUntouched();
+        this.cargarHospitalizacionYSeguimientos(data.id_consulta);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -2798,7 +2983,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         _estado_desparasitacion: this.planSanitario.estadoDesparasitacion || 'Suministrada',
         _estado_ectoparasitos: this.planSanitario.estadoEctoparasitos || 'Tratado',
         _enfermedades_anteriores: this.planSanitario.enfermedadesAnteriores || '',
-        _historia_reproductiva: this.planSanitario.historiaReproductiva || ''
+        _historia_reproductiva: this.planSanitario.historiaReproductiva || '',
+        _ultimo_celo: this.planSanitario.ultimoCelo || '',
+        _fecha_ultimo_parto: this.planSanitario.fechaUltimoParto || '',
+        _hoja_hospitalizacion_numero: this.hojaHospitalizacionNumero || 1
       },
       examenes_solicitados: this.examenesSolicitados.map(ex => ({
         id_examen: ex.id_examen || ex.id,
@@ -2831,7 +3019,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         ingresa_cba: this.ingresaCBA,
         motivo_ingreso_no_ingreso: this.motivoIngresoNoIngreso,
         canil_asignado: this.canilAsignado,
-        funcionario_recibe_cba: this.funcionarioRecibeCBA
+        funcionario_recibe_cba: this.funcionarioRecibeCBA,
+        hoja_numero: this.hojaHospitalizacionNumero || 1
       },
       tenedor: {
         nombres: this.nombreAcudiente,
@@ -2844,7 +3033,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         productoDesparasitacion: this.planSanitario.productoDesparasitacion || '',
         enfermedadesAnteriores: this.planSanitario.enfermedadesAnteriores || '',
         alimentacion: this.alimento_marca || '',
-        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero')
+        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero'),
+        ultimoCelo: this.planSanitario.ultimoCelo || '',
+        fechaUltimoParto: this.planSanitario.fechaUltimoParto || ''
       },
       alimento_marca: this.alimento_marca || '',
       esterilizado_opcion: this.esterilizado_opcion || 'No',

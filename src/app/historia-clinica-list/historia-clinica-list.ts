@@ -1296,8 +1296,21 @@ export class HistoriaClinicaListComponent implements OnInit {
         this.modalCrearEnHistorial = false;
 
         const fechaAhora = new Date().toISOString();
+        const idConsultaCreada = Number(resp?.consulta_id || resp?.id_consulta || this.historiaSeleccionada?.id_consulta || 0);
+        if (idConsultaCreada > 0) {
+          this.historiaService.crearSeguimientoClinico({
+            id_consulta: idConsultaCreada,
+            evolucion: `${this.nuevoRegistroHistorial.tipo}: ${this.nuevoRegistroHistorial.diagnostico || motivoTexto}`,
+            temperatura: this.nuevoRegistroHistorial.temperatura,
+            frecuencia_cardiaca: this.nuevoRegistroHistorial.frecuenciaCardiaca,
+            frecuencia_respiratoria: this.nuevoRegistroHistorial.frecuenciaRespiratoria,
+            peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada?.animal_peso) || null,
+            plan_tratamiento: planTexto
+          }).subscribe();
+        }
+
         const nuevaTarjeta = {
-          id_consulta: resp?.consulta_id || resp?.id_consulta || Date.now(),
+          id_consulta: idConsultaCreada || Date.now(),
           titulo: this.normalizarTituloConsulta(this.nuevoRegistroHistorial.tipo),
           peso: this.nuevoRegistroHistorial.peso || Number(this.historiaSeleccionada?.animal_peso) || 3.0,
           temperatura: this.nuevoRegistroHistorial.temperatura || 38.5,
@@ -1703,21 +1716,43 @@ export class HistoriaClinicaListComponent implements OnInit {
           const filtradas = arrCons.filter((c: any) => Number(c?.id_historia) === Number(this.animalEnEdicion.id_historia));
           filtradas.forEach((c: any) => {
             if (c?.id_consulta) {
-              this.http.patch(
-                `${environment.apiUrlClinica}consultas/${c.id_consulta}/`,
-                {
-                  ingresa_cba: Boolean(this.animalEnEdicion.ingresa_cba),
-                  canil_asignado: (this.animalEnEdicion.canil_asignado || '').trim(),
-                  motivo_ingreso_cba: (this.animalEnEdicion.motivo_ingreso_cba || '').trim(),
-                  funcionario_recibe_cba: (this.animalEnEdicion.funcionario_recibe_cba || '').trim()
-                },
-                { headers: this.authHeaders }
-              ).pipe(catchError(() => of(null))).subscribe();
-            }
-          });
-        }
-      });
-    }
+                this.http.patch(
+                  `${environment.apiUrlClinica}consultas/${c.id_consulta}/`,
+                  {
+                    ingresa_cba: Boolean(this.animalEnEdicion.ingresa_cba),
+                    canil_asignado: (this.animalEnEdicion.canil_asignado || '').trim(),
+                    motivo_ingreso_cba: (this.animalEnEdicion.motivo_ingreso_cba || '').trim(),
+                    funcionario_recibe_cba: (this.animalEnEdicion.funcionario_recibe_cba || '').trim()
+                  },
+                  { headers: this.authHeaders }
+                ).pipe(catchError(() => of(null))).subscribe();
+
+                if (Boolean(this.animalEnEdicion.ingresa_cba)) {
+                  this.historiaService.sincronizarHospitalizacionCba(Number(c.id_consulta), true, {
+                    descripcion_estado: `${this.animalEnEdicion.estado_general || 'En observación'} — ${this.animalEnEdicion.motivo_ingreso_cba || 'Hospitalización CBA'}`,
+                    diagnostico_presuntivo: this.animalEnEdicion.observaciones || 'Paciente hospitalizado en CBA',
+                    responsable_clinico: this.animalEnEdicion.funcionario_recibe_cba || this.obtenerVeterinarioSesion(),
+                    hoja_numero: 1
+                  }).subscribe();
+                }
+              }
+            });
+          }
+        });
+      }
+
+      if (idAnim && idAnim > 0) {
+        const estadoNombre = this.animalEnEdicion.disponible_adopcion
+          ? 'Disponible para Adopción'
+          : (this.animalEnEdicion.ingresa_cba ? 'Hospitalizado CBA' : (this.animalEnEdicion.estado_general || 'Estable'));
+        this.historiaService.registrarEstadoAnimal(
+          Number(idAnim),
+          estadoNombre,
+          this.animalEnEdicion.disponible_adopcion
+            ? descripcionAdopcion
+            : (this.animalEnEdicion.motivo_ingreso_cba || this.animalEnEdicion.observaciones || '')
+        ).subscribe();
+      }
 
     if (urlAnimal) {
       this.http.patch<any>(urlAnimal, payloadAnimal, { headers: this.authHeaders }).subscribe({
@@ -1871,6 +1906,12 @@ export class HistoriaClinicaListComponent implements OnInit {
           },
           { headers: this.authHeaders }
         ).pipe(catchError(() => of(null))).subscribe();
+
+        this.historiaService.registrarEstadoAnimal(
+          idAnim,
+          'Disponible para Adopción',
+          `Alta médica de hospitalización CBA — ${descripcionFinal}`
+        ).subscribe();
       }
 
       this.aplicarFiltros();
