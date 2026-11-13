@@ -2935,6 +2935,20 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.historiaOriginal.organos_sistemas = dto.organos_sistemas;
           this.historiaOriginal.examenes_solicitados = dto.examenes_solicitados;
           this.historiaOriginal.tratamientos = dto.tratamientos;
+          this.historiaOriginal.ingresa_cba = this.ingresaCBA === 'SI';
+          this.historiaOriginal.canil_asignado = this.canilAsignado;
+          this.historiaOriginal.motivo_ingreso_cba = this.motivoIngresoNoIngreso;
+          this.historiaOriginal.funcionario_recibe_cba = this.funcionarioRecibeCBA;
+          this.historiaService.guardarEstadoCbaLocal(
+            this.historiaOriginal.id_historia || this.idHistoria,
+            idAnimalEfectivo,
+            this.ingresaCBA === 'SI',
+            {
+              canil_asignado: this.canilAsignado,
+              motivo_ingreso_cba: this.motivoIngresoNoIngreso,
+              funcionario_recibe_cba: this.funcionarioRecibeCBA
+            }
+          );
           if (dto.peso && this.paciente) {
             this.paciente.peso = dto.peso;
           }
