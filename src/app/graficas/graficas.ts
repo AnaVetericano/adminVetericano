@@ -1,15 +1,23 @@
-import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, OnDestroy, ChangeDetectorRef, inject, computed } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { Chart } from 'chart.js/auto';
 import { CommonModule, NgIf } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import {
+  ErrorDuplicadosApi,
+  ResumenConteosAlertas,
+  crearResumenAlertasVacio
+} from '../models/duplicados.model';
 
 @Component({
   selector: 'app-graficas',
-  imports: [NgIf, CommonModule],
+  imports: [NgIf, CommonModule, RouterLink],
   templateUrl: './graficas.html',
   styleUrl: './graficas.css',
 })
-export class Graficas implements OnInit {
+export class Graficas implements OnInit, OnDestroy {
   @ViewChild('GraficUsers') GraficUsers!: ElementRef<HTMLCanvasElement>;
   @ViewChild('GraficUsersRol') GraficUsersRol!: ElementRef<HTMLCanvasElement>;
 
@@ -24,6 +32,25 @@ export class Graficas implements OnInit {
   rolJud = 0;
   rolAdm = 0;
 
+  readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  cargandoDuplicados = false;
+  errorDuplicados = '';
+  private duplicadosSub?: Subscription;
+
+  readonly resumenDuplicados = computed<ResumenConteosAlertas>(() =>
+    this.puedeGestionarDuplicados
+      ? this.alertasDuplicadosService.resumen()
+      : crearResumenAlertasVacio()
+  );
+
+  get puedeGestionarDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get totalPendientesDuplicados(): number {
+    return this.puedeGestionarDuplicados ? this.alertasDuplicadosService.totalPendientes() : 0;
+  }
+
   get totalUsuarios(): number {
     return this.activosPie + this.inactivosPie;
   }
@@ -36,6 +63,45 @@ export class Graficas implements OnInit {
 
   ngOnInit() {
     this.ListAllUsersActives();
+    this.cargarResumenDuplicados(false);
+  }
+
+  ngOnDestroy(): void {
+    this.duplicadosSub?.unsubscribe();
+    this.chartUsersActive?.destroy();
+    this.chartUsersRol?.destroy();
+  }
+
+  /**
+   * Reutiliza `AlertasDuplicadosService` para obtener el contador reactivo de
+   * posibles duplicados únicamente cuando el rol activo está autorizado.
+   */
+  cargarResumenDuplicados(forzarRecarga: boolean = false): void {
+    if (!this.puedeGestionarDuplicados) {
+      this.cargandoDuplicados = false;
+      this.errorDuplicados = '';
+      return;
+    }
+
+    this.cargandoDuplicados = true;
+    this.errorDuplicados = '';
+    this.duplicadosSub?.unsubscribe();
+
+    this.duplicadosSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, forzarRecarga)
+      .subscribe({
+        next: () => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados = '';
+          this.cdr.detectChanges();
+        },
+        error: (err: ErrorDuplicadosApi) => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados =
+            err?.mensaje || 'No se pudo consultar el resumen de duplicados.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   ListAllUsersActives() {

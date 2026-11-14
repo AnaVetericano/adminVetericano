@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 
@@ -12,10 +14,14 @@ import { VeterinaryInventoryService } from '../services/veterinary-inventory.ser
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })
-export class InicioAdministradorComponent implements OnInit {
+export class InicioAdministradorComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   public authService = inject(AuthService);
   public inventoryService = inject(VeterinaryInventoryService);
+  public alertasDuplicadosService = inject(AlertasDuplicadosService);
+
+  private alertasMaletinSub: Subscription | null = null;
+  private duplicadosIndiceSub: Subscription | null = null;
 
   // Control para abrir y cerrar el menú en móviles
   menuAbierto: boolean = true;
@@ -37,13 +43,44 @@ export class InicioAdministradorComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isVeterinario() || this.authService.isAdmin()) {
-      this.inventoryService.alertasMaletin$.subscribe(alertas => {
+      this.alertasMaletinSub = this.inventoryService.alertasMaletin$.subscribe(alertas => {
         this.medicamentosAlertas = alertas || [];
       });
       if (this.medicamentosAlertas.length === 0) {
         this.cargarAlertasIniciales();
       }
     }
+
+    if (this.puedeVerAlertasDuplicados) {
+      this.cargarAlertasDuplicadosIniciales();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.alertasMaletinSub?.unsubscribe();
+    this.duplicadosIndiceSub?.unsubscribe();
+  }
+
+  get puedeVerAlertasDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get totalAlertasDuplicadosPendientes(): number {
+    return this.puedeVerAlertasDuplicados
+      ? this.alertasDuplicadosService.totalPendientes()
+      : 0;
+  }
+
+  cargarAlertasDuplicadosIniciales(): void {
+    if (!this.puedeVerAlertasDuplicados) {
+      return;
+    }
+    this.duplicadosIndiceSub?.unsubscribe();
+    this.duplicadosIndiceSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, false)
+      .subscribe({
+        error: () => {}
+      });
   }
 
   cargarAlertasIniciales(): void {

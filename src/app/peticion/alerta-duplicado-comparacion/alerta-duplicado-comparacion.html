@@ -1,0 +1,741 @@
+<div
+  [ngClass]="modoModal
+    ? 'fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-2 sm:p-5 adc-animate-in'
+    : 'w-full adc-animate-in'"
+  [attr.role]="modoModal ? 'dialog' : null"
+  [attr.aria-modal]="modoModal ? 'true' : null"
+  [attr.aria-labelledby]="'adc-modal-titulo'"
+  (click)="onBackdropClick()">
+
+  <div
+    (click)="$event.stopPropagation()"
+    class="bg-white rounded-3xl w-full max-w-6xl border border-gray-100 flex flex-col overflow-hidden font-['Nunito',sans-serif] text-slate-800 antialiased"
+    [ngClass]="modoModal ? 'max-h-[94vh] shadow-2xl' : 'shadow-sm'">
+
+    <!-- ======================================================================= -->
+    <!-- ENCABEZADO DEL COMPARADOR                                               -->
+    <!-- ======================================================================= -->
+    <header
+      class="px-4 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 via-white to-indigo-50/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <div
+          class="w-10 h-10 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 id="adc-modal-titulo" class="text-sm sm:text-base font-extrabold text-[#170B3D] tracking-wide uppercase">
+              Comparación de Posible Duplicado
+            </h2>
+            <span *ngIf="idAlerta"
+              class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4141a5]/10 text-[#4141a5] border border-[#4141a5]/20">
+              Alerta #{{ idAlerta }}
+            </span>
+            <span *ngIf="detalle"
+              [ngClass]="claseEstadoRevision(detalle.estado_revision)"
+              class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide">
+              {{ etiquetaEstadoRevision(detalle.estado_revision) }}
+            </span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
+            Supervisión jurídica y administrativa lado a lado sin modificar los casos originales
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button *ngIf="!sinPermiso && idAlerta" type="button"
+          (click)="recargarDetalle()"
+          [disabled]="cargando || resolviendo"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-slate-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+          title="Recargar detalle actualizado">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141a5]"
+            [ngClass]="{'animate-spin': cargando}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden sm:inline">Actualizar</span>
+        </button>
+
+        <button type="button"
+          (click)="solicitarCerrar()"
+          [disabled]="resolviendo"
+          aria-label="Cerrar comparador"
+          class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-[#4141a5] hover:text-white text-gray-600 flex items-center justify-center text-sm font-bold transition cursor-pointer disabled:opacity-50">
+          ✕
+        </button>
+      </div>
+    </header>
+
+    <!-- ======================================================================= -->
+    <!-- CUERPO SCROLLABLE                                                       -->
+    <!-- ======================================================================= -->
+    <div class="p-4 sm:p-6 overflow-y-auto adc-scroll space-y-5 text-xs bg-[#F4F5F7]/60 flex-1">
+
+      <!-- Banner de Conflicto HTTP 409 (resolución previa por otro usuario) -->
+      <div *ngIf="mensajeConflicto409" data-testid="banner-conflicto-409" role="alert"
+        class="p-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 flex items-start gap-3 shadow-xs">
+        <span class="text-lg leading-none shrink-0">⚠️</span>
+        <div class="space-y-1 flex-1">
+          <p class="font-extrabold text-xs uppercase tracking-wider text-amber-800">
+            Alerta modificada por otra persona (Conflicto 409)
+          </p>
+          <p class="text-xs font-semibold leading-relaxed">{{ mensajeConflicto409 }}</p>
+        </div>
+      </div>
+
+      <!-- Banner de Éxito al resolver -->
+      <div *ngIf="mensajeExito" data-testid="banner-exito-resolucion" role="status"
+        class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-start gap-3 shadow-xs">
+        <span class="text-lg leading-none shrink-0">✅</span>
+        <div class="space-y-0.5 flex-1">
+          <p class="font-extrabold text-xs uppercase tracking-wider text-emerald-800">Resolución registrada</p>
+          <p class="text-xs font-semibold">{{ mensajeExito }}</p>
+        </div>
+      </div>
+
+      <!-- Estado: Sin permisos (solo roles 1 y 2) -->
+      <div *ngIf="sinPermiso && !cargando" data-testid="estado-sin-permiso"
+        class="bg-white rounded-2xl border border-red-200 p-6 sm:p-8 text-center space-y-3 shadow-xs">
+        <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 mx-auto flex items-center justify-center text-xl font-bold">
+          🔒
+        </div>
+        <h3 class="text-sm sm:text-base font-extrabold text-[#170B3D]">Acceso restringido</h3>
+        <p class="text-xs text-slate-600 max-w-lg mx-auto font-medium">
+          {{ errorCarga || 'Solo los roles Administrador y Jurídico tienen permiso para visualizar o resolver alertas de posibles duplicados.' }}
+        </p>
+        <div class="pt-1">
+          <button type="button" (click)="solicitarCerrar()"
+            class="px-5 py-2.5 rounded-xl bg-[#170B3D] hover:bg-[#25155c] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+            Cerrar
+          </button>
+        </div>
+      </div>
+
+      <!-- Estado: Cargando detalle -->
+      <div *ngIf="cargando" data-testid="estado-cargando"
+        class="bg-white rounded-2xl border border-slate-100 p-8 text-center space-y-3 shadow-xs">
+        <div
+          class="inline-block w-8 h-8 border-4 border-[#4141a5]/25 border-t-[#4141a5] rounded-full animate-spin"></div>
+        <p class="text-sm font-extrabold text-[#170B3D]">Cargando comparación de la alerta...</p>
+        <p class="text-xs text-slate-500 font-medium">
+          Consultando peticiones, evidencias multimedia y métricas de similitud.
+        </p>
+      </div>
+
+      <!-- Estado: Error al cargar -->
+      <div *ngIf="!cargando && !sinPermiso && errorCarga && !detalle" data-testid="estado-error-carga"
+        class="bg-white rounded-2xl border border-red-200 p-6 text-center space-y-3 shadow-xs">
+        <div class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 mx-auto flex items-center justify-center text-lg font-bold">
+          ✕
+        </div>
+        <p class="text-sm font-extrabold text-[#170B3D]">No se pudo cargar la alerta</p>
+        <p class="text-xs text-red-700 font-semibold max-w-lg mx-auto">{{ errorCarga }}</p>
+        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <button *ngIf="idAlerta" type="button" (click)="recargarDetalle()"
+            class="px-4 py-2 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+            Reintentar
+          </button>
+          <button type="button" (click)="solicitarCerrar()"
+            class="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-slate-700 font-bold text-xs uppercase tracking-wider transition cursor-pointer">
+            Cerrar
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner de Error al recargar manteniendo vista previa -->
+      <div *ngIf="!cargando && !sinPermiso && errorCarga && detalle" data-testid="banner-error-recarga" role="alert"
+        class="p-3.5 rounded-2xl border border-red-200 bg-red-50 text-red-800 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+        <span class="text-xs font-semibold">No se pudo actualizar el detalle: {{ errorCarga }}</span>
+        <button *ngIf="idAlerta" type="button" (click)="recargarDetalle(!!mensajeConflicto409)"
+          class="px-3 py-1 rounded-lg bg-white border border-red-200 text-red-700 text-[11px] font-bold hover:bg-red-100 cursor-pointer">
+          Reintentar recarga
+        </button>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- DETALLE COMPARATIVO CARGADO                                           -->
+      <!-- ===================================================================== -->
+      <ng-container *ngIf="!cargando && !sinPermiso && detalle">
+
+        <!-- 1. MÉTRICAS DE SIMILITUD Y CRITERIOS -->
+        <section aria-label="Métricas de comparación"
+          class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Análisis del motor de detección
+              </span>
+              <h3 class="text-sm font-extrabold text-[#170B3D]">Métricas y Criterios de Coincidencia</h3>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+              <span *ngIf="detalle.comparacion.mismo_tipo"
+                class="px-2.5 py-1 rounded-full bg-indigo-50 text-[#4141a5] border border-indigo-100">
+                Mismo tipo
+              </span>
+              <span *ngIf="detalle.comparacion.mismo_estado"
+                class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                Mismo estado
+              </span>
+              <span *ngIf="detalle.comparacion.mismo_veterinario_asignado"
+                class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Mismo veterinario
+              </span>
+              <span class="px-2.5 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200">
+                Origen: {{ detalle.origen_deteccion || 'No disponible' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Similitud de texto -->
+            <div class="rounded-xl bg-[#4141a5]/5 border border-[#4141a5]/15 p-3.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                Similitud de texto
+              </span>
+              <p class="text-lg font-black text-[#170B3D] mt-1" data-testid="metrica-similitud-texto">
+                {{ formatearSimilitudTexto(detalle) }}
+              </p>
+              <span class="text-[11px] font-semibold"
+                [ngClass]="detalle.coincidencia_texto ? 'text-[#4141a5]' : 'text-slate-400'">
+                {{ detalle.coincidencia_texto ? 'Coincidencia textual relevante' : 'Sin coincidencia textual fuerte' }}
+              </span>
+            </div>
+
+            <!-- Distancia GPS en metros -->
+            <div class="rounded-xl bg-slate-50 border border-slate-200/70 p-3.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                Distancia GPS
+              </span>
+              <p class="text-lg font-black text-[#170B3D] mt-1" data-testid="metrica-distancia-gps">
+                {{ formatearDistanciaGpsMetros(detalle) }}
+              </p>
+              <span class="text-[11px] font-semibold"
+                [ngClass]="detalle.coincidencia_gps ? 'text-emerald-700' : 'text-slate-400'">
+                {{ detalle.coincidencia_gps ? 'Dentro de proximidad geográfica' : 'Sin cercanía GPS confirmada' }}
+              </span>
+            </div>
+
+            <!-- Similitud de imagen -->
+            <div class="rounded-xl bg-slate-50 border border-slate-200/70 p-3.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                Similitud de imagen
+              </span>
+              <p class="text-lg font-black text-[#170B3D] mt-1" data-testid="metrica-similitud-imagen">
+                {{ tieneSimilitudImagen(detalle) ? formatearSimilitudImagenMetrica(detalle) : 'No disponible' }}
+              </p>
+              <span class="text-[11px] font-semibold"
+                [ngClass]="detalle.coincidencia_imagen ? 'text-emerald-700' : 'text-slate-400'">
+                {{ detalle.coincidencia_imagen ? 'Coincidencia visual perceptual' : 'Sin comparación visual positiva' }}
+              </span>
+            </div>
+
+            <!-- Score combinado + diferencia horaria -->
+            <div class="rounded-xl bg-slate-50 border border-slate-200/70 p-3.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                Score combinado
+              </span>
+              <p class="text-lg font-black text-[#170B3D] mt-1" data-testid="metrica-score-combinado">
+                {{ formatearScoreCombinado(detalle) }}
+              </p>
+              <span class="text-[11px] text-slate-500 font-semibold">
+                Diferencia: {{ formatearDiferenciaTiempo(detalle) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Criterios de coincidencia -->
+          <div class="pt-1 flex flex-wrap items-center gap-2">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+              Criterios de coincidencia:
+            </span>
+            <ng-container *ngIf="criteriosChips.length > 0; else sinCriteriosTpl">
+              <span *ngFor="let c of criteriosChips"
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#170B3D]/5 text-[#170B3D] border border-[#170B3D]/15">
+                {{ c.etiqueta }}
+              </span>
+            </ng-container>
+            <ng-template #sinCriteriosTpl>
+              <span class="text-xs text-slate-500 font-semibold">No disponible</span>
+            </ng-template>
+          </div>
+        </section>
+
+        <!-- 2. PETICIONES LADO A LADO -->
+        <section aria-label="Peticiones comparadas lado a lado" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <article *ngFor="let col of columnasComparacion"
+            [attr.data-testid]="'tarjeta-peticion-' + col.lado"
+            class="bg-white rounded-2xl border p-4 sm:p-5 flex flex-col gap-4 transition-all shadow-2xs"
+            [ngClass]="(esSoloLectura && col.esPrincipalGuardada) || (decisionSeleccionada === 'CONFIRMADO' && peticionPrincipalSeleccionada === col.idPeticion)
+              ? 'border-[#4141a5] ring-2 ring-[#4141a5]/20'
+              : 'border-slate-200/90'">
+
+            <!-- Cabecera de cada petición -->
+            <div class="flex flex-wrap items-start justify-between gap-2 pb-3 border-b border-gray-100">
+              <div class="space-y-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-[#170B3D] text-white">
+                    {{ col.etiquetaLado }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
+                    ID #{{ col.idPeticion ?? 'No disponible' }}
+                  </span>
+                  <span *ngIf="col.esOrigen"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-[#4141a5] border border-indigo-100">
+                    Detección más reciente
+                  </span>
+                  <span *ngIf="esSoloLectura && col.esPrincipalGuardada"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    ★ Petición Principal
+                  </span>
+                </div>
+                <h3 class="text-base font-extrabold text-[#170B3D] break-words">
+                  {{ col.radicado }}
+                </h3>
+                <p class="text-[11px] font-bold text-[#4141a5]">
+                  Tipo: {{ col.tipo }}
+                </p>
+              </div>
+
+              <!-- Botón contextual para elegir como principal cuando esté pendiente -->
+              <button *ngIf="puedeEditarResolucion && col.idPeticion"
+                type="button"
+                (click)="seleccionarPeticionPrincipal(col.idPeticion)"
+                [disabled]="resolviendo"
+                [attr.data-testid]="'btn-elegir-principal-' + col.lado"
+                [ngClass]="decisionSeleccionada === 'CONFIRMADO' && peticionPrincipalSeleccionada === col.idPeticion
+                  ? 'bg-[#4141a5] text-white border-[#4141a5]'
+                  : 'bg-white hover:bg-[#4141a5]/5 text-[#4141a5] border-[#4141a5]/30'"
+                class="px-3 py-1.5 rounded-xl border text-[11px] font-extrabold transition cursor-pointer shrink-0 disabled:opacity-50">
+                {{ decisionSeleccionada === 'CONFIRMADO' && peticionPrincipalSeleccionada === col.idPeticion
+                  ? '✓ Principal seleccionada'
+                  : 'Elegir como principal' }}
+              </button>
+            </div>
+
+            <!-- Estado, Prioridad y Fecha -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Estado</span>
+                <span [ngClass]="col.estadoClase"
+                  class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                  {{ col.estado }}
+                </span>
+              </div>
+
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Prioridad</span>
+                <span [ngClass]="col.prioridadClase"
+                  class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                  {{ col.prioridad }}
+                </span>
+              </div>
+
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Fecha del reporte</span>
+                <p class="font-bold text-slate-800 text-[11px] leading-snug">{{ col.fechaReporte }}</p>
+              </div>
+            </div>
+
+            <!-- Veterinario asignado y Ubicación -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Veterinario asignado</span>
+                <p class="font-bold text-slate-800 text-xs mt-1 break-words">{{ col.veterinarioNombre }}</p>
+                <p *ngIf="col.veterinarioDetalle" class="text-[10px] text-slate-500 font-medium mt-0.5">
+                  {{ col.veterinarioDetalle }}
+                </p>
+              </div>
+
+              <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Ubicación y coordenadas</span>
+                <p class="font-bold text-slate-800 text-xs mt-1 break-words">{{ col.direccion }}</p>
+                <p class="text-[11px] text-slate-500 font-mono mt-0.5">{{ col.coordenadasTexto }}</p>
+                <a *ngIf="col.mapaUrl" [href]="col.mapaUrl" target="_blank" rel="noopener noreferrer"
+                  class="inline-block mt-1 text-[11px] font-bold text-[#4141a5] hover:underline">
+                  Ver en Google Maps ↗
+                </a>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block">Descripción del reporte</span>
+              <p class="text-slate-700 mt-1 font-medium whitespace-pre-line break-words text-xs leading-relaxed">
+                {{ col.descripcion }}
+              </p>
+            </div>
+
+            <!-- Multimedia: Fotografías y videos -->
+            <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-100 space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[10px] uppercase font-bold text-slate-400">
+                  Evidencias multimedia
+                </span>
+                <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                  <span class="px-2 py-0.5 rounded-full bg-white border border-slate-200">
+                    {{ col.totalFotos }} foto{{ col.totalFotos === 1 ? '' : 's' }}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-full bg-white border border-slate-200">
+                    {{ col.totalVideos }} video{{ col.totalVideos === 1 ? '' : 's' }}
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="col.multimedia.length === 0"
+                class="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center text-slate-400">
+                <p class="text-xs font-bold text-slate-500">No disponible</p>
+                <p class="text-[11px] mt-0.5">Esta petición no tiene fotografías ni videos adjuntos.</p>
+              </div>
+
+              <div *ngIf="col.multimedia.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div *ngFor="let item of col.multimedia"
+                  class="rounded-xl border border-slate-200 bg-white overflow-hidden flex flex-col">
+
+                  <!-- Fotografía -->
+                  <ng-container *ngIf="item.tipo === 'imagen'">
+                    <button *ngIf="!mediaTuvoError(item.url)" type="button"
+                      (click)="abrirVisorMedia(item)"
+                      class="group relative w-full h-28 bg-slate-100 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                      <img [src]="item.url" [alt]="item.descripcion || ('Fotografía de ' + col.radicado)"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        loading="lazy" (error)="marcarMediaConError(item.url)" />
+                      <span
+                        class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-slate-900/75 text-white text-[9px] font-bold">
+                        📷 Foto
+                      </span>
+                    </button>
+                    <div *ngIf="mediaTuvoError(item.url)"
+                      class="h-28 p-2 flex flex-col items-center justify-center text-center bg-slate-50 text-slate-500">
+                      <span class="text-[10px] font-bold">No se pudo previsualizar</span>
+                      <a [href]="item.url" target="_blank" rel="noopener noreferrer"
+                        class="mt-1 text-[10px] font-bold text-[#4141a5] hover:underline">
+                        Abrir original ↗
+                      </a>
+                    </div>
+                  </ng-container>
+
+                  <!-- Video -->
+                  <ng-container *ngIf="item.tipo === 'video'">
+                    <button *ngIf="!mediaTuvoError(item.url)" type="button"
+                      (click)="abrirVisorMedia(item)"
+                      class="group relative w-full h-28 bg-slate-900 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+                      <video [src]="item.url" class="w-full h-full object-cover pointer-events-none"
+                        preload="metadata" muted playsinline (error)="marcarMediaConError(item.url)"></video>
+                      <span
+                        class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[#4141a5]/90 text-white text-[9px] font-bold">
+                        🎬 Video
+                      </span>
+                      <span
+                        class="absolute inset-0 bg-slate-900/25 flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform">
+                        ▶
+                      </span>
+                    </button>
+                    <div *ngIf="mediaTuvoError(item.url)"
+                      class="h-28 p-2 flex flex-col items-center justify-center text-center bg-slate-50 text-slate-500">
+                      <span class="text-[10px] font-bold">Video no reproducible</span>
+                      <a [href]="item.url" target="_blank" rel="noopener noreferrer"
+                        class="mt-1 text-[10px] font-bold text-[#4141a5] hover:underline">
+                        Abrir video ↗
+                      </a>
+                    </div>
+                  </ng-container>
+
+                  <!-- Otro archivo adjunto (p. ej. PDF) -->
+                  <ng-container *ngIf="item.tipo === 'archivo'">
+                    <button type="button" (click)="abrirVisorMedia(item)"
+                      class="w-full h-28 p-2 bg-slate-50 hover:bg-indigo-50/50 flex flex-col items-center justify-center text-center transition cursor-pointer">
+                      <span class="text-xl mb-1">📄</span>
+                      <span class="text-[10px] font-extrabold text-[#170B3D]">Archivo adjunto</span>
+                      <span class="text-[10px] font-bold text-[#4141a5] mt-0.5">Ver detalle</span>
+                    </button>
+                  </ng-container>
+
+                  <p *ngIf="item.descripcion"
+                    class="px-2 py-1 text-[10px] text-slate-600 font-medium truncate border-t border-slate-100"
+                    [title]="item.descripcion">
+                    {{ item.descripcion }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </article>
+        </section>
+
+        <!-- 3. PANEL DE RESOLUCIÓN O MODO SOLO LECTURA -->
+        <section aria-label="Decisión sobre la alerta"
+          class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs space-y-4">
+
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+            <div>
+              <h3 class="text-sm font-extrabold text-[#170B3D]">
+                {{ esSoloLectura ? 'Resolución Registrada (Solo lectura)' : 'Resolución de la Alerta de Duplicado' }}
+              </h3>
+              <p class="text-[11px] text-slate-500 font-medium">
+                Esta acción registra únicamente la revisión de duplicidad y no fusiona, elimina, reasigna ni altera estados de las peticiones.
+              </p>
+            </div>
+            <span [ngClass]="claseEstadoRevision(detalle.estado_revision)"
+              class="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wide">
+              {{ esSoloLectura ? 'Solo lectura · ' + detalle.estado_revision : detalle.estado_revision }}
+            </span>
+          </div>
+
+          <!-- MODO SOLO LECTURA (ALERTA CONFIRMADA O DESCARTADA) -->
+          <div *ngIf="esSoloLectura" data-testid="panel-solo-lectura" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Decisión final</span>
+                <p class="font-extrabold text-[#170B3D] text-xs mt-1">
+                  {{ etiquetaEstadoRevision(detalle.estado_revision) }}
+                </p>
+                <p *ngIf="detalle.estado_revision === 'CONFIRMADO'"
+                  class="text-[11px] font-bold text-[#4141a5] mt-1">
+                  Petición principal: {{ radicadoDePeticionId(detalle.peticion_principal_id) }}
+                </p>
+              </div>
+
+              <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Revisado por</span>
+                <p class="font-bold text-slate-800 text-xs mt-1">
+                  {{ formatearUsuario(detalle.revisado_por) }}
+                </p>
+                <p *ngIf="detalle.revisado_por?.email" class="text-[11px] text-slate-500 mt-0.5">
+                  {{ detalle.revisado_por?.email }}
+                </p>
+              </div>
+
+              <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block">Fecha de revisión</span>
+                <p class="font-bold text-slate-800 text-xs mt-1">
+                  {{ formatearFechaLegible(detalle.fecha_revision) }}
+                </p>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block">Observación registrada</span>
+              <p class="text-slate-700 font-medium text-xs mt-1 whitespace-pre-line break-words">
+                {{ detalle.observacion_revision?.trim() || 'No disponible' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- MODO EDICIÓN (ALERTA PENDIENTE) -->
+          <div *ngIf="puedeEditarResolucion" data-testid="panel-edicion-resolucion" class="space-y-4">
+
+            <!-- Mensajes de validación o error en resolución -->
+            <div *ngIf="errorValidacion || errorResolucion" data-testid="mensaje-error-resolucion" role="alert"
+              class="p-3.5 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs font-bold flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{{ errorValidacion || errorResolucion }}</span>
+            </div>
+
+            <!-- Paso 1: Elegir decisión -->
+            <div class="space-y-2">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                1. Selecciona una decisión
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button type="button"
+                  data-testid="btn-opcion-confirmado"
+                  (click)="seleccionarDecision('CONFIRMADO')"
+                  [disabled]="resolviendo"
+                  class="p-4 rounded-2xl border text-left transition cursor-pointer disabled:opacity-50"
+                  [ngClass]="decisionSeleccionada === 'CONFIRMADO'
+                    ? 'border-[#4141a5] bg-[#4141a5]/8 ring-2 ring-[#4141a5]/20'
+                    : 'border-slate-200 bg-slate-50/70 hover:border-[#4141a5]/40'">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-extrabold text-[#170B3D]">Confirmar duplicado</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black badge-status-success">
+                      CONFIRMADO
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-600 mt-1 font-medium">
+                    Corresponden al mismo hecho. Exige designar cuál petición es la principal.
+                  </p>
+                </button>
+
+                <button type="button"
+                  data-testid="btn-opcion-descartado"
+                  (click)="seleccionarDecision('DESCARTADO')"
+                  [disabled]="resolviendo"
+                  class="p-4 rounded-2xl border text-left transition cursor-pointer disabled:opacity-50"
+                  [ngClass]="decisionSeleccionada === 'DESCARTADO'
+                    ? 'border-[#170B3D] bg-slate-100 ring-2 ring-[#170B3D]/20'
+                    : 'border-slate-200 bg-slate-50/70 hover:border-slate-400'">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-extrabold text-[#170B3D]">Descartar posible duplicado</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black badge-status-neutral">
+                      DESCARTADO
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-600 mt-1 font-medium">
+                    Son peticiones independientes. No requiere ni envía petición principal.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            <!-- Paso 2 (solo si CONFIRMADO): Seleccionar petición principal -->
+            <div *ngIf="decisionSeleccionada === 'CONFIRMADO'" data-testid="selector-peticion-principal"
+              class="p-4 rounded-2xl bg-indigo-50/60 border border-[#4141a5]/25 space-y-2.5">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#170B3D] block">
+                2. Elige la petición principal (obligatorio para confirmar)
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button *ngFor="let col of columnasComparacion"
+                  type="button"
+                  (click)="seleccionarPeticionPrincipal(col.idPeticion)"
+                  [disabled]="resolviendo || !col.idPeticion"
+                  [attr.data-testid]="'radio-principal-' + col.lado"
+                  class="p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 disabled:opacity-50"
+                  [ngClass]="peticionPrincipalSeleccionada === col.idPeticion
+                    ? 'bg-white border-[#4141a5] ring-2 ring-[#4141a5]/25 shadow-xs'
+                    : 'bg-white/80 border-slate-200 hover:border-[#4141a5]/50'">
+                  <div class="min-w-0">
+                    <p class="font-extrabold text-[#170B3D] text-xs truncate">
+                      {{ col.etiquetaLado }}: {{ col.radicado }}
+                    </p>
+                    <p class="text-[11px] text-slate-500 font-semibold truncate">
+                      ID #{{ col.idPeticion ?? 'No disponible' }} · {{ col.estado }}
+                    </p>
+                  </div>
+                  <span
+                    class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 text-[10px] font-black"
+                    [ngClass]="peticionPrincipalSeleccionada === col.idPeticion
+                      ? 'border-[#4141a5] bg-[#4141a5] text-white'
+                      : 'border-slate-300 bg-white'">
+                    {{ peticionPrincipalSeleccionada === col.idPeticion ? '✓' : '' }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Paso 3: Observación -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label for="adc-observacion"
+                  class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                  {{ decisionSeleccionada === 'CONFIRMADO' ? '3.' : '2.' }} Observación de revisión (opcional)
+                </label>
+                <span class="text-[10px] font-bold text-slate-400">
+                  {{ observacion.length }} / {{ maxObservacion }}
+                </span>
+              </div>
+              <textarea
+                id="adc-observacion"
+                name="observacion"
+                rows="3"
+                [maxlength]="maxObservacion"
+                [(ngModel)]="observacion"
+                [disabled]="resolviendo"
+                placeholder="Registra el motivo jurídico o administrativo de la decisión..."
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-[#4141a5] focus:ring-2 focus:ring-[#4141a5]/20 p-3 text-xs text-slate-800 outline-none transition resize-y disabled:opacity-60"></textarea>
+            </div>
+
+            <!-- Botón de envío -->
+            <div class="flex flex-wrap items-center justify-end gap-2.5 pt-1">
+              <button type="button"
+                data-testid="btn-enviar-resolucion"
+                (click)="confirmarResolucion()"
+                [disabled]="resolviendo || !decisionSeleccionada"
+                class="px-5 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition cursor-pointer btn-levitate disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <span *ngIf="resolviendo"
+                  class="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>
+                  {{ resolviendo
+                    ? 'Guardando decisión...'
+                    : (decisionSeleccionada === 'CONFIRMADO'
+                        ? 'Confirmar Duplicado'
+                        : (decisionSeleccionada === 'DESCARTADO' ? 'Descartar Alerta' : 'Selecciona una decisión')) }}
+                </span>
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+      </ng-container>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- PIE DEL COMPARADOR                                                      -->
+    <!-- ======================================================================= -->
+    <footer class="px-4 sm:px-6 py-3 border-t border-gray-100 bg-white flex items-center justify-between gap-3 shrink-0">
+      <p class="text-[11px] text-slate-400 font-semibold hidden sm:block">
+        Auditoría de duplicados · Módulo Jurídico / Administración Vetericano
+      </p>
+      <button type="button" (click)="solicitarCerrar()" [disabled]="resolviendo"
+        data-testid="btn-cerrar-comparador"
+        class="ml-auto px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-slate-700 font-bold text-xs uppercase tracking-wider transition cursor-pointer disabled:opacity-50">
+        Cerrar
+      </button>
+    </footer>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- VISOR LIGHTBOX PARA FOTOGRAFÍAS, VIDEOS Y ARCHIVOS                        -->
+  <!-- ========================================================================= -->
+  <div *ngIf="mediaActiva" (click)="cerrarVisorMedia()"
+    class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center z-[60] p-4 cursor-zoom-out">
+    <div (click)="$event.stopPropagation()"
+      class="relative bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl w-full p-4 sm:p-5 cursor-default space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+        <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-xs sm:text-sm">
+          {{ mediaActiva.tipo === 'video' ? 'Video de evidencia' : (mediaActiva.tipo === 'archivo' ? 'Archivo adjunto' : 'Fotografía de evidencia') }}
+        </h4>
+        <button type="button" (click)="cerrarVisorMedia()"
+          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#4141a5] hover:text-white text-gray-600 font-bold transition cursor-pointer"
+          aria-label="Cerrar visor multimedia">✕</button>
+      </div>
+
+      <div class="flex items-center justify-center bg-slate-50 rounded-2xl overflow-hidden min-h-[220px] p-2">
+        <img *ngIf="mediaActiva.tipo === 'imagen' && !mediaTuvoError(mediaActiva.url)"
+          [src]="mediaActiva.url"
+          [alt]="mediaActiva.descripcion || 'Evidencia fotográfica ampliada'"
+          class="max-h-[68vh] w-auto max-w-full object-contain rounded-xl"
+          (error)="marcarMediaConError(mediaActiva.url)" />
+
+        <video *ngIf="mediaActiva.tipo === 'video' && !mediaTuvoError(mediaActiva.url)"
+          [src]="mediaActiva.url"
+          controls autoplay playsinline preload="metadata"
+          class="max-h-[68vh] w-full max-w-full object-contain rounded-xl bg-black"
+          (error)="marcarMediaConError(mediaActiva.url)"></video>
+
+        <div *ngIf="mediaActiva.tipo === 'archivo' || mediaTuvoError(mediaActiva.url)"
+          class="p-6 text-center space-y-2">
+          <span class="text-3xl block">📎</span>
+          <p class="text-xs font-extrabold text-[#170B3D]">
+            {{ mediaTuvoError(mediaActiva.url) ? 'No se pudo previsualizar este recurso en línea.' : 'Documento o archivo adjunto externo.' }}
+          </p>
+          <a [href]="mediaActiva.url" target="_blank" rel="noopener noreferrer"
+            class="inline-block px-4 py-2 rounded-xl bg-[#4141a5] text-white font-bold text-xs">
+            Abrir archivo original ↗
+          </a>
+        </div>
+      </div>
+
+      <p *ngIf="mediaActiva.descripcion" class="text-xs text-slate-600 font-medium px-1">
+        {{ mediaActiva.descripcion }}
+      </p>
+
+      <div class="flex justify-between items-center gap-3 pt-1">
+        <a [href]="mediaActiva.url" target="_blank" rel="noopener noreferrer"
+          class="px-4 py-2 bg-gray-100 hover:bg-[#4141a5]/10 text-[#170B3D] font-bold rounded-xl text-xs uppercase tracking-wider transition">
+          Abrir original ↗
+        </a>
+        <button type="button" (click)="cerrarVisorMedia()"
+          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
+          Cerrar visor
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

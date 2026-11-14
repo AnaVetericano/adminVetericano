@@ -102,11 +102,15 @@
                 [ngClass]="{'bg-[#4141a5]/5': !notif.leida}">
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <span *ngIf="notif.tipo?.includes('URG') || notif.mensaje?.toLowerCase()?.includes('urgente')"
+                    <span *ngIf="esNotificacionPosibleDuplicado(notif)"
+                      class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300 uppercase">
+                      🔁 Posible duplicado
+                    </span>
+                    <span *ngIf="!esNotificacionPosibleDuplicado(notif) && (notif.tipo?.includes('URG') || notif.mensaje?.toLowerCase()?.includes('urgente'))"
                       class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 text-red-700 uppercase">
                       🚨 Urgente
                     </span>
-                    <span *ngIf="notif.tipo"
+                    <span *ngIf="notif.tipo && !esNotificacionPosibleDuplicado(notif)"
                       class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-600">
                       {{ notif.tipo }}
                     </span>
@@ -127,10 +131,16 @@
             </div>
 
             <!-- Pie de notificaciones -->
-            <div class="px-4 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-3xl text-center">
+            <div class="px-4 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-3xl flex items-center justify-between gap-2">
               <p class="text-[10px] text-gray-400 font-medium">
                 Notificaciones sincronizadas con el servidor central
               </p>
+              <button *ngIf="puedeGestionarDuplicados"
+                type="button"
+                (click)="cambiarVistaModulo('duplicados'); panelNotificacionesAbierto = false"
+                class="text-[10px] font-extrabold text-[#4141a5] hover:underline shrink-0 cursor-pointer">
+                Ver duplicados ({{ totalPendientesDuplicados }})
+              </button>
             </div>
           </div>
         </div>
@@ -168,10 +178,47 @@
     <!-- VISTA CASOS Y PETICIONES TRADICIONAL -->
     <ng-container *ngIf="vistaJuridica === 'peticiones'">
 
+    <!-- Selector de vista del módulo Peticiones (Solo Administrador y Jurídico) -->
+    <div *ngIf="mostrarLista && puedeGestionarDuplicados"
+      role="tablist"
+      aria-label="Vistas del módulo de peticiones"
+      class="inline-flex flex-wrap items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-gray-200 shadow-xs mb-5">
+      <button type="button"
+        role="tab"
+        [attr.aria-selected]="vistaModulo === 'listado'"
+        (click)="cambiarVistaModulo('listado')"
+        [ngClass]="vistaModulo === 'listado'
+          ? 'bg-[#170B3D] text-white shadow-xs'
+          : 'text-gray-600 hover:text-[#170B3D] hover:bg-gray-50'"
+        class="px-4 py-2 rounded-xl text-xs font-extrabold tracking-wide transition cursor-pointer flex items-center gap-2">
+        <span>📋</span>
+        <span>Peticiones</span>
+      </button>
+
+      <button type="button"
+        role="tab"
+        [attr.aria-selected]="vistaModulo === 'duplicados'"
+        (click)="cambiarVistaModulo('duplicados')"
+        [ngClass]="vistaModulo === 'duplicados'
+          ? 'bg-[#4141A5] text-white shadow-xs'
+          : 'text-gray-600 hover:text-[#170B3D] hover:bg-gray-50'"
+        class="px-4 py-2 rounded-xl text-xs font-extrabold tracking-wide transition cursor-pointer flex items-center gap-2">
+        <span>🔁</span>
+        <span>Alertas de duplicados</span>
+        <span
+          [ngClass]="vistaModulo === 'duplicados'
+            ? 'bg-white/20 text-white'
+            : (totalPendientesDuplicados > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-600')"
+          class="px-2 py-0.5 rounded-full text-[10px] font-black leading-none">
+          {{ totalPendientesDuplicados }}
+        </span>
+      </button>
+    </div>
+
     <!-- ========================================================================= -->
     <!-- 3.1. PANEL PRINCIPAL DE JURÍDICO: RESUMEN Y MÉTRICAS VISUALES            -->
     <!-- ========================================================================= -->
-    <div *ngIf="mostrarLista" class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6" [ngClass]="puedeAsignarOReasignar ? 'lg:grid-cols-5' : 'lg:grid-cols-4'">
+    <div *ngIf="mostrarLista && vistaModulo === 'listado'" class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6" [ngClass]="puedeAsignarOReasignar ? 'lg:grid-cols-5' : 'lg:grid-cols-4'">
 
       <!-- 1. Total registradas -->
       <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
@@ -251,7 +298,7 @@
     <!-- ========================================================================= -->
     <!-- 3.2. LISTADO DE PETICIONES CON FILTROS Y TARJETAS                        -->
     <!-- ========================================================================= -->
-    <ng-container *ngIf="mostrarLista">
+    <ng-container *ngIf="mostrarLista && vistaModulo === 'listado'">
 
       <!-- BARRA DE BÚSQUEDA Y FILTROS AVANZADOS -->
       <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-4 shrink-0">
@@ -418,6 +465,22 @@
                       title="Lleva 5 o más días sin avances">
                       ⚠️ ≥ 5 días sin avance
                     </span>
+                    <!-- Indicador Posible duplicado pendiente (Solo Admin y Jurídico) -->
+                    <button *ngIf="puedeGestionarDuplicados && tienePosibleDuplicadoPendiente(p)"
+                      type="button"
+                      (click)="abrirAlertaDesdeTarjeta(p, $event)"
+                      title="Revisar alerta de posible duplicado"
+                      class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition flex items-center gap-1 cursor-pointer">
+                      🔁 Posible duplicado
+                      <span *ngIf="cantidadAlertasPendientesPeticion(p) > 1">
+                        ({{ cantidadAlertasPendientesPeticion(p) }})
+                      </span>
+                    </button>
+                    <span *ngIf="puedeGestionarDuplicados && !tienePosibleDuplicadoPendiente(p) && tieneDuplicadoConfirmadoPeticion(p)"
+                      class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1"
+                      title="Esta petición tiene un duplicado confirmado">
+                      ✓ Duplicado confirmado
+                    </span>
                   </div>
                   <h3 class="text-base font-extrabold text-[#170B3D] truncate mt-0.5">
                     {{ p.numero_radicado || ('RAD-PET-' + p.id_peticion) }}
@@ -528,6 +591,241 @@
         </button>
       </div>
 
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- 3.2B. BANDEJA DE ALERTAS DE DUPLICADOS (SOLO ADMIN Y JURÍDICO)            -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="mostrarLista && puedeGestionarDuplicados && vistaModulo === 'duplicados'">
+      <section class="space-y-5 mb-6" aria-label="Bandeja de alertas de duplicados">
+
+        <!-- Resumen rápido de alertas -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <button type="button" (click)="filtrarEstadoAlertas('PENDIENTE')"
+            [ngClass]="{'ring-2 ring-amber-400 border-amber-300': filtroEstadoAlertas === 'PENDIENTE'}"
+            class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-amber-300 transition text-left cursor-pointer">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 block">Pendientes</span>
+            <div class="text-2xl font-black text-amber-600 mt-1">{{ resumenAlertas.PENDIENTE }}</div>
+            <p class="text-[11px] text-gray-400 font-medium">Requieren revisión</p>
+          </button>
+
+          <button type="button" (click)="filtrarEstadoAlertas('CONFIRMADO')"
+            [ngClass]="{'ring-2 ring-emerald-400 border-emerald-300': filtroEstadoAlertas === 'CONFIRMADO'}"
+            class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-emerald-300 transition text-left cursor-pointer">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 block">Confirmadas</span>
+            <div class="text-2xl font-black text-emerald-700 mt-1">{{ resumenAlertas.CONFIRMADO }}</div>
+            <p class="text-[11px] text-gray-400 font-medium">Duplicados verificados</p>
+          </button>
+
+          <button type="button" (click)="filtrarEstadoAlertas('DESCARTADO')"
+            [ngClass]="{'ring-2 ring-slate-400 border-slate-300': filtroEstadoAlertas === 'DESCARTADO'}"
+            class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-slate-300 transition text-left cursor-pointer">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block">Descartadas</span>
+            <div class="text-2xl font-black text-slate-700 mt-1">{{ resumenAlertas.DESCARTADO }}</div>
+            <p class="text-[11px] text-gray-400 font-medium">No son duplicados</p>
+          </button>
+
+          <button type="button" (click)="filtrarEstadoAlertas('TODOS')"
+            [ngClass]="{'ring-2 ring-[#4141A5] border-[#4141A5]/50': filtroEstadoAlertas === 'TODOS'}"
+            class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-[#4141A5]/40 transition text-left cursor-pointer">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#4141A5] block">Total Alertas</span>
+            <div class="text-2xl font-black text-[#170B3D] mt-1">{{ resumenAlertas.total }}</div>
+            <p class="text-[11px] text-gray-400 font-medium">Historial completo</p>
+          </button>
+        </div>
+
+        <!-- Barra de filtros por estado + recarga -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar alertas por estado">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 mr-1">Estado:</span>
+
+            <button type="button" (click)="filtrarEstadoAlertas('PENDIENTE')"
+              [ngClass]="filtroEstadoAlertas === 'PENDIENTE'
+                ? 'bg-amber-600 text-white border-amber-600'
+                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-amber-50'"
+              class="px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer">
+              Pendientes
+            </button>
+
+            <button type="button" (click)="filtrarEstadoAlertas('CONFIRMADO')"
+              [ngClass]="filtroEstadoAlertas === 'CONFIRMADO'
+                ? 'bg-emerald-700 text-white border-emerald-700'
+                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-emerald-50'"
+              class="px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer">
+              Confirmadas
+            </button>
+
+            <button type="button" (click)="filtrarEstadoAlertas('DESCARTADO')"
+              [ngClass]="filtroEstadoAlertas === 'DESCARTADO'
+                ? 'bg-slate-700 text-white border-slate-700'
+                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-slate-100'"
+              class="px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer">
+              Descartadas
+            </button>
+
+            <button type="button" (click)="filtrarEstadoAlertas('TODOS')"
+              [ngClass]="filtroEstadoAlertas === 'TODOS'
+                ? 'bg-[#170B3D] text-white border-[#170B3D]'
+                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'"
+              class="px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer">
+              Todas
+            </button>
+          </div>
+
+          <button type="button"
+            (click)="cargarBandejaAlertas(); cargarIndiceDuplicados(true)"
+            [disabled]="cargandoAlertas"
+            class="px-3.5 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-[#170B3D] text-xs font-bold transition disabled:opacity-50 cursor-pointer self-start sm:self-auto">
+            {{ cargandoAlertas ? 'Actualizando...' : '↻ Actualizar' }}
+          </button>
+        </div>
+
+        <!-- Estado de carga -->
+        <div *ngIf="cargandoAlertas"
+          class="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-xs">
+          <div class="w-8 h-8 border-4 border-[#4141A5] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p class="text-sm font-bold text-[#170B3D]">Cargando alertas de duplicados...</p>
+          <p class="text-xs text-gray-400 mt-1">Consultando coincidencias registradas en el sistema.</p>
+        </div>
+
+        <!-- Estado de error -->
+        <div *ngIf="!cargandoAlertas && errorAlertas"
+          class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center space-y-3">
+          <p class="text-sm font-extrabold text-red-800">{{ errorAlertas }}</p>
+          <button type="button" (click)="cargarBandejaAlertas()"
+            class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition cursor-pointer">
+            Reintentar
+          </button>
+        </div>
+
+        <!-- Estado vacío -->
+        <div *ngIf="!cargandoAlertas && !errorAlertas && alertasBandeja.length === 0"
+          class="bg-white rounded-2xl border border-gray-100 p-10 text-center shadow-xs space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-[#4141A5] flex items-center justify-center text-xl mx-auto">
+            🔁
+          </div>
+          <h3 class="text-sm font-extrabold text-[#170B3D]">No hay alertas de duplicados para este filtro</h3>
+          <p class="text-xs text-gray-500 max-w-md mx-auto">
+            No se encontraron alertas con estado <span class="font-bold">{{ filtroEstadoAlertas }}</span>.
+          </p>
+          <button *ngIf="filtroEstadoAlertas !== 'TODOS'"
+            type="button"
+            (click)="filtrarEstadoAlertas('TODOS')"
+            class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition cursor-pointer">
+            Ver todas las alertas
+          </button>
+        </div>
+
+        <!-- Tabla única responsiva de la bandeja -->
+        <div *ngIf="!cargandoAlertas && !errorAlertas && alertasBandeja.length > 0"
+          class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[780px]">
+              <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">
+                  <th class="py-3.5 px-4">Alerta</th>
+                  <th class="py-3.5 px-4">Peticiones comparadas</th>
+                  <th class="py-3.5 px-4">Estado</th>
+                  <th class="py-3.5 px-4">Similitud texto</th>
+                  <th class="py-3.5 px-4">Distancia GPS</th>
+                  <th class="py-3.5 px-4">Fecha detección</th>
+                  <th class="py-3.5 px-4 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 text-xs">
+                <tr *ngFor="let a of alertasBandeja" class="hover:bg-indigo-50/30 transition">
+                  <td class="py-3.5 px-4 font-black text-[#170B3D] whitespace-nowrap">
+                    #{{ a.id_alerta }}
+                  </td>
+
+                  <td class="py-3.5 px-4">
+                    <div class="flex flex-wrap items-center gap-1.5 font-bold text-[#170B3D]">
+                      <span class="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200">
+                        {{ radicadoPeticionEnAlerta(a, 'menor') }}
+                        <span *ngIf="a.peticion_principal_id === a.peticion_menor_id"
+                          class="ml-1 text-[9px] font-black text-emerald-700 uppercase">Principal</span>
+                      </span>
+                      <span class="text-gray-400 font-semibold">vs</span>
+                      <span class="px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200">
+                        {{ radicadoPeticionEnAlerta(a, 'mayor') }}
+                        <span *ngIf="a.peticion_principal_id === a.peticion_mayor_id"
+                          class="ml-1 text-[9px] font-black text-emerald-700 uppercase">Principal</span>
+                      </span>
+                    </div>
+                  </td>
+
+                  <td class="py-3.5 px-4 whitespace-nowrap">
+                    <span [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
+                      {{ a.estado_revision }}
+                    </span>
+                  </td>
+
+                  <td class="py-3.5 px-4 font-bold text-[#4141A5] whitespace-nowrap">
+                    {{ formatearSimilitudAlerta(a) }}
+                  </td>
+
+                  <td class="py-3.5 px-4 font-semibold text-gray-700 whitespace-nowrap">
+                    {{ formatearDistanciaAlerta(a) }}
+                  </td>
+
+                  <td class="py-3.5 px-4 text-gray-600 whitespace-nowrap">
+                    {{ formatearFechaHora(a.fecha_creacion) }}
+                  </td>
+
+                  <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                    <button type="button"
+                      (click)="abrirComparadorDuplicado(a.id_alerta)"
+                      [title]="a.estado_revision === 'PENDIENTE' ? 'Comparar peticiones y resolver alerta' : 'Ver comparación en solo lectura'"
+                      class="px-3.5 py-1.5 rounded-xl bg-[#4141A5] hover:bg-[#33338b] text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                      Comparar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación de bandeja -->
+          <div class="px-4 py-3.5 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div class="text-gray-600 font-semibold">
+              Mostrando <span class="font-extrabold text-[#170B3D]">{{ alertasBandeja.length }}</span> de
+              <span class="font-extrabold text-[#170B3D]">{{ totalAlertasBandeja }}</span> alertas ·
+              Página <span class="font-extrabold text-[#170B3D]">{{ paginaAlertas }}</span> de
+              <span class="font-extrabold text-[#170B3D]">{{ totalPaginasAlertas }}</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="text-[11px] font-bold text-gray-500 flex items-center gap-1.5">
+                Por página:
+                <select
+                  [ngModel]="tamanioPaginaAlertas"
+                  (ngModelChange)="cambiarTamanioPaginaAlertas($event)"
+                  aria-label="Alertas por página"
+                  class="px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-[#170B3D] bg-white">
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="20">20</option>
+                  <option [ngValue]="50">50</option>
+                </select>
+              </label>
+
+              <button type="button"
+                (click)="cambiarPaginaAlertas(paginaAlertas - 1)"
+                [disabled]="paginaAlertas <= 1 || cargandoAlertas"
+                class="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-xs font-bold text-[#170B3D] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                Anterior
+              </button>
+
+              <button type="button"
+                (click)="cambiarPaginaAlertas(paginaAlertas + 1)"
+                [disabled]="paginaAlertas >= totalPaginasAlertas || cargandoAlertas"
+                class="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-xs font-bold text-[#170B3D] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
     </ng-container>
 
     <!-- ========================================================================= -->
@@ -942,6 +1240,84 @@
           </div>
         </div>
 
+        <!-- 6. Alertas de Posibles Duplicados (Solo Admin y Jurídico) -->
+        <div *ngIf="puedeGestionarDuplicados"
+          class="bg-amber-50/40 rounded-2xl p-4 border border-amber-200/80 space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <h4 class="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🔁</span> 6. Alertas de Posibles Duplicados
+              <span *ngIf="alertasPeticionDetalle.length > 0"
+                class="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-black">
+                {{ alertasPeticionDetalle.length }}
+              </span>
+            </h4>
+            <button type="button"
+              (click)="cargarAlertasDetallePeticion(peticionDetalle.id_peticion)"
+              [disabled]="cargandoAlertasDetalle"
+              class="text-[11px] font-bold text-[#4141A5] hover:underline disabled:opacity-50 cursor-pointer">
+              {{ cargandoAlertasDetalle ? 'Consultando...' : '↻ Actualizar' }}
+            </button>
+          </div>
+
+          <div *ngIf="cargandoAlertasDetalle" class="py-3 flex items-center gap-2 text-xs text-gray-600">
+            <span class="w-4 h-4 border-2 border-[#4141A5] border-t-transparent rounded-full animate-spin inline-block"></span>
+            Consultando posibles duplicados...
+          </div>
+
+          <div *ngIf="!cargandoAlertasDetalle && errorAlertasDetalle"
+            class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center justify-between gap-2">
+            <span class="font-semibold">{{ errorAlertasDetalle }}</span>
+            <button type="button"
+              (click)="cargarAlertasDetallePeticion(peticionDetalle.id_peticion)"
+              class="px-2.5 py-1 rounded-lg bg-red-600 text-white font-bold text-[10px] cursor-pointer">
+              Reintentar
+            </button>
+          </div>
+
+          <div *ngIf="!cargandoAlertasDetalle && !errorAlertasDetalle && alertasPeticionDetalle.length === 0"
+            class="py-2 text-xs text-gray-500 font-medium">
+            Esta petición no registra alertas de posibles duplicados.
+          </div>
+
+          <div *ngIf="!cargandoAlertasDetalle && !errorAlertasDetalle && alertasPeticionDetalle.length > 0"
+            class="space-y-2.5">
+            <div *ngFor="let a of alertasPeticionDetalle"
+              class="bg-white rounded-xl p-3 border border-amber-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="font-black text-[#170B3D]">Alerta #{{ a.id_alerta }}</span>
+                  <span [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
+                    {{ a.estado_revision }}
+                  </span>
+                  <span *ngIf="a.peticion_principal_id === peticionDetalle.id_peticion"
+                    class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Esta petición es la principal
+                  </span>
+                  <span *ngIf="otraPeticionDeAlerta(a, peticionDetalle.id_peticion).esPrincipal"
+                    class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-800 border border-blue-200">
+                    Principal: {{ otraPeticionDeAlerta(a, peticionDetalle.id_peticion).radicado }}
+                  </span>
+                </div>
+                <p class="text-gray-700 font-semibold">
+                  Petición relacionada:
+                  <span class="font-black text-[#170B3D]">{{ otraPeticionDeAlerta(a, peticionDetalle.id_peticion).radicado }}</span>
+                </p>
+                <p class="text-[11px] text-gray-500">
+                  Similitud: <span class="font-bold text-[#4141A5]">{{ formatearSimilitudAlerta(a) }}</span> ·
+                  Distancia GPS: <span class="font-bold text-gray-700">{{ formatearDistanciaAlerta(a) }}</span> ·
+                  Detectada: {{ formatearFechaHora(a.fecha_creacion) }}
+                </p>
+              </div>
+
+              <button type="button"
+                (click)="abrirComparadorDuplicado(a.id_alerta)"
+                class="px-3 py-1.5 rounded-xl bg-[#4141A5] hover:bg-[#33338b] text-white text-[11px] font-bold transition shrink-0 cursor-pointer">
+                Comparar
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Pie del Modal -->
@@ -1191,5 +1567,14 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL COMPARADOR VISUAL DE POSIBLES DUPLICADOS (ETAPA 2 / 3) -->
+  <app-alerta-duplicado-comparacion
+    *ngIf="puedeGestionarDuplicados && alertaComparacionId !== null"
+    [idAlerta]="alertaComparacionId"
+    [manejarEscapeExterno]="true"
+    (cerrar)="cerrarComparadorDuplicado()"
+    (alertaResuelta)="onAlertaDuplicadoResuelta($event)">
+  </app-alerta-duplicado-comparacion>
 
 </div>

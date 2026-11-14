@@ -33,7 +33,7 @@
         <!-- Botón Actualizar -->
         <button
           type="button"
-          (click)="cargarDatos()"
+          (click)="cargarDatos(true)"
           [disabled]="cargando"
           class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" [ngClass]="{'animate-spin': cargando}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -145,6 +145,197 @@
         </div>
       </div>
 
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 2.1B. RESUMEN Y ALERTAS RECIENTES DE POSIBLES DUPLICADOS                  -->
+    <!-- ========================================================================= -->
+    <section
+      *ngIf="puedeGestionarDuplicados"
+      data-testid="dashboard-juridico-duplicados"
+      class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3.5">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-sm sm:text-base font-bold text-slate-900 tracking-wide">
+                Alertas de Posibles Duplicados
+              </h2>
+              <span
+                class="px-2.5 py-0.5 rounded-full text-xs font-bold border"
+                [ngClass]="resumenDuplicados().PENDIENTE > 0
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-slate-100 text-slate-600 border-slate-200'">
+                {{ resumenDuplicados().PENDIENTE }} pendientes
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium">
+              Supervisión preventiva de reportes similares sin modificar radicados ni asignaciones
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          data-testid="btn-ver-todas-alertas-duplicados"
+          (click)="irABandejaDuplicados()"
+          class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#170B3D] hover:bg-[#25155c] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-xs transition-all cursor-pointer shrink-0">
+          <span>Ver todas las alertas</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tarjeta principal PENDIENTE + resumen CONFIRMADO y DESCARTADO -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div
+          data-testid="tarjeta-duplicados-pendientes"
+          class="rounded-xl p-4 border flex items-center justify-between"
+          [ngClass]="resumenDuplicados().PENDIENTE > 0
+            ? 'bg-amber-50/70 border-amber-200'
+            : 'bg-slate-50 border-slate-200'">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-700">
+              Pendientes (PENDIENTE)
+            </span>
+            <div class="text-2xl font-bold text-slate-900 mt-1">
+              {{ resumenDuplicados().PENDIENTE }}
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+              {{ resumenDuplicados().PENDIENTE > 0 ? 'Requieren revisión comparativa' : 'Al día en revisiones' }}
+            </p>
+          </div>
+          <div class="w-9 h-9 rounded-xl bg-white border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
+            🔎
+          </div>
+        </div>
+
+        <div
+          data-testid="resumen-duplicados-confirmados"
+          class="bg-emerald-50/70 rounded-xl p-4 border border-emerald-100 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">
+              Confirmados (CONFIRMADO)
+            </span>
+            <div class="text-2xl font-bold text-emerald-700 mt-1">
+              {{ resumenDuplicados().CONFIRMADO }}
+            </div>
+            <p class="text-xs text-emerald-700/80 font-medium mt-0.5">
+              Duplicados validados
+            </p>
+          </div>
+          <div class="w-9 h-9 rounded-xl bg-white border border-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+            ✓
+          </div>
+        </div>
+
+        <div
+          data-testid="resumen-duplicados-descartados"
+          class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-600">
+              Descartados (DESCARTADO)
+            </span>
+            <div class="text-2xl font-bold text-slate-800 mt-1">
+              {{ resumenDuplicados().DESCARTADO }}
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+              Total registradas: {{ resumenDuplicados().total }}
+            </p>
+          </div>
+          <div class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-500 flex items-center justify-center font-bold">
+            ✕
+          </div>
+        </div>
+      </div>
+
+      <!-- Error aislado de duplicados (no bloquea métricas jurídicas) -->
+      <div
+        *ngIf="errorDuplicados"
+        data-testid="error-duplicados-dashboard"
+        class="p-3.5 bg-red-50/70 border border-red-100 rounded-xl flex items-center justify-between gap-3 text-red-700 text-xs font-semibold">
+        <span>{{ errorDuplicados }}</span>
+        <button
+          type="button"
+          (click)="cargarAlertasDuplicados(true)"
+          class="px-3 py-1.5 bg-white border border-red-200 rounded-lg hover:bg-red-50 font-bold cursor-pointer shrink-0">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Estado de carga de duplicados -->
+      <div
+        *ngIf="!errorDuplicados && cargandoDuplicados && alertasPendientesRecientes().length === 0"
+        data-testid="cargando-duplicados-dashboard"
+        class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 flex items-center gap-2">
+        <span class="inline-block w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></span>
+        <span>Cargando alertas de posibles duplicados...</span>
+      </div>
+
+      <!-- Estado sin alertas pendientes -->
+      <div
+        *ngIf="!errorDuplicados && !cargandoDuplicados && alertasPendientesRecientes().length === 0"
+        data-testid="sin-alertas-duplicados-dashboard"
+        class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span>No hay alertas de posibles duplicados pendientes por revisar en este momento.</span>
+        <span *ngIf="resumenDuplicados().total > 0" class="text-slate-400 font-semibold">
+          Histórico revisado: {{ resumenDuplicados().CONFIRMADO + resumenDuplicados().DESCARTADO }}
+        </span>
+      </div>
+
+      <!-- Lista compacta de alertas pendientes más recientes -->
+      <div
+        *ngIf="!errorDuplicados && alertasPendientesRecientes().length > 0"
+        data-testid="lista-alertas-duplicados-recientes"
+        class="space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
+          <span>Pendientes más recientes</span>
+          <span>Haz clic en una alerta para abrir el comparador</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <button
+            *ngFor="let alerta of alertasPendientesRecientes()"
+            type="button"
+            [attr.data-testid]="'alerta-reciente-' + alerta.id_alerta"
+            (click)="abrirAlertaDuplicado(alerta.id_alerta)"
+            class="w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-indigo-300 hover:shadow-xs transition-all cursor-pointer flex items-center justify-between gap-3">
+            <div class="min-w-0 space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                  Alerta #{{ alerta.id_alerta }}
+                </span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  {{ alerta.estado_revision }}
+                </span>
+                <span class="text-xs font-semibold text-slate-500 truncate">
+                  {{ obtenerTipoAlerta(alerta) }}
+                </span>
+              </div>
+              <div class="text-xs font-bold text-slate-900 truncate">
+                {{ obtenerRadicadoAlerta(alerta, 'menor') }} ↔ {{ obtenerRadicadoAlerta(alerta, 'mayor') }}
+              </div>
+              <div class="flex items-center gap-2 flex-wrap text-[11px] text-slate-500 font-medium">
+                <span>Similitud: <strong class="text-slate-700">{{ formatearSimilitudAlerta(alerta) }}</strong></span>
+                <span>•</span>
+                <span>Distancia: <strong class="text-slate-700">{{ formatearDistanciaAlerta(alerta) }}</strong></span>
+                <span>•</span>
+                <span>{{ alerta.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+
+            <span class="px-2.5 py-1.5 rounded-lg bg-white border border-indigo-200 text-indigo-700 text-xs font-bold shrink-0">
+              Comparar →
+            </span>
+          </button>
+        </div>
+      </div>
     </section>
 
     <!-- ========================================================================= -->

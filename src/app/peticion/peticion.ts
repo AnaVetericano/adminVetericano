@@ -1,23 +1,43 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 
 import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
 import { AuthService } from '../services/auth';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import {
+  AlertaDuplicadoResumen,
+  ErrorDuplicadosApi,
+  EstadoRevisionAlerta,
+  PeticionAlertaResumen,
+  ResolverAlertaDuplicadoResponse,
+  ResumenConteosAlertas,
+  crearResumenAlertasVacio,
+  extraerIdAlertaDeNotificacion
+} from '../models/duplicados.model';
+import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparacion/alerta-duplicado-comparacion';
 
 @Component({
   selector: 'app-peticion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, DashboardJuridicoComponent, RouterLink],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    DashboardJuridicoComponent,
+    AlertaDuplicadoComparacionComponent,
+    RouterLink
+  ],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'
 })
-export class Peticion implements OnInit {
+export class Peticion implements OnInit, OnDestroy {
   reporteForm!: FormGroup;
   archivoSeleccionado: File | null = null;
 
@@ -98,7 +118,11 @@ export class Peticion implements OnInit {
 
   togglePanelNotificaciones(): void {
     this.panelNotificacionesAbierto = !this.panelNotificacionesAbierto;
-    if (this.panelNotificacionesAbierto && this.notificaciones.length === 0) {
+    if (
+      this.panelNotificacionesAbierto &&
+      this.puedeConsultarNotificacionesJuridicas &&
+      this.notificaciones.length === 0
+    ) {
       this.obtenerNotificaciones();
     }
   }
@@ -135,6 +159,38 @@ export class Peticion implements OnInit {
   evidenciaSeleccionada: string | null = null;
   evidenciaEsVideo = false;
 
+  // Integración de Duplicados (Etapa 3 - Exclusivo Administrador y Jurídico)
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+
+  @ViewChild(AlertaDuplicadoComparacionComponent)
+  private comparadorDuplicadoRef?: AlertaDuplicadoComparacionComponent;
+
+  vistaModulo: 'listado' | 'duplicados' = 'listado';
+  alertasBandeja: AlertaDuplicadoResumen[] = [];
+  resumenAlertas: ResumenConteosAlertas = crearResumenAlertasVacio();
+  filtroEstadoAlertas: 'TODOS' | EstadoRevisionAlerta = 'TODOS';
+  paginaAlertas = 1;
+  tamanioPaginaAlertas = 10;
+  totalAlertasBandeja = 0;
+  totalPaginasAlertas = 1;
+  cargandoAlertas = false;
+  errorAlertas: string | null = null;
+
+  alertasPeticionDetalle: AlertaDuplicadoResumen[] = [];
+  cargandoAlertasDetalle = false;
+  errorAlertasDetalle: string | null = null;
+
+  alertaComparacionId: number | null = null;
+  private estadoOriginalAlertaAbierta: EstadoRevisionAlerta | null = null;
+
+  private queryParamsSub: Subscription | null = null;
+  private indiceDuplicadosSub: Subscription | null = null;
+  private bandejaAlertasSub: Subscription | null = null;
+  private detalleAlertasSub: Subscription | null = null;
+  private notificacionAlertaSub: Subscription | null = null;
+
   // Solo veterinarios (id_rol === 3) para el combo de asignación
   get veterinariosDisponibles(): any[] {
     return this.funcionarios;
@@ -146,6 +202,18 @@ export class Peticion implements OnInit {
 
   get esVeterinario(): boolean {
     return this.authService.isVeterinario();
+  }
+
+  get puedeGestionarDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get puedeConsultarNotificacionesJuridicas(): boolean {
+    return this.puedeGestionarDuplicados;
+  }
+
+  get totalPendientesDuplicados(): number {
+    return this.puedeGestionarDuplicados ? this.alertasDuplicadosService.totalPendientes() : 0;
   }
 
   constructor(
@@ -166,11 +234,30 @@ export class Peticion implements OnInit {
       ubicacion: ['', Validators.required]
     });
 
-    // Cargar automáticamente peticiones, funcionarios, notificaciones y tipos
+    // Cargar automáticamente peticiones, funcionarios y tipos;
+    // notificaciones jurídicas y duplicados aplican exclusivamente a Administrador (1) y Jurídico (2).
     this.obtenerPeticiones();
     this.obtenerFuncionarios();
-    this.obtenerNotificaciones();
     this.obtenerTiposPeticion();
+
+    if (this.puedeConsultarNotificacionesJuridicas) {
+      this.obtenerNotificaciones();
+    }
+
+    if (this.puedeGestionarDuplicados) {
+      this.inicializarIntegracionDuplicados();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.queryParamsSub?.unsubscribe();
+    this.indiceDuplicadosSub?.unsubscribe();
+    this.bandejaAlertasSub?.unsubscribe();
+    this.detalleAlertasSub?.unsubscribe();
+    this.notificacionAlertaSub?.unsubscribe();
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
+    }
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -182,8 +269,16 @@ export class Peticion implements OnInit {
   // GESTIÓN DE NOTIFICACIONES (GET / POST / PATCH /notificaciones/)
   // =========================================================================
 
+  esNotificacionPosibleDuplicado(notif: any): boolean {
+    return String(notif?.tipo ?? '').trim().toUpperCase() === 'POSIBLE_DUPLICADO';
+  }
+
   obtenerNotificaciones(): void {
-    if (!localStorage.getItem('token')) return;
+    if (!this.puedeConsultarNotificacionesJuridicas || !localStorage.getItem('token')) {
+      this.notificaciones = [];
+      this.cargandoNotificaciones = false;
+      return;
+    }
     this.cargandoNotificaciones = true;
     const url = `${this.apiNotificacionesUrl}?todas=true`;
 
@@ -204,7 +299,7 @@ export class Peticion implements OnInit {
   }
 
   marcarTodasNotificacionesLeidas(): void {
-    if (!localStorage.getItem('token')) return;
+    if (!this.puedeConsultarNotificacionesJuridicas || !localStorage.getItem('token')) return;
     const url = `${this.apiNotificacionesUrl}marcar-leida/`;
 
     this.http.patch(url, { marcar_todas: true }, { headers: this.getAuthHeaders() }).subscribe({
@@ -220,7 +315,7 @@ export class Peticion implements OnInit {
   }
 
   marcarNotificacionLeida(notif: any): void {
-    if (!localStorage.getItem('token') || !notif) return;
+    if (!this.puedeConsultarNotificacionesJuridicas || !localStorage.getItem('token') || !notif) return;
     const idNotif = notif.id_notificacion || notif.id;
     const url = idNotif
       ? `${this.apiNotificacionesUrl}${idNotif}/marcar-leida/`
@@ -242,14 +337,58 @@ export class Peticion implements OnInit {
 
   abrirPeticionDesdeNotificacion(notif: any): void {
     this.panelNotificacionesAbierto = false;
-    const idPet = notif.id_peticion;
-    if (idPet) {
-      const encontrada = this.peticionesLista.find(p => Number(p.id_peticion) === Number(idPet));
-      if (encontrada) {
-        this.abrirModalDetalle(encontrada);
-      } else {
-        this.consultarDetallePeticionPorId(Number(idPet));
+    if (!notif) {
+      return;
+    }
+
+    if (this.puedeGestionarDuplicados && this.esNotificacionPosibleDuplicado(notif)) {
+      const idAlerta = extraerIdAlertaDeNotificacion(notif);
+      if (idAlerta !== null) {
+        this.abrirComparadorDuplicado(idAlerta);
+        return;
       }
+
+      const idPeticionDup = Number(notif.id_peticion);
+      if (Number.isInteger(idPeticionDup) && idPeticionDup > 0) {
+        this.abrirAlertaDeNotificacionSinIdEnMensaje(idPeticionDup);
+        return;
+      }
+      return;
+    }
+
+    const idPet = Number(notif.id_peticion);
+    if (Number.isInteger(idPet) && idPet > 0) {
+      this.abrirDetallePeticionPorId(idPet);
+    }
+  }
+
+  private abrirAlertaDeNotificacionSinIdEnMensaje(idPet: number): void {
+    this.notificacionAlertaSub?.unsubscribe();
+    this.notificacionAlertaSub = this.alertasDuplicadosService
+      .obtenerAlertasPorPeticion(idPet, { page_size: 20 })
+      .subscribe({
+        next: (resp) => {
+          const alertas = resp?.results ?? [];
+          const relacionada =
+            alertas.find((a) => a.estado_revision === 'PENDIENTE') ?? alertas[0];
+          if (relacionada?.id_alerta) {
+            this.abrirComparadorDuplicado(relacionada.id_alerta);
+          } else {
+            this.abrirDetallePeticionPorId(idPet);
+          }
+        },
+        error: () => {
+          this.abrirDetallePeticionPorId(idPet);
+        }
+      });
+  }
+
+  private abrirDetallePeticionPorId(idPet: number): void {
+    const encontrada = this.peticionesLista.find(p => Number(p.id_peticion) === Number(idPet));
+    if (encontrada) {
+      this.abrirModalDetalle(encontrada);
+    } else {
+      this.consultarDetallePeticionPorId(Number(idPet));
     }
   }
 
@@ -306,6 +445,12 @@ export class Peticion implements OnInit {
   recargarPeticiones(): void {
     this.obtenerPeticiones();
     this.obtenerNotificaciones();
+    if (this.puedeGestionarDuplicados) {
+      this.cargarIndiceDuplicados(true);
+      if (this.vistaModulo === 'duplicados') {
+        this.cargarBandejaAlertas();
+      }
+    }
   }
 
   obtenerFuncionarios(): void {
@@ -340,13 +485,27 @@ export class Peticion implements OnInit {
     if (id) {
       this.cargarDetalleCompleto(id);
       this.obtenerHistorialAsignaciones(id);
+      if (this.puedeGestionarDuplicados) {
+        this.cargarAlertasDetallePeticion(Number(id));
+      } else {
+        this.alertasPeticionDetalle = [];
+        this.cargandoAlertasDetalle = false;
+        this.errorAlertasDetalle = null;
+      }
     }
+    this.cdr.markForCheck();
   }
 
   cerrarModalDetalle(): void {
     this.modalDetalleAbierto = false;
     this.peticionDetalle = null;
     this.historialAsignaciones = [];
+    this.detalleAlertasSub?.unsubscribe();
+    this.detalleAlertasSub = null;
+    this.alertasPeticionDetalle = [];
+    this.cargandoAlertasDetalle = false;
+    this.errorAlertasDetalle = null;
+    this.cdr.markForCheck();
   }
 
   cargarDetalleCompleto(id: number): void {
@@ -1129,7 +1288,9 @@ export class Peticion implements OnInit {
   cerrarEvidencia(): void {
     this.evidenciaSeleccionada = null;
     this.evidenciaEsVideo = false;
-    document.body.style.overflow = '';
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = this.alertaComparacionId !== null ? 'hidden' : '';
+    }
   }
 
   onImgError(event: Event): void {
@@ -1140,6 +1301,12 @@ export class Peticion implements OnInit {
   cerrarConEscape(): void {
     if (this.evidenciaSeleccionada) {
       this.cerrarEvidencia();
+    } else if (this.alertaComparacionId !== null) {
+      if (this.comparadorDuplicadoRef?.tieneVisorMediaAbierto) {
+        this.comparadorDuplicadoRef.cerrarVisorMedia();
+      } else if (!this.comparadorDuplicadoRef?.resolviendo) {
+        this.cerrarComparadorDuplicado();
+      }
     } else if (this.mostrarModalEstado) {
       this.cerrarModalCambiarEstado();
     } else if (this.mostrarModalReasignar) {
@@ -1155,6 +1322,372 @@ export class Peticion implements OnInit {
     } else if (this.menuFiltroEstadoAbierto) {
       this.menuFiltroEstadoAbierto = false;
     }
+  }
+
+  // =========================================================================
+  // INTEGRACIÓN DE ALERTAS DE DUPLICADOS (ETAPA 3 - SOLO ADMIN / JURÍDICO)
+  // =========================================================================
+
+  private inicializarIntegracionDuplicados(): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+
+    this.cargarIndiceDuplicados(false);
+
+    this.queryParamsSub?.unsubscribe();
+    this.queryParamsSub = this.route.queryParamMap.subscribe((params) => {
+      this.aplicarQueryParamsDuplicados(params);
+    });
+  }
+
+  private aplicarQueryParamsDuplicados(params: ParamMap): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+
+    const estadoParam = (params.get('estado') || '').trim().toUpperCase();
+    if (estadoParam === 'PENDIENTE' || estadoParam === 'CONFIRMADO' || estadoParam === 'DESCARTADO') {
+      this.filtroEstadoAlertas = estadoParam;
+      this.paginaAlertas = 1;
+    }
+
+    const vistaParam = (params.get('vista') || '').trim().toLowerCase();
+    if (vistaParam === 'duplicados') {
+      if (this.vistaModulo !== 'duplicados' || this.vistaJuridica !== 'peticiones' || !this.mostrarLista) {
+        this.cambiarVistaModulo('duplicados', false);
+      } else if (this.alertasBandeja.length === 0 && !this.cargandoAlertas && !this.errorAlertas) {
+        this.cargarBandejaAlertas();
+      }
+    } else if (vistaParam === 'peticiones' || (vistaParam === '' && this.vistaModulo !== 'listado')) {
+      this.cambiarVistaModulo('listado', false);
+    }
+
+    const alertaParam = params.get('alerta');
+    if (alertaParam !== null && String(alertaParam).trim() !== '') {
+      const idAlerta = Number(alertaParam);
+      if (Number.isInteger(idAlerta) && idAlerta > 0 && idAlerta !== this.alertaComparacionId) {
+        this.abrirComparadorDuplicado(idAlerta, false);
+      }
+    } else if (this.alertaComparacionId !== null) {
+      this.cerrarComparadorDuplicado(false);
+    }
+  }
+
+  cambiarVistaModulo(vista: 'listado' | 'duplicados', actualizarUrl: boolean = true): void {
+    if (vista === 'duplicados' && !this.puedeGestionarDuplicados) {
+      return;
+    }
+
+    this.vistaModulo = vista;
+    this.vistaJuridica = 'peticiones';
+    this.mostrarLista = true;
+    this.menuFiltroAbierto = false;
+    this.menuFiltroEstadoAbierto = false;
+
+    if (vista === 'duplicados') {
+      this.cargarBandejaAlertas();
+    } else if (this.puedeGestionarDuplicados) {
+      this.cargarIndiceDuplicados(false);
+    }
+
+    if (actualizarUrl) {
+      this.actualizarQueryParams({
+        vista: vista === 'duplicados' ? 'duplicados' : null
+      });
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  cargarIndiceDuplicados(forzarRecarga: boolean = false): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+
+    this.indiceDuplicadosSub?.unsubscribe();
+    this.indiceDuplicadosSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, forzarRecarga)
+      .subscribe({
+        next: () => {
+          this.resumenAlertas = { ...this.alertasDuplicadosService.resumen() };
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  cargarBandejaAlertas(): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+
+    this.cargandoAlertas = true;
+    this.errorAlertas = null;
+    this.bandejaAlertasSub?.unsubscribe();
+
+    this.bandejaAlertasSub = this.alertasDuplicadosService
+      .listarAlertas({
+        estado_revision: this.filtroEstadoAlertas === 'TODOS' ? undefined : this.filtroEstadoAlertas,
+        page: this.paginaAlertas,
+        page_size: this.tamanioPaginaAlertas
+      })
+      .subscribe({
+        next: (resp) => {
+          this.alertasBandeja = resp.results;
+          this.resumenAlertas = { ...resp.resumen };
+          this.totalAlertasBandeja = resp.count;
+          this.totalPaginasAlertas = Math.max(
+            1,
+            resp.total_pages ?? Math.ceil((resp.count || 0) / this.tamanioPaginaAlertas)
+          );
+          this.cargandoAlertas = false;
+          this.cdr.detectChanges();
+        },
+        error: (err: ErrorDuplicadosApi) => {
+          this.cargandoAlertas = false;
+          this.errorAlertas = err?.mensaje || 'No se pudieron consultar las alertas de duplicados.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  filtrarEstadoAlertas(estado: 'TODOS' | EstadoRevisionAlerta): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+    this.filtroEstadoAlertas = estado;
+    this.paginaAlertas = 1;
+    this.cargarBandejaAlertas();
+  }
+
+  cambiarTamanioPaginaAlertas(nuevoTamanio: number): void {
+    const tam = Number(nuevoTamanio);
+    if (!Number.isInteger(tam) || tam <= 0 || tam > 100) {
+      return;
+    }
+    this.tamanioPaginaAlertas = tam;
+    this.paginaAlertas = 1;
+    this.cargarBandejaAlertas();
+  }
+
+  cambiarPaginaAlertas(nuevaPagina: number): void {
+    if (!this.puedeGestionarDuplicados || this.cargandoAlertas) {
+      return;
+    }
+    if (nuevaPagina < 1 || nuevaPagina > this.totalPaginasAlertas || nuevaPagina === this.paginaAlertas) {
+      return;
+    }
+    this.paginaAlertas = nuevaPagina;
+    this.cargarBandejaAlertas();
+  }
+
+  cargarAlertasDetallePeticion(idPeticion: number): void {
+    if (!this.puedeGestionarDuplicados || !Number.isInteger(idPeticion) || idPeticion <= 0) {
+      return;
+    }
+
+    this.cargandoAlertasDetalle = true;
+    this.errorAlertasDetalle = null;
+    this.alertasPeticionDetalle = [];
+    this.detalleAlertasSub?.unsubscribe();
+
+    this.detalleAlertasSub = this.alertasDuplicadosService
+      .obtenerAlertasPorPeticion(idPeticion, { page_size: 50 })
+      .subscribe({
+        next: (resp) => {
+          this.alertasPeticionDetalle = resp.results;
+          this.cargandoAlertasDetalle = false;
+          this.cdr.detectChanges();
+        },
+        error: (err: ErrorDuplicadosApi) => {
+          this.cargandoAlertasDetalle = false;
+          this.errorAlertasDetalle =
+            err?.mensaje || 'No se pudieron consultar los posibles duplicados de esta petición.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  alertasPendientesDePeticion(p: any): AlertaDuplicadoResumen[] {
+    const id = Number(p?.id_peticion);
+    if (!this.puedeGestionarDuplicados || !Number.isInteger(id) || id <= 0) {
+      return [];
+    }
+    return this.alertasDuplicadosService.obtenerAlertasPendientesDePeticion(id);
+  }
+
+  cantidadAlertasPendientesPeticion(p: any): number {
+    return this.alertasPendientesDePeticion(p).length;
+  }
+
+  tienePosibleDuplicadoPendiente(p: any): boolean {
+    return this.alertasPendientesDePeticion(p).length > 0;
+  }
+
+  tieneDuplicadoConfirmadoPeticion(p: any): boolean {
+    const id = Number(p?.id_peticion);
+    if (!this.puedeGestionarDuplicados || !Number.isInteger(id) || id <= 0) {
+      return false;
+    }
+    return this.alertasDuplicadosService.tieneDuplicadoConfirmado(id);
+  }
+
+  abrirAlertaDesdeTarjeta(p: any, event?: Event): void {
+    event?.stopPropagation();
+    if (!this.puedeGestionarDuplicados || !p) {
+      return;
+    }
+    const pendientes = this.alertasPendientesDePeticion(p);
+    if (pendientes.length === 1) {
+      this.abrirComparadorDuplicado(pendientes[0].id_alerta);
+    } else {
+      this.abrirModalDetalle(p);
+    }
+  }
+
+  abrirComparadorDuplicado(idAlerta: number, actualizarUrl: boolean = true): void {
+    const id = Number(idAlerta);
+    if (!this.puedeGestionarDuplicados || !Number.isInteger(id) || id <= 0) {
+      return;
+    }
+
+    const existente =
+      this.alertasBandeja.find((a) => a.id_alerta === id) ??
+      this.alertasPeticionDetalle.find((a) => a.id_alerta === id);
+    this.estadoOriginalAlertaAbierta = existente?.estado_revision ?? null;
+
+    this.alertaComparacionId = id;
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden';
+    }
+    if (actualizarUrl) {
+      this.actualizarQueryParams({ alerta: id });
+    }
+    this.cdr.detectChanges();
+  }
+
+  cerrarComparadorDuplicado(actualizarUrl: boolean = true): void {
+    const idCerrada = this.alertaComparacionId;
+    const estadoInicial = this.estadoOriginalAlertaAbierta;
+    const detalleActual = this.alertasDuplicadosService.alertaDetalleActiva();
+
+    this.alertaComparacionId = null;
+    this.estadoOriginalAlertaAbierta = null;
+
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = this.evidenciaSeleccionada ? 'hidden' : '';
+    }
+
+    // Si durante la vista hubo recarga (p. ej. HTTP 409) que reveló cambio de estado, sincronizar bandeja/índice
+    if (
+      idCerrada !== null &&
+      detalleActual &&
+      detalleActual.id_alerta === idCerrada &&
+      estadoInicial === 'PENDIENTE' &&
+      detalleActual.estado_revision !== 'PENDIENTE'
+    ) {
+      this.sincronizarAlertaResueltaEnListados(detalleActual, true);
+      this.cargarIndiceDuplicados(true);
+    }
+
+    if (actualizarUrl) {
+      this.actualizarQueryParams({ alerta: null });
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  onAlertaDuplicadoResuelta(resp: ResolverAlertaDuplicadoResponse): void {
+    this.estadoOriginalAlertaAbierta = resp.estado_nuevo;
+    this.resumenAlertas = { ...this.alertasDuplicadosService.resumen() };
+    this.sincronizarAlertaResueltaEnListados(resp.alerta, resp.cambiada);
+    this.cdr.detectChanges();
+  }
+
+  radicadoPeticionEnAlerta(
+    alerta: AlertaDuplicadoResumen,
+    lado: 'menor' | 'mayor'
+  ): string {
+    const pet = lado === 'menor' ? alerta.peticion_menor : alerta.peticion_mayor;
+    const idFallback = lado === 'menor' ? alerta.peticion_menor_id : alerta.peticion_mayor_id;
+    return pet?.numero_radicado?.trim() || pet?.codigo?.trim() || `RAD-PET-${idFallback}`;
+  }
+
+  otraPeticionDeAlerta(
+    alerta: AlertaDuplicadoResumen,
+    idPeticionActual: number
+  ): { id: number; radicado: string; resumen: PeticionAlertaResumen | null; esPrincipal: boolean } {
+    const esMenorActual = Number(alerta.peticion_menor_id) === Number(idPeticionActual);
+    const idOtra = esMenorActual ? alerta.peticion_mayor_id : alerta.peticion_menor_id;
+    const petOtra = esMenorActual ? alerta.peticion_mayor : alerta.peticion_menor;
+    const radicado = petOtra?.numero_radicado?.trim() || petOtra?.codigo?.trim() || `RAD-PET-${idOtra}`;
+    return {
+      id: idOtra,
+      radicado,
+      resumen: petOtra,
+      esPrincipal: alerta.peticion_principal_id !== null && Number(alerta.peticion_principal_id) === Number(idOtra)
+    };
+  }
+
+  formatearSimilitudAlerta(alerta: AlertaDuplicadoResumen): string {
+    return this.alertasDuplicadosService.formatearPorcentajeSimilitud(
+      alerta.similitud_texto,
+      1,
+      'No disponible'
+    );
+  }
+
+  formatearDistanciaAlerta(alerta: AlertaDuplicadoResumen): string {
+    return this.alertasDuplicadosService.formatearDistanciaMetros(
+      alerta.distancia_metros,
+      'No disponible'
+    );
+  }
+
+  claseEstadoAlertaBadge(estado: EstadoRevisionAlerta): string {
+    switch (estado) {
+      case 'PENDIENTE':
+        return 'badge-status-warning';
+      case 'CONFIRMADO':
+        return 'badge-status-success';
+      case 'DESCARTADO':
+        return 'badge-status-neutral';
+      default:
+        return 'badge-status-neutral';
+    }
+  }
+
+  private sincronizarAlertaResueltaEnListados(
+    alertaActualizada: AlertaDuplicadoResumen,
+    cambiada: boolean
+  ): void {
+    this.alertasPeticionDetalle = this.alertasPeticionDetalle.map((a) =>
+      a.id_alerta === alertaActualizada.id_alerta ? alertaActualizada : a
+    );
+
+    if (this.filtroEstadoAlertas === 'PENDIENTE') {
+      const estabaEnBandeja = this.alertasBandeja.some((a) => a.id_alerta === alertaActualizada.id_alerta);
+      if (estabaEnBandeja) {
+        this.alertasBandeja = this.alertasBandeja.filter((a) => a.id_alerta !== alertaActualizada.id_alerta);
+        this.totalAlertasBandeja = Math.max(0, this.totalAlertasBandeja - (cambiada ? 1 : 0));
+      }
+    } else {
+      this.alertasBandeja = this.alertasBandeja.map((a) =>
+        a.id_alerta === alertaActualizada.id_alerta ? alertaActualizada : a
+      );
+    }
+  }
+
+  private actualizarQueryParams(cambios: Record<string, string | number | null>): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: cambios,
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   private mostrarAlerta(title: string, text: string, icon: 'success' | 'error' | 'warning'): void {

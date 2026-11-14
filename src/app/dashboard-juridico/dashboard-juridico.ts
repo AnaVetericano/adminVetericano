@@ -6,16 +6,28 @@ import {
   ElementRef,
   ChangeDetectorRef,
   Output,
-  EventEmitter
+  EventEmitter,
+  inject,
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Chart } from 'chart.js/auto';
+import { Subscription } from 'rxjs';
 import {
   DashboardJuridicoService,
   ResumenDashboardJuridico,
   CasoVeterinario
 } from '../services/dashboard-juridico.service';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import {
+  AlertaDuplicadoResumen,
+  ErrorDuplicadosApi,
+  ResumenConteosAlertas,
+  crearResumenAlertasVacio
+} from '../models/duplicados.model';
+
+const MAX_ALERTAS_PENDIENTES_DASHBOARD = 5;
 
 @Component({
   selector: 'app-dashboard-juridico',
@@ -59,6 +71,45 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   private chartVeterinarios?: Chart;
   private chartCBA?: Chart;
 
+  readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  cargandoDuplicados = false;
+  errorDuplicados = '';
+  private duplicadosSub?: Subscription;
+
+  readonly resumenDuplicados = computed<ResumenConteosAlertas>(() =>
+    this.puedeGestionarDuplicados
+      ? this.alertasDuplicadosService.resumen()
+      : crearResumenAlertasVacio()
+  );
+
+  readonly alertasPendientesRecientes = computed<AlertaDuplicadoResumen[]>(() => {
+    if (!this.puedeGestionarDuplicados) {
+      return [];
+    }
+    const mapaPorId = new Map<number, AlertaDuplicadoResumen>();
+    for (const alertas of this.alertasDuplicadosService.indicePorPeticion().values()) {
+      for (const alerta of alertas) {
+        if (alerta.estado_revision === 'PENDIENTE' && !mapaPorId.has(alerta.id_alerta)) {
+          mapaPorId.set(alerta.id_alerta, alerta);
+        }
+      }
+    }
+    return Array.from(mapaPorId.values())
+      .sort((a, b) => {
+        const fechaB = Date.parse(b.fecha_creacion || '') || 0;
+        const fechaA = Date.parse(a.fecha_creacion || '') || 0;
+        if (fechaB !== fechaA) {
+          return fechaB - fechaA;
+        }
+        return b.id_alerta - a.id_alerta;
+      })
+      .slice(0, MAX_ALERTAS_PENDIENTES_DASHBOARD);
+  });
+
+  get puedeGestionarDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
   constructor(
     private dashboardService: DashboardJuridicoService,
     private cdr: ChangeDetectorRef,
@@ -66,16 +117,18 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.cargarDatos();
+    this.cargarDatos(false);
   }
 
   ngOnDestroy(): void {
+    this.duplicadosSub?.unsubscribe();
     this.destruirGraficas();
   }
 
-  cargarDatos(): void {
+  cargarDatos(forzarDuplicados: boolean = false): void {
     this.cargando = true;
     this.errorCarga = '';
+    this.cargarAlertasDuplicados(forzarDuplicados);
 
     this.dashboardService.obtenerDatosDashboard().subscribe({
       next: (datos) => {
@@ -379,5 +432,77 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   irAGestionPeticiones(): void {
     this.verCasos.emit();
     this.router.navigate(['/inicio-admin/peticion'], { queryParams: { tab: 'peticiones' } });
+  }
+
+  /**
+   * Consulta o sincroniza las alertas de duplicados desde `AlertasDuplicadosService`
+   * únicamente para roles autorizados (Administrador y Jurídico).
+   */
+  cargarAlertasDuplicados(forzarRecarga: boolean = false): void {
+    if (!this.puedeGestionarDuplicados) {
+      this.cargandoDuplicados = false;
+      this.errorDuplicados = '';
+      return;
+    }
+
+    this.cargandoDuplicados = true;
+    this.errorDuplicados = '';
+    this.duplicadosSub?.unsubscribe();
+
+    this.duplicadosSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, forzarRecarga)
+      .subscribe({
+        next: () => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados = '';
+          this.cdr.detectChanges();
+        },
+        error: (err: ErrorDuplicadosApi) => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados =
+            err?.mensaje || 'No se pudieron consultar las alertas de duplicados.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  irABandejaDuplicados(): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+    this.router.navigate(['/inicio-admin/peticion'], {
+      queryParams: { vista: 'duplicados' }
+    });
+  }
+
+  abrirAlertaDuplicado(idAlerta: number): void {
+    if (!this.puedeGestionarDuplicados || !Number.isInteger(idAlerta) || idAlerta <= 0) {
+      return;
+    }
+    this.router.navigate(['/inicio-admin/peticion'], {
+      queryParams: { vista: 'duplicados', alerta: idAlerta }
+    });
+  }
+
+  obtenerRadicadoAlerta(alerta: AlertaDuplicadoResumen, lado: 'menor' | 'mayor'): string {
+    const pet = lado === 'menor' ? alerta.peticion_menor : alerta.peticion_mayor;
+    const idFallback = lado === 'menor' ? alerta.peticion_menor_id : alerta.peticion_mayor_id;
+    return pet?.numero_radicado || `Petición #${idFallback}`;
+  }
+
+  obtenerTipoAlerta(alerta: AlertaDuplicadoResumen): string {
+    return (
+      alerta.peticion_mayor?.tipo?.nombre ||
+      alerta.peticion_menor?.tipo?.nombre ||
+      'Reporte ciudadano'
+    );
+  }
+
+  formatearSimilitudAlerta(alerta: AlertaDuplicadoResumen): string {
+    return this.alertasDuplicadosService.formatearPorcentajeSimilitud(alerta.similitud_texto);
+  }
+
+  formatearDistanciaAlerta(alerta: AlertaDuplicadoResumen): string {
+    return this.alertasDuplicadosService.formatearDistanciaMetros(alerta.distancia_metros);
   }
 }
