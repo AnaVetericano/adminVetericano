@@ -176,6 +176,7 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.logout();
+        this.alertasDuplicadosService.limpiarEstado();
         this.router.navigate(['/']);
       }
     });

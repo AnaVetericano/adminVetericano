@@ -1269,4 +1269,140 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
     httpMock.expectNone((req) => req.url.toLowerCase().includes('notificaciones'));
     httpMock.expectNone((req) => req.url.toLowerCase().includes('duplicad'));
   });
+
+  it('debe retroceder a página 1 y recargar la bandeja al resolver la última alerta pendiente de la página 2', () => {
+    const alertaPag1 = crearAlertaMock({ id_alerta: 50, peticion_menor_id: 101, peticion_mayor_id: 205 });
+    const alertaPag2 = crearAlertaMock({ id_alerta: 55, peticion_menor_id: 301, peticion_mayor_id: 401 });
+    const resumenInicial: ResumenAlertas = { PENDIENTE: 11, CONFIRMADO: 0, DESCARTADO: 0, total: 11 };
+
+    const fixture = crearFixture();
+    flushPeticionesNoDuplicadas();
+    flushIndiceAlertas([alertaPag1, alertaPag2], resumenInicial);
+    fixture.detectChanges();
+
+    // Ir a pestaña Alertas de duplicados y filtrar PENDIENTE
+    const tabDuplicados = fixture.debugElement
+      .queryAll(By.css('button[role="tab"]'))
+      .find((b) => (b.nativeElement.textContent as string).includes('Alertas de duplicados'));
+    tabDuplicados!.nativeElement.click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne(
+        (req) =>
+          req.method === 'GET' &&
+          req.url === `${basePeticionesUrl}/duplicados/alertas/` &&
+          req.params.get('page_size') !== '100'
+      )
+      .flush(
+        crearListadoResponse([alertaPag1], resumenInicial, { count: 11, page: 1, page_size: 10, total_pages: 2 })
+      );
+    fixture.detectChanges();
+
+    const btnPendientes = fixture.debugElement
+      .queryAll(By.css('div[role="group"] button'))
+      .find((b) => b.nativeElement.textContent.trim() === 'Pendientes');
+    btnPendientes!.nativeElement.click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne(
+        (req) =>
+          req.method === 'GET' &&
+          req.url === `${basePeticionesUrl}/duplicados/alertas/` &&
+          req.params.get('estado_revision') === 'PENDIENTE' &&
+          req.params.get('page') === '1'
+      )
+      .flush(
+        crearListadoResponse([alertaPag1], resumenInicial, { count: 11, page: 1, page_size: 10, total_pages: 2 })
+      );
+    fixture.detectChanges();
+
+    // Ir a página 2 donde hay una única alerta pendiente
+    const btnSiguiente = fixture.debugElement
+      .queryAll(By.css('button'))
+      .find((b) => b.nativeElement.textContent.trim() === 'Siguiente');
+    btnSiguiente!.nativeElement.click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne(
+        (req) =>
+          req.method === 'GET' &&
+          req.url === `${basePeticionesUrl}/duplicados/alertas/` &&
+          req.params.get('estado_revision') === 'PENDIENTE' &&
+          req.params.get('page') === '2'
+      )
+      .flush(
+        crearListadoResponse([alertaPag2], resumenInicial, { count: 11, page: 2, page_size: 10, total_pages: 2 })
+      );
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.paginaAlertas).toBe(2);
+    expect(fixture.debugElement.queryAll(By.css('table tbody tr')).length).toBe(1);
+
+    // Abrir comparador y resolver la única alerta de la página 2 como DESCARTADO
+    const btnComparar = fixture.debugElement
+      .queryAll(By.css('table tbody tr button'))
+      .find((b) => b.nativeElement.textContent.trim() === 'Comparar');
+    btnComparar!.nativeElement.click();
+    fixture.detectChanges();
+
+    httpMock
+      .expectOne((req) => req.method === 'GET' && req.url === `${basePeticionesUrl}/duplicados/alertas/55/`)
+      .flush(crearDetalleMock(alertaPag2));
+    fixture.detectChanges();
+
+    const compDebug = fixture.debugElement.query(By.directive(AlertaDuplicadoComparacionComponent));
+    compDebug
+      .queryAll(By.css('button'))
+      .find((b) => (b.nativeElement.textContent as string).includes('Descartar posible duplicado'))!
+      .nativeElement.click();
+    fixture.detectChanges();
+
+    compDebug
+      .queryAll(By.css('button'))
+      .find((b) => (b.nativeElement.textContent as string).includes('Descartar Alerta'))!
+      .nativeElement.click();
+    fixture.detectChanges();
+
+    const reqPost = httpMock.expectOne(
+      (req) => req.method === 'POST' && req.url === `${basePeticionesUrl}/duplicados/alertas/55/resolver/`
+    );
+    const alertaPag2Descartada = crearAlertaMock({
+      id_alerta: 55,
+      estado_revision: 'DESCARTADO',
+      peticion_menor_id: 301,
+      peticion_mayor_id: 401,
+      peticion_principal_id: null
+    });
+    reqPost.flush({
+      mensaje: 'Alerta descartada.',
+      cambiada: true,
+      estado_anterior: 'PENDIENTE',
+      estado_nuevo: 'DESCARTADO',
+      alerta: crearDetalleMock(alertaPag2Descartada)
+    });
+    fixture.detectChanges();
+
+    // Debe haber decrementado paginaAlertas a 1 y solicitado la página 1 de la bandeja
+    expect(fixture.componentInstance.paginaAlertas).toBe(1);
+    const reqRecargaPag1 = httpMock.expectOne(
+      (req) =>
+        req.method === 'GET' &&
+        req.url === `${basePeticionesUrl}/duplicados/alertas/` &&
+        req.params.get('estado_revision') === 'PENDIENTE' &&
+        req.params.get('page') === '1'
+    );
+    reqRecargaPag1.flush(
+      crearListadoResponse(
+        [alertaPag1],
+        { PENDIENTE: 10, CONFIRMADO: 0, DESCARTADO: 1, total: 11 },
+        { count: 10, page: 1, page_size: 10, total_pages: 1 }
+      )
+    );
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.queryAll(By.css('table tbody tr')).length).toBe(1);
+  });
 });

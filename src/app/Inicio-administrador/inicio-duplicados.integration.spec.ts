@@ -548,4 +548,41 @@ describe('Integración Etapa 4: Sidebar, acceso global y reactividad de duplicad
     expect(fixtureSuper.debugElement.query(By.css('[data-testid="sidebar-peticiones-duplicados-badge"]'))).toBeNull();
     expect(fixtureSuper.debugElement.query(By.css('[data-testid="acceso-global-duplicados"]'))).toBeNull();
   });
+
+  it('debe invocar limpiarEstado de AlertasDuplicadosService al confirmar onLogout', async () => {
+    await router.navigateByUrl('/inicio-admin/graficas');
+    const fixture = TestBed.createComponent(InicioAdministradorComponent);
+    fixture.detectChanges();
+
+    const alerta1 = crearAlertaMock({ id_alerta: 101 });
+    httpMock
+      .expectOne(
+        (req) =>
+          req.method === 'GET' &&
+          req.url === `${basePeticionesUrl}/duplicados/alertas/` &&
+          req.params.get('page_size') === '100'
+      )
+      .flush({
+        count: 1,
+        next: null,
+        previous: null,
+        page: 1,
+        page_size: 100,
+        total_pages: 1,
+        resumen: { PENDIENTE: 1, CONFIRMADO: 0, DESCARTADO: 0, total: 1 },
+        results: [alerta1]
+      });
+    fixture.detectChanges();
+
+    const alertasService = TestBed.inject(AlertasDuplicadosService);
+    const limpiarSpy = vi.spyOn(alertasService, 'limpiarEstado');
+    expect(alertasService.totalPendientes()).toBe(1);
+
+    fixture.componentInstance.onLogout();
+    await fixture.whenStable();
+
+    expect(authMock.logout).toHaveBeenCalledTimes(1);
+    expect(limpiarSpy).toHaveBeenCalledTimes(1);
+    expect(alertasService.totalPendientes()).toBe(0);
+  });
 });

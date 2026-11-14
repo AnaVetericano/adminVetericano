@@ -1673,6 +1673,10 @@ export class Peticion implements OnInit, OnDestroy {
       if (estabaEnBandeja) {
         this.alertasBandeja = this.alertasBandeja.filter((a) => a.id_alerta !== alertaActualizada.id_alerta);
         this.totalAlertasBandeja = Math.max(0, this.totalAlertasBandeja - (cambiada ? 1 : 0));
+        if (this.alertasBandeja.length === 0 && this.paginaAlertas > 1) {
+          this.paginaAlertas -= 1;
+          this.cargarBandejaAlertas();
+        }
       }
     } else {
       this.alertasBandeja = this.alertasBandeja.map((a) =>

@@ -755,7 +755,8 @@
                   </td>
 
                   <td class="py-3.5 px-4 whitespace-nowrap">
-                    <span [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold"
+                      [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
                       {{ a.estado_revision }}
                     </span>
                   </td>
@@ -1286,7 +1287,8 @@
               <div class="space-y-1">
                 <div class="flex flex-wrap items-center gap-1.5">
                   <span class="font-black text-[#170B3D]">Alerta #{{ a.id_alerta }}</span>
-                  <span [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold"
+                    [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
                     {{ a.estado_revision }}
                   </span>
                   <span *ngIf="a.peticion_principal_id === peticionDetalle.id_peticion"

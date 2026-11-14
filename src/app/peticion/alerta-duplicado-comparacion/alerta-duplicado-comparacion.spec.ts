@@ -534,4 +534,31 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
     btnCerrar.click();
     expect(cierres).toBe(1);
   });
+
+  it('con mediaActiva abierto y modoModal=true, un clic en el fondo del visor cierra SOLO el visor y NO emite cerrar', () => {
+    let cierres = 0;
+    component.cerrar.subscribe(() => cierres++);
+
+    cargarAlertaEnComponente(crearAlertaDetalleMock());
+    fixture.componentRef.setInput('modoModal', true);
+
+    component.abrirVisorMedia({
+      url: 'https://cdn.vetericano.test/evidencia-101.jpg',
+      tipo: 'imagen',
+      descripcion: 'Evidencia de prueba',
+      esPrincipal: true
+    });
+    fixture.detectChanges();
+
+    expect(component.mediaActiva).toBeTruthy();
+
+    const fondoVisor: HTMLElement | null = fixture.nativeElement.querySelector('.cursor-zoom-out');
+    expect(fondoVisor).toBeTruthy();
+
+    fondoVisor!.click();
+    fixture.detectChanges();
+
+    expect(component.mediaActiva).toBeNull();
+    expect(cierres).toBe(0);
+  });
 });

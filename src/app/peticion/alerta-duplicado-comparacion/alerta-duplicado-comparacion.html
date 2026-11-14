@@ -682,7 +682,7 @@
   <!-- ========================================================================= -->
   <!-- VISOR LIGHTBOX PARA FOTOGRAFÍAS, VIDEOS Y ARCHIVOS                        -->
   <!-- ========================================================================= -->
-  <div *ngIf="mediaActiva" (click)="cerrarVisorMedia()"
+  <div *ngIf="mediaActiva" (click)="cerrarVisorMedia(); $event.stopPropagation()"
     class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center z-[60] p-4 cursor-zoom-out">
     <div (click)="$event.stopPropagation()"
       class="relative bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl w-full p-4 sm:p-5 cursor-default space-y-4">
