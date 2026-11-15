@@ -390,10 +390,8 @@ describe('Integración Etapa 4: Sidebar, acceso global y reactividad de duplicad
     expect(badgeSidebar).toBeTruthy();
     expect(badgeSidebar.nativeElement.textContent.trim()).toBe('2');
 
-    const accesoGlobal = fixture.debugElement.query(By.css('[data-testid="acceso-global-duplicados"]'));
-    expect(accesoGlobal).toBeTruthy();
-    expect(accesoGlobal.nativeElement.textContent).toContain('Duplicados');
-    expect(accesoGlobal.nativeElement.textContent).toContain('2');
+    // El acceso a duplicados ya no está en la barra superior: se consulta desde Peticiones
+    expect(fixture.debugElement.query(By.css('[data-testid="acceso-global-duplicados"]'))).toBeNull();
 
     // Alertas de inventario del maletín siguen independientes y operativas
     expect(fixture.componentInstance.totalMedicamentosAlertas).toBe(1);
@@ -407,7 +405,7 @@ describe('Integración Etapa 4: Sidebar, acceso global y reactividad de duplicad
     expect(fixture.nativeElement.textContent.toLowerCase()).toContain('amoxicilina');
   });
 
-  it('debe navegar desde acceso global a /inicio-admin/peticion?vista=duplicados reutilizando AlertasDuplicadosService y actualizar sidebar al resolver (rol 2)', async () => {
+  it('debe abrir /inicio-admin/peticion?vista=duplicados reutilizando AlertasDuplicadosService y actualizar sidebar al resolver (rol 2)', async () => {
     configurarToken({ autenticado: true, id_rol: 2, rol: 'Jurídico' });
     await router.navigateByUrl('/inicio-admin/dashboard-juridico');
 
@@ -436,9 +434,8 @@ describe('Integración Etapa 4: Sidebar, acceso global y reactividad de duplicad
       });
     fixture.detectChanges();
 
-    // Clic en el acceso global del header -> navega a /inicio-admin/peticion?vista=duplicados
-    const accesoGlobal = fixture.debugElement.query(By.css('[data-testid="acceso-global-duplicados"]'));
-    accesoGlobal.nativeElement.click();
+    // Navegación a la bandeja de duplicados de Peticiones (pestaña "Alertas de duplicados")
+    await router.navigateByUrl('/inicio-admin/peticion?vista=duplicados');
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -514,7 +511,6 @@ describe('Integración Etapa 4: Sidebar, acceso global y reactividad de duplicad
 
     const badgeSidebar = fixture.debugElement.query(By.css('[data-testid="sidebar-peticiones-duplicados-badge"]'));
     expect(badgeSidebar.nativeElement.textContent.trim()).toBe('1');
-    expect(fixture.debugElement.query(By.css('[data-testid="topbar-duplicados-count"]')).nativeElement.textContent.trim()).toBe('1');
   });
 
   it('debe ocultar contador y acceso global de duplicados sin consultar endpoints para Veterinario (rol 3) y Super Administrador (rol 5)', async () => {

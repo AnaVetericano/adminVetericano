@@ -452,31 +452,10 @@
     <!-- BARRA SUPERIOR CON PERFIL EN LA ESQUINA DERECHA -->
     <header class="bg-white border-b border-slate-200 h-14 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
       
-      <!-- Acceso global discreto a duplicados (Solo Administrador y Jurídico) -->
-      <div class="flex items-center gap-3 pl-12 lg:pl-0">
-        @if (puedeVerAlertasDuplicados) {
-          <a
-            routerLink="/inicio-admin/peticion"
-            [queryParams]="{ vista: 'duplicados' }"
-            (click)="menuAbierto = false"
-            data-testid="acceso-global-duplicados"
-            class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
-            [ngClass]="totalAlertasDuplicadosPendientes > 0
-              ? 'bg-white hover:bg-slate-50 text-[#170B3D] border-[#4141A5]/30'
-              : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'"
-            title="Ir a la bandeja de alertas de posibles duplicados">
-            <span class="w-2 h-2 rounded-full"
-              [ngClass]="totalAlertasDuplicadosPendientes > 0 ? 'bg-[#4141A5]' : 'bg-slate-400'"></span>
-            <span class="hidden sm:inline">Duplicados</span>
-            <span
-              data-testid="topbar-duplicados-count"
-              class="px-1.5 py-0.5 rounded-md text-[11px] font-bold leading-none"
-              [ngClass]="totalAlertasDuplicadosPendientes > 0 ? 'bg-[#4141A5] text-white' : 'bg-slate-200 text-slate-700'">
-              {{ totalAlertasDuplicadosPendientes }}
-            </span>
-          </a>
-        }
-      </div>
+      <!-- Espacio izquierdo: reserva el lugar del botón de menú en móvil.
+           Las alertas de duplicados se consultan desde Peticiones (pestaña "Alertas de duplicados")
+           y el contador del ítem Peticiones en la barra lateral. -->
+      <div class="flex items-center gap-3 pl-12 lg:pl-0"></div>
 
       <!-- ACCIONES DERECHA: ALERTAS DE MEDICAMENTOS + BOTÓN DE PERFIL -->
       <div class="flex items-center gap-2.5 sm:gap-3">
