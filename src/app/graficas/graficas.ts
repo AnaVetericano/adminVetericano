@@ -162,7 +162,7 @@ export class Graficas implements OnInit, OnDestroy {
           data: [this.activosPie, this.inactivosPie],
           backgroundColor: [
             '#4141A5', // Indigo corporativo VETERICANO
-            '#64748B'  // Slate corporativo
+            '#CBD5E1'  // Slate referencia
           ],
           borderWidth: 2,
           borderColor: '#ffffff',
@@ -172,13 +172,14 @@ export class Graficas implements OnInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '68%',
+        cutout: '70%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569',
               padding: 16
             }
@@ -207,10 +208,10 @@ export class Graficas implements OnInit, OnDestroy {
         datasets: [{
           data: [this.rolAdm, this.rolJud, this.rolVet, this.rolPet],
           backgroundColor: [
-            '#170B3D', // Deep Navy institucional
-            '#4141A5', // Indigo corporativo
-            '#6366F1', // Indigo claro
-            '#64748B'  // Slate institucional
+            '#170B3D',
+            '#4141A5',
+            'rgba(65, 65, 165, 0.55)',
+            'rgba(65, 65, 165, 0.28)'
           ],
           borderWidth: 2,
           borderColor: '#ffffff',
@@ -220,13 +221,14 @@ export class Graficas implements OnInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '68%',
+        cutout: '70%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569',
               padding: 16
             }

@@ -271,9 +271,8 @@ export class ExamenesClinicos implements OnInit {
     if (!nombreLimpio) {
       Swal.fire({
         icon: 'warning',
-        title: 'Campo obligatorio',
-        text: 'Por favor ingresa el nombre del examen clínico antes de guardar.',
-        confirmButtonColor: '#4141a5'
+        title: 'Campos obligatorios incompletos',
+        text: 'Ingrese el nombre del examen clínico antes de guardar.'
       });
       return;
     }
@@ -317,8 +316,8 @@ export class ExamenesClinicos implements OnInit {
           this.cargarCatalogo();
           Swal.fire({
             icon: 'success',
-            title: '¡Actualizado!',
-            text: 'El examen clínico se ha actualizado correctamente.',
+            title: 'Registro actualizado',
+            text: 'El examen clínico se actualizó correctamente.',
             timer: 1600,
             showConfirmButton: false
           });
@@ -329,9 +328,8 @@ export class ExamenesClinicos implements OnInit {
           this.cdr.detectChanges();
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'No se pudo actualizar el examen clínico.',
-            confirmButtonColor: '#4141a5'
+            title: 'No fue posible actualizar el registro',
+            text: 'No se pudo actualizar el examen clínico.'
           });
         }
       });
@@ -342,8 +340,8 @@ export class ExamenesClinicos implements OnInit {
           this.cargarCatalogo();
           Swal.fire({
             icon: 'success',
-            title: '¡Creado!',
-            text: 'El examen clínico se ha registrado correctamente.',
+            title: 'Registro guardado',
+            text: 'El examen clínico se registró correctamente.',
             timer: 1600,
             showConfirmButton: false
           });
@@ -354,9 +352,8 @@ export class ExamenesClinicos implements OnInit {
           this.cdr.detectChanges();
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'No se pudo registrar el examen clínico.',
-            confirmButtonColor: '#4141a5'
+            title: 'No fue posible guardar el registro',
+            text: 'No se pudo registrar el examen clínico.'
           });
         }
       });
@@ -376,13 +373,11 @@ export class ExamenesClinicos implements OnInit {
     const nombreMostrar = item.nombre || item.nombre_tipo || 'este examen';
 
     Swal.fire({
-      title: `¿Deseas ${accion} este examen?`,
+      title: 'Confirmar cambio de estado',
       text: `El examen clínico "${nombreMostrar}" quedará como ${nuevoEstado}.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#4141a5',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: `Sí, ${accion}`,
+      confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (!result.isConfirmed) return;
@@ -405,7 +400,7 @@ export class ExamenesClinicos implements OnInit {
 
           Swal.fire({
             icon: 'success',
-            title: '¡Estado actualizado!',
+            title: 'Estado actualizado',
             text: `El examen ahora está ${estadoFinal}.`,
             timer: 1500,
             showConfirmButton: false
@@ -415,9 +410,8 @@ export class ExamenesClinicos implements OnInit {
           console.error('Error al cambiar estado del examen:', err);
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'No se pudo cambiar el estado del examen clínico.',
-            confirmButtonColor: '#4141a5'
+            title: 'No fue posible actualizar el estado',
+            text: 'No se pudo cambiar el estado del examen clínico.'
           });
         }
       });

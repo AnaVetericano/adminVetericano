@@ -1,17 +1,17 @@
-<div class="min-h-screen bg-[#F5F5F5] p-6 md:p-8">
+<div class="min-h-full bg-[#F4F5F7] px-4 sm:px-6 py-5 font-['Nunito',sans-serif] text-slate-800 antialiased">
 
   <!-- CONTENEDOR PRINCIPAL -->
-  <div class="max-w-7xl mx-auto">
+  <div class="max-w-screen-2xl mx-auto">
 
     <!-- ENCABEZADO -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
 
       <div>
-        <h1 class="text-3xl font-extrabold text-[#170B3D]">
+        <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
           Adopciones
         </h1>
 
-        <p class="text-gray-500 mt-1">
+        <p class="text-sm text-slate-500 mt-1">
           Gestiona las mascotas disponibles para adopción
         </p>
       </div>
@@ -19,9 +19,9 @@
       <!-- BOTÓN AGREGAR -->
       <button
         (click)="openModal()"
-        class="bg-[#4141A5] hover:bg-[#34348d] text-white px-5 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all duration-200 hover:scale-[1.02]"
+        class="bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
       >
-        <span class="text-xl">+</span>
+        <span class="text-base">+</span>
         Agregar mascota
       </button>
 
@@ -29,7 +29,7 @@
 
 
     <!-- BUSCADOR -->
-    <div class="bg-white rounded-2xl shadow-sm p-4 mb-8">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 mb-5">
 
       <div class="relative">
 
@@ -37,17 +37,17 @@
           type="text"
           [(ngModel)]="searchTerm"
           placeholder="Buscar por nombre, raza, descripción o estado..."
-          class="w-full border border-gray-200 rounded-xl px-5 py-3 pl-12 outline-none focus:ring-2 focus:ring-[#4141A5] focus:border-transparent transition"
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition"
         >
 
         <!-- ICONO BUSCAR -->
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="1.75"
         >
           <path
             stroke-linecap="round"
@@ -64,20 +64,20 @@
     <!-- GRID DE MASCOTAS -->
     <div
       *ngIf="filteredPets.length > 0"
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
     >
 
       <!-- TARJETA MASCOTA -->
       <div
         *ngFor="let pet of filteredPets; let i = index"
-        class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300"
+        class="bg-white rounded-xl shadow-xs overflow-hidden border border-slate-200 transition"
       >
 
         <!-- ================================================= -->
         <!-- IMAGEN RESPONSIVE - NO SE RECORTA -->
         <!-- ================================================= -->
         <div
-          class="w-full h-52 sm:h-56 md:h-60 rounded-xl overflow-hidden mb-3 bg-gray-100 flex items-center justify-center"
+          class="w-full h-52 sm:h-56 overflow-hidden bg-slate-100 flex items-center justify-center border-b border-slate-100"
         >
 
           <img
@@ -90,21 +90,24 @@
 
 
         <!-- INFORMACIÓN -->
-        <div class="p-5">
+        <div class="p-4 sm:p-5">
 
           <!-- NOMBRE -->
           <div class="flex items-start justify-between gap-3 mb-2">
 
-            <h2 class="text-xl font-extrabold text-[#170B3D]">
+            <h2 class="text-base font-bold text-[#170B3D]">
               {{ pet.nombre }}
             </h2>
 
             <!-- ESTADO -->
             <span
-              class="text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap"
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold border whitespace-nowrap"
               [ngClass]="{
-                'bg-green-100 text-green-700': pet.estado === 'Disponible',
-                'bg-yellow-100 text-yellow-700': pet.estado !== 'Disponible'
+                'bg-[#ECFDF3] border-[#ABEFC6] text-[#067647]': pet.estado === 'Disponible',
+                'bg-[#FFF4E5] border-[#FCD9A6] text-[#9A5B13]': pet.estado === 'En proceso',
+                'bg-[#4141A5]/5 border-[#4141A5]/20 text-[#4141A5]': pet.estado === 'Adoptado',
+                'bg-[#FEECEB] border-[#F5B7B1] text-[#B42318]': pet.estado === 'Rechazado',
+                'bg-slate-50 border-slate-200 text-slate-600': pet.estado !== 'Disponible' && pet.estado !== 'En proceso' && pet.estado !== 'Adoptado' && pet.estado !== 'Rechazado'
               }"
             >
               {{ pet.estado }}
@@ -114,8 +117,8 @@
 
 
           <!-- RAZA -->
-          <p class="text-sm text-gray-500 mb-3">
-            <span class="font-bold text-gray-700">
+          <p class="text-sm text-slate-500 mb-3">
+            <span class="font-semibold text-slate-700">
               Raza:
             </span>
 
@@ -124,13 +127,13 @@
 
 
           <!-- DESCRIPCIÓN -->
-          <p class="text-sm text-gray-600 line-clamp-3 mb-4">
+          <p class="text-sm text-slate-600 line-clamp-3 mb-4">
             {{ pet.descripcion }}
           </p>
 
 
           <!-- FECHA -->
-          <div class="flex items-center gap-2 text-xs text-gray-400 mb-5">
+          <div class="flex items-center gap-2 text-xs text-slate-400 mb-4">
 
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +141,7 @@
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="1.75"
             >
               <path
                 stroke-linecap="round"
@@ -158,7 +161,7 @@
             <!-- EDITAR -->
             <button
               (click)="openModal(i)"
-              class="flex-1 bg-[#4141A5] hover:bg-[#34348d] text-white py-2.5 rounded-lg font-bold text-sm transition"
+              class="flex-1 bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg font-semibold text-sm transition cursor-pointer"
             >
               Editar
             </button>
@@ -167,7 +170,7 @@
             <!-- ELIMINAR -->
             <button
               (click)="deletePet(i)"
-              class="px-4 bg-red-50 hover:bg-red-100 text-red-600 py-2.5 rounded-lg font-bold text-sm transition"
+              class="px-4 py-2 bg-white hover:bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1] rounded-lg font-semibold text-sm transition cursor-pointer"
             >
               Eliminar
             </button>
@@ -184,14 +187,14 @@
     <!-- SIN RESULTADOS -->
     <div
       *ngIf="filteredPets.length === 0"
-      class="bg-white rounded-2xl shadow-sm p-12 text-center"
+      class="bg-white rounded-xl border border-slate-200 shadow-xs p-10 text-center"
     >
 
       <div class="flex justify-center mb-4">
 
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="w-16 h-16 text-gray-300"
+          class="w-12 h-12 text-slate-300"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -214,11 +217,11 @@
 
       </div>
 
-      <h3 class="text-xl font-bold text-[#170B3D]">
+      <h3 class="text-lg font-bold text-[#170B3D]">
         No se encontraron mascotas
       </h3>
 
-      <p class="text-gray-500 mt-2">
+      <p class="text-sm text-slate-500 mt-1">
         Intenta realizar otra búsqueda o agrega una nueva mascota.
       </p>
 
@@ -236,19 +239,19 @@
   >
 
     <div
-      class="bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+      class="bg-white w-full max-w-lg rounded-xl shadow-lg border border-slate-200 max-h-[90vh] overflow-y-auto"
     >
 
       <!-- CABECERA MODAL -->
-      <div class="bg-[#170B3D] text-white px-6 py-5 flex items-center justify-between">
+      <div class="bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between">
 
         <div>
 
-          <h2 class="text-xl font-extrabold">
+          <h2 class="text-lg font-bold text-[#170B3D]">
             {{ isEditMode ? 'Editar mascota' : 'Agregar mascota' }}
           </h2>
 
-          <p class="text-white/70 text-sm mt-1">
+          <p class="text-slate-500 text-xs mt-0.5">
             Completa la información de la mascota
           </p>
 
@@ -256,7 +259,7 @@
 
         <button
           (click)="closeModal()"
-          class="text-white/70 hover:text-white text-2xl"
+          class="text-slate-400 hover:text-slate-700 text-xl p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
         >
           ×
         </button>
@@ -265,12 +268,12 @@
 
 
       <!-- FORMULARIO -->
-      <div class="p-6 space-y-5">
+      <div class="p-5 sm:p-6 space-y-4">
 
         <!-- NOMBRE -->
         <div>
 
-          <label class="block text-sm font-bold text-gray-700 mb-2">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
             Nombre
           </label>
 
@@ -278,7 +281,7 @@
             type="text"
             [(ngModel)]="currentPet.nombre"
             placeholder="Ej: Max"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"
           >
 
         </div>
@@ -287,7 +290,7 @@
         <!-- RAZA -->
         <div>
 
-          <label class="block text-sm font-bold text-gray-700 mb-2">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
             Raza
           </label>
 
@@ -295,7 +298,7 @@
             type="text"
             [(ngModel)]="currentPet.raza"
             placeholder="Ej: Labrador"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"
           >
 
         </div>
@@ -304,7 +307,7 @@
         <!-- IMAGEN -->
         <div>
 
-          <label class="block text-sm font-bold text-gray-700 mb-2">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
             URL de la imagen
           </label>
 
@@ -312,7 +315,7 @@
             type="text"
             [(ngModel)]="currentPet.imagen"
             placeholder="https://..."
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"
           >
 
         </div>
@@ -321,7 +324,7 @@
         <!-- VISTA PREVIA DE IMAGEN -->
         <div
           *ngIf="currentPet.imagen"
-          class="w-full h-52 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200"
+          class="w-full h-52 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200"
         >
 
           <img
@@ -336,7 +339,7 @@
         <!-- DESCRIPCIÓN -->
         <div>
 
-          <label class="block text-sm font-bold text-gray-700 mb-2">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
             Descripción
           </label>
 
@@ -344,7 +347,7 @@
             [(ngModel)]="currentPet.descripcion"
             rows="4"
             placeholder="Describe a la mascota..."
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5] resize-none"
+            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 resize-none"
           ></textarea>
 
         </div>
@@ -353,13 +356,13 @@
         <!-- ESTADO -->
         <div>
 
-          <label class="block text-sm font-bold text-gray-700 mb-2">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">
             Estado
           </label>
 
           <select
             [(ngModel)]="currentPet.estado"
-            class="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#4141A5]"
+            class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"
           >
 
             <option value="Disponible">
@@ -380,18 +383,18 @@
 
 
         <!-- BOTONES DEL MODAL -->
-        <div class="flex gap-3 pt-3">
+        <div class="flex gap-3 pt-3 border-t border-slate-200">
 
           <button
             (click)="closeModal()"
-            class="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-50 py-3 rounded-xl font-bold transition"
+            class="flex-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer"
           >
             Cancelar
           </button>
 
           <button
             (click)="savePet()"
-            class="flex-1 bg-[#4141A5] hover:bg-[#34348d] text-white py-3 rounded-xl font-bold transition"
+            class="flex-1 bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer"
           >
             {{ isEditMode ? 'Actualizar' : 'Guardar mascota' }}
           </button>

@@ -792,7 +792,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       return 'badge-status-warning';
     }
     if (v.includes('asignad') || v.includes('proceso') || v.includes('atenci') || v.includes('curso')) {
-      return 'badge-status-info';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20';
     }
     if (v.includes('resuelt') || v.includes('finaliz') || v.includes('atendid') || v.includes('adopci')) {
       return 'badge-status-success';
@@ -812,7 +812,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       return 'badge-status-warning';
     }
     if (v.includes('baja')) {
-      return 'badge-status-info';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20';
     }
     return 'badge-status-neutral';
   }

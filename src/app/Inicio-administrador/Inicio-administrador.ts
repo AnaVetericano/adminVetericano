@@ -24,7 +24,7 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   private duplicadosIndiceSub: Subscription | null = null;
 
   // Control para abrir y cerrar el menú en móviles
-  menuAbierto: boolean = true;
+  menuAbierto: boolean = false; // UI: en móvil el menú inicia cerrado (en escritorio no aplica)
 
   // Control para el menú desplegable del perfil en la esquina superior derecha
   menuPerfilAbierto: boolean = false;
@@ -162,17 +162,12 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   onLogout(): void {
     this.cerrarMenuPerfil();
     Swal.fire({
-      title: '¿Cerrar sesión?',
-      text: '¿Estás seguro de que deseas cerrar sesión?',
+      title: 'Cerrar sesión',
+      text: 'Se cerrará la sesión activa en este dispositivo.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, cerrar sesión',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#4141A5',
-      cancelButtonColor: '#ffffff',
-      customClass: {
-        cancelButton: '!text-black !border !border-gray-400'
-      }
+      confirmButtonText: 'Cerrar sesión',
+      cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.logout();

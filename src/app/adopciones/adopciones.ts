@@ -149,9 +149,8 @@ export class Adopciones implements OnInit {
         console.error('Error al cargar las mascotas:', err);
         Swal.fire({
           icon: 'error',
-          title: 'Oops...',
-          text: 'No se pudieron cargar las mascotas desde el servidor.',
-          confirmButtonColor: '#3085d6'
+          title: 'Error de conexión',
+          text: 'No fue posible cargar las mascotas. Verifique la conexión e intente nuevamente.'
         });
       }
     });
@@ -199,9 +198,8 @@ export class Adopciones implements OnInit {
     if (!this.currentPet.nombre || !this.currentPet.raza || !this.currentPet.imagen || !this.currentPet.descripcion) {
       Swal.fire({
         icon: 'warning',
-        title: 'Campos incompletos',
-        text: 'Por favor completa todos los campos obligatorios.',
-        confirmButtonColor: '#f8bb86'
+        title: 'Campos obligatorios incompletos',
+        text: 'Complete todos los campos obligatorios.'
       });
       return;
     }
@@ -230,8 +228,8 @@ export class Adopciones implements OnInit {
           this.cdr.detectChanges(); // Refrescamos la vista
           Swal.fire({
             icon: 'success',
-            title: '¡Actualizado!',
-            text: 'La información de la mascota se ha actualizado correctamente.',
+            title: 'Registro actualizado',
+            text: 'La información de la mascota se actualizó correctamente.',
             timer: 2000,
             showConfirmButton: false
           });
@@ -240,9 +238,8 @@ export class Adopciones implements OnInit {
           console.error("Error al actualizar:", err);
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Hubo un error al actualizar la mascota.',
-            confirmButtonColor: '#d33'
+            title: 'No fue posible actualizar el registro',
+            text: 'Verifique los datos e intente nuevamente.'
           });
         }
       });
@@ -267,8 +264,8 @@ export class Adopciones implements OnInit {
           this.cdr.detectChanges(); // Refrescamos la vista
           Swal.fire({
             icon: 'success',
-            title: '¡Registrado!',
-            text: 'La mascota se ha agregado con éxito a la base de datos.',
+            title: 'Registro guardado',
+            text: 'La mascota se agregó correctamente.',
             timer: 2000,
             showConfirmButton: false
           });
@@ -277,9 +274,8 @@ export class Adopciones implements OnInit {
           console.error("Error al crear:", err);
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Hubo un error al guardar la mascota en la API.',
-            confirmButtonColor: '#d33'
+            title: 'No fue posible guardar el registro',
+            text: 'Verifique la conexión e intente nuevamente.'
           });
         }
       });
@@ -291,13 +287,11 @@ export class Adopciones implements OnInit {
     const petToDelete = this.filteredPets[index];
     
     Swal.fire({
-      title: `¿Estás seguro de eliminar a ${petToDelete.nombre}?`,
-      text: "¡Esta acción no se puede revertir!",
+      title: `Confirmar eliminación de ${petToDelete.nombre}`,
+      text: 'Esta acción no se puede deshacer.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, ¡eliminar!',
+      confirmButtonText: 'Eliminar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -314,7 +308,7 @@ export class Adopciones implements OnInit {
             this.cdr.detectChanges(); // Refrescamos la vista tras retirar de adopción
             Swal.fire({
               icon: 'success',
-              title: '¡Retirado de Adopciones!',
+              title: 'Retirado de adopciones',
               text: 'La mascota fue retirada del listado de adopciones (su historia clínica se conserva intacta).',
               timer: 2000,
               showConfirmButton: false

@@ -115,9 +115,8 @@ export class Compra implements OnInit {
         this.cdr.detectChanges();
         Swal.fire({
           title: 'Error de conexión',
-          text: 'No se pudieron cargar los datos de compras e inventario.',
-          icon: 'error',
-          confirmButtonColor: '#d33'
+          text: 'No se pudieron cargar los datos de compras e inventario. Verifique la conexión e intente nuevamente.',
+          icon: 'error'
         });
       }
     });
@@ -378,8 +377,7 @@ export class Compra implements OnInit {
       Swal.fire({
         title: 'Mínimo de detalle',
         text: 'La factura debe tener al menos un medicamento registrado.',
-        icon: 'info',
-        confirmButtonColor: '#4141A5'
+        icon: 'info'
       });
       return;
     }
@@ -403,10 +401,9 @@ export class Compra implements OnInit {
   guardarCompra(): void {
     if (!this.idProveedorSeleccionado) {
       Swal.fire({
-        title: 'Campo obligatorio',
-        text: 'Debes seleccionar el proveedor emisor de la factura.',
-        icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        title: 'Campos obligatorios incompletos',
+        text: 'Seleccione el proveedor emisor de la factura.',
+        icon: 'warning'
       });
       return;
     }
@@ -414,9 +411,8 @@ export class Compra implements OnInit {
     if (!this.filasDetalle || this.filasDetalle.length === 0) {
       Swal.fire({
         title: 'Detalles requeridos',
-        text: 'Debes agregar al menos un medicamento a la factura.',
-        icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        text: 'Agregue al menos un medicamento a la factura.',
+        icon: 'warning'
       });
       return;
     }
@@ -431,9 +427,8 @@ export class Compra implements OnInit {
       if (!fila.id_medicamento) {
         Swal.fire({
           title: 'Medicamento requerido',
-          text: `En la fila #${numFila} debes seleccionar un medicamento del catálogo.`,
-          icon: 'warning',
-          confirmButtonColor: '#4141A5'
+          text: `En la fila #${numFila} seleccione un medicamento del catálogo.`,
+          icon: 'warning'
         });
         return;
       }
@@ -442,9 +437,8 @@ export class Compra implements OnInit {
       if (medicamentosSeleccionados.has(idMed)) {
         Swal.fire({
           title: 'Medicamento repetido',
-          text: `El medicamento de la fila #${numFila} ya está en la lista. Agrupa la cantidad en una sola fila.`,
-          icon: 'warning',
-          confirmButtonColor: '#4141A5'
+          text: `El medicamento de la fila #${numFila} ya está en la lista. Agrupe la cantidad en una sola fila.`,
+          icon: 'warning'
         });
         return;
       }
@@ -455,8 +449,7 @@ export class Compra implements OnInit {
         Swal.fire({
           title: 'Cantidad inválida',
           text: `En la fila #${numFila} la cantidad debe ser un número entero mayor a 0.`,
-          icon: 'warning',
-          confirmButtonColor: '#4141A5'
+          icon: 'warning'
         });
         return;
       }
@@ -479,10 +472,9 @@ export class Compra implements OnInit {
           this.cerrarModalRegistro();
 
           Swal.fire({
-            title: '¡Compra Actualizada!',
-            text: `Factura #${idEditado} y sus medicamentos fueron actualizados con éxito.`,
+            title: 'Compra actualizada',
+            text: `Factura #${idEditado} y sus medicamentos fueron actualizados.`,
             icon: 'success',
-            confirmButtonColor: '#4141A5',
             timer: 2300
           });
 
@@ -491,12 +483,11 @@ export class Compra implements OnInit {
         error: (err) => {
           this.guardando = false;
           console.error('Error al actualizar la compra:', err);
-          const msj = this.extraerMensajeError(err, 'No se pudo actualizar la compra.');
+          const msj = this.extraerMensajeError(err, 'No fue posible actualizar la compra.');
           Swal.fire({
-            title: 'Error al actualizar',
+            title: 'No fue posible actualizar la compra',
             text: msj,
-            icon: 'error',
-            confirmButtonColor: '#d33'
+            icon: 'error'
           });
         }
       });
@@ -519,10 +510,9 @@ export class Compra implements OnInit {
           this.cerrarModalRegistro();
 
           Swal.fire({
-            title: '¡Compra Registrada!',
-            text: `Factura #${resultado.compra.id_compra} guardada con éxito con ${payloadDetalles.length} detalle(s).`,
+            title: 'Registro guardado',
+            text: `Factura #${resultado.compra.id_compra} guardada con ${payloadDetalles.length} detalle(s).`,
             icon: 'success',
-            confirmButtonColor: '#4141A5',
             timer: 2300
           });
 
@@ -531,12 +521,11 @@ export class Compra implements OnInit {
         error: (err) => {
           this.guardando = false;
           console.error('Error al registrar la compra:', err);
-          const msj = this.extraerMensajeError(err, 'No se pudo guardar la compra en el servidor.');
+          const msj = this.extraerMensajeError(err, 'No fue posible guardar la compra en el servidor.');
           Swal.fire({
-            title: 'Error al registrar',
+            title: 'No fue posible guardar el registro',
             text: msj,
-            icon: 'error',
-            confirmButtonColor: '#d33'
+            icon: 'error'
           });
         }
       });
@@ -578,10 +567,9 @@ export class Compra implements OnInit {
 
     if (c.estado === 'ANULADA') {
       Swal.fire({
-        title: 'Factura Anulada',
+        title: 'Factura anulada',
         text: `La compra #${idCompra} ya se encuentra anulada en el sistema.`,
-        icon: 'info',
-        confirmButtonColor: '#4141A5'
+        icon: 'info'
       });
       return;
     }
@@ -589,19 +577,17 @@ export class Compra implements OnInit {
     const cantidadDetalles = c.detalles?.length || 0;
 
     Swal.fire({
-      title: `¿Anular Factura de Compra #${idCompra}?`,
+      title: `Confirmar anulación de factura #${idCompra}`,
       text: `Se verificará el stock en bodega y se registrará el contra-asiento de auditoría para los ${cantidadDetalles} medicamentos asociados.`,
       input: 'text',
-      inputPlaceholder: 'Ingresa el motivo de anulación (ej. Error de digitación, devolución al proveedor)...',
+      inputPlaceholder: 'Ingrese el motivo de anulación...',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Sí, anular factura',
+      confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar',
       inputValidator: (valor) => {
         if (!valor || !valor.trim()) {
-          return 'Debes especificar un motivo para la anulación.';
+          return 'Debe especificar un motivo para la anulación.';
         }
         return null;
       }
@@ -622,16 +608,15 @@ export class Compra implements OnInit {
       this.comprasService.anularCompra(idCompra, motivo).subscribe({
         next: () => {
           Swal.fire({
-            title: '¡Factura Anulada!',
-            text: `La compra #${idCompra} fue anulada y los inventarios han sido compensados correctamente.`,
-            icon: 'success',
-            confirmButtonColor: '#4141A5'
+            title: 'Factura anulada',
+            text: `La compra #${idCompra} fue anulada y los inventarios fueron compensados.`,
+            icon: 'success'
           });
           this.obtenerDatos();
         },
         error: (err) => {
           console.error('Error al anular compra:', err);
-          let msj = 'No se pudo completar la anulación de la compra.';
+          let msj = 'No fue posible completar la anulación de la compra.';
           if (err?.error) {
             if (typeof err.error === 'string') msj = err.error;
             else if (err.error.detail) msj = err.error.detail;
@@ -642,18 +627,17 @@ export class Compra implements OnInit {
           }
 
           Swal.fire({
-            title: 'Anulación Rechazada',
+            title: 'Anulación rechazada',
             html: `
               <div class="text-left text-sm space-y-2">
-                <p class="font-semibold text-rose-600">La base de datos o el sistema rechazó la anulación:</p>
-                <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-mono">
+                <p class="font-semibold text-[#B42318]">La base de datos o el sistema rechazó la anulación:</p>
+                <div class="p-3 bg-[#FEECEB] border border-[#F5B7B1] rounded-xl text-[#B42318] text-xs font-mono">
                   ${msj}
                 </div>
-                <p class="text-xs text-gray-500">Si los medicamentos ya fueron asignados a maletines o formulados, debes reintegrarlos antes de anular la factura.</p>
+                <p class="text-xs text-slate-500">Si los medicamentos ya fueron asignados a maletines o formulados, reintégrelos antes de anular la factura.</p>
               </div>
             `,
-            icon: 'error',
-            confirmButtonColor: '#d33'
+            icon: 'error'
           });
         }
       });

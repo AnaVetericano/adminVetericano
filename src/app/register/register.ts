@@ -32,19 +32,13 @@ export class Register {
   registrarse() {
     if (!this.register.email || !this.register.identificacion || !this.register.password || !this.register.nombre || !this.register.apellido) {
       Swal.fire({
-  title: 'Campos incompletos',
-  text: 'Por favor completa todos los campos principales.',
-  icon: 'warning',
-  confirmButtonText: 'Entendido',
-  confirmButtonColor: '#1B1947',
-  background: '#ffffff',
-  color: '#1B1947',
-  customClass: {
-    popup: 'rounded-3xl',
-    title: 'font-bold',
-    confirmButton: 'rounded-xl px-6 py-3 font-semibold'
-  }
-});
+        title: 'Campos obligatorios incompletos',
+        text: 'Complete todos los campos obligatorios para continuar.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar',
+        background: '#ffffff',
+        color: '#170B3D'
+      });
       return;
     }
 
@@ -56,18 +50,12 @@ this.authService.registrar(this.register).subscribe({
     console.log(' Registrado:', respuesta);
 
     Swal.fire({
-      title: '¡Registro exitoso! ',
+      title: 'Registro guardado',
       text: 'Administrador registrado correctamente.',
       icon: 'success',
-      confirmButtonText: 'Continuar',
-      confirmButtonColor: '#1B1947',
+      confirmButtonText: 'Aceptar',
       background: '#ffffff',
-      color: '#1B1947',
-      customClass: {
-        popup: 'rounded-3xl',
-        title: 'font-bold',
-        confirmButton: 'rounded-xl px-6 py-3 font-semibold'
-      }
+      color: '#170B3D'
     }).then(() => {
 
       this.router.navigate(['/iniciodesesionadministrador']);
@@ -96,18 +84,12 @@ this.authService.registrar(this.register).subscribe({
       || 'Ocurrió un error al registrarse';
 
     Swal.fire({
-      title: '¡Ups! 😕',
+      title: 'No fue posible completar el registro',
       text: mensajeReal,
       icon: 'error',
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#1B1947',
+      confirmButtonText: 'Aceptar',
       background: '#ffffff',
-      color: '#1B1947',
-      customClass: {
-        popup: 'rounded-3xl',
-        title: 'font-bold',
-        confirmButton: 'rounded-xl px-6 py-3 font-semibold'
-      }
+      color: '#170B3D'
     });
 
   }

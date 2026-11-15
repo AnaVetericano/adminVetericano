@@ -204,7 +204,13 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
           datasets: [
             {
               data,
-              backgroundColor: ['#4141A5', '#F1C63C', '#10B981', '#170B3D', '#F43F5E'],
+              backgroundColor: [
+                '#170B3D',
+                '#4141A5',
+                'rgba(65, 65, 165, 0.55)',
+                'rgba(65, 65, 165, 0.28)',
+                '#94A3B8'
+              ],
               borderWidth: 2,
               borderColor: '#ffffff'
             }
@@ -213,12 +219,14 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '62%',
+          cutout: '70%',
           plugins: {
             legend: {
               position: 'bottom',
               labels: {
-                boxWidth: 12,
+                boxWidth: 10,
+                usePointStyle: true,
+                color: '#475569',
                 font: { family: 'Nunito', size: 11, weight: 'bold' }
               }
             }
@@ -244,15 +252,15 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
             {
               label: 'Asignadas',
               data: asignadas,
-              backgroundColor: '#4141A5',
-              borderRadius: 6,
+              backgroundColor: '#170B3D',
+              borderRadius: 4,
               maxBarThickness: 32
             },
             {
               label: 'Atendidas',
               data: atendidas,
-              backgroundColor: '#10B981',
-              borderRadius: 6,
+              backgroundColor: '#4141A5',
+              borderRadius: 4,
               maxBarThickness: 32
             }
           ]
@@ -264,7 +272,9 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
             legend: {
               position: 'bottom',
               labels: {
-                boxWidth: 12,
+                boxWidth: 10,
+                usePointStyle: true,
+                color: '#475569',
                 font: { family: 'Nunito', size: 11, weight: 'bold' }
               }
             }
@@ -272,7 +282,12 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { stepSize: 1 }
+              ticks: { stepSize: 1, color: '#64748B', font: { family: 'Nunito', size: 11 } },
+              grid: { color: '#EEF0F3' }
+            },
+            x: {
+              ticks: { color: '#64748B', font: { family: 'Nunito', size: 11 } },
+              grid: { display: false }
             }
           }
         }

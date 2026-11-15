@@ -189,11 +189,10 @@ listarUsuarios(): void {
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
   next: (response) => {
     Swal.fire({
-      title: '¡Éxito!',
+      title: 'Registro guardado',
       text: 'Usuario creado correctamente' + response,
       icon: 'success',
-      confirmButtonText: 'Aceptar',
-      confirmButtonColor: '#4141A5'
+      confirmButtonText: 'Aceptar'
     }).then(() => {
       // Es una buena práctica ejecutar estas acciones después de que el usuario cierra la alerta
       this.listarUsuarios();
@@ -223,11 +222,10 @@ error: (error) => {
 
   // 3. Mostrar el SweetAlert usando la propiedad 'html'
   Swal.fire({
-    title: 'Oops...',
+    title: 'No fue posible guardar el registro',
     html: mensajeErrorHtml, // IMPORTANTE: Cambiar 'text' por 'html'
     icon: 'error',
-    confirmButtonText: 'Cerrar',
-    confirmButtonColor: '#991b1b',
+    confirmButtonText: 'Aceptar',
     background: '#FFFFFF',
     color: '#170B3D'
   });
@@ -256,10 +254,9 @@ actualizarUsuario(): void {
 
       Swal.fire({
         icon: 'success',
-        title: '¡Usuario actualizado!',
+        title: 'Usuario actualizado',
         text: 'Los datos del usuario se actualizaron correctamente.',
         confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#4141A5',
         background: '#FFFFFF',
         color: '#170B3D',
         timer: 2500,
@@ -276,10 +273,9 @@ actualizarUsuario(): void {
 
       Swal.fire({
         icon: 'error',
-        title: 'Error al actualizar',
-        text: 'No se pudo actualizar el usuario. Intenta nuevamente.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#4141A5',
+        title: 'No fue posible actualizar el registro',
+        text: 'No se pudo actualizar el usuario. Intente nuevamente.',
+        confirmButtonText: 'Aceptar',
         background: '#FFFFFF',
         color: '#170B3D'
       });
@@ -313,18 +309,13 @@ actualizarUsuario(): void {
     const accionCapitalizada = nuevoEstado ? 'activado' : 'inactivado';
 
     Swal.fire({
-      title: `¿Estás seguro de que deseas ${accion} este usuario?`,
+      title: `Confirmar ${accion} usuario`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: nuevoEstado ? '#16a34a' : '#991b1b',
       background: '#FFFFFF',
       color: '#170B3D',
-      cancelButtonColor: '#ffffff',
-      confirmButtonText: `Sí, ${accion}`,
-      cancelButtonText: 'Cancelar',
-        customClass: {
-      cancelButton: '!text-black !border !border-gray-400'
-    }
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.inactivarUsuario(id_usuario, nuevoEstado).subscribe({
@@ -338,7 +329,7 @@ actualizarUsuario(): void {
           error: (error) => {
             console.error(`Error al ${accion} usuario:`, error);
             Swal.fire({
-              title: 'Error',
+              title: 'No fue posible completar la acción',
               text: `No se pudo ${accion} el usuario.`,
               icon: 'error'
             });
@@ -350,14 +341,12 @@ actualizarUsuario(): void {
   cerrarSesion(): void {
 
   Swal.fire({
-    title: '¿Cerrar sesión?',
-    text: '¿Estás seguro de que deseas cerrar tu sesión?',
+    title: 'Cerrar sesión',
+    text: 'Se finalizará la sesión actual en el sistema.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Sí, cerrar sesión',
-    cancelButtonText: 'No, cancelar',
-    confirmButtonColor: '#4141A5',
-    cancelButtonColor: '#C4C4C4',
+    confirmButtonText: 'Confirmar',
+    cancelButtonText: 'Cancelar',
     reverseButtons: true,
     background: '#FFFFFF',
     color: '#170B3D'
@@ -464,22 +453,15 @@ filtrarPorRol(idRol: number | null): void {
     }
 
     Swal.fire({
-      title: '¿Confirmar cambio de rol?',
-      html: `¿Estás seguro de que deseas cambiar el rol de <b>${usuario.nombre} ${usuario.apellido}</b> a <span class="text-indigo-700 font-bold">${nuevoNombreRol}</span>?`,
+      title: 'Confirmar cambio de rol',
+      html: `Se asignará a <b>${usuario.nombre} ${usuario.apellido}</b> el rol <b>${nuevoNombreRol}</b>.`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, cambiar rol',
+      confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#1d1b4f',
-      cancelButtonColor: '#C4C4C4',
       reverseButtons: true,
       background: '#FFFFFF',
-      color: '#170B3D',
-      customClass: {
-        popup: 'rounded-2xl shadow-2xl',
-        confirmButton: 'rounded-xl px-5 py-2.5 font-semibold shadow-md',
-        cancelButton: 'rounded-xl px-5 py-2.5 font-semibold text-gray-700'
-      }
+      color: '#170B3D'
     }).then((result) => {
       if (result.isConfirmed) {
         this.ejecutarCambioRol(usuario, nuevoIdRol, nuevoNombreRol);
@@ -505,10 +487,9 @@ filtrarPorRol(idRol: number | null): void {
 
         Swal.fire({
           icon: 'success',
-          title: '¡Rol actualizado!',
+          title: 'Rol actualizado',
           text: `El rol de ${usuario.nombre} se actualizó a ${nuevoNombreRol} correctamente.`,
           confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#4141A5',
           background: '#FFFFFF',
           color: '#170B3D',
           timer: 2200,
@@ -521,10 +502,9 @@ filtrarPorRol(idRol: number | null): void {
         console.error('Error al actualizar rol:', error);
         Swal.fire({
           icon: 'error',
-          title: 'Error al cambiar rol',
-          text: 'No se pudo actualizar el rol del usuario. Intenta nuevamente.',
-          confirmButtonText: 'Entendido',
-          confirmButtonColor: '#4141A5',
+          title: 'No fue posible actualizar el rol',
+          text: 'No se pudo actualizar el rol del usuario. Intente nuevamente.',
+          confirmButtonText: 'Aceptar',
           background: '#FFFFFF',
           color: '#170B3D'
         });

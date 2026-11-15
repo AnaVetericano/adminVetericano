@@ -71,11 +71,10 @@ this.authService.listarEspecies().subscribe({
     console.error('Error al listar especies:', error);
 
     Swal.fire({
-      title: 'Error',
+      title: 'No fue posible cargar las especies',
       text: 'No se pudieron cargar las especies.',
       icon: 'error',
-      confirmButtonText: 'Cerrar',
-      confirmButtonColor: '#d33'
+      confirmButtonText: 'Aceptar'
     });
 
   }
@@ -163,11 +162,10 @@ guardar(): void {
 if (!this.especie.nombre.trim()) {
 
   Swal.fire({
-    title: 'Campo obligatorio',
-    text: 'Debes ingresar el nombre de la especie.',
+    title: 'Campos obligatorios incompletos',
+    text: 'Ingrese el nombre de la especie.',
     icon: 'warning',
-    confirmButtonText: 'Entendido',
-    confirmButtonColor: '#4141A5'
+    confirmButtonText: 'Aceptar'
   });
 
   return;
@@ -204,11 +202,10 @@ this.authService.crearEspecie(nuevaEspecie).subscribe({
   next: () => {
 
     Swal.fire({
-      title: '¡Éxito!',
-      text: 'La especie se creó correctamente.',
+      title: 'Registro guardado',
+      text: 'La especie se registró correctamente.',
       icon: 'success',
-      confirmButtonText: 'Aceptar',
-      confirmButtonColor: '#4141A5'
+      confirmButtonText: 'Aceptar'
     }).then(() => {
 
       this.listarEspecies();
@@ -225,11 +222,10 @@ this.authService.crearEspecie(nuevaEspecie).subscribe({
     const mensajeError = error?.error?.nombre?.[0] || error?.error?.detail || 'No se pudo crear la especie. Revisa la consola.';
 
     Swal.fire({
-      title: 'Oops...',
+      title: 'No fue posible guardar el registro',
       text: mensajeError,
       icon: 'error',
-      confirmButtonText: 'Cerrar',
-      confirmButtonColor: '#d33'
+      confirmButtonText: 'Aceptar'
     });
 
   }
@@ -261,10 +257,9 @@ this.authService.actualizarEspecie(
 
     Swal.fire({
       icon: 'success',
-      title: '¡Especie actualizada!',
+      title: 'Especie actualizada',
       text: 'Los datos se actualizaron correctamente.',
       confirmButtonText: 'Aceptar',
-      confirmButtonColor: '#4141A5',
       background: '#FFFFFF',
       color: '#170B3D',
       timer: 2500,
@@ -287,10 +282,9 @@ this.authService.actualizarEspecie(
 
     Swal.fire({
       icon: 'error',
-      title: 'Error al actualizar',
+      title: 'No fue posible actualizar el registro',
       text: mensajeError,
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#4141A5'
+      confirmButtonText: 'Aceptar'
     });
 
   }
@@ -311,7 +305,7 @@ const accion = nuevoEstado
 
 Swal.fire({
 
-  title: `¿Deseas ${accion} esta especie?`,
+  title: 'Confirmar cambio de estado',
 
   text: `La especie "${especie.nombre}" será ${nuevoEstado ? 'activada' : 'inactivada'}.`,
 
@@ -319,13 +313,7 @@ Swal.fire({
 
   showCancelButton: true,
 
-  confirmButtonColor: nuevoEstado
-    ? '#16a34a'
-    : '#ef4444',
-
-  cancelButtonColor: '#64748b',
-
-  confirmButtonText: `Sí, ${accion}`,
+  confirmButtonText: 'Confirmar',
 
   cancelButtonText: 'Cancelar'
 
@@ -363,7 +351,7 @@ Swal.fire({
       const mensajeError = error?.error?.detail || `No se pudo ${accion} la especie.`;
 
       Swal.fire({
-        title: 'Error',
+        title: 'No fue posible completar la acción',
         text: mensajeError,
         icon: 'error'
       });

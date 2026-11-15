@@ -173,56 +173,52 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Resuelve el color exacto para las series de datos según la paleta institucional jurídica:
-   * - Serie Primaria (En proceso / En observación): Índigo #4338CA
-   * - Serie Secundaria (Pendiente / Asignada): Gris azulado #94A3B8
-   * - Serie Oscura (En revisión / Finalizada / Egresado / Adopción): Azul marino casi negro #151236
-   * - Serie Alerta (En tratamiento / Crítico / Urgente): Rojo #DC2626
+   * Resuelve el color exacto para las series de datos según la paleta monocroma de marca:
+   * - Serie Primaria (En proceso / En observación): Índigo #4141A5
+   * - Serie Destacada (Pendiente / Asignada): Dorado #F1C63C
+   * - Serie Oscura (Finalizada / Egresado / Adopción): Tinta #170B3D
+   * - Serie Secundaria (En tratamiento / Crítico / Urgente): Índigo medio rgba(65, 65, 165, 0.55)
    */
   obtenerColorGrafica(nombre: string, indexFallback: number = 0): string {
     const n = (nombre || '').toLowerCase();
-    // Serie Alerta: Rojo #DC2626 (En tratamiento / Crítico / Urgente / Grave)
     if (n.includes('tratam') || n.includes('crit') || n.includes('urgente') || n.includes('grave')) {
-      return '#DC2626';
+      return 'rgba(65, 65, 165, 0.55)';
     }
-    // Serie Primaria: Índigo #4338CA (En proceso / En curso / En observación)
     if (n.includes('proceso') || n.includes('curso') || n.includes('observaci')) {
-      return '#4338CA';
+      return '#4141A5';
     }
-    // Serie Secundaria: Gris azulado #94A3B8 (Pendiente / Asignada / Advertencia)
     if (n.includes('pend') || n.includes('asig') || n.includes('advert')) {
-      return '#94A3B8';
+      return '#F1C63C';
     }
-    // Serie Oscura: Azul marino casi negro #151236 (En revisión / Finalizada / Cerrada / Adopción)
     if (n.includes('finaliz') || n.includes('revis') || n.includes('cerr') || n.includes('adop') || n.includes('egres')) {
-      return '#151236';
+      return '#170B3D';
     }
-    const paleta = ['#4338CA', '#94A3B8', '#151236', '#DC2626'];
+    const paleta = ['#170B3D', '#4141A5', 'rgba(65, 65, 165, 0.55)', 'rgba(65, 65, 165, 0.28)', '#94A3B8', '#CBD5E1'];
     return paleta[indexFallback % paleta.length];
   }
 
   /**
    * Mapea un estado semántico a las clases CSS permitidas del Panel Jurídico:
-   * - Crítico / Urgente / Tratamiento: bg-red-50/70 border-red-100 text-red-600
-   * - Pendientes / Advertencia: bg-amber-50 border-amber-100 text-amber-700
-   * - En Proceso / En Curso: bg-blue-50 border-blue-100 text-blue-600
-   * - Finalizadas / Óptimo / Apto: bg-emerald-50 border-emerald-100 text-emerald-600
+   * - Crítico / Urgente / Tratamiento: bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]
+   * - Pendientes / Advertencia: bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]
+   * - En Proceso / En Curso: bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20
+   * - Finalizadas / Óptimo / Apto: bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]
    */
   obtenerClaseEstadoBadge(estado: string): string {
     const e = (estado || '').toLowerCase();
     if (e.includes('tratam') || e.includes('crit') || e.includes('urgente') || e.includes('grave')) {
-      return 'bg-red-50/70 text-red-600 border-red-100';
+      return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
     }
     if (e.includes('pend') || e.includes('advert') || e.includes('bajo')) {
-      return 'bg-amber-50 text-amber-700 border-amber-100';
+      return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
     }
     if (e.includes('proceso') || e.includes('curso') || e.includes('asig') || e.includes('observ')) {
-      return 'bg-blue-50 text-blue-600 border-blue-100';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20';
     }
     if (e.includes('adop') || e.includes('finaliz') || e.includes('optimo') || e.includes('recuperad')) {
-      return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
     }
-    return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   }
 
   /**
@@ -265,9 +261,10 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
+              color: '#475569'
             }
           },
           tooltip: {
@@ -281,16 +278,13 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             }
           }
         },
-        cutout: '68%'
+        cutout: '70%'
       }
     });
   }
 
   /**
    * 2. Gráfica de Barras Apiladas: Casos asignados y sus estados por veterinario
-   * - Pendiente: #94A3B8 (Serie Secundaria)
-   * - En Proceso: #4338CA (Serie Primaria)
-   * - Finalizada: #151236 (Serie Oscura)
    */
   private crearGraficaVeterinarios(): void {
     if (!this.chartVeterinariosRef?.nativeElement) return;
@@ -316,20 +310,23 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           {
             label: 'Pendiente',
             data: dataPendientes,
-            backgroundColor: '#94A3B8', // Serie Secundaria: Gris azulado
-            borderRadius: 6
+            backgroundColor: '#94A3B8',
+            borderRadius: 4,
+            maxBarThickness: 32
           },
           {
             label: 'En Proceso',
             data: dataEnProceso,
-            backgroundColor: '#4338CA', // Serie Primaria: Índigo
-            borderRadius: 6
+            backgroundColor: '#4141A5',
+            borderRadius: 4,
+            maxBarThickness: 32
           },
           {
             label: 'Finalizada',
             data: dataFinalizadas,
-            backgroundColor: '#151236', // Serie Oscura: Azul marino casi negro
-            borderRadius: 6
+            backgroundColor: '#170B3D',
+            borderRadius: 4,
+            maxBarThickness: 32
           }
         ]
       },
@@ -341,8 +338,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             stacked: true,
             grid: { display: false },
             ticks: {
-              font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              font: { family: 'Nunito', size: 11 },
+              color: '#64748B'
             }
           },
           y: {
@@ -351,9 +348,9 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             ticks: {
               stepSize: 1,
               font: { family: 'Nunito', size: 11 },
-              color: '#94A3B8' // text-slate-400
+              color: '#64748B'
             },
-            grid: { color: '#F1F5F9' } // border-slate-100
+            grid: { color: '#EEF0F3' }
           }
         },
         plugins: {
@@ -361,9 +358,10 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             position: 'top',
             align: 'end',
             labels: {
-              boxWidth: 12,
+              boxWidth: 10,
+              usePointStyle: true,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              color: '#475569'
             }
           }
         }
@@ -373,9 +371,6 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
 
   /**
    * 3. Gráfica Polar Area: Animales ingresados al CBA y sus estados
-   * - En Observación: #4338CA (Serie Primaria)
-   * - En Tratamiento: #DC2626 (Serie Alerta)
-   * - Apto Adopción: #151236 (Serie Oscura)
    */
   private crearGraficaCBA(): void {
     if (!this.chartCBARef?.nativeElement) return;
@@ -413,16 +408,17 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           legend: {
             position: 'right',
             labels: {
-              boxWidth: 12,
+              boxWidth: 10,
+              usePointStyle: true,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              color: '#475569'
             }
           }
         },
         scales: {
           r: {
             ticks: { display: false },
-            grid: { color: '#E2E8F0' } // border-slate-200
+            grid: { color: '#EEF0F3' }
           }
         }
       }

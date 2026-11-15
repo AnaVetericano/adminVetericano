@@ -1,0 +1,8 @@
+@media (max-width: 1023.98px) {
+  .sidebar.is-open { width: 260px; }
+  .sidebar.is-open .nav-label { opacity: 1; }
+  .sidebar.is-open .nav-label.hidden { display: inline-block; }
+}
+.sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
+.sidebar nav::-webkit-scrollbar { width: 6px; }
+.sidebar nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 3px; }

@@ -421,7 +421,7 @@ export class Peticion implements OnInit, OnDestroy {
   obtenerPeticiones(): void {
     const token = localStorage.getItem('token');
     if (!token) {
-      this.mostrarAlerta('Sesión no iniciada', 'Debes iniciar sesión para ver las peticiones.', 'error');
+      this.mostrarAlerta('Sesión no iniciada', 'Inicie sesión para consultar las peticiones.', 'error');
       return;
     }
 
@@ -437,7 +437,7 @@ export class Peticion implements OnInit, OnDestroy {
         console.error('Error al obtener peticiones:', error);
         this.cargandoPeticiones = false;
         this.cdr.detectChanges();
-        this.mostrarAlerta('Error', 'No se pudieron cargar las peticiones.', 'error');
+        this.mostrarAlerta('No fue posible cargar las peticiones', 'Verifique la conexión e intente nuevamente.', 'error');
       }
     });
   }
@@ -530,7 +530,7 @@ export class Peticion implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.mostrarAlerta('No encontrada', `No se encontró la petición #${id}.`, 'warning');
+        this.mostrarAlerta('Petición no encontrada', `No se encontró la petición #${id}.`, 'warning');
       }
     });
   }
@@ -573,7 +573,7 @@ export class Peticion implements OnInit, OnDestroy {
 
   asignarVeterinario(): void {
     if (!this.peticionSeleccionada || !this.veterinarioSeleccionado) {
-      this.mostrarAlerta('Selecciona un veterinario', 'Debes elegir un veterinario para asignar la petición.', 'warning');
+      this.mostrarAlerta('Selección requerida', 'Seleccione un veterinario para asignar la petición.', 'warning');
       return;
     }
 
@@ -599,14 +599,14 @@ export class Peticion implements OnInit, OnDestroy {
         }
         this.asignando = false;
         this.cerrarModalAsignar();
-        this.mostrarAlerta('¡Asignado!', 'La petición fue asignada correctamente al veterinario.', 'success');
+        this.mostrarAlerta('Petición asignada', 'La petición fue asignada al veterinario.', 'success');
         this.obtenerPeticiones();
         this.obtenerNotificaciones();
       },
       error: (err) => {
         this.asignando = false;
         const detalle = err.error?.error || err.error?.detail || err.error?.mensaje || 'Error al asignar la petición.';
-        this.mostrarAlerta('Error al asignar', detalle, 'error');
+        this.mostrarAlerta('No fue posible asignar la petición', detalle, 'error');
       }
     });
   }
@@ -627,7 +627,7 @@ export class Peticion implements OnInit, OnDestroy {
 
   confirmarReasignacionVisual(): void {
     if (!this.peticionParaReasignar || !this.nuevoVeterinarioSeleccionado) {
-      this.mostrarAlerta('Selecciona el nuevo veterinario', 'Debes elegir el veterinario que asumirá el caso.', 'warning');
+      this.mostrarAlerta('Selección requerida', 'Seleccione el veterinario que asumirá el caso.', 'warning');
       return;
     }
 
@@ -646,7 +646,7 @@ export class Peticion implements OnInit, OnDestroy {
       next: () => {
         this.asignando = false;
         this.cerrarModalReasignar();
-        this.mostrarAlerta('¡Caso Reasignado!', 'El nuevo veterinario y el motivo han sido registrados exitosamente en el historial.', 'success');
+        this.mostrarAlerta('Caso reasignado', 'El nuevo veterinario y el motivo fueron registrados en el historial.', 'success');
         this.obtenerPeticiones();
         this.obtenerNotificaciones();
         if (this.modalDetalleAbierto && this.peticionDetalle?.id_peticion === petId) {
@@ -657,7 +657,7 @@ export class Peticion implements OnInit, OnDestroy {
       error: (err) => {
         this.asignando = false;
         const detalle = err.error?.error || err.error?.detail || err.error?.mensaje || 'Error al reasignar el caso.';
-        this.mostrarAlerta('Error al reasignar', detalle, 'error');
+        this.mostrarAlerta('No fue posible reasignar el caso', detalle, 'error');
       }
     });
   }
@@ -683,7 +683,7 @@ export class Peticion implements OnInit, OnDestroy {
 
   confirmarCambioEstado(): void {
     if (!this.peticionParaCambiarEstado || !this.nuevoEstadoSeleccionado) {
-      this.mostrarAlerta('Selecciona un estado', 'Debes seleccionar el nuevo estado de la petición.', 'warning');
+      this.mostrarAlerta('Selección requerida', 'Seleccione el nuevo estado de la petición.', 'warning');
       return;
     }
 
@@ -710,7 +710,7 @@ export class Peticion implements OnInit, OnDestroy {
           this.peticionesLista[idx].estado = nombreEstado;
         }
         this.cerrarModalCambiarEstado();
-        this.mostrarAlerta('Estado Actualizado', `El caso #${petId} ahora se encuentra en estado '${nombreEstado}'.`, 'success');
+        this.mostrarAlerta('Estado actualizado', `El caso #${petId} ahora se encuentra en estado '${nombreEstado}'.`, 'success');
         this.obtenerPeticiones();
         this.obtenerNotificaciones();
         if (this.modalDetalleAbierto && this.peticionDetalle?.id_peticion === petId) {
@@ -720,7 +720,7 @@ export class Peticion implements OnInit, OnDestroy {
       error: (err) => {
         this.cambiandoEstado = false;
         const detalle = err.error?.error || err.error?.detail || err.error?.mensaje || 'Error al actualizar el estado.';
-        this.mostrarAlerta('Error al actualizar estado', detalle, 'error');
+        this.mostrarAlerta('No fue posible actualizar el estado', detalle, 'error');
       }
     });
   }
@@ -731,19 +731,19 @@ export class Peticion implements OnInit, OnDestroy {
 
   async enviarReporte(): Promise<void> {
     if (this.reporteForm.invalid) {
-      this.mostrarAlerta('Formulario incompleto', 'Completa todos los campos requeridos.', 'warning');
+      this.mostrarAlerta('Campos obligatorios incompletos', 'Complete todos los campos requeridos.', 'warning');
       this.reporteForm.markAllAsTouched();
       return;
     }
 
     if (!this.ubicacionObtenida) {
-      this.mostrarAlerta('Ubicación requerida', 'Debes buscar o seleccionar tu ubicación.', 'warning');
+      this.mostrarAlerta('Ubicación requerida', 'Busque o seleccione una ubicación.', 'warning');
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      this.mostrarAlerta('Sesión no iniciada', 'Por favor inicia sesión nuevamente.', 'error');
+      this.mostrarAlerta('Sesión no iniciada', 'Inicie sesión nuevamente.', 'error');
       return;
     }
 
@@ -760,8 +760,8 @@ export class Peticion implements OnInit, OnDestroy {
     const prioridadSeleccionada = this.reporteForm.get('prioridad')?.value || 'Media';
 
     Swal.fire({
-      title: 'Enviando petición...',
-      text: 'Por favor espera un momento.',
+      title: 'Enviando petición',
+      text: 'Espere un momento mientras se procesa el registro.',
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
@@ -805,7 +805,7 @@ export class Peticion implements OnInit, OnDestroy {
 
     this.http.post(this.apiUrl, payload, { headers }).subscribe({
       next: (response: any) => {
-        this.mostrarAlerta('¡Petición enviada!', `El caso #${response.id_peticion || ''} ha sido registrado con éxito.`, 'success');
+        this.mostrarAlerta('Petición registrada', `El caso #${response.id_peticion || ''} fue registrado correctamente.`, 'success');
         this.resetearFormulario();
         this.mostrarLista = true;
         this.obtenerPeticiones();
@@ -813,7 +813,7 @@ export class Peticion implements OnInit, OnDestroy {
       },
       error: (error) => {
         const detalle = error.error?.detail || error.error?.mensaje || 'Error al registrar la petición.';
-        this.mostrarAlerta('Error al enviar', detalle, 'error');
+        this.mostrarAlerta('No fue posible registrar la petición', detalle, 'error');
       }
     });
   }
@@ -1148,42 +1148,42 @@ export class Peticion implements OnInit, OnDestroy {
   estadoBadgeClase(p: any): string {
     const est = String(p?.estado || (this.estaAsignada(p) ? 'Asignada' : 'En revisión')).toLowerCase();
     if (est.includes('revis') || est.includes('pend')) {
-      return 'bg-slate-100 text-slate-700 border-slate-200';
+      return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
     }
     if (est.includes('asignad')) {
-      return 'bg-[#4141a5]/10 text-[#4141a5] border-[#4141a5]/20 font-bold';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20 font-semibold';
     }
     if (est.includes('proces')) {
-      return 'bg-indigo-50 text-indigo-800 border-indigo-200';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20';
     }
     if (est.includes('atendid') || est.includes('resuelt')) {
-      return 'bg-slate-100 text-[#170B3D] border-slate-300 font-bold';
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6] font-semibold';
     }
     if (est.includes('tratamient') || est.includes('observac')) {
-      return 'bg-indigo-50 text-indigo-800 border-indigo-200';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20';
     }
     if (est.includes('adopci')) {
-      return 'bg-[#170B3D]/10 text-[#170B3D] border-[#170B3D]/20 font-bold';
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6] font-semibold';
     }
     if (est.includes('finaliz') || est.includes('alta') || est.includes('cerrad')) {
-      return 'bg-slate-100 text-slate-700 border-slate-300';
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
     }
-    return 'bg-gray-100 text-gray-700 border-gray-200';
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   }
 
   prioridadClase(prioridad: any, esUrg: boolean = false): string {
-    if (esUrg) return 'bg-red-50 text-red-700 border-red-200';
+    if (esUrg) return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
     const v = String(prioridad || '').toLowerCase();
     if (v.includes('alta') || v.includes('urgente') || v.includes('crít') || v.includes('crit')) {
-      return 'bg-red-50 text-red-700 border-red-200';
+      return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
     }
     if (v.includes('media')) {
-      return 'bg-slate-100 text-slate-700 border-slate-200';
+      return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
     }
     if (v.includes('baja')) {
-      return 'bg-slate-100 text-[#170B3D] border-slate-300 font-bold';
+      return 'bg-slate-50 text-slate-600 border-slate-200 font-semibold';
     }
-    return 'bg-gray-50 text-gray-600 border-gray-200';
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   }
 
   fotoDe(p: any): string {
@@ -1695,6 +1695,6 @@ export class Peticion implements OnInit, OnDestroy {
   }
 
   private mostrarAlerta(title: string, text: string, icon: 'success' | 'error' | 'warning'): void {
-    Swal.fire({ title, text, icon, confirmButtonColor: '#4141a5' });
+    Swal.fire({ title, text, icon });
   }
 }
