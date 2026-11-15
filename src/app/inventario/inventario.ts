@@ -7,11 +7,12 @@ import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })

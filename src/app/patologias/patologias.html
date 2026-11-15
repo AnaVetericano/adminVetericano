@@ -106,7 +106,12 @@
 
                         <!-- Mensaje si no hay registros -->
                         <tr *ngIf="!cargando && patologias.length === 0">
-                            <td colspan="4" class="px-4 py-8 text-center text-slate-400 font-medium">No se encontraron patologías registradas.</td>
+                            <td colspan="4" class="px-4 py-8 text-center text-slate-400 font-medium">
+                                <div class="flex flex-col items-center gap-2 py-6">
+                                    <app-animal-icon tipo="conejo" [tamano]="56" />
+                                    No se encontraron patologías registradas.
+                                </div>
+                            </td>
                         </tr>
 
                         <!-- Filas dinámicas -->

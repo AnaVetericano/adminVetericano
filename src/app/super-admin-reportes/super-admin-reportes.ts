@@ -19,11 +19,12 @@ import {
   PeticionAtendidaReporte,
   VeterinarioRendimiento
 } from '../services/super-admin.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-super-admin-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './super-admin-reportes.html',
   styleUrl: './super-admin-reportes.css'
 })

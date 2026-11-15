@@ -6,11 +6,12 @@ import Swal from 'sweetalert2';
 import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule],
+  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule, AnimalIconComponent],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })

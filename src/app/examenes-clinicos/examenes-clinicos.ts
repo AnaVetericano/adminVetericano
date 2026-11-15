@@ -6,11 +6,12 @@ import {
   ExamenesClinicosService,
   ExamenClinico
 } from '../services/examenes-clinicos.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-examenes-clinicos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './examenes-clinicos.html',
   styleUrl: './examenes-clinicos.css',
 })

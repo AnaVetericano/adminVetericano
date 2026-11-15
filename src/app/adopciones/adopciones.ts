@@ -5,6 +5,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 interface Pet {
   id?: number;
@@ -20,7 +21,7 @@ interface Pet {
 @Component({
   selector: 'app-adopciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './adopciones.html',
   styleUrl: './adopciones.css',
 })

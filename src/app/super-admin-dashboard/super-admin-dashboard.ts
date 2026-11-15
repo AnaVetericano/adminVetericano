@@ -19,11 +19,12 @@ import {
   VeterinarioRendimiento
 } from '../services/super-admin.service';
 import { SedesService, Sede } from '../services/sedes.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-super-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AnimalIconComponent],
   templateUrl: './super-admin-dashboard.html',
   styleUrl: './super-admin-dashboard.css'
 })

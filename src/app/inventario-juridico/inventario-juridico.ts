@@ -6,11 +6,12 @@ import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService, VeterinaryKitItem } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-inventario-juridico',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './inventario-juridico.html',
   styleUrl: './inventario-juridico.css',
 })

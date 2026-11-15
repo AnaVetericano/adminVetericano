@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService, EventoVoluntariado, PostulacionVoluntariado } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 export interface VoluntarioPostulado {
   id?: number;
@@ -17,7 +18,7 @@ export interface VoluntarioPostulado {
 @Component({
   selector: 'app-eventos-voluntariado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent],
   templateUrl: './eventos-voluntariado.html',
   styleUrl: './eventos-voluntariado.css'
 })

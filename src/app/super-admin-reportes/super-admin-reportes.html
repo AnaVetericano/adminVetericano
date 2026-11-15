@@ -229,7 +229,7 @@
             @if (cargando) {
               <tr>
                 <td colspan="7" class="px-4 py-10 text-center text-slate-500">
-                  <div class="inline-block animate-spin w-7 h-7 border-3 border-[#4141A5] border-t-transparent rounded-full mb-2"></div>
+                  <app-animal-icon tipo="huellas" [tamano]="40" />
                   <p class="text-xs font-semibold">Consultando casos atendidos...</p>
                 </td>
               </tr>
@@ -238,7 +238,10 @@
             @if (!cargando && peticionesAtendidas.length === 0) {
               <tr>
                 <td colspan="7" class="px-4 py-10 text-center text-slate-500 text-xs font-medium">
-                  No se encontraron peticiones atendidas con los criterios seleccionados.
+                  <div class="flex flex-col items-center gap-2 py-6">
+                    <app-animal-icon tipo="gato" [tamano]="56" />
+                    No se encontraron peticiones atendidas con los criterios seleccionados.
+                  </div>
                 </td>
               </tr>
             }

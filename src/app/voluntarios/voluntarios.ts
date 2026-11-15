@@ -8,6 +8,7 @@ import {
   EventoVoluntariado,
   PostulacionVoluntariado
 } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-voluntarios',
@@ -15,7 +16,8 @@ import {
   imports: [
     CommonModule,
     RouterLink,
-    FormsModule
+    FormsModule,
+    AnimalIconComponent
   ],
   templateUrl: './voluntarios.html',
   styleUrl: './voluntarios.css'

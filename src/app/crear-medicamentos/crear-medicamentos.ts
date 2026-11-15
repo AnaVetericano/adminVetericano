@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 export interface OpcionViaAdministracion {
   valor: string;
@@ -19,7 +20,7 @@ export interface OpcionViaAdministracion {
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './crear-medicamentos.html',
   styleUrl: './crear-medicamentos.css',
 })

@@ -6,11 +6,12 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { AuthService, CrearEspecie, ActualizarEspecie } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
 selector: 'app-especies',
 standalone: true,
-imports: [FormsModule, CommonModule],
+imports: [FormsModule, CommonModule, AnimalIconComponent],
 templateUrl: './especies.html',
 styleUrl: './especies.css',
 })

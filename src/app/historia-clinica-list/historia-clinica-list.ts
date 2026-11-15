@@ -8,6 +8,7 @@ import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 export interface HistoriaClinicaItem {
   id_historia: number;
@@ -45,7 +46,7 @@ export interface HistoriaClinicaItem {
 @Component({
   selector: 'app-historia-clinica-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './historia-clinica-list.html',
   styleUrl: './historia-clinica-list.css'
 })

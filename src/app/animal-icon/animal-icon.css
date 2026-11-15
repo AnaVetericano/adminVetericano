@@ -1,0 +1,63 @@
+/* Íconos de línea animados. Intensidad "sutil": amplitud 0.6, ritmo 1.35x más lento. */
+:host {
+  --ai-size: 72px;
+  --amp: 0.6;
+  --slow: 1.35;
+  display: inline-flex;
+  justify-content: center;
+  color: #4141A5;
+  line-height: 0;
+}
+.ico { width: var(--ai-size); height: var(--ai-size); overflow: visible; }
+.paws { width: calc(var(--ai-size) * 2); height: calc(var(--ai-size) * 0.75); }
+.ico * { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ico .fill { fill: #170B3D; stroke: none; }
+.ico .tint { fill: rgba(65, 65, 165, 0.16); }
+.part { transform-box: fill-box; }
+
+/* Perro: jadea y de vez en cuando mueve una oreja */
+.dog .tongue { transform-origin: 50% 0%; animation: ai-pant calc(1.15s * var(--slow)) ease-in-out infinite; }
+.dog .ear-l { transform-origin: 85% 8%; animation: ai-flop calc(6s * var(--slow)) ease-in-out infinite; }
+@keyframes ai-pant { 0%, 100% { transform: scaleY(0.82); } 50% { transform: scaleY(calc(1 + 0.18 * var(--amp))); } }
+@keyframes ai-flop { 0%, 84%, 100% { transform: rotate(0); } 89% { transform: rotate(calc(-14deg * var(--amp))); } 94% { transform: rotate(calc(4deg * var(--amp))); } }
+
+/* Gato: parpadea, mueve bigotes y una oreja */
+.cat .eye { transform-origin: 50% 50%; animation: ai-blink calc(4.6s * var(--slow)) ease-in-out infinite; }
+.cat .wh-l { transform-origin: 100% 50%; animation: ai-whisk calc(5.2s * var(--slow)) ease-in-out infinite; }
+.cat .wh-r { transform-origin: 0% 50%; animation: ai-whisk calc(5.2s * var(--slow)) ease-in-out infinite reverse; }
+.cat .ear-r { transform-origin: 20% 100%; animation: ai-catear calc(7s * var(--slow)) ease-in-out infinite; }
+@keyframes ai-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes ai-whisk { 0%, 60%, 100% { transform: rotate(0); } 66% { transform: rotate(calc(5deg * var(--amp))); } 72% { transform: rotate(calc(-3deg * var(--amp))); } }
+@keyframes ai-catear { 0%, 40%, 100% { transform: rotate(0); } 44% { transform: rotate(calc(9deg * var(--amp))); } 48% { transform: rotate(0); } }
+
+/* Conejo: nariz, masticado, hoja y oreja */
+.rab .nose { transform-origin: 50% 50%; animation: ai-sniff calc(2.4s * var(--slow)) linear infinite; }
+.rab .jaw { transform-origin: 50% 0%; animation: ai-chew calc(3s * var(--slow)) ease-in-out infinite; }
+.rab .leaf { transform-origin: 0% 50%; animation: ai-leaf calc(3s * var(--slow)) ease-in-out infinite; }
+.rab .ear-r { transform-origin: 20% 100%; animation: ai-rabear calc(6.5s * var(--slow)) ease-in-out infinite; }
+@keyframes ai-sniff { 0%, 50%, 100% { transform: translateY(0); } 8%, 24%, 40% { transform: translateY(calc(-0.7px * var(--amp))); } 16%, 32% { transform: translateY(0); } }
+@keyframes ai-chew { 0%, 55%, 100% { transform: translateY(0); } 60%, 70%, 80%, 90% { transform: translateY(calc(0.9px * var(--amp))); } 65%, 75%, 85% { transform: translateY(0); } }
+@keyframes ai-leaf { 0%, 55%, 100% { transform: rotate(0); } 62%, 78% { transform: rotate(calc(-6deg * var(--amp))); } 70%, 86% { transform: rotate(calc(3deg * var(--amp))); } }
+@keyframes ai-rabear { 0%, 78%, 100% { transform: rotate(0); } 82% { transform: rotate(calc(12deg * var(--amp))); } 86% { transform: rotate(calc(-3deg * var(--amp))); } 90% { transform: rotate(0); } }
+
+/* Huellas de carga */
+.paws { fill: currentColor; }
+.paws .paw { opacity: 0; animation: ai-step calc(2s * var(--slow)) ease-in-out infinite; }
+.paws .p2 { animation-delay: calc(0.3s * var(--slow)); }
+.paws .p3 { animation-delay: calc(0.6s * var(--slow)); }
+.paws .p4 { animation-delay: calc(0.9s * var(--slow)); }
+@keyframes ai-step { 0%, 12% { opacity: 0; } 24%, 62% { opacity: 0.9; } 80%, 100% { opacity: 0; } }
+
+/* Modo "una-vez" (encabezado de dashboard): inclina la cabeza y levanta una oreja, luego queda quieto */
+:host(.una-vez) .tongue,
+:host(.una-vez) .ear-l { animation: none; }
+:host(.una-vez) .tongue { transform: scaleY(0.9); }
+:host(.una-vez) .head { transform-box: view-box; transform-origin: 32px 50px; animation: ai-tilt 1.4s ease-in-out 0.5s 1 both; }
+:host(.una-vez) .ear-r { transform-origin: 15% 8%; animation: ai-perk 0.9s ease-in-out 1.6s 1 both; }
+@keyframes ai-tilt { 0%, 100% { transform: rotate(0); } 35%, 65% { transform: rotate(calc(-7deg * var(--amp))); } }
+@keyframes ai-perk { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(calc(16deg * var(--amp))); } 70% { transform: rotate(calc(-4deg * var(--amp))); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ico *, .paws .paw, :host(.una-vez) .head { animation: none !important; }
+  .paws .paw { opacity: 0.9; }
+}

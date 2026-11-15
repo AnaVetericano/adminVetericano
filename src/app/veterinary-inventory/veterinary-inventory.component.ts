@@ -11,11 +11,12 @@ import {
   SolicitudKitPayload
 } from '../services/veterinary-inventory.service';
 import { AuthService } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-veterinary-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent],
   templateUrl: './veterinary-inventory.component.html',
   styleUrl: './veterinary-inventory.component.css'
 })

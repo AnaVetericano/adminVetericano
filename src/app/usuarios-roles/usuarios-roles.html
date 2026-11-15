@@ -223,7 +223,10 @@
                         <!-- SIN USUARIOS -->
                         <tr *ngIf="usuarios.length === 0">
                             <td colspan="6" class="text-center py-8 text-slate-400 font-medium">
-                                No hay usuarios registrados.
+                                <div class="flex flex-col items-center gap-2 py-6">
+                                    <app-animal-icon tipo="perro" [tamano]="56" />
+                                    No hay usuarios registrados.
+                                </div>
                             </td>
                         </tr>
 

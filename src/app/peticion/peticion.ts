@@ -22,6 +22,7 @@ import {
   extraerIdAlertaDeNotificacion
 } from '../models/duplicados.model';
 import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparacion/alerta-duplicado-comparacion';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-peticion',
@@ -32,7 +33,8 @@ import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparac
     FormsModule,
     DashboardJuridicoComponent,
     AlertaDuplicadoComparacionComponent,
-    RouterLink
+    RouterLink,
+    AnimalIconComponent
   ],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'

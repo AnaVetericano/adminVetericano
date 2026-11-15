@@ -48,7 +48,7 @@
 
     @if (cargando) {
       <div class="bg-white rounded-xl p-10 border border-slate-200 shadow-xs text-center">
-        <div class="inline-block animate-spin w-10 h-10 border-4 border-[#4141A5] border-t-transparent rounded-full mb-3"></div>
+        <app-animal-icon tipo="huellas" [tamano]="40" />
         <p class="text-sm font-semibold text-[#170B3D]">Consultando indicadores institucionales en tiempo real...</p>
       </div>
     } @else {
@@ -330,7 +330,10 @@
               @if (rendimientoVeterinarios.length === 0) {
                 <tr>
                   <td colspan="6" class="px-4 py-8 text-center text-slate-500 text-xs font-medium">
-                    No hay registros de rendimiento veterinario disponibles en este momento.
+                    <div class="flex flex-col items-center gap-2 py-6">
+                      <app-animal-icon tipo="perro" [tamano]="56" />
+                      No hay registros de rendimiento veterinario disponibles en este momento.
+                    </div>
                   </td>
                 </tr>
               }

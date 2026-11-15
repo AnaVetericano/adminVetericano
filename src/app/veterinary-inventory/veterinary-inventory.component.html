@@ -290,10 +290,7 @@
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col flex-1 min-h-[380px]">
       @if (cargando) {
         <div class="flex-1 flex flex-col items-center justify-center gap-3 py-16 text-slate-400">
-          <svg class="w-8 h-8 animate-spin text-[#4141A5]" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-          </svg>
+          <app-animal-icon tipo="huellas" [tamano]="40" />
           <p class="text-sm font-semibold">Cargando inventario de campo del veterinario...</p>
         </div>
       } @else {
@@ -421,11 +418,7 @@
                 <tr>
                   <td colspan="5" class="py-14 px-6 text-center">
                     <div class="max-w-md mx-auto flex flex-col items-center">
-                      <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                      </div>
+                      <app-animal-icon tipo="conejo" [tamano]="56" />
                       <h3 class="text-base font-bold text-[#170B3D] mb-1">Maletín de Campo sin Lotes Asignados</h3>
                       <p class="text-xs text-slate-500 leading-relaxed mb-4">
                         Este médico veterinario aún no tiene medicamentos o suministros asignados desde el inventario general de CBA. 
@@ -443,11 +436,14 @@
               } @else if (itemsFiltrados.length === 0) {
                 <tr>
                   <td colspan="5" class="py-12 text-center text-slate-400">
-                    <p class="font-semibold text-base">No se encontraron medicamentos o suministros.</p>
-                    <p class="text-xs text-slate-500 mt-1">Prueba ajustando el texto de búsqueda o el filtro de estado.</p>
-                    <button type="button" (click)="limpiarFiltro()" class="mt-3 text-xs font-semibold text-[#4141A5] underline cursor-pointer">
-                      Restablecer filtros
-                    </button>
+                    <div class="flex flex-col items-center gap-2 py-6">
+                      <app-animal-icon tipo="gato" [tamano]="56" />
+                      <p class="font-semibold text-base">No se encontraron medicamentos o suministros.</p>
+                      <p class="text-xs text-slate-500 mt-1">Prueba ajustando el texto de búsqueda o el filtro de estado.</p>
+                      <button type="button" (click)="limpiarFiltro()" class="mt-3 text-xs font-semibold text-[#4141A5] underline cursor-pointer">
+                        Restablecer filtros
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }

@@ -8,11 +8,7 @@
       
       <!-- Título y subtítulo -->
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-white text-[#4141A5] rounded-lg flex items-center justify-center shrink-0 border border-slate-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
+        <app-animal-icon tipo="perro" modo="una-vez" [tamano]="44" />
         <div>
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
@@ -297,7 +293,10 @@
         *ngIf="!errorDuplicados && !cargandoDuplicados && alertasPendientesRecientes().length === 0"
         data-testid="sin-alertas-duplicados-dashboard"
         class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <span>No hay alertas de posibles duplicados pendientes por revisar en este momento.</span>
+        <div class="flex flex-col items-center sm:items-start gap-2">
+          <app-animal-icon tipo="perro" [tamano]="64" />
+          <span>No hay alertas de posibles duplicados pendientes por revisar en este momento.</span>
+        </div>
         <span *ngIf="resumenDuplicados().total > 0" class="text-slate-500 font-semibold">
           Histórico revisado: {{ resumenDuplicados().CONFIRMADO + resumenDuplicados().DESCARTADO }}
         </span>
@@ -558,7 +557,10 @@
 
                 <tr *ngIf="metricas.casosVeterinarios.length === 0">
                   <td colspan="6" class="py-6 text-center text-slate-500 font-medium text-xs">
-                    No hay casos asignados actualmente a ningún veterinario.
+                    <div class="flex flex-col items-center gap-2 py-6">
+                      <app-animal-icon tipo="perro" [tamano]="56" />
+                      No hay casos asignados actualmente a ningún veterinario.
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -611,6 +613,7 @@
         </div>
 
         <div *ngIf="metricas.cba.ultimosIngresos.length === 0" class="col-span-full py-8 text-center text-slate-500 font-medium text-xs">
+          <div class="mb-2"><app-animal-icon tipo="perro" [tamano]="64" /></div>
           No hay registros recientes de ingresos activos a CBA en la clínica.
         </div>
       </div>

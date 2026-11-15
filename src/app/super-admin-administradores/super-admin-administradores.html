@@ -166,7 +166,7 @@
             @if (cargando) {
               <tr>
                 <td colspan="6" class="px-4 py-12 text-center text-slate-500">
-                  <div class="inline-block animate-spin w-8 h-8 border-3 border-[#4141A5] border-t-transparent rounded-full mb-2"></div>
+                  <app-animal-icon tipo="huellas" [tamano]="40" />
                   <p class="text-sm font-semibold">Cargando administradores desde el servidor...</p>
                 </td>
               </tr>
@@ -175,12 +175,15 @@
             @if (!cargando && administradoresFiltrados.length === 0) {
               <tr>
                 <td colspan="6" class="px-4 py-12 text-center text-slate-500">
-                  <p class="text-base font-bold text-[#170B3D]">No se encontraron administradores</p>
-                  <p class="text-xs text-slate-500 mt-1">
-                    {{ filtroTexto || filtroEstado !== 'todos' || filtroSedeId !== 'todas'
-                      ? 'No hay resultados para los filtros aplicados.'
-                      : 'Aún no hay administradores registrados.' }}
-                  </p>
+                  <div class="flex flex-col items-center gap-2 py-6">
+                    <app-animal-icon [tipo]="(filtroTexto || filtroEstado !== 'todos' || filtroSedeId !== 'todas') ? 'gato' : 'perro'" [tamano]="56" />
+                    <p class="text-base font-bold text-[#170B3D]">No se encontraron administradores</p>
+                    <p class="text-xs text-slate-500 mt-1">
+                      {{ filtroTexto || filtroEstado !== 'todos' || filtroSedeId !== 'todas'
+                        ? 'No hay resultados para los filtros aplicados.'
+                        : 'Aún no hay administradores registrados.' }}
+                    </p>
+                  </div>
                 </td>
               </tr>
             }

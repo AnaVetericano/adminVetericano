@@ -7,11 +7,12 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
 import { Graficas } from '../graficas/graficas';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule, Graficas],
+  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })

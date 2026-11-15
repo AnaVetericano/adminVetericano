@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-sedes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './sedes.component.html',
   styleUrl: './sedes.component.css'
 })

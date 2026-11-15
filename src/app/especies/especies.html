@@ -105,7 +105,10 @@
                         <!-- SIN ESPECIES -->
                         <tr *ngIf="especiesFiltradas.length === 0">
                             <td colspan="5" class="text-center py-8 text-slate-400 font-medium">
-                                No se encontraron especies registradas.
+                                <div class="flex flex-col items-center gap-2 py-6">
+                                    <app-animal-icon tipo="conejo" [tamano]="56" />
+                                    No se encontraron especies registradas.
+                                </div>
                             </td>
                         </tr>
 

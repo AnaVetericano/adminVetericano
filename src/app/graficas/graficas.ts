@@ -10,10 +10,11 @@ import {
   ResumenConteosAlertas,
   crearResumenAlertasVacio
 } from '../models/duplicados.model';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-graficas',
-  imports: [NgIf, CommonModule, RouterLink],
+  imports: [NgIf, CommonModule, RouterLink, AnimalIconComponent],
   templateUrl: './graficas.html',
   styleUrl: './graficas.css',
 })
