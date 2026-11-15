@@ -573,3 +573,21 @@ thead th {
 .swal2-popup.swal2-show { animation: qa-in .16s ease-out !important; }
 .swal2-popup.swal2-hide { animation: qa-out .12s ease-in forwards !important; }
 .swal2-icon.swal2-icon-show, .swal2-icon .swal2-icon-content { animation: none !important; }
+
+/* ========================================================================= */
+/* FONDO TÉCNICO SUTIL: retícula de puntos tipo papel de registro clínico    */
+/* ========================================================================= */
+/*
+ * Solo en las superficies con el gris de la página (#F4F5F7): raíz de cada
+ * página, área principal del layout y panel del login/registro. Nunca dentro
+ * de tarjetas, tablas, formularios ni modales (`.fixed`). CSS puro, sin imágenes.
+ * Para ajustarlo: --bg-dot-color (intensidad) y --bg-dot-gap (separación).
+ */
+:root {
+  --bg-dot-color: rgba(100, 116, 139, 0.16);
+  --bg-dot-gap: 20px;
+}
+[class*="bg-[#F4F5F7]" i]:not(.fixed, .fixed *) {
+  background-image: radial-gradient(circle at 1px 1px, var(--bg-dot-color) 1px, transparent 0);
+  background-size: var(--bg-dot-gap) var(--bg-dot-gap);
+}
