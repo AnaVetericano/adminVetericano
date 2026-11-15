@@ -64,15 +64,82 @@ html, body {
 /* ========================================================================= */
 /* ELEVACIÓN Y LEVITACIÓN PARA BOTONES (REFERENCIA BUSCADOR HISTORIAS)       */
 /* ========================================================================= */
-.btn-levitate {
-  box-shadow: 0 1px 2px rgba(23, 11, 61, 0.06);
-  transition: box-shadow .15s ease, background-color .15s ease;
+/*
+ * Sistema global: todo elemento clicable con superficie propia (botones, selects,
+ * tarjetas clicables) se ve ligeramente separado de la pantalla y se eleva 1-2 px
+ * al pasar el cursor. Al presionar vuelve a su sitio (nunca se hunde).
+ * Excluido: barra lateral, fondos de modales, filas/celdas de tabla y lo marcado
+ * con `.no-levitate`.
+ *
+ * INTENSIDAD: cambiar solo estas tres variables.
+ *   Suave  (~30% de la referencia): --lev-lift: -1px
+ *   Media  (~50%, ACTIVA)          : valores actuales
+ *   Marcada(~70%)                  : --lev-lift: -2px y sombras más profundas
+ */
+:root {
+  --lev-lift: -1.5px;
+  --lev-rest:
+    0 1px 2px rgba(23, 11, 61, 0.06),
+    0 4px 10px -2px rgba(23, 11, 61, 0.10);
+  --lev-hover:
+    0 2px 4px rgba(23, 11, 61, 0.06),
+    0 10px 20px -6px rgba(23, 11, 61, 0.18);
+  --lev-focus-ring: 0 0 0 3px rgba(65, 65, 165, 0.25);
 }
-.btn-levitate:hover:not(:disabled) {
-  box-shadow: 0 2px 6px rgba(23, 11, 61, 0.10);
+
+:is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option),
+select:not(:disabled, aside *, .no-levitate),
+.btn-levitate:not(:disabled),
+.swal2-styled {
+  box-shadow: var(--lev-rest) !important;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease,
+    opacity .15s ease, box-shadow .2s ease, transform .2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
-.btn-levitate:active:not(:disabled) {
-  box-shadow: 0 1px 2px rgba(23, 11, 61, 0.06);
+
+:is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option):hover,
+select:not(:disabled, aside *, .no-levitate):hover,
+.btn-levitate:not(:disabled):hover,
+.swal2-styled:hover {
+  box-shadow: var(--lev-hover) !important;
+  transform: translateY(var(--lev-lift));
+}
+
+:is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option):active,
+.btn-levitate:not(:disabled):active,
+.swal2-styled:active {
+  box-shadow: var(--lev-rest) !important;
+  transform: translateY(0);
+}
+
+/* El foco por teclado conserva un anillo visible además de la elevación */
+:is(button, a, [role="button"], select, summary, .cursor-pointer, .swal2-styled):focus-visible:not(aside *) {
+  box-shadow: var(--lev-hover), var(--lev-focus-ring) !important;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(button, a, [role="button"], label, summary, select, .cursor-pointer, .btn-levitate, .swal2-styled):hover {
+    transform: none !important;
+  }
+}
+
+/* ========================================================================= */
+/* ENCABEZADOS DE TABLA: se distinguen del fondo de la página                */
+/* ========================================================================= */
+/* Tono opaco del índigo de marca (#4141A5 al ~10% sobre blanco): funciona
+   también en encabezados fijos (sticky) sin transparentar las filas. */
+:root {
+  --table-head-bg: #ECECF6;
+  --table-head-border: #CFCFE8;
+}
+thead tr {
+  background-color: var(--table-head-bg) !important;
+  border-bottom: 1px solid var(--table-head-border) !important;
+}
+thead th {
+  background-color: var(--table-head-bg) !important;
+  color: rgba(23, 11, 61, 0.80) !important;
+  font-weight: 700 !important;
 }
 
 /* ========================================================================= */
@@ -360,11 +427,7 @@ html, body {
   padding: 8px 16px !important;
   font-size: 14px !important;
   font-weight: 600 !important;
-  box-shadow: none !important;
   font-family: inherit !important;
-}
-.swal2-styled:focus {
-  box-shadow: 0 0 0 3px rgba(65, 65, 165, 0.25) !important;
 }
 .swal2-styled.swal2-confirm {
   background: #4141A5 !important;
