@@ -65,26 +65,106 @@ html, body {
 /* ELEVACIÓN Y LEVITACIÓN PARA BOTONES (REFERENCIA BUSCADOR HISTORIAS)       */
 /* ========================================================================= */
 /*
- * Sistema global: todo elemento clicable con superficie propia (botones, selects,
- * tarjetas clicables) se ve ligeramente separado de la pantalla y se eleva 1-2 px
- * al pasar el cursor. Al presionar vuelve a su sitio (nunca se hunde).
+ * Sistema global de relieve (referencia: kit neumórfico, al 50% de su fuerza).
+ * Todo elemento clicable con superficie propia (botones, selects, tarjetas
+ * clicables) se ve separado de la pantalla con cuatro capas:
+ *   1. sombra abajo-derecha   2. luz arriba-izquierda
+ *   3. brillo fino arriba     4. borde inferior más oscuro (da grosor)
+ * Al pasar el cursor sube 1 px; al presionar baja a casi plano (nunca se hunde).
+ * Variante clara (botones blancos/grises) y variante de color (azul, tinta,
+ * rojo, verde), detectada por la clase de fondo del elemento.
  * Excluido: barra lateral, fondos de modales, filas/celdas de tabla y lo marcado
- * con `.no-levitate`.
- *
- * INTENSIDAD: cambiar solo estas tres variables.
- *   Suave  (~30% de la referencia): --lev-lift: -1px
- *   Media  (~50%, ACTIVA)          : valores actuales
- *   Marcada(~70%)                  : --lev-lift: -2px y sombras más profundas
+ * con `.no-levitate`. Las intensidades se ajustan solo en estas variables.
  */
 :root {
-  --lev-lift: -1.5px;
-  --lev-rest:
-    0 1px 2px rgba(23, 11, 61, 0.06),
-    0 4px 10px -2px rgba(23, 11, 61, 0.10);
-  --lev-hover:
-    0 2px 4px rgba(23, 11, 61, 0.06),
-    0 10px 20px -6px rgba(23, 11, 61, 0.18);
+  --lev-lift: -1px;
+  --raise-light:
+    4px 4px 10px rgba(23, 11, 61, 0.10),
+    -4px -4px 10px rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(23, 11, 61, 0.06);
+  --raise-light-hover:
+    6px 6px 14px rgba(23, 11, 61, 0.13),
+    -5px -5px 12px rgba(255, 255, 255, 1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(23, 11, 61, 0.06);
+  --raise-dark:
+    4px 4px 10px rgba(23, 11, 61, 0.20),
+    -3px -3px 8px rgba(255, 255, 255, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(23, 11, 61, 0.28);
+  --raise-dark-hover:
+    6px 6px 14px rgba(23, 11, 61, 0.24),
+    -4px -4px 10px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -2px 0 rgba(23, 11, 61, 0.28);
+  --raise-press:
+    2px 2px 5px rgba(23, 11, 61, 0.10),
+    -2px -2px 5px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* Hundido de las tarjetitas: 30% de la referencia */
+  --sunk:
+    inset 2px 2px 5px rgba(23, 11, 61, 0.07),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+
+  --lev-rest: var(--raise-light);
+  --lev-hover: var(--raise-light-hover);
+  --lev-press: var(--raise-press);
   --lev-focus-ring: 0 0 0 3px rgba(65, 65, 165, 0.25);
+}
+
+/* Cada clicable parte del relieve claro (especificidad 0, no se hereda del padre)... */
+:where(button, a, [role="button"], label, summary, select, .cursor-pointer, .btn-levitate, .swal2-styled) {
+  --lev-rest: var(--raise-light);
+  --lev-hover: var(--raise-light-hover);
+}
+
+/* ...y la variante de color la activa solo su propia clase de fondo */
+:is(
+  [class^="bg-[#4141A5] " i],
+  [class*=" bg-[#4141A5] " i],
+  [class$=" bg-[#4141A5]" i],
+  [class="bg-[#4141A5]" i],
+  [class^="bg-[#353583] " i],
+  [class*=" bg-[#353583] " i],
+  [class$=" bg-[#353583]" i],
+  [class="bg-[#353583]" i],
+  [class^="bg-[#170B3D] " i],
+  [class*=" bg-[#170B3D] " i],
+  [class$=" bg-[#170B3D]" i],
+  [class="bg-[#170B3D]" i],
+  [class^="bg-[#B42318] " i],
+  [class*=" bg-[#B42318] " i],
+  [class$=" bg-[#B42318]" i],
+  [class="bg-[#B42318]" i],
+  [class^="bg-[#067647] " i],
+  [class*=" bg-[#067647] " i],
+  [class$=" bg-[#067647]" i],
+  [class="bg-[#067647]" i],
+  [class^="bg-primary " i],
+  [class*=" bg-primary " i],
+  [class$=" bg-primary" i],
+  [class="bg-primary" i],
+  [class^="bg-secundary " i],
+  [class*=" bg-secundary " i],
+  [class$=" bg-secundary" i],
+  [class="bg-secundary" i],
+  [class^="bg-slate-700 " i],
+  [class*=" bg-slate-700 " i],
+  [class$=" bg-slate-700" i],
+  [class="bg-slate-700" i],
+  [class^="bg-slate-800 " i],
+  [class*=" bg-slate-800 " i],
+  [class$=" bg-slate-800" i],
+  [class="bg-slate-800" i],
+  [class^="bg-slate-900 " i],
+  [class*=" bg-slate-900 " i],
+  [class$=" bg-slate-900" i],
+  [class="bg-slate-900" i]
+),
+.swal2-styled.swal2-confirm {
+  --lev-rest: var(--raise-dark);
+  --lev-hover: var(--raise-dark-hover);
 }
 
 :is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option),
@@ -107,8 +187,13 @@ select:not(:disabled, aside *, .no-levitate):hover,
 :is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option):active,
 .btn-levitate:not(:disabled):active,
 .swal2-styled:active {
-  box-shadow: var(--lev-rest) !important;
+  box-shadow: var(--lev-press) !important;
   transform: translateY(0);
+}
+
+/* Tarjetitas informativas (no clicables) con fondo gris claro: levemente hundidas */
+div:is([class^="bg-slate-50 "], [class*=" bg-slate-50 "], [class$=" bg-slate-50"], [class^="bg-slate-50/"], [class*=" bg-slate-50/"]):is([class*="rounded-lg"], [class*="rounded-xl"]):not(.cursor-pointer, [class*="inset-0"], [class*="rounded-t-"], [class*="rounded-b-"], [class*="rounded-l-"], [class*="rounded-r-"], .fixed, .sticky, .absolute, aside *, .no-levitate, .no-sunk) {
+  box-shadow: var(--sunk) !important;
 }
 
 /* El foco por teclado conserva un anillo visible además de la elevación */
