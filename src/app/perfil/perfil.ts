@@ -102,7 +102,7 @@ export class PerfilComponent implements OnInit {
 
   private asignarDatosDesdeSesion(sesion: UserSession): void {
     const sesionAny = sesion as any;
-    const rolActual = sesion.rol || this.authService.userRole() || (this.authService.isAdmin() ? 'Administrador' : 'Veterinario');
+    const rolActual = sesion.rol || this.authService.userRole() || '';
     this.usuario = {
       id_usuario: sesion.id_usuario,
       identificacion: sesion.identificacion || '',

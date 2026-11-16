@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, finalize, map, shareReplay, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type UserRole = 'Super Administrador' | 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
@@ -204,10 +204,35 @@ export interface ActualizarMedicamento {
   estado?: boolean;
 }
 
+/**
+ * La sesión se cerró o cambió de cuenta mientras se renovaba: el token
+ * renovado se descarta y NO se debe cerrar la sesión que hay ahora.
+ */
+export class RenovacionDescartada extends Error { }
+
+/**
+ * Indica si una renovación falló porque el servidor rechazó el refresh
+ * (vencido, inválido o usuario desactivado) o porque no hay sesión que renovar.
+ * Un fallo de red (0) o del servidor (5xx) NO cuenta como rechazo.
+ */
+export function renovacionRechazada(err: unknown): boolean {
+  if (err instanceof RenovacionDescartada) return false;
+  if (!(err instanceof HttpErrorResponse)) return true;
+  return err.status === 400 || err.status === 401;
+}
+
+/** Tiempo mínimo entre renovaciones al volver a la pestaña. */
+const INTERVALO_MINIMO_RENOVACION_MS = 5 * 60 * 1000;
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  // Renovación en curso compartida: si varias peticiones la piden a la vez,
+  // todas esperan la misma en lugar de pedir una cada una.
+  private renovacionEnCurso: Observable<string> | null = null;
+  private ultimaRenovacion = 0;
+
   private apiUrl = environment.apiUrl;
   private apiUrlespecies = environment.apiUrlespecies;
   private apiUrlMedicamentos = environment.apiUrlMedicamentos;
@@ -218,7 +243,12 @@ export class AuthService {
   // Señales públicas de solo lectura
   public currentUser = this.currentUserSignal.asReadonly();
   public isAuthenticated = computed(() => !!this.currentUserSignal() || !!localStorage.getItem('token'));
-  public userRole = computed(() => this.obtenerRolDesdeToken() || this.currentUserSignal()?.rol || '');
+  public userRole = computed(() => {
+    // Leer la señal siempre (antes del token) para que el rol se recalcule
+    // cuando cambie la sesión, por ejemplo al renovar el token.
+    const sesion = this.currentUserSignal();
+    return this.obtenerRolDesdeToken() || sesion?.rol || '';
+  });
   public isSuperAdmin = computed(() => {
     const token = localStorage.getItem('token');
     const payload = this.extraerPayloadToken(token);
@@ -339,6 +369,11 @@ export class AuthService {
         const sesion = JSON.parse(sesionStr) as UserSession;
         if (sesion) {
           const rolReal = rolToken || this.normalizarRol(sesion.id_rol ?? sesion.rol);
+          if (!rolReal) {
+            // Sin rol identificable no se supone ninguno: se limpia y se pide iniciar sesión
+            this.limpiarAlmacenamiento();
+            return null;
+          }
           const idRolReal = payload?.id_rol ? Number(payload.id_rol) : Number(sesion.id_rol);
           sesion.rol = rolReal;
           if (!isNaN(idRolReal) && idRolReal > 0) {
@@ -349,11 +384,16 @@ export class AuthService {
       } catch { }
     }
 
-    // Si hay token pero no user_session, recuperar desde el token
-    const rolFinal = rolToken || 'Administrador';
+    // Si hay token pero no user_session, recuperar desde el token.
+    // Sin rol identificable no se supone ninguno: se limpia y se pide iniciar sesión.
+    const rolFinal = rolToken;
+    if (!rolFinal) {
+      this.limpiarAlmacenamiento();
+      return null;
+    }
     const idRolFinal = payload?.id_rol
       ? Number(payload.id_rol)
-      : (rolFinal === 'Super Administrador' ? 5 : rolFinal === 'Veterinario' ? 3 : rolFinal === 'Jurídico' ? 2 : 1);
+      : this.idRolDesdeNombre(rolFinal);
     const sesion: UserSession = {
       id_usuario: payload?.id_usuario || payload?.user_id || payload?.id,
       email: payload?.email || payload?.username || 'usuario@vetericano.com',
@@ -375,12 +415,126 @@ export class AuthService {
   }
 
   /**
+   * Pide un token nuevo a /api/token/refresh/ y lo guarda. Si ya hay una
+   * renovación en curso, devuelve esa misma.
+   */
+  renovarToken(): Observable<string> {
+    if (this.renovacionEnCurso) {
+      return this.renovacionEnCurso;
+    }
+
+    const refresh = localStorage.getItem('refresh_token');
+    if (!refresh) {
+      return throwError(() => new Error('No hay token de renovación.'));
+    }
+
+    const usuarioQueRenueva = this.idUsuarioDelToken();
+    this.renovacionEnCurso = this.http
+      .post<{ access?: string; refresh?: string }>(`${environment.backendUrl}/api/token/refresh/`, { refresh })
+      .pipe(
+        map((res) => {
+          // Si la sesión se cerró o cambió de cuenta mientras se renovaba, no se toca
+          if (!localStorage.getItem('refresh_token') || this.idUsuarioDelToken() !== usuarioQueRenueva) {
+            throw new RenovacionDescartada('La sesión cambió durante la renovación.');
+          }
+          if (!res?.access) {
+            throw new Error('El servidor no devolvió un token nuevo.');
+          }
+          this.guardarTokensRenovados(res.access, res.refresh);
+          this.ultimaRenovacion = Date.now();
+          return res.access;
+        }),
+        finalize(() => {
+          this.renovacionEnCurso = null;
+        }),
+        shareReplay(1)
+      );
+
+    return this.renovacionEnCurso;
+  }
+
+  /** true si pasó suficiente tiempo desde la última renovación (para no renovar en cada cambio de pestaña). */
+  debeRenovar(): boolean {
+    return Date.now() - this.ultimaRenovacion >= INTERVALO_MINIMO_RENOVACION_MS;
+  }
+
+  /** id del usuario dueño del token guardado (o null si no hay token). */
+  idUsuarioDelToken(): number | null {
+    const payload = this.extraerPayloadToken(localStorage.getItem('token'));
+    const id = Number(payload?.user_id ?? payload?.id_usuario ?? payload?.id);
+    return !isNaN(id) && id > 0 ? id : null;
+  }
+
+  /**
+   * Vuelve a leer la sesión desde localStorage (por ejemplo, cuando otra
+   * pestaña renovó el token o cerró la sesión).
+   */
+  sincronizarDesdeAlmacenamiento(): void {
+    this.currentUserSignal.set(this.obtenerSesionInicial());
+  }
+
+  private idRolDesdeNombre(rol: UserRole): number | undefined {
+    switch (rol) {
+      case 'Administrador': return 1;
+      case 'Jurídico': return 2;
+      case 'Veterinario': return 3;
+      case 'Peticionario': return 4;
+      case 'Super Administrador': return 5;
+      default: return undefined;
+    }
+  }
+
+  private limpiarAlmacenamiento(): void {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_session');
+    } catch { }
+  }
+
+  /**
+   * Guarda los tokens que entrega /api/token/refresh/ y alinea la sesión
+   * (rol e id_rol) con el token nuevo, que el backend arma con el rol actual
+   * de la base de datos.
+   */
+  guardarTokensRenovados(access: string, refresh?: string): void {
+    localStorage.setItem('token', access);
+    if (refresh) {
+      localStorage.setItem('refresh_token', refresh);
+    }
+
+    const actual = this.currentUserSignal();
+    if (!actual) {
+      this.currentUserSignal.set(this.obtenerSesionInicial());
+      return;
+    }
+
+    const payload = this.extraerPayloadToken(access);
+    const rolToken = this.obtenerRolDesdeToken();
+    const idRolToken = Number(payload?.id_rol);
+    const sesion: UserSession = {
+      ...actual,
+      rol: rolToken || actual.rol,
+      ...(!isNaN(idRolToken) && idRolToken > 0 ? { id_rol: idRolToken } : {})
+    };
+    // Objeto nuevo para que las señales derivadas (userRole, isAdmin…) se recalculen
+    this.currentUserSignal.set(sesion);
+    try {
+      localStorage.setItem('user_session', JSON.stringify(sesion));
+    } catch { }
+  }
+
+  /**
    * Actualiza los datos de la sesión activa y los persiste en localStorage
    */
   actualizarSesion(usuarioActualizado: Partial<UserSession>): void {
     const actual = this.currentUserSignal();
+    // Sin sesión activa no se crea una nueva con un rol supuesto
+    if (!actual) {
+      return;
+    }
     const nuevaSesion: UserSession = {
-      ...(actual || { email: '', rol: 'Veterinario' }),
+      ...actual,
       ...usuarioActualizado
     };
     this.currentUserSignal.set(nuevaSesion);
@@ -455,9 +609,7 @@ export class AuthService {
    * Limpia toda la sesión activa
    */
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_session');
+    this.limpiarAlmacenamiento();
     this.currentUserSignal.set(null);
   }
 
@@ -511,6 +663,11 @@ export class AuthService {
           (decoded?.is_superuser ? 'Super Administrador' : undefined);
 
         const rolFinal = this.normalizarRol(idRolRaw ?? rolTextoRaw);
+        if (!rolFinal) {
+          // No se supone ningún rol: se limpia y se informa
+          this.logout();
+          throw { error: { detail: 'No se pudo identificar el rol de la cuenta. Comuníquese con el administrador del sistema.' } };
+        }
 
         const idUsuarioRaw =
           res.id_usuario ??
@@ -524,17 +681,7 @@ export class AuthService {
           decoded?.id;
 
         const fotoFinal = res.foto || res.usuario?.foto || res.foto_perfil || res.usuario?.foto_perfil || decoded?.foto || decoded?.foto_perfil || '';
-        const idRolNumerico = idRolRaw
-          ? Number(idRolRaw)
-          : rolFinal === 'Super Administrador'
-            ? 5
-            : rolFinal === 'Jurídico'
-              ? 2
-              : rolFinal === 'Veterinario'
-                ? 3
-                : rolFinal === 'Peticionario'
-                  ? 4
-                  : 1;
+        const idRolNumerico = idRolRaw ? Number(idRolRaw) : this.idRolDesdeNombre(rolFinal);
 
         const sessionData: UserSession = {
           id_usuario: idUsuarioRaw ? Number(idUsuarioRaw) : undefined,
