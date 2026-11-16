@@ -1,610 +1,429 @@
-<div class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white min-h-full">
+<div class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white min-h-screen">
 
   <!-- ========================================================================= -->
-  <!-- 1. ENCABEZADO INSTITUCIONAL DEL DASHBOARD JURÍDICO                        -->
+  <!-- 1. TÍTULO Y BOTÓN DE ACCIÓN EN LA BARRA SUPERIOR (SIN SUB-HEADER)          -->
   <!-- ========================================================================= -->
-  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1">
-    <app-page-title
-      titulo="Dashboard"
-      etiqueta="Supervisión Legal"
-      subtitulo="Seguimiento de peticiones radicadas, asignación veterinaria y control de seres sintientes en CBA"
-      animal="perro"
-    />
-    <div class="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-end gap-2">
-      <!-- Acciones de Cabecera -->
-      <div class="flex items-center gap-2.5">
-        <!-- Botón Actualizar -->
-        <button
-          type="button"
-          (click)="cargarDatos(true)"
-          [disabled]="cargando"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" [ngClass]="{'animate-spin': cargando}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span class="hidden sm:inline">{{ cargando ? 'Sincronizando...' : 'Actualizar' }}</span>
-        </button>
-        <!-- Botón Ver Peticiones -->
-        <button
-          type="button"
-          (click)="irAGestionPeticiones()"
-          class="px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold rounded-lg text-sm transition-colors cursor-pointer flex items-center gap-2">
-          <span>Ver Casos y Peticiones</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </button>
-      </div>
-
-    </div>
-  </header>
+  <app-page-title
+    titulo="Dashboard"
+    etiqueta="Supervisión Legal"
+    subtitulo="Seguimiento de peticiones radicadas, asignación veterinaria y control de seres sintientes en CBA"
+    animal="perro"
+    botonTexto="Ver Casos y Peticiones"
+    botonRuta="/inicio-admin/peticion"
+  />
 
   <!-- ========================================================================= -->
-  <!-- 2. CONTENIDO PRINCIPAL DEL DASHBOARD                                      -->
+  <!-- 2. CONTENIDO PRINCIPAL: 3 COLUMNAS [~25% | ~50% | ~25%]                    -->
+  <!--    Aprovecha todo el espacio vertical superior                             -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 space-y-5">
+  <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 space-y-4">
 
-    <!-- MENSAJE DE ERROR SI OCURRE -->
-    <div *ngIf="errorCarga" class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 flex items-center justify-between gap-3 shadow-xs">
-      <div class="flex items-center gap-2.5">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    <!-- Mensaje de Error si ocurre -->
+    <div *ngIf="errorCarga" class="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between text-red-700 text-xs font-bold">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
         </svg>
-        <span class="text-sm font-semibold text-[#170B3D]">{{ errorCarga }}</span>
+        <span>{{ errorCarga }}</span>
       </div>
-      <button (click)="cargarDatos()" class="text-sm font-semibold text-[#4141A5] hover:text-[#353583] underline cursor-pointer shrink-0">Reintentar</button>
+      <button (click)="cargarDatos(true)" class="underline cursor-pointer hover:text-red-900">Reintentar</button>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- 2.1. TARJETAS DE INDICADORES CLAVE (KPIS)                                 -->
-    <!-- ========================================================================= -->
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      
-      <!-- KPI 1: TOTAL PETICIONES -->
-      <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Total Peticiones</span>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 text-[#4141A5] flex items-center justify-center border border-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </div>
-        </div>
-        <div class="mt-3">
-          <div class="text-2xl font-bold text-[#170B3D]">{{ metricas.peticiones.total }}</div>
-          <div class="flex items-center gap-2 mt-1 text-xs text-slate-500 font-medium">
-            <span class="text-[#9A5B13] font-semibold">{{ metricas.peticiones.pendientes }} pendientes</span>
-            <span>•</span>
-            <span class="text-[#4141A5] font-semibold">{{ metricas.peticiones.enProceso }} en curso</span>
-          </div>
-        </div>
-      </div>
+    <!-- Grid de 3 Columnas -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
-      <!-- KPI 2: CASOS ASIGNADOS A VETERINARIOS -->
-      <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Casos Asignados</span>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 text-[#4141A5] flex items-center justify-center border border-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-        </div>
-        <div class="mt-3">
-          <div class="text-2xl font-bold text-[#170B3D]">
-            {{ (metricas.peticiones.total - metricas.peticiones.pendientes) >= 0 ? (metricas.peticiones.total - metricas.peticiones.pendientes) : 0 }}
-          </div>
-          <p class="mt-1 text-xs text-slate-500 font-medium">
-            Repartidos entre <span class="font-semibold text-[#170B3D]">{{ metricas.casosVeterinarios.length }}</span> veterinarios activos
-          </p>
-        </div>
-      </div>
+      <!-- ===================================================================== -->
+      <!-- COLUMNA IZQUIERDA (Operativo & Urgencias) [~25% ancho -> lg:col-span-3]-->
+      <!-- ===================================================================== -->
+      <div class="lg:col-span-3 min-w-0 space-y-4">
 
-      <!-- KPI 3: ANIMALES EN CBA -->
-      <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 border-l-4 border-l-[#067647] shadow-xs">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Animales en CBA</span>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 text-[#4141A5] flex items-center justify-center border border-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </div>
-        </div>
-        <div class="mt-3">
-          <div class="text-2xl font-bold text-[#170B3D]">{{ metricas.cba.totalIngresadosCBA }}</div>
-          <p class="mt-1 text-xs text-slate-500 font-medium">
-            <span class="font-semibold text-[#067647]">{{ metricas.cba.aptosAdopcion }}</span> aptos para adopción
-          </p>
-        </div>
-      </div>
-
-      <!-- KPI 4: CASOS URGENTES / PRIORITARIOS (TARJETA DE ALERTA) -->
-      <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 border-l-4 border-l-[#B42318] shadow-xs">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Atención Urgente</span>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 text-[#B42318] flex items-center justify-center border border-slate-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-        </div>
-        <div class="mt-3">
-          <div class="text-2xl font-bold text-[#170B3D]">{{ metricas.peticiones.urgentes }}</div>
-          <p class="mt-1 text-xs text-slate-500 font-medium">
-            Alta prioridad o maltrato crítico
-          </p>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- 2.1B. RESUMEN Y ALERTAS RECIENTES DE POSIBLES DUPLICADOS                  -->
-    <!-- ========================================================================= -->
-    <section
-      *ngIf="puedeGestionarDuplicados"
-      data-testid="dashboard-juridico-duplicados"
-      class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3.5">
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-lg bg-slate-50 text-[#9A5B13] border border-slate-200 flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-base font-bold text-[#170B3D]">
-                Alertas de Posibles Duplicados
-              </h2>
-              <span
-                class="px-2 py-0.5 rounded-md text-xs font-semibold border"
-                [ngClass]="resumenDuplicados().PENDIENTE > 0
-                  ? 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'">
-                {{ resumenDuplicados().PENDIENTE }} pendientes
-              </span>
+        <!-- 1. Flujo de Peticiones -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D]">Flujo de Peticiones</h3>
             </div>
-            <p class="text-xs text-slate-500">
-              Supervisión preventiva de reportes similares sin modificar radicados ni asignaciones
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          data-testid="btn-ver-todas-alertas-duplicados"
-          (click)="irABandejaDuplicados()"
-          class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold rounded-lg text-sm transition-colors cursor-pointer shrink-0">
-          <span>Ver todas las alertas</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Tarjeta principal PENDIENTE + resumen CONFIRMADO y DESCARTADO -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div
-          data-testid="tarjeta-duplicados-pendientes"
-          class="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between"
-          [ngClass]="resumenDuplicados().PENDIENTE > 0
-            ? 'border-l-4 border-l-[#9A5B13]'
-            : ''">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Pendientes (PENDIENTE)
-            </span>
-            <div class="text-2xl font-bold text-[#170B3D] mt-1">
-              {{ resumenDuplicados().PENDIENTE }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              {{ resumenDuplicados().PENDIENTE > 0 ? 'Requieren revisión comparativa' : 'Al día en revisiones' }}
-            </p>
-          </div>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#9A5B13] flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
-
-        <div
-          data-testid="resumen-duplicados-confirmados"
-          class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#067647] flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Confirmados (CONFIRMADO)
-            </span>
-            <div class="text-2xl font-bold text-[#170B3D] mt-1">
-              {{ resumenDuplicados().CONFIRMADO }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Duplicados validados
-            </p>
-          </div>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#067647] flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        </div>
-
-        <div
-          data-testid="resumen-duplicados-descartados"
-          class="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Descartados (DESCARTADO)
-            </span>
-            <div class="text-2xl font-bold text-[#170B3D] mt-1">
-              {{ resumenDuplicados().DESCARTADO }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Total registradas: {{ resumenDuplicados().total }}
-            </p>
-          </div>
-          <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Error aislado de duplicados (no bloquea métricas jurídicas) -->
-      <div
-        *ngIf="errorDuplicados"
-        data-testid="error-duplicados-dashboard"
-        class="px-4 py-3 bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl flex items-center justify-between gap-3 text-sm text-[#170B3D] font-semibold">
-        <span>{{ errorDuplicados }}</span>
-        <button
-          type="button"
-          (click)="cargarAlertasDuplicados(true)"
-          class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-xs font-semibold cursor-pointer shrink-0">
-          Reintentar
-        </button>
-      </div>
-
-      <!-- Estado de carga de duplicados -->
-      <div
-        *ngIf="!errorDuplicados && cargandoDuplicados && alertasPendientesRecientes().length === 0"
-        data-testid="cargando-duplicados-dashboard"
-        class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 flex items-center gap-2">
-        <span class="inline-block w-3.5 h-3.5 border-2 border-[#4141A5] border-t-transparent rounded-full animate-spin"></span>
-        <span>Cargando alertas de posibles duplicados...</span>
-      </div>
-
-      <!-- Estado sin alertas pendientes -->
-      <div
-        *ngIf="!errorDuplicados && !cargandoDuplicados && alertasPendientesRecientes().length === 0"
-        data-testid="sin-alertas-duplicados-dashboard"
-        class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <app-animal-icon tipo="perro" [tamano]="64" />
-          <span>No hay alertas de posibles duplicados pendientes por revisar en este momento.</span>
-        </div>
-        <span *ngIf="resumenDuplicados().total > 0" class="text-slate-500 font-semibold">
-          Histórico revisado: {{ resumenDuplicados().CONFIRMADO + resumenDuplicados().DESCARTADO }}
-        </span>
-      </div>
-
-      <!-- Lista compacta de alertas pendientes más recientes -->
-      <div
-        *ngIf="!errorDuplicados && alertasPendientesRecientes().length > 0"
-        data-testid="lista-alertas-duplicados-recientes"
-        class="space-y-2">
-        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500 px-1">
-          <span>Pendientes más recientes</span>
-          <span>Haz clic en una alerta para abrir el comparador</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button
-            *ngFor="let alerta of alertasPendientesRecientes()"
-            type="button"
-            [attr.data-testid]="'alerta-reciente-' + alerta.id_alerta"
-            (click)="abrirAlertaDuplicado(alerta.id_alerta)"
-            class="w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#4141A5]/40 transition-colors cursor-pointer flex items-center justify-between gap-3">
-            <div class="min-w-0 space-y-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-                  Alerta #{{ alerta.id_alerta }}
-                </span>
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]">
-                  {{ alerta.estado_revision }}
-                </span>
-                <span class="text-xs font-semibold text-slate-500 truncate">
-                  {{ obtenerTipoAlerta(alerta) }}
-                </span>
-              </div>
-              <div class="text-xs font-bold text-[#170B3D] truncate">
-                {{ obtenerRadicadoAlerta(alerta, 'menor') }} ↔ {{ obtenerRadicadoAlerta(alerta, 'mayor') }}
-              </div>
-              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-500 font-medium">
-                <span>Similitud: <strong class="text-slate-700">{{ formatearSimilitudAlerta(alerta) }}</strong></span>
-                <span>•</span>
-                <span>Distancia: <strong class="text-slate-700">{{ formatearDistanciaAlerta(alerta) }}</strong></span>
-                <span>•</span>
-                <span>{{ alerta.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-            </div>
-
-            <span class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-[#4141A5] text-xs font-semibold shrink-0">
-              Comparar →
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- 2.2. REQUERIMIENTOS 1 Y 2: PETICIONES POR ESTADO Y CASOS POR VETERINARIO  -->
-    <!-- ========================================================================= -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-      <!-- GRÁFICA 1: TOTAL PETICIONES Y SUS DIFERENTES ESTADOS (5 COLS) -->
-      <div class="lg:col-span-5 bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div>
-              <h2 class="text-sm sm:text-base font-bold text-[#170B3D]">
-                1. Peticiones y sus Estados
-              </h2>
-              <p class="text-xs text-slate-500">
-                Distribución porcentual de los radicados ingresados
-              </p>
-            </div>
-            <span class="px-2 py-0.5 bg-[#4141A5]/5 text-[#4141A5] text-xs font-semibold rounded-md border border-[#4141A5]/20">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4141A5]/10 text-[#4141A5]">
               Total: {{ metricas.peticiones.total }}
             </span>
           </div>
 
-          <!-- Canvas Dona -->
-          <div class="relative h-64 sm:h-72 w-full mt-4 flex items-center justify-center">
-            <canvas #chartPeticiones></canvas>
+          <!-- Total Radicados -->
+          <div class="mt-4">
+            <div class="text-3xl font-black text-[#170B3D] tracking-tight">
+              {{ metricas.peticiones.total }}
+            </div>
+            <p class="text-xs text-gray-400 font-medium mt-0.5">
+              Radicados ingresados al sistema
+            </p>
+          </div>
+
+          <!-- Barra de Proporción -->
+          <div class="mt-4 space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold text-gray-500">
+              <span>Proporción de estados</span>
+              <span class="text-slate-600 font-semibold">{{ porcentajeFinalizadas }}% resueltas</span>
+            </div>
+            <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+              <div 
+                class="bg-amber-400 h-full rounded-l-full transition-all duration-500" 
+                [style.width.%]="porcentajePendientes" 
+                [title]="'Pendientes: ' + metricas.peticiones.pendientes + ' (' + porcentajePendientes + '%)'">
+              </div>
+              <div 
+                class="bg-[#4141A5] h-full transition-all duration-500" 
+                [style.width.%]="porcentajeEnProceso" 
+                [title]="'En Proceso: ' + metricas.peticiones.enProceso + ' (' + porcentajeEnProceso + '%)'">
+              </div>
+              <div 
+                class="bg-[#170B3D] h-full rounded-r-full transition-all duration-500" 
+                [style.width.%]="porcentajeFinalizadas" 
+                [title]="'Finalizadas: ' + metricas.peticiones.finalizadas + ' (' + porcentajeFinalizadas + '%)'">
+              </div>
+            </div>
+          </div>
+
+          <!-- Desglose Numérico con micro-tarjetas -->
+          <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-gray-100">
+            <div class="bg-amber-50 rounded-2xl p-2.5 border border-amber-100/60 text-center min-w-0">
+              <div class="text-[10px] font-bold text-amber-700 uppercase truncate">Pendientes</div>
+              <div class="text-lg font-black text-amber-700 mt-0.5">{{ metricas.peticiones.pendientes }}</div>
+              <div class="text-[9px] text-amber-600 font-semibold">{{ porcentajePendientes }}%</div>
+            </div>
+            <div class="bg-indigo-50/60 rounded-2xl p-2.5 border border-indigo-100/60 text-center min-w-0">
+              <div class="text-[10px] font-bold text-[#4141A5] uppercase truncate">En Proceso</div>
+              <div class="text-lg font-black text-[#4141A5] mt-0.5">{{ metricas.peticiones.enProceso }}</div>
+              <div class="text-[9px] text-[#4141A5]/80 font-semibold">{{ porcentajeEnProceso }}%</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-200/60 text-center min-w-0">
+              <div class="text-[10px] font-bold text-slate-500 uppercase truncate">Finalizadas</div>
+              <div class="text-lg font-black text-slate-800 mt-0.5">{{ metricas.peticiones.finalizadas }}</div>
+              <div class="inline-flex items-center justify-center gap-1 text-[9px] text-emerald-600 font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{{ porcentajeFinalizadas }}%</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Desglose de estados en tarjetas pequeñas -->
-        <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-200 text-center">
-          <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#9A5B13]"></span>Pendientes
+        <!-- 2. Atención Urgente -->
+        <div class="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200/80 rounded-3xl p-5 shadow-xs min-w-0 overflow-hidden relative">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
+              <span class="text-xs font-black uppercase tracking-wider text-red-700">Atención Urgente</span>
             </div>
-            <div class="text-base font-bold text-[#170B3D]">{{ metricas.peticiones.pendientes }}</div>
-          </div>
-          <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>En Proceso
+            <div class="w-9 h-9 rounded-2xl bg-white text-red-600 flex items-center justify-center font-bold shadow-xs">
+              🚨
             </div>
-            <div class="text-base font-bold text-[#170B3D]">{{ metricas.peticiones.enProceso }}</div>
           </div>
-          <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#067647]"></span>Finalizadas
-            </div>
-            <div class="text-base font-bold text-[#170B3D]">{{ metricas.peticiones.finalizadas }}</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- GRÁFICA 2: CASOS ASIGNADOS Y SUS ESTADOS POR VETERINARIO (7 COLS) -->
-      <div class="lg:col-span-7 bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div>
-              <h2 class="text-sm sm:text-base font-bold text-[#170B3D]">
-                2. Casos Asignados por Veterinario
-              </h2>
-              <p class="text-xs text-slate-500">
-                Volumen de casos activos y finalizados por profesional asignado
-              </p>
+          <div class="mt-3">
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-black text-red-600 tracking-tight">{{ metricas.peticiones.urgentes }}</span>
+              <span class="text-xs font-bold text-red-700 uppercase">Casos Críticos</span>
             </div>
-            <span class="px-2 py-0.5 bg-[#4141A5]/5 text-[#4141A5] text-xs font-semibold rounded-md border border-[#4141A5]/20">
-              Barras Apiladas
+            <p class="mt-1 text-xs text-red-700/90 font-medium leading-relaxed">
+              Maltrato prioritario, abandono severo o riesgo vital inminente.
+            </p>
+          </div>
+
+          <!-- Botón Rápido -->
+          <button
+            type="button"
+            (click)="irACasosUrgentes()"
+            class="mt-4 w-full py-2.5 px-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Atender Casos Urgentes</span>
+          </button>
+        </div>
+
+        <!-- 3. Seres en CBA -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D]">Seres en CBA</h3>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              {{ metricas.cba.totalIngresadosCBA }} activos
             </span>
           </div>
 
-          <!-- Canvas Barras Apiladas -->
-          <div class="relative h-64 sm:h-72 w-full mt-4">
+          <div class="mt-3 space-y-2.5">
+            <!-- Observación -->
+            <div class="flex items-center justify-between p-2.5 bg-[#4141A5]/5 hover:bg-[#4141A5]/10 rounded-2xl border border-[#4141A5]/10 transition-colors">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+                <span class="text-xs font-bold text-gray-700">En Observación</span>
+              </div>
+              <span class="text-sm font-black text-[#4141A5]">{{ metricas.cba.enObservacion }}</span>
+            </div>
+
+            <!-- Tratamiento -->
+            <div class="flex items-center justify-between p-2.5 bg-red-50/60 hover:bg-red-50 rounded-2xl border border-red-100 transition-colors">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="text-xs font-bold text-gray-700">En Tratamiento</span>
+              </div>
+              <span class="text-sm font-black text-red-600">{{ metricas.cba.enTratamiento }}</span>
+            </div>
+
+            <!-- Adopción -->
+            <div class="flex items-center justify-between p-2.5 bg-slate-50/70 hover:bg-slate-100/70 rounded-2xl border border-slate-200/70 transition-colors">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-[#170B3D]"></span>
+                <span class="text-xs font-bold text-gray-700">Aptos Adopción</span>
+              </div>
+              <span class="text-sm font-black text-[#170B3D]">{{ metricas.cba.aptosAdopcion }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- COLUMNA CENTRAL (Núcleo Analítico y Gráficas) [~50% ancho -> lg:col-span-6]-->
+      <!-- ===================================================================== -->
+      <div class="lg:col-span-6 min-w-0 space-y-4">
+
+        <!-- 1. Cinta de 4 KPIs Compactos: [Total] [Asignados] [CBA] [% Efectividad] -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <!-- KPI 1: Total -->
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400">
+              <span class="text-[10px] font-bold uppercase tracking-wider">Total</span>
+              <span class="text-xs">📋</span>
+            </div>
+            <div class="mt-2">
+              <div class="text-2xl font-black text-[#170B3D]">{{ metricas.peticiones.total }}</div>
+              <p class="text-[10px] text-gray-400 font-medium truncate">Peticiones radicadas</p>
+            </div>
+          </div>
+
+          <!-- KPI 2: Asignados -->
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400">
+              <span class="text-[10px] font-bold uppercase tracking-wider">Asignados</span>
+              <span class="text-xs">🩺</span>
+            </div>
+            <div class="mt-2">
+              <div class="text-2xl font-black text-[#4141A5]">{{ totalCasosAsignados }}</div>
+              <p class="text-[10px] text-gray-400 font-medium truncate">A veterinarios</p>
+            </div>
+          </div>
+
+          <!-- KPI 3: CBA -->
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400">
+              <span class="text-[10px] font-bold uppercase tracking-wider">CBA</span>
+              <span class="text-xs">🐾</span>
+            </div>
+            <div class="mt-2">
+              <div class="text-2xl font-black text-[#170B3D]">{{ metricas.cba.totalIngresadosCBA }}</div>
+              <p class="text-[10px] text-gray-400 font-medium truncate">Seres en centro</p>
+            </div>
+          </div>
+
+          <!-- KPI 4: % Efectividad -->
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-gray-400">
+              <span class="text-[10px] font-bold uppercase tracking-wider">Efectividad</span>
+              <span class="text-xs">🎯</span>
+            </div>
+            <div class="mt-2">
+              <div class="text-2xl font-black text-[#170B3D]">{{ porcentajeEfectividadGlobal }}%</div>
+              <p class="text-[10px] text-gray-400 font-medium truncate">Casos resueltos</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Gráfica Principal Grande: Casos por Veterinario (Barras) -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div>
+              <h2 class="text-sm font-extrabold text-[#170B3D] tracking-wide">
+                Casos Asignados por Veterinario
+              </h2>
+              <p class="text-[11px] text-gray-400 font-medium">
+                Carga de trabajo y distribución de estados por profesional
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="hidden sm:inline-flex px-2.5 py-1 bg-[#4141A5]/10 text-[#4141A5] text-[10px] font-bold rounded-lg border border-[#4141A5]/20">
+                Barras Apiladas
+              </span>
+              <span class="text-xs font-bold text-gray-500">
+                {{ metricas.casosVeterinarios.length }} profesionales
+              </span>
+            </div>
+          </div>
+
+          <!-- Canvas Barras Apiladas Grande -->
+          <div class="relative h-64 sm:h-72 w-full mt-3 overflow-hidden">
             <canvas #chartVeterinarios></canvas>
           </div>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-slate-200 text-xs text-slate-500 font-medium">
-          * Muestra los funcionarios veterinarios con mayor asignación de radicados.
+        <!-- 3. Fila Dual de Gráficas: [A: Peticiones (Dona)] [B: Seres en CBA (Polar Area)] -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Gráfica A: Peticiones (Dona) -->
+          <div class="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col justify-between min-w-0">
+            <div>
+              <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                <div class="min-w-0">
+                  <h3 class="text-xs font-extrabold text-[#170B3D] truncate">A: Peticiones</h3>
+                  <p class="text-[10px] text-gray-400 font-medium truncate">Distribución por estados</p>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4141A5]/10 text-[#4141A5]">
+                  Dona
+                </span>
+              </div>
+              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
+                <canvas #chartPeticiones></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfica B: Seres en CBA (Polar Area) -->
+          <div class="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col justify-between min-w-0">
+            <div>
+              <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                <div class="min-w-0">
+                  <h3 class="text-xs font-extrabold text-[#170B3D] truncate">B: Seres en CBA</h3>
+                  <p class="text-[10px] text-gray-400 font-medium truncate">Estado clínico y adopción</p>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                  Polar Area
+                </span>
+              </div>
+              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
+                <canvas #chartCBA></canvas>
+              </div>
+            </div>
+          </div>
+
         </div>
+
       </div>
 
-    </section>
+      <!-- ===================================================================== -->
+      <!-- COLUMNA DERECHA (Historial y Equipo) [~25% ancho -> lg:col-span-3]   -->
+      <!-- ===================================================================== -->
+      <div class="lg:col-span-3 min-w-0 space-y-4">
 
-    <!-- ========================================================================= -->
-    <!-- 2.3. REQUERIMIENTO 3: ANIMALES INGRESADOS AL CBA Y TABLA DE VETERINARIOS    -->
-    <!-- ========================================================================= -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-      <!-- GRÁFICA 3: ANIMALES EN CBA Y SUS ESTADOS (5 COLS) -->
-      <div class="lg:col-span-5 bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div>
-              <h2 class="text-sm sm:text-base font-bold text-[#170B3D]">
-                3. Seres Sintientes en CBA
-              </h2>
-              <p class="text-xs text-slate-500">
-                Total de ingresos al Centro de Bienestar Animal y sus estados
+        <!-- 1. Últimos Ingresos al CBA (Lista scrolleable limpia) -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+            <div class="min-w-0">
+              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D] truncate">
+                1. Últimos Ingresos CBA
+              </h3>
+              <p class="text-[11px] text-gray-400 font-medium truncate">
+                Historial de caniles y funcionarios
               </p>
             </div>
-            <span class="px-2 py-0.5 bg-[#ECFDF3] text-[#067647] text-xs font-semibold rounded-md border border-[#ABEFC6]">
-              Total CBA: {{ metricas.cba.totalIngresadosCBA }}
+            <span class="text-xs font-bold text-gray-400 shrink-0">
+              Recientes
             </span>
           </div>
 
-          <!-- Canvas Polar Area -->
-          <div class="relative h-64 sm:h-72 w-full mt-4 flex items-center justify-center">
-            <canvas #chartCBA></canvas>
+          <!-- Lista scrolleable limpia -->
+          <div class="space-y-2.5 max-h-[300px] sm:max-h-[320px] overflow-y-auto pr-1">
+            <div *ngFor="let item of metricas.cba.ultimosIngresos" class="p-3 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-[#4141A5]/30 hover:shadow-xs transition-all min-w-0">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="px-2 py-0.5 rounded-full font-black bg-[#4141A5]/10 text-[#4141A5] shrink-0">
+                  {{ item.canil }}
+                </span>
+                <span class="text-gray-400 font-medium text-[10px]">
+                  {{ item.fecha_ingreso | date:'dd/MM/yyyy' }}
+                </span>
+              </div>
+              <h4 class="text-xs font-bold text-[#170B3D] mt-1.5 line-clamp-1 truncate" [title]="item.motivo">
+                {{ item.motivo }}
+              </h4>
+              <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 gap-2">
+                <span class="truncate min-w-0">Receptor: <strong class="text-gray-700">{{ item.funcionario }}</strong></span>
+                <span class="px-1.5 py-0.5 rounded-md font-bold shrink-0 text-[10px]" [ngClass]="obtenerClaseEstadoBadge(item.estado)">
+                  {{ item.estado }}
+                </span>
+              </div>
+            </div>
+
+            <div *ngIf="metricas.cba.ultimosIngresos.length === 0" class="py-6 text-center text-gray-400 font-medium text-xs">
+              No hay registros recientes de ingresos activos a CBA.
+            </div>
           </div>
         </div>
 
-        <!-- Indicadores rápidos CBA -->
-        <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-200 text-center">
-          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>Observación
-            </div>
-            <div class="text-base font-bold text-[#170B3D]">{{ metricas.cba.enObservacion }}</div>
-          </div>
-          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>Tratamiento
-            </div>
-            <div class="text-base font-bold text-[#170B3D]">{{ metricas.cba.enTratamiento }}</div>
-          </div>
-          <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-[#067647]"></span>Adopción
-            </div>
-            <div class="text-base font-bold text-[#170B3D]">{{ metricas.cba.aptosAdopcion }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TABLA DETALLADA DE VETERINARIOS Y EFECTIVIDAD (7 COLS) -->
-      <div class="lg:col-span-7 bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-            <div>
-              <h2 class="text-sm sm:text-base font-bold text-[#170B3D]">
-                Tabla de Rendimiento Veterinario
-              </h2>
-              <p class="text-xs text-slate-500">
-                Desglose tabular de casos atendidos y porcentaje de resolución
+        <!-- 2. Rendimiento Veterinario (Estilo barras horizontales) -->
+        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+            <div class="min-w-0">
+              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D] truncate">
+                2. Rendimiento Veterinario
+              </h3>
+              <p class="text-[11px] text-gray-400 font-medium truncate">
+                Resolución y efectividad por profesional
               </p>
             </div>
-            <span class="text-xs font-semibold text-slate-500">
-              {{ metricas.casosVeterinarios.length }} profesionales
+            <span class="text-xs font-bold text-gray-400 shrink-0">
+              {{ metricas.casosVeterinarios.length }} vets
             </span>
           </div>
 
-          <!-- Tabla responsiva -->
-          <div class="overflow-x-auto mt-4 max-h-72 overflow-y-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
-                  <th class="py-2.5 px-4">Veterinario</th>
-                  <th class="py-2.5 px-2 text-center">Asignados</th>
-                  <th class="py-2.5 px-2 text-center">Pendientes</th>
-                  <th class="py-2.5 px-2 text-center">En Proceso</th>
-                  <th class="py-2.5 px-2 text-center">Finalizados</th>
-                  <th class="py-2.5 px-4 text-right">Efectividad</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
-                <tr *ngFor="let vet of metricas.casosVeterinarios" class="hover:bg-slate-50 transition-colors">
-                  <td class="py-3 px-4">
-                    <div class="flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-full bg-[#4141A5]/5 text-[#4141A5] font-semibold text-xs flex items-center justify-center shrink-0 border border-[#4141A5]/20">
-                        {{ vet.nombre_completo.charAt(0) || 'V' }}
-                      </div>
-                      <span class="font-semibold text-[#170B3D] truncate max-w-[140px] sm:max-w-none">
-                        {{ vet.nombre_completo }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="py-3 px-2 text-center font-bold text-[#170B3D]">
-                    {{ vet.total_asignados }}
-                  </td>
-                  <td class="py-3 px-2 text-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]">
-                      {{ vet.pendientes }}
-                    </span>
-                  </td>
-                  <td class="py-3 px-2 text-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-                      {{ vet.en_proceso }}
-                    </span>
-                  </td>
-                  <td class="py-3 px-2 text-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
-                      {{ vet.finalizadas }}
-                    </span>
-                  </td>
-                  <td class="py-3 px-4 text-right">
-                    <div class="flex items-center justify-end gap-2">
-                      <div class="w-14 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-[#4141A5] h-1.5 rounded-full" [style.width.%]="vet.porcentaje_completado"></div>
-                      </div>
-                      <span class="font-semibold text-slate-700 text-xs w-8">
-                        {{ vet.porcentaje_completado }}%
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+          <!-- Lista de barras horizontales -->
+          <div class="space-y-3 max-h-[300px] sm:max-h-[340px] overflow-y-auto pr-1">
+            <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-2xl border border-gray-100 bg-gray-50/40 hover:bg-white hover:border-gray-200 transition-all min-w-0">
+              <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
+              <div class="flex items-center justify-between gap-2 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
+                  <div class="w-6 h-6 rounded-full bg-[#4141A5]/10 text-[#4141A5] font-black text-[10px] flex items-center justify-center shrink-0">
+                    {{ vet.nombre_completo.charAt(0) || 'V' }}
+                  </div>
+                  <span class="text-xs font-bold text-[#170B3D] truncate" [title]="vet.nombre_completo">
+                    {{ vet.nombre_completo }}
+                  </span>
+                </div>
+                <span class="text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-full shrink-0">
+                  {{ vet.finalizadas }}/{{ vet.total_asignados }} resueltos
+                </span>
+              </div>
 
-                <tr *ngIf="metricas.casosVeterinarios.length === 0">
-                  <td colspan="6" class="py-6 text-center text-slate-500 font-medium text-xs">
-                    <div class="flex flex-col items-center gap-2 py-6">
-                      <app-animal-icon tipo="perro" [tamano]="56" />
-                      No hay casos asignados actualmente a ningún veterinario.
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+              <!-- Barra horizontal de efectividad en un solo color institucional limpio -->
+              <div class="mt-2.5">
+                <div class="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-1">
+                  <span>Efectividad</span>
+                  <span class="font-black text-[#170B3D]">{{ vet.porcentaje_completado }}%</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div 
+                    class="bg-[#4141A5] h-2 rounded-full transition-all duration-500" 
+                    [style.width.%]="vet.porcentaje_completado">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sub-indicadores: Pendientes y En proceso -->
+              <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
+                <span class="text-amber-700 font-semibold">{{ vet.pendientes }} pendientes</span>
+                <span class="text-[#4141A5] font-semibold">{{ vet.en_proceso }} en proceso</span>
+              </div>
+            </div>
+
+            <div *ngIf="metricas.casosVeterinarios.length === 0" class="py-6 text-center text-gray-400 font-medium text-xs">
+              No hay casos asignados a profesionales.
+            </div>
           </div>
         </div>
-
 
       </div>
 
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- 2.4. SECCIÓN REGISTRO RECIENTE DE INGRESOS AL CBA                         -->
-    <!-- ========================================================================= -->
-    <section class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
-        <div>
-          <h2 class="text-sm sm:text-base font-bold text-[#170B3D]">
-            Últimos Seres Sintientes Ingresados al Centro de Bienestar Animal (CBA)
-          </h2>
-          <p class="text-xs text-slate-500">
-            Registro de caniles asignados, motivo de ingreso y funcionario receptor
-          </p>
-        </div>
-        <span class="text-xs font-semibold text-slate-500">
-          Últimos movimientos
-        </span>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div *ngFor="let item of metricas.cba.ultimosIngresos" class="p-4 rounded-xl border border-slate-200 bg-white hover:border-[#4141A5]/40 transition-colors">
-          <div class="flex items-center justify-between text-xs">
-            <span class="px-2 py-0.5 rounded-md font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-              {{ item.canil }}
-            </span>
-            <span class="text-slate-500 font-medium">
-              {{ item.fecha_ingreso | date:'dd/MM/yyyy' }}
-            </span>
-          </div>
-          <h4 class="text-sm font-bold text-[#170B3D] mt-2 line-clamp-1">
-            {{ item.motivo }}
-          </h4>
-          <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Receptor: <strong class="text-[#170B3D]">{{ item.funcionario }}</strong></span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-xs border" [ngClass]="obtenerClaseEstadoBadge(item.estado)">
-              {{ item.estado }}
-            </span>
-          </div>
-        </div>
-
-        <div *ngIf="metricas.cba.ultimosIngresos.length === 0" class="col-span-full py-8 text-center text-slate-500 font-medium text-xs">
-          <div class="mb-2"><app-animal-icon tipo="perro" [tamano]="64" /></div>
-          No hay registros recientes de ingresos activos a CBA en la clínica.
-        </div>
-      </div>
-    </section>
+    </div>
 
   </main>
 </div>

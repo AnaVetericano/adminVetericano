@@ -13,6 +13,10 @@ export interface EncabezadoPagina {
   imagen?: string | null;
   /** Ícono animado que saluda una vez junto al título (dashboards). */
   animal?: TipoAnimalIcon | null;
+  /** Texto del botón de acción en la cabecera superior (ej: "Ver Casos y Peticiones"). */
+  botonTexto?: string | null;
+  /** Ruta opcional para navegación del botón de cabecera. */
+  botonRuta?: string | null;
 }
 
 /** Estado compartido (solo presentación) entre la página activa y la barra superior. */
@@ -56,6 +60,8 @@ export class PageTitleComponent implements OnDestroy {
   readonly detalle = input<string | null | undefined>(null);
   readonly imagen = input<string | null | undefined>(null);
   readonly animal = input<TipoAnimalIcon | null | undefined>(null);
+  readonly botonTexto = input<string | null | undefined>(null);
+  readonly botonRuta = input<string | null | undefined>(null);
 
   private readonly token = {};
 
@@ -68,6 +74,8 @@ export class PageTitleComponent implements OnDestroy {
         detalle: this.detalle(),
         imagen: this.imagen(),
         animal: this.animal(),
+        botonTexto: this.botonTexto(),
+        botonRuta: this.botonRuta(),
       });
     });
   }

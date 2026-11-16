@@ -174,6 +174,40 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     this.crearGraficaCBA();
   }
 
+  // Getters para cálculos analíticos
+  get totalCasosAsignados(): number {
+    const total = this.metricas?.peticiones?.total || 0;
+    const pendientes = this.metricas?.peticiones?.pendientes || 0;
+    return Math.max(0, total - pendientes);
+  }
+
+  get porcentajeEfectividadGlobal(): number {
+    const total = this.metricas?.peticiones?.total || 0;
+    const finalizadas = this.metricas?.peticiones?.finalizadas || 0;
+    if (total === 0) return 0;
+    return Math.min(100, Math.round((finalizadas / total) * 100));
+  }
+
+  get porcentajePendientes(): number {
+    const total = this.metricas?.peticiones?.total || 0;
+    return total > 0 ? Math.round(((this.metricas?.peticiones?.pendientes || 0) / total) * 100) : 0;
+  }
+
+  get porcentajeEnProceso(): number {
+    const total = this.metricas?.peticiones?.total || 0;
+    return total > 0 ? Math.round(((this.metricas?.peticiones?.enProceso || 0) / total) * 100) : 0;
+  }
+
+  get porcentajeFinalizadas(): number {
+    const total = this.metricas?.peticiones?.total || 0;
+    return total > 0 ? Math.round(((this.metricas?.peticiones?.finalizadas || 0) / total) * 100) : 0;
+  }
+
+  irACasosUrgentes(): void {
+    this.verCasos.emit();
+    this.router.navigate(['/inicio-admin/peticion'], { queryParams: { tab: 'peticiones', urgentes: 'true' } });
+  }
+
   /**
    * Resuelve el color exacto para las series de datos según la paleta monocroma de marca:
    * - Serie Primaria (En proceso / En observación): Índigo #4141A5
@@ -217,8 +251,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     if (e.includes('proceso') || e.includes('curso') || e.includes('asig') || e.includes('observ')) {
       return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20';
     }
-    if (e.includes('adop') || e.includes('finaliz') || e.includes('optimo') || e.includes('recuperad')) {
-      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
+    if (e.includes('adop') || e.includes('finaliz') || e.includes('optimo') || e.includes('recuperad') || e.includes('favor')) {
+      return 'bg-slate-100 text-slate-700 border-slate-200';
     }
     return 'bg-slate-50 text-slate-600 border-slate-200';
   }
@@ -380,17 +414,32 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     const ctx = this.chartCBARef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const estados = Object.keys(this.metricas.cba.distribucionEstados);
-    const valores = Object.values(this.metricas.cba.distribucionEstados);
+    const dist = this.metricas?.cba?.distribucionEstados;
+    const estados = dist ? Object.keys(dist) : [];
+    const valores = dist ? Object.values(dist) : [];
 
-    const labels = estados.length > 0 ? estados : ['En Observación', 'En Tratamiento', 'Apto Adopción'];
-    const data = valores.length > 0 ? valores : [
-      this.metricas.cba.enObservacion || 1,
-      this.metricas.cba.enTratamiento || 1,
-      this.metricas.cba.aptosAdopcion || 1
-    ];
+    let labels: string[];
+    let data: number[];
 
-    const colores = labels.map((label, idx) => this.obtenerColorGrafica(label, idx));
+    if (estados.length > 0) {
+      labels = estados;
+      data = valores.map((v) => Number(v) || 0);
+    } else {
+      const obs = Number(this.metricas?.cba?.enObservacion ?? 0);
+      const trat = Number(this.metricas?.cba?.enTratamiento ?? 0);
+      const adop = Number(this.metricas?.cba?.aptosAdopcion ?? 0);
+
+      labels = ['En Observación', 'En Tratamiento', 'Apto Adopción'];
+      data = [obs, trat, adop];
+    }
+
+    const colores = labels.map((label, idx) => {
+      const l = label.toLowerCase();
+      if (l.includes('tratam') || l.includes('crit') || l.includes('grave')) return 'rgba(217, 45, 32, 0.85)';
+      if (l.includes('observ') || l.includes('evalua')) return 'rgba(65, 65, 165, 0.85)';
+      if (l.includes('adop') || l.includes('recuperad') || l.includes('favor')) return '#170B3D';
+      return this.obtenerColorGrafica(label, idx);
+    });
 
     this.chartCBA = new Chart(ctx, {
       type: 'polarArea',
@@ -408,12 +457,23 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'right',
+            position: 'bottom',
             labels: {
-              boxWidth: 10,
+              boxWidth: 8,
               usePointStyle: true,
-              font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#475569'
+              font: { family: 'Nunito', size: 10, weight: 'bold' },
+              color: '#64748B'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const datasetData = context.dataset.data as number[];
+                const total = datasetData.reduce((a, b) => Number(a) + Number(b), 0);
+                const valor = Number(context.raw || 0);
+                const porcentaje = total > 0 ? Math.round((valor / total) * 100) : 0;
+                return ` ${context.label}: ${valor} seres (${porcentaje}%)`;
+              }
             }
           }
         },
