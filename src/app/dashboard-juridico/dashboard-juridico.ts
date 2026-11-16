@@ -11,7 +11,7 @@ import {
   computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Chart } from 'chart.js/auto';
 import { Subscription } from 'rxjs';
 import {
@@ -28,13 +28,14 @@ import {
 } from '../models/duplicados.model';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { AuthService } from '../services/auth';
 
 const MAX_ALERTAS_PENDIENTES_DASHBOARD = 5;
 
 @Component({
   selector: 'app-dashboard-juridico',
   standalone: true,
-  imports: [CommonModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, AnimalIconComponent, PageTitleComponent, RouterLink],
   templateUrl: './dashboard-juridico.html',
   styleUrl: './dashboard-juridico.css'
 })
@@ -74,6 +75,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   private chartCBA?: Chart;
 
   readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  // Para mostrar el selector de vistas por rol solo al Administrador (supervisión)
+  readonly authService = inject(AuthService);
   cargandoDuplicados = false;
   errorDuplicados = '';
   private duplicadosSub?: Subscription;
