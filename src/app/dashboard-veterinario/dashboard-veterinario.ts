@@ -14,6 +14,8 @@ import {
   KitItemLote,
   SolicitudKitPayload
 } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface PeticionItem {
   id_peticion: number;
@@ -53,7 +55,7 @@ export interface MedicamentoMaletinUI {
 @Component({
   selector: 'app-dashboard-veterinario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './dashboard-veterinario.html',
   styleUrl: './dashboard-veterinario.css'
 })
@@ -319,14 +321,14 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       ? Object.values(this.distribucionEstados)
       : [this.totalPendientes, this.totalEnProceso, this.totalAtendidas];
 
-    // Mapeo semántico de colores con acentos de la paleta oficial
+    // Mapeo de colores con la paleta monocroma de marca (y #F1C63C solo para 1 categoría destacada)
     const backgroundColors = labels.map(lbl => {
       const lower = lbl.toLowerCase();
-      if (lower.includes('urgent') || lower.includes('crit')) return '#D92D20'; // Acento Crítico
-      if (lower.includes('pend') || lower.includes('atender')) return '#DC6803'; // Acento Preventivo
-      if (lower.includes('proceso') || lower.includes('tratam')) return '#2E90FA'; // Acento Informativo
-      if (lower.includes('atendid') || lower.includes('finaliz') || lower.includes('alta') || lower.includes('resuelt')) return '#12B76A'; // Acento Exitoso
-      return '#667085'; // Acento Neutro
+      if (lower.includes('urgent') || lower.includes('crit')) return 'rgba(65, 65, 165, 0.55)';
+      if (lower.includes('pend') || lower.includes('atender')) return '#F1C63C';
+      if (lower.includes('proceso') || lower.includes('tratam')) return '#4141A5';
+      if (lower.includes('atendid') || lower.includes('finaliz') || lower.includes('alta') || lower.includes('resuelt')) return '#170B3D';
+      return '#94A3B8';
     });
 
     this.chartPeticiones = new Chart(ctx, {
@@ -348,8 +350,9 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569'
             }
           },
@@ -364,7 +367,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
             }
           }
         },
-        cutout: '68%'
+        cutout: '70%'
       }
     });
   }
@@ -380,12 +383,12 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       ? Object.values(this.distribucionTipos)
       : [this.totalUrgentes, Math.max(0, this.totalAsignadas - this.totalUrgentes)];
 
-    const standardPalette = ['#4141A5', '#170B3D', '#2E90FA', '#667085', '#344054'];
+    const standardPalette = ['#170B3D', '#4141A5', 'rgba(65, 65, 165, 0.55)', 'rgba(65, 65, 165, 0.28)', '#94A3B8', '#CBD5E1'];
     let stdIndex = 0;
     const backgroundColorsTipos = labels.map(lbl => {
       const lower = lbl.toLowerCase();
       if (lower.includes('urgent') || lower.includes('crític') || lower.includes('critic')) {
-        return '#D92D20'; // Acento Crítico correspondiente a Urgencias
+        return '#F1C63C';
       }
       const color = standardPalette[stdIndex % standardPalette.length];
       stdIndex++;
@@ -411,8 +414,9 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569'
             }
           },
@@ -427,7 +431,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
             }
           }
         },
-        cutout: '68%'
+        cutout: '70%'
       }
     });
   }
@@ -576,7 +580,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   obtenerClaseBadgePrioridad(prioridad?: string): string {
     const pr = (prioridad || '').toLowerCase();
     if (pr.includes('urgent') || pr.includes('alta') || pr.includes('critica') || pr.includes('emergencia')) {
-      return 'badge-status-critical font-black animate-pulse';
+      return 'badge-status-critical font-bold';
     }
     if (pr.includes('media')) {
       return 'badge-status-warning';
@@ -639,16 +643,15 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
         }
         Swal.fire({
           icon: 'success',
-          title: 'Estado Actualizado',
-          text: `La petición #${this.peticionSeleccionada?.id_peticion} ahora está en '${this.nuevoEstadoSeleccionado}'.`,
-          confirmButtonColor: '#4141A5'
+          title: 'Estado actualizado',
+          text: `La petición #${this.peticionSeleccionada?.id_peticion} fue actualizada a '${this.nuevoEstadoSeleccionado}'.`
         });
         this.cargarPeticiones();
       },
       error: (err) => {
         this.guardandoEstado = false;
         const msg = err.error?.detail || err.error?.error || 'No se pudo actualizar el estado de la petición.';
-        Swal.fire({ icon: 'error', title: 'Error', text: msg, confirmButtonColor: '#4141A5' });
+        Swal.fire({ icon: 'error', title: 'No fue posible actualizar el estado', text: msg });
       }
     });
   }
@@ -857,9 +860,8 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
     if (!this.medicamentoSolicitudId || this.cantidadSolicitud <= 0) {
       Swal.fire({
         icon: 'warning',
-        title: 'Datos Incompletos',
-        text: 'Por favor selecciona un medicamento y una cantidad mayor a cero.',
-        confirmButtonColor: '#4141A5'
+        title: 'Campos obligatorios incompletos',
+        text: 'Seleccione un medicamento y una cantidad mayor a cero.'
       });
       return;
     }
@@ -883,21 +885,19 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
         this.modalNuevaSolicitudAbierto = false;
         Swal.fire({
           icon: 'success',
-          title: '¡Solicitud Radicada!',
-          text: `La solicitud ante Farmacia CBA ha sido radicada exitosamente bajo el código #${resp?.id_solicitud || ''}.`,
-          confirmButtonColor: '#4141A5'
+          title: 'Solicitud radicada',
+          text: `La solicitud ante Farmacia CBA fue radicada bajo el código #${resp?.id_solicitud || ''}.`
         });
         this.cargarSolicitudes();
         this.cargarDatosMaletin();
       },
       error: (err) => {
         this.guardandoSolicitud = false;
-        const msg = err.error?.detail || err.error?.error || err.error?.mensaje || 'Error al radicar la solicitud de reposición.';
+        const msg = err.error?.detail || err.error?.error || err.error?.mensaje || 'No fue posible radicar la solicitud de reposición.';
         Swal.fire({
           icon: 'error',
-          title: 'Error al Radicar',
-          text: msg,
-          confirmButtonColor: '#4141A5'
+          title: 'No fue posible radicar la solicitud',
+          text: msg
         });
       }
     });
@@ -906,29 +906,26 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   cancelarSolicitud(s: any): void {
     const id = s.id_solicitud;
     Swal.fire({
-      title: '¿Cancelar Solicitud?',
-      text: `¿Deseas cancelar la solicitud #${id}?`,
+      title: 'Confirmar cancelación',
+      text: `Se cancelará la solicitud #${id}. Esta acción no se puede deshacer.`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, cancelar',
-      cancelButtonText: 'Volver',
-      confirmButtonColor: '#D92D20',
-      cancelButtonColor: '#667085'
+      confirmButtonText: 'Cancelar solicitud',
+      cancelButtonText: 'Volver'
     }).then(res => {
       if (res.isConfirmed) {
         this.inventoryService.cancelarSolicitudKit(id).subscribe({
           next: () => {
             Swal.fire({
               icon: 'success',
-              title: 'Solicitud Cancelada',
-              text: `La solicitud #${id} ha sido cancelada.`,
-              confirmButtonColor: '#4141A5'
+              title: 'Solicitud cancelada',
+              text: `La solicitud #${id} fue cancelada.`
             });
             this.cargarSolicitudes();
           },
           error: (err) => {
             const msg = err.error?.detail || err.error?.error || 'No se pudo cancelar la solicitud.';
-            Swal.fire({ icon: 'error', title: 'Error', text: msg, confirmButtonColor: '#4141A5' });
+            Swal.fire({ icon: 'error', title: 'No fue posible cancelar la solicitud', text: msg });
           }
         });
       }

@@ -6,21 +6,35 @@ import {
   ElementRef,
   ChangeDetectorRef,
   Output,
-  EventEmitter
+  EventEmitter,
+  inject,
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Chart } from 'chart.js/auto';
+import { Subscription } from 'rxjs';
 import {
   DashboardJuridicoService,
   ResumenDashboardJuridico,
   CasoVeterinario
 } from '../services/dashboard-juridico.service';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import {
+  AlertaDuplicadoResumen,
+  ErrorDuplicadosApi,
+  ResumenConteosAlertas,
+  crearResumenAlertasVacio
+} from '../models/duplicados.model';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
+
+const MAX_ALERTAS_PENDIENTES_DASHBOARD = 5;
 
 @Component({
   selector: 'app-dashboard-juridico',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './dashboard-juridico.html',
   styleUrl: './dashboard-juridico.css'
 })
@@ -59,6 +73,45 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   private chartVeterinarios?: Chart;
   private chartCBA?: Chart;
 
+  readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  cargandoDuplicados = false;
+  errorDuplicados = '';
+  private duplicadosSub?: Subscription;
+
+  readonly resumenDuplicados = computed<ResumenConteosAlertas>(() =>
+    this.puedeGestionarDuplicados
+      ? this.alertasDuplicadosService.resumen()
+      : crearResumenAlertasVacio()
+  );
+
+  readonly alertasPendientesRecientes = computed<AlertaDuplicadoResumen[]>(() => {
+    if (!this.puedeGestionarDuplicados) {
+      return [];
+    }
+    const mapaPorId = new Map<number, AlertaDuplicadoResumen>();
+    for (const alertas of this.alertasDuplicadosService.indicePorPeticion().values()) {
+      for (const alerta of alertas) {
+        if (alerta.estado_revision === 'PENDIENTE' && !mapaPorId.has(alerta.id_alerta)) {
+          mapaPorId.set(alerta.id_alerta, alerta);
+        }
+      }
+    }
+    return Array.from(mapaPorId.values())
+      .sort((a, b) => {
+        const fechaB = Date.parse(b.fecha_creacion || '') || 0;
+        const fechaA = Date.parse(a.fecha_creacion || '') || 0;
+        if (fechaB !== fechaA) {
+          return fechaB - fechaA;
+        }
+        return b.id_alerta - a.id_alerta;
+      })
+      .slice(0, MAX_ALERTAS_PENDIENTES_DASHBOARD);
+  });
+
+  get puedeGestionarDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
   constructor(
     private dashboardService: DashboardJuridicoService,
     private cdr: ChangeDetectorRef,
@@ -66,16 +119,18 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.cargarDatos();
+    this.cargarDatos(false);
   }
 
   ngOnDestroy(): void {
+    this.duplicadosSub?.unsubscribe();
     this.destruirGraficas();
   }
 
-  cargarDatos(): void {
+  cargarDatos(forzarDuplicados: boolean = false): void {
     this.cargando = true;
     this.errorCarga = '';
+    this.cargarAlertasDuplicados(forzarDuplicados);
 
     this.dashboardService.obtenerDatosDashboard().subscribe({
       next: (datos) => {
@@ -120,56 +175,52 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Resuelve el color exacto para las series de datos según la paleta institucional jurídica:
-   * - Serie Primaria (En proceso / En observación): Índigo #4338CA
-   * - Serie Secundaria (Pendiente / Asignada): Gris azulado #94A3B8
-   * - Serie Oscura (En revisión / Finalizada / Egresado / Adopción): Azul marino casi negro #151236
-   * - Serie Alerta (En tratamiento / Crítico / Urgente): Rojo #DC2626
+   * Resuelve el color exacto para las series de datos según la paleta monocroma de marca:
+   * - Serie Primaria (En proceso / En observación): Índigo #4141A5
+   * - Serie Destacada (Pendiente / Asignada): Dorado #F1C63C
+   * - Serie Oscura (Finalizada / Egresado / Adopción): Tinta #170B3D
+   * - Serie Secundaria (En tratamiento / Crítico / Urgente): Índigo medio rgba(65, 65, 165, 0.55)
    */
   obtenerColorGrafica(nombre: string, indexFallback: number = 0): string {
     const n = (nombre || '').toLowerCase();
-    // Serie Alerta: Rojo #DC2626 (En tratamiento / Crítico / Urgente / Grave)
     if (n.includes('tratam') || n.includes('crit') || n.includes('urgente') || n.includes('grave')) {
-      return '#DC2626';
+      return 'rgba(65, 65, 165, 0.55)';
     }
-    // Serie Primaria: Índigo #4338CA (En proceso / En curso / En observación)
     if (n.includes('proceso') || n.includes('curso') || n.includes('observaci')) {
-      return '#4338CA';
+      return '#4141A5';
     }
-    // Serie Secundaria: Gris azulado #94A3B8 (Pendiente / Asignada / Advertencia)
     if (n.includes('pend') || n.includes('asig') || n.includes('advert')) {
-      return '#94A3B8';
+      return '#F1C63C';
     }
-    // Serie Oscura: Azul marino casi negro #151236 (En revisión / Finalizada / Cerrada / Adopción)
     if (n.includes('finaliz') || n.includes('revis') || n.includes('cerr') || n.includes('adop') || n.includes('egres')) {
-      return '#151236';
+      return '#170B3D';
     }
-    const paleta = ['#4338CA', '#94A3B8', '#151236', '#DC2626'];
+    const paleta = ['#170B3D', '#4141A5', 'rgba(65, 65, 165, 0.55)', 'rgba(65, 65, 165, 0.28)', '#94A3B8', '#CBD5E1'];
     return paleta[indexFallback % paleta.length];
   }
 
   /**
    * Mapea un estado semántico a las clases CSS permitidas del Panel Jurídico:
-   * - Crítico / Urgente / Tratamiento: bg-red-50/70 border-red-100 text-red-600
-   * - Pendientes / Advertencia: bg-amber-50 border-amber-100 text-amber-700
-   * - En Proceso / En Curso: bg-blue-50 border-blue-100 text-blue-600
-   * - Finalizadas / Óptimo / Apto: bg-emerald-50 border-emerald-100 text-emerald-600
+   * - Crítico / Urgente / Tratamiento: bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]
+   * - Pendientes / Advertencia: bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]
+   * - En Proceso / En Curso: bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20
+   * - Finalizadas / Óptimo / Apto: bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]
    */
   obtenerClaseEstadoBadge(estado: string): string {
     const e = (estado || '').toLowerCase();
     if (e.includes('tratam') || e.includes('crit') || e.includes('urgente') || e.includes('grave')) {
-      return 'bg-red-50/70 text-red-600 border-red-100';
+      return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
     }
     if (e.includes('pend') || e.includes('advert') || e.includes('bajo')) {
-      return 'bg-amber-50 text-amber-700 border-amber-100';
+      return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
     }
     if (e.includes('proceso') || e.includes('curso') || e.includes('asig') || e.includes('observ')) {
-      return 'bg-blue-50 text-blue-600 border-blue-100';
+      return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20';
     }
     if (e.includes('adop') || e.includes('finaliz') || e.includes('optimo') || e.includes('recuperad')) {
-      return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
     }
-    return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   }
 
   /**
@@ -212,9 +263,10 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
+              color: '#475569'
             }
           },
           tooltip: {
@@ -228,16 +280,13 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             }
           }
         },
-        cutout: '68%'
+        cutout: '70%'
       }
     });
   }
 
   /**
    * 2. Gráfica de Barras Apiladas: Casos asignados y sus estados por veterinario
-   * - Pendiente: #94A3B8 (Serie Secundaria)
-   * - En Proceso: #4338CA (Serie Primaria)
-   * - Finalizada: #151236 (Serie Oscura)
    */
   private crearGraficaVeterinarios(): void {
     if (!this.chartVeterinariosRef?.nativeElement) return;
@@ -263,20 +312,23 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           {
             label: 'Pendiente',
             data: dataPendientes,
-            backgroundColor: '#94A3B8', // Serie Secundaria: Gris azulado
-            borderRadius: 6
+            backgroundColor: '#94A3B8',
+            borderRadius: 4,
+            maxBarThickness: 32
           },
           {
             label: 'En Proceso',
             data: dataEnProceso,
-            backgroundColor: '#4338CA', // Serie Primaria: Índigo
-            borderRadius: 6
+            backgroundColor: '#4141A5',
+            borderRadius: 4,
+            maxBarThickness: 32
           },
           {
             label: 'Finalizada',
             data: dataFinalizadas,
-            backgroundColor: '#151236', // Serie Oscura: Azul marino casi negro
-            borderRadius: 6
+            backgroundColor: '#170B3D',
+            borderRadius: 4,
+            maxBarThickness: 32
           }
         ]
       },
@@ -288,8 +340,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             stacked: true,
             grid: { display: false },
             ticks: {
-              font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              font: { family: 'Nunito', size: 11 },
+              color: '#64748B'
             }
           },
           y: {
@@ -298,9 +350,9 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             ticks: {
               stepSize: 1,
               font: { family: 'Nunito', size: 11 },
-              color: '#94A3B8' // text-slate-400
+              color: '#64748B'
             },
-            grid: { color: '#F1F5F9' } // border-slate-100
+            grid: { color: '#EEF0F3' }
           }
         },
         plugins: {
@@ -308,9 +360,10 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             position: 'top',
             align: 'end',
             labels: {
-              boxWidth: 12,
+              boxWidth: 10,
+              usePointStyle: true,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              color: '#475569'
             }
           }
         }
@@ -320,9 +373,6 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
 
   /**
    * 3. Gráfica Polar Area: Animales ingresados al CBA y sus estados
-   * - En Observación: #4338CA (Serie Primaria)
-   * - En Tratamiento: #DC2626 (Serie Alerta)
-   * - Apto Adopción: #151236 (Serie Oscura)
    */
   private crearGraficaCBA(): void {
     if (!this.chartCBARef?.nativeElement) return;
@@ -360,16 +410,17 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           legend: {
             position: 'right',
             labels: {
-              boxWidth: 12,
+              boxWidth: 10,
+              usePointStyle: true,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
-              color: '#64748B' // text-slate-500
+              color: '#475569'
             }
           }
         },
         scales: {
           r: {
             ticks: { display: false },
-            grid: { color: '#E2E8F0' } // border-slate-200
+            grid: { color: '#EEF0F3' }
           }
         }
       }
@@ -379,5 +430,77 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   irAGestionPeticiones(): void {
     this.verCasos.emit();
     this.router.navigate(['/inicio-admin/peticion'], { queryParams: { tab: 'peticiones' } });
+  }
+
+  /**
+   * Consulta o sincroniza las alertas de duplicados desde `AlertasDuplicadosService`
+   * únicamente para roles autorizados (Administrador y Jurídico).
+   */
+  cargarAlertasDuplicados(forzarRecarga: boolean = false): void {
+    if (!this.puedeGestionarDuplicados) {
+      this.cargandoDuplicados = false;
+      this.errorDuplicados = '';
+      return;
+    }
+
+    this.cargandoDuplicados = true;
+    this.errorDuplicados = '';
+    this.duplicadosSub?.unsubscribe();
+
+    this.duplicadosSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, forzarRecarga)
+      .subscribe({
+        next: () => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados = '';
+          this.cdr.detectChanges();
+        },
+        error: (err: ErrorDuplicadosApi) => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados =
+            err?.mensaje || 'No se pudieron consultar las alertas de duplicados.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  irABandejaDuplicados(): void {
+    if (!this.puedeGestionarDuplicados) {
+      return;
+    }
+    this.router.navigate(['/inicio-admin/peticion'], {
+      queryParams: { vista: 'duplicados' }
+    });
+  }
+
+  abrirAlertaDuplicado(idAlerta: number): void {
+    if (!this.puedeGestionarDuplicados || !Number.isInteger(idAlerta) || idAlerta <= 0) {
+      return;
+    }
+    this.router.navigate(['/inicio-admin/peticion'], {
+      queryParams: { vista: 'duplicados', alerta: idAlerta }
+    });
+  }
+
+  obtenerRadicadoAlerta(alerta: AlertaDuplicadoResumen, lado: 'menor' | 'mayor'): string {
+    const pet = lado === 'menor' ? alerta.peticion_menor : alerta.peticion_mayor;
+    const idFallback = lado === 'menor' ? alerta.peticion_menor_id : alerta.peticion_mayor_id;
+    return pet?.numero_radicado || `Petición #${idFallback}`;
+  }
+
+  obtenerTipoAlerta(alerta: AlertaDuplicadoResumen): string {
+    return (
+      alerta.peticion_mayor?.tipo?.nombre ||
+      alerta.peticion_menor?.tipo?.nombre ||
+      'Reporte ciudadano'
+    );
+  }
+
+  formatearSimilitudAlerta(alerta: AlertaDuplicadoResumen): string {
+    return this.alertasDuplicadosService.formatearPorcentajeSimilitud(alerta.similitud_texto);
+  }
+
+  formatearDistanciaAlerta(alerta: AlertaDuplicadoResumen): string {
+    return this.alertasDuplicadosService.formatearDistanciaMetros(alerta.distancia_metros);
   }
 }

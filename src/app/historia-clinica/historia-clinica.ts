@@ -19,11 +19,12 @@ import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-historia-clinica',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageTitleComponent],
   templateUrl: './historia-clinica.html',
   styleUrls: ['./historia-clinica.css']
 })
@@ -720,12 +721,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   iniciarNuevaConsulta(): void {
     Swal.fire({
       icon: 'question',
-      title: '¿Nueva Consulta Médica?',
+      title: 'Nueva consulta médica',
       text: `Se iniciará un nuevo registro de atención para ${this.paciente?.nombre || 'el paciente'}, conservando todos sus antecedentes y datos base.`,
       showCancelButton: true,
-      confirmButtonText: 'Sí, iniciar nueva consulta',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#4141a5'
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar'
     }).then((res) => {
       if (res.isConfirmed) {
         this.esNuevaConsulta = true;
@@ -805,8 +805,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         Swal.fire({
           icon: 'success',
-          title: 'Formulario Listo',
-          text: 'Puedes diligenciar la nueva evolución médica.',
+          title: 'Formulario listo',
+          text: 'Puede diligenciar la nueva evolución médica.',
           timer: 1700,
           showConfirmButton: false
         });
@@ -996,13 +996,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   obtenerColorAvatar(item: any): string {
     const paleta = [
-      'bg-gradient-to-br from-blue-600 to-indigo-800',
-      'bg-gradient-to-br from-emerald-500 to-teal-800',
-      'bg-gradient-to-br from-violet-600 to-purple-800',
-      'bg-gradient-to-br from-amber-500 to-orange-700',
-      'bg-gradient-to-br from-cyan-600 to-blue-800',
-      'bg-gradient-to-br from-rose-500 to-red-800',
-      'bg-gradient-to-br from-fuchsia-600 to-pink-800'
+      'bg-[#4141A5]',
+      'bg-[#170B3D]',
+      'bg-[#353583]',
+      'bg-slate-700',
+      'bg-slate-800',
+      'bg-slate-600'
     ];
     const clave = String(
       item?.nombre ||
@@ -1377,12 +1376,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   obtenerClaseColorMucosa(mucosa?: string | null): string {
     const m = String(mucosa || this.mucosas || '').toLowerCase();
-    if (m.includes('rosad') || m.includes('normal')) return 'bg-pink-400';
+    if (m.includes('rosad') || m.includes('normal')) return 'bg-[#067647]';
     if (m.includes('palid') || m.includes('pálid')) return 'bg-slate-300';
-    if (m.includes('cianot') || m.includes('cianót') || m.includes('azul')) return 'bg-cyan-500';
-    if (m.includes('icter') || m.includes('ictér') || m.includes('amarill')) return 'bg-amber-400';
-    if (m.includes('congest') || m.includes('roj')) return 'bg-red-500';
-    return 'bg-[#4141a5]';
+    if (m.includes('cianot') || m.includes('cianót') || m.includes('azul')) return 'bg-[#4141A5]';
+    if (m.includes('icter') || m.includes('ictér') || m.includes('amarill')) return 'bg-[#9A5B13]';
+    if (m.includes('congest') || m.includes('roj')) return 'bg-[#B42318]';
+    return 'bg-[#4141A5]';
   }
 
   actualizarConstante(nombre: string, valor: any): void {
@@ -1990,8 +1989,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         icon: 'info',
         title: 'Examen ya agregado',
         text: 'Este examen ya se encuentra en la orden del paciente.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#4141a5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2023,13 +2021,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     Swal.fire({
       icon: 'warning',
-      title: '¿Eliminar examen?',
+      title: 'Confirmar eliminación',
       text: `Se quitará "${examen.nombre}" de la orden de exámenes solicitados.`,
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#4141a5'
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar'
     }).then((resultado) => {
       if (resultado.isConfirmed) {
         this.examenesSolicitados.splice(indice, 1);
@@ -2044,8 +2040,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     Swal.fire({
       icon: 'success',
       title: 'Evaluación física registrada',
-      text: 'Se han conservado los estados de los 12 sistemas orgánicos para el expediente.',
-      confirmButtonColor: '#4141a5'
+      text: 'Se han conservado los estados de los 12 sistemas orgánicos para el expediente.'
     });
   }
 
@@ -2369,8 +2364,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'info',
         title: 'Medicamento ya prescrito',
-        text: 'Este fármaco ya se encuentra agregado al plan terapéutico.',
-        confirmButtonColor: '#4141a5'
+        text: 'Este fármaco ya se encuentra agregado al plan terapéutico.'
       });
       return;
     }
@@ -2426,13 +2420,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (med && med.administrado) {
       Swal.fire({
         icon: 'warning',
-        title: '¿Quitar fármaco administrado?',
-        html: `Atención: Ya se registró la administración de <b>${med.cantidadEfectivaAdministrada} uds</b> en el inventario.<br><br>¿Deseas quitar este tratamiento del registro?`,
+        title: 'Confirmar eliminación de fármaco',
+        html: `Ya se registró la administración de <b>${med.cantidadEfectivaAdministrada} uds</b> en el inventario.<br><br>¿Desea retirar este tratamiento del registro?`,
         showCancelButton: true,
-        confirmButtonText: 'Sí, quitar',
-        cancelButtonText: 'Conservar',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#4141a5'
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar'
       }).then((res) => {
         if (res.isConfirmed) {
           if (med.id_tratamiento && Number(med.id_tratamiento) > 0) {
@@ -2462,8 +2454,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'info',
         title: 'Ya administrado',
-        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado de tu maletín.`,
-        confirmButtonColor: '#4141a5'
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado del maletín.`
       });
       return;
     }
@@ -2473,8 +2464,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'warning',
         title: 'Cantidad inválida',
-        text: 'Ingresa una cantidad numérica mayor a 0 para registrar la administración.',
-        confirmButtonColor: '#4141a5'
+        text: 'Ingrese una cantidad numérica mayor a 0 para registrar la administración.'
       });
       return;
     }
@@ -2484,8 +2474,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Sin existencias en maletín',
-        text: `No hay unidades disponibles en tu maletín para el medicamento "${med.nombre}".`,
-        confirmButtonColor: '#4141a5'
+        text: `No hay unidades disponibles en el maletín para el medicamento "${med.nombre}".`
       });
       return;
     }
@@ -2494,8 +2483,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Stock insuficiente en maletín de campo',
-        text: `No cuentas con suficiente stock en tu maletín (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Por favor, ajusta la cantidad a descontar.`,
-        confirmButtonColor: '#4141a5'
+        text: `No hay suficiente stock en el maletín (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Ajuste la cantidad a descontar.`
       });
       return;
     }
@@ -2503,14 +2491,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const nombreMed = med.nombre || 'el medicamento';
 
     Swal.fire({
-      title: '¿Confirmar administración y descuento?',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b>.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades de tu maletín de campo y actualizará el inventario en tiempo real.</span>`,
+      title: 'Confirmar administración y descuento',
+      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b>.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades del maletín de campo y actualizará el inventario en tiempo real.</span>`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, confirmar y descontar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#4141a5',
-      cancelButtonColor: '#64748b'
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'Cancelar'
     }).then((resultado) => {
       if (!resultado.isConfirmed) return;
 
@@ -2534,9 +2520,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
               Swal.fire({
                 icon: 'success',
-                title: '¡Descontado con éxito!',
-                html: `Se descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> de tu maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
-                confirmButtonColor: '#4141a5'
+                title: 'Descuento registrado',
+                html: `Se descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> del maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`
               });
             }
           });
@@ -2546,9 +2531,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.cdr.detectChanges();
           Swal.fire({
             icon: 'error',
-            title: 'Error al registrar consumo',
-            text: 'No se pudo registrar la administración en el inventario del maletín.',
-            confirmButtonColor: '#4141a5'
+            title: 'No fue posible registrar el consumo',
+            text: 'No se pudo registrar la administración en el inventario del maletín. Verifique la conexión e intente nuevamente.'
           });
         }
       });
@@ -2564,19 +2548,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const s = Number(stock) || 0;
     Swal.fire({
       icon: 'warning',
-      title: '¡Alerta de Stock Bajo!',
+      title: 'Alerta de stock bajo',
       html: `
         <div class="text-left text-sm space-y-2">
-          <div class="p-3 bg-amber-50 border-l-4 border-[#F1C63C] rounded-r-xl">
-            <p class="font-bold text-amber-950">
-              Recuerda que te quedan ${s} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
+          <div class="p-3 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
+            <p class="font-semibold text-[#170B3D]">
+              Quedan <b>${s}</b> unidades de este producto. Solicite reaprovisionamiento al inventario general.
             </p>
           </div>
           <p class="text-xs text-slate-500">Producto en inventario: <b>${nombre}</b></p>
         </div>
       `,
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#4141a5'
+      confirmButtonText: 'Aceptar'
     });
   }
 
@@ -2632,24 +2615,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   guardarEdicion(): void {
     if (this.historiaAnulada) {
       Swal.fire({
-        title: 'Historia Anulada',
+        title: 'Historia clínica anulada',
         text: 'No es posible modificar una historia clínica en estado anulado (Jira HE06-HU013 Escenario 3.0).',
-        icon: 'warning',
-        confirmButtonColor: '#4141a5',
-        customClass: {
-          popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
-          confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
-        }
+        icon: 'warning'
       });
       return;
     }
 
     if (this.hayMedicamentosConStockInsuficiente) {
       Swal.fire({
-        title: 'Stock Insuficiente',
-        text: 'Existen fármacos en el tratamiento con cantidades solicitadas superiores al stock disponible. Por favor ajusta las cantidades antes de guardar.',
-        icon: 'warning',
-        confirmButtonColor: '#4141a5'
+        title: 'Stock insuficiente',
+        text: 'Existen fármacos en el tratamiento con cantidades solicitadas superiores al stock disponible. Ajuste las cantidades antes de guardar.',
+        icon: 'warning'
       });
       return;
     }
@@ -2966,22 +2943,22 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           });
         }
 
-        const tituloAlerta = eraNuevaConsulta ? '¡Consulta Guardada!' : '¡Actualización Exitosa!';
+        const tituloAlerta = eraNuevaConsulta ? 'Consulta guardada' : 'Registro actualizado';
         const textoAlerta = eraNuevaConsulta
-          ? 'Se ha registrado la nueva consulta clínica en la base de datos con éxito.'
+          ? 'Se ha registrado la nueva consulta clínica en la base de datos.'
           : 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.';
 
         let htmlAlerta = `<p class="mb-3 text-slate-700">${textoAlerta}</p>`;
         if (detallesDescuentoAuto.length > 0) {
           htmlAlerta += `
-            <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-left text-xs">
-              <p class="font-black text-emerald-800 flex items-center gap-1.5 mb-1.5">
-                <span>🎒</span> Descuento automático de Maletín (${farmacosDescontadosAuto} uds):
+            <div class="mt-3 p-3 bg-white border border-slate-200 border-l-4 border-l-[#067647] rounded-xl text-left text-xs">
+              <p class="font-semibold text-[#170B3D] mb-1.5">
+                Descuento automático de maletín (${farmacosDescontadosAuto} uds):
               </p>
-              <ul class="list-disc list-inside text-emerald-700 space-y-0.5">
+              <ul class="list-disc list-inside text-slate-600 space-y-0.5">
                 ${detallesDescuentoAuto.map(d => `<li>${d}</li>`).join('')}
               </ul>
-              <p class="mt-2 text-[11px] text-emerald-600 font-medium">El inventario de tu kit de campo ha sido actualizado en tiempo real.</p>
+              <p class="mt-2 text-[11px] text-slate-500 font-medium">El inventario del kit de campo ha sido actualizado en tiempo real.</p>
             </div>
           `;
         }
@@ -2990,12 +2967,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           title: tituloAlerta,
           html: htmlAlerta,
           icon: 'success',
-          confirmButtonColor: '#4141a5',
-          confirmButtonText: 'Aceptar',
-          customClass: {
-            popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
-            confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
-          }
+          confirmButtonText: 'Aceptar'
         }).then(() => {
           if (eraNuevaConsulta) {
             this.volverAlDetalle();
@@ -3009,14 +2981,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         const msg = err?.error?.detail || err?.error?.mensaje || 'Ocurrió un error al guardar las modificaciones. Intente nuevamente.';
         this.mensajeError = msg;
         Swal.fire({
-          title: 'Error de Guardado',
+          title: 'No fue posible guardar el registro',
           text: msg,
-          icon: 'error',
-          confirmButtonColor: '#4141a5',
-          customClass: {
-            popup: 'rounded-2xl font-[\'Nunito\',sans-serif]',
-            confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
-          }
+          icon: 'error'
         });
         this.cdr.detectChanges();
       }
@@ -3078,13 +3045,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (!this.historiaOriginal) return;
 
     Swal.fire({
-      title: '¿Restablecer valores?',
+      title: 'Restablecer valores',
       text: 'Se descartarán las modificaciones actuales y se restaurarán los datos originales cargados.',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#4141a5',
-      cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, restablecer',
+      confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar'
     }).then(res => {
       if (res.isConfirmed) {

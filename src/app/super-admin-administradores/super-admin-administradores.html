@@ -1,35 +1,19 @@
-<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white overflow-hidden relative">
+<div class="h-full w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white overflow-hidden relative">
 
   <!-- ENCABEZADO -->
-  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
-    <div class="flex items-center justify-between gap-4 max-w-7xl mx-auto flex-wrap">
-      <div class="flex items-center gap-3.5">
-        <div class="p-3 bg-[#4141A5]/10 text-[#4141A5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
-              Gestión de Administradores
-            </h1>
-            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#F1C63C] text-[#170B3D] border border-[#170B3D]/10">
-              Super Admin
-            </span>
-          </div>
-          <p class="text-xs sm:text-sm text-gray-500 font-medium">
-            Creación, asignación de sede y control de estado de cuentas con rol Administrador (Rol 1)
-          </p>
-        </div>
-      </div>
-
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full">
+    <app-page-title
+      titulo="Gestión de Administradores"
+      etiqueta="Super Admin"
+      subtitulo="Creación, asignación de sede y control de estado de cuentas con rol Administrador (Rol 1)"
+    />
+    <div class="flex flex-wrap items-center justify-end gap-2 max-w-screen-2xl mx-auto">
       <button
         type="button"
         (click)="abrirModalCrear()"
-        class="flex items-center gap-2 bg-[#4141A5] hover:bg-[#170B3D] text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl shadow-md transition-all text-xs sm:text-sm tracking-wider uppercase active:scale-95 cursor-pointer"
+        class="flex items-center gap-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold px-4 py-2 rounded-lg transition text-sm cursor-pointer"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
         <span>Crear Administrador</span>
@@ -38,55 +22,55 @@
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col overflow-hidden">
 
     <!-- TARJETAS KPI -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 shrink-0">
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-[#4141A5]/10 text-[#4141A5] flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4 shrink-0">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total Administradores</p>
-          <p class="text-xl sm:text-2xl font-black text-[#170B3D]">{{ totalAdministradores }}</p>
+          <p class="text-xs font-semibold text-slate-500">Total Administradores</p>
+          <p class="text-2xl font-bold text-[#170B3D]">{{ totalAdministradores }}</p>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#067647] shadow-xs flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Activos</p>
-          <p class="text-xl sm:text-2xl font-black text-emerald-600">{{ totalActivos }}</p>
+          <p class="text-xs font-semibold text-slate-500">Activos</p>
+          <p class="text-2xl font-bold text-[#170B3D]">{{ totalActivos }}</p>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#B42318] shadow-xs flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Inactivos</p>
-          <p class="text-xl sm:text-2xl font-black text-rose-600">{{ totalInactivos }}</p>
+          <p class="text-xs font-semibold text-slate-500">Inactivos</p>
+          <p class="text-2xl font-bold text-[#170B3D]">{{ totalInactivos }}</p>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-[#F1C63C]/20 text-[#170B3D] flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Con Sede Asignada</p>
-          <p class="text-xl sm:text-2xl font-black text-[#170B3D]">{{ totalConSede }}</p>
+          <p class="text-xs font-semibold text-slate-500">Con Sede Asignada</p>
+          <p class="text-2xl font-bold text-[#170B3D]">{{ totalConSede }}</p>
         </div>
       </div>
     </div>
@@ -95,8 +79,8 @@
     <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-4 shrink-0">
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
         <!-- Input búsqueda -->
-        <div class="flex items-center bg-white rounded-2xl border border-gray-200 flex-1 h-11 px-4 gap-3 shadow-xs focus-within:border-[#4141A5] focus-within:ring-2 focus-within:ring-[#4141A5]/20 transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <div class="flex items-center bg-white rounded-lg border border-slate-300 flex-1 h-10 px-3 gap-2.5 focus-within:border-[#4141A5] focus-within:ring-2 focus-within:ring-[#4141A5]/20 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -104,13 +88,13 @@
             [(ngModel)]="filtroTexto"
             (input)="aplicarFiltros()"
             placeholder="Buscar por nombre, apellido, identificación, correo o sede..."
-            class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent"
+            class="w-full outline-none text-sm text-slate-800 placeholder:text-slate-400 bg-transparent"
           />
           @if (filtroTexto) {
             <button
               type="button"
               (click)="filtroTexto = ''; aplicarFiltros()"
-              class="text-xs font-bold text-gray-400 hover:text-[#4141A5] cursor-pointer"
+              class="text-xs font-semibold text-slate-500 hover:text-[#4141A5] cursor-pointer"
             >
               Limpiar
             </button>
@@ -121,7 +105,7 @@
         <select
           [(ngModel)]="filtroEstado"
           (change)="aplicarFiltros()"
-          class="bg-white rounded-2xl border border-gray-200 h-11 px-4 text-xs sm:text-sm font-bold text-gray-700 outline-none focus:border-[#4141A5] shadow-xs cursor-pointer"
+          class="bg-white rounded-lg border border-slate-300 h-10 px-3 text-sm font-medium text-slate-700 outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 cursor-pointer"
         >
           <option value="todos">Todos los estados</option>
           <option value="activos">Solo Activos</option>
@@ -132,7 +116,7 @@
         <select
           [(ngModel)]="filtroSedeId"
           (change)="aplicarFiltros()"
-          class="bg-white rounded-2xl border border-gray-200 h-11 px-4 text-xs sm:text-sm font-bold text-gray-700 outline-none focus:border-[#4141A5] shadow-xs cursor-pointer"
+          class="bg-white rounded-lg border border-slate-300 h-10 px-3 text-sm font-medium text-slate-700 outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 cursor-pointer"
         >
           <option value="todas">Todas las sedes</option>
           <option value="sin_sede">Sin sede asignada</option>
@@ -142,31 +126,31 @@
         </select>
       </div>
 
-      <div class="text-xs font-bold text-gray-500 self-center shrink-0">
-        Mostrando <span class="text-[#170B3D] font-extrabold">{{ administradoresFiltrados.length }}</span> de {{ totalAdministradores }} administradores
+      <div class="text-xs font-semibold text-slate-500 self-center shrink-0">
+        Mostrando <span class="text-[#170B3D] font-bold">{{ administradoresFiltrados.length }}</span> de {{ totalAdministradores }} administradores
       </div>
     </div>
 
     <!-- TABLA DE ADMINISTRADORES -->
-    <div class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
+    <div class="bg-white rounded-xl shadow-xs border border-slate-200 flex-1 overflow-hidden flex flex-col mb-4">
       <div class="overflow-x-auto overflow-y-auto flex-1">
         <table class="w-full text-left border-collapse min-w-[860px]">
-          <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
+          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Administrador</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Identificación</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Contacto</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Sede Asignada</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Estado</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Acciones</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Administrador</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Identificación</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Contacto</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sede Asignada</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">Estado</th>
+              <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 text-sm">
+          <tbody class="divide-y divide-slate-100 text-sm">
 
             @if (cargando) {
               <tr>
-                <td colspan="6" class="px-6 py-12 text-center text-gray-400">
-                  <div class="inline-block animate-spin w-8 h-8 border-3 border-[#4141A5] border-t-transparent rounded-full mb-2"></div>
+                <td colspan="6" class="px-4 py-12 text-center text-slate-500">
+                  <app-animal-icon tipo="huellas" [tamano]="40" />
                   <p class="text-sm font-semibold">Cargando administradores desde el servidor...</p>
                 </td>
               </tr>
@@ -174,33 +158,36 @@
 
             @if (!cargando && administradoresFiltrados.length === 0) {
               <tr>
-                <td colspan="6" class="px-6 py-12 text-center text-gray-400">
-                  <p class="text-base font-bold text-gray-600">No se encontraron administradores</p>
-                  <p class="text-xs text-gray-400 mt-1">
-                    {{ filtroTexto || filtroEstado !== 'todos' || filtroSedeId !== 'todas'
-                      ? 'No hay resultados para los filtros aplicados.'
-                      : 'Aún no hay administradores registrados.' }}
-                  </p>
+                <td colspan="6" class="px-4 py-12 text-center text-slate-500">
+                  <div class="flex flex-col items-center gap-2 py-6">
+                    <app-animal-icon [tipo]="(filtroTexto || filtroEstado !== 'todos' || filtroSedeId !== 'todas') ? 'gato' : 'perro'" [tamano]="56" />
+                    <p class="text-base font-bold text-[#170B3D]">No se encontraron administradores</p>
+                    <p class="text-xs text-slate-500 mt-1">
+                      {{ filtroTexto || filtroEstado !== 'todos' || filtroSedeId !== 'todas'
+                        ? 'No hay resultados para los filtros aplicados.'
+                        : 'Aún no hay administradores registrados.' }}
+                    </p>
+                  </div>
                 </td>
               </tr>
             }
 
             @for (admin of administradoresFiltrados; track admin.id_usuario) {
-              <tr class="hover:bg-[#4141A5]/5 transition-colors group">
+              <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                 <!-- Nombre y Rol -->
-                <td class="px-6 py-4">
+                <td class="px-4 py-3 text-sm text-slate-700">
                   <div class="flex items-center gap-3">
                     <div
-                      class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm uppercase"
-                      [ngClass]="admin.activo ? 'bg-[#170B3D] text-[#F1C63C]' : 'bg-gray-100 text-gray-400'"
+                      class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs uppercase border"
+                      [ngClass]="admin.activo ? 'bg-[#4141A5]/5 border-[#4141A5]/20 text-[#4141A5]' : 'bg-slate-50 border-slate-200 text-slate-400'"
                     >
                       {{ (admin.nombre || 'A').slice(0, 1) }}{{ (admin.apellido || '').slice(0, 1) }}
                     </div>
                     <div>
-                      <h4 class="font-bold text-[#170B3D] text-sm">
+                      <h4 class="font-semibold text-[#170B3D] text-sm">
                         {{ admin.nombre }} {{ admin.apellido || '' }}
                       </h4>
-                      <span class="text-[11px] font-bold text-[#4141A5]">
+                      <span class="text-xs font-medium text-slate-500">
                         ID #{{ admin.id_usuario }} · {{ admin.nombre_rol || 'Administrador' }}
                       </span>
                     </div>
@@ -208,51 +195,51 @@
                 </td>
 
                 <!-- Identificación -->
-                <td class="px-6 py-4 font-mono text-xs font-bold text-gray-700">
+                <td class="px-4 py-3 font-mono text-xs font-semibold text-slate-700">
                   {{ admin.identificacion || 'Sin registrar' }}
                 </td>
 
                 <!-- Contacto -->
-                <td class="px-6 py-4 text-xs">
-                  <p class="font-bold text-gray-800">{{ admin.email }}</p>
-                  <p class="text-gray-400 font-mono mt-0.5">{{ admin.telefono || 'Sin teléfono' }}</p>
+                <td class="px-4 py-3 text-xs">
+                  <p class="font-semibold text-slate-800">{{ admin.email }}</p>
+                  <p class="text-slate-500 font-mono mt-0.5">{{ admin.telefono || 'Sin teléfono' }}</p>
                 </td>
 
                 <!-- Sede Asignada -->
-                <td class="px-6 py-4">
+                <td class="px-4 py-3">
                   @if (admin.nombre_sede) {
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#4141A5]/10 text-[#4141A5] border border-[#4141A5]/20">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
                       {{ admin.nombre_sede }}
                     </span>
                   } @else {
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-500">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-50 text-slate-500 border border-slate-200">
                       Sin sede asignada
                     </span>
                   }
                 </td>
 
                 <!-- Estado -->
-                <td class="px-6 py-4 text-center">
+                <td class="px-4 py-3 text-center">
                   @if (admin.activo) {
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#067647]"></span>
                       Activo
                     </span>
                   } @else {
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
-                      <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                       Inactivo
                     </span>
                   }
                 </td>
 
                 <!-- Acciones -->
-                <td class="px-6 py-4 text-center">
+                <td class="px-4 py-3 text-center">
                   <div class="flex items-center justify-center gap-2">
                     <button
                       type="button"
                       (click)="abrirModalEditar(admin)"
-                      class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-[#4141A5] text-[#170B3D] hover:text-white transition cursor-pointer"
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 transition cursor-pointer"
                     >
                       Editar
                     </button>
@@ -261,10 +248,10 @@
                       type="button"
                       (click)="toggleEstadoAdministrador(admin)"
                       [disabled]="usuariosEnTransicion.has(admin.id_usuario)"
-                      class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                       [ngClass]="admin.activo
-                        ? 'text-rose-600 hover:bg-rose-50 border border-rose-200'
-                        : 'text-emerald-700 hover:bg-emerald-50 border border-emerald-200'"
+                        ? 'bg-white text-[#B42318] hover:bg-[#FEECEB] border border-[#F5B7B1]'
+                        : 'bg-white text-[#067647] hover:bg-[#ECFDF3] border border-[#ABEFC6]'"
                     >
                       {{ usuariosEnTransicion.has(admin.id_usuario)
                         ? 'Procesando...'
@@ -285,27 +272,27 @@
   <!-- MODAL CREAR / EDITAR ADMINISTRADOR -->
   @if (modalAbierto) {
     <div class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-y-auto">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl p-5 sm:p-7 border border-gray-100 relative my-auto">
+      <div class="bg-white rounded-xl shadow-lg w-full max-w-xl p-5 sm:p-6 border border-slate-200 relative my-auto">
 
         <button
           type="button"
           (click)="cerrarModal()"
-          class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1.5 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+          class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 font-semibold text-lg p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
         >
           ✕
         </button>
 
-        <div class="flex items-center gap-3.5 mb-5 pr-8">
-          <div class="w-11 h-11 rounded-2xl bg-[#170B3D] text-[#F1C63C] flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <div class="flex items-center gap-3 mb-5 pr-8">
+          <div class="w-9 h-9 rounded-lg bg-[#4141A5]/5 border border-[#4141A5]/20 text-[#4141A5] flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
           <div>
-            <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] uppercase tracking-wider">
+            <h2 class="text-lg font-bold text-[#170B3D]">
               {{ modoEdicion ? 'Editar Administrador' : 'Registrar Nuevo Administrador' }}
             </h2>
-            <p class="text-xs text-gray-400 font-medium">
+            <p class="text-xs text-slate-500">
               {{ modoEdicion
                 ? 'Actualiza la información y asignación de sede del Administrador'
                 : 'Se asignará automáticamente el Rol 1 (Administrador)' }}
@@ -314,8 +301,11 @@
         </div>
 
         @if (errorBackendGeneral) {
-          <div class="mb-4 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
-            ⚠️ {{ errorBackendGeneral }}
+          <div class="mb-4 px-4 py-3 rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#B42318] flex items-center gap-2.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <span class="text-sm text-slate-600">{{ errorBackendGeneral }}</span>
           </div>
         }
 
@@ -323,25 +313,25 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <!-- Nombre * -->
             <div>
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                Nombre <span class="text-rose-500">*</span>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                Nombre <span class="text-[#B42318]">*</span>
               </label>
               <input
                 type="text"
                 name="nombre"
                 [(ngModel)]="formulario.nombre"
                 placeholder="Ej. Carlos Andrés"
-                class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition"
-                [ngClass]="erroresFormulario['nombre'] ? 'border-rose-400 bg-rose-50/30' : 'border-gray-200 focus:border-[#4141A5]'"
+                class="w-full bg-white px-3 py-2 rounded-lg border text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition"
+                [ngClass]="erroresFormulario['nombre'] ? 'border-[#F5B7B1] bg-[#FEECEB]/30' : 'border-slate-300'"
               />
               @if (erroresFormulario['nombre']) {
-                <p class="text-[11px] text-rose-600 font-bold mt-1">{{ erroresFormulario['nombre'] }}</p>
+                <p class="text-xs text-[#B42318] font-medium mt-1">{{ erroresFormulario['nombre'] }}</p>
               }
             </div>
 
             <!-- Apellido -->
             <div>
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">
                 Apellido
               </label>
               <input
@@ -349,7 +339,7 @@
                 name="apellido"
                 [(ngModel)]="formulario.apellido"
                 placeholder="Ej. Gómez Pérez"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:border-[#4141A5] text-sm outline-none transition"
+                class="w-full bg-white px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition"
               />
             </div>
           </div>
@@ -357,7 +347,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <!-- Identificación -->
             <div>
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">
                 Identificación (Cédula / NIT)
               </label>
               <input
@@ -365,17 +355,17 @@
                 name="identificacion"
                 [(ngModel)]="formulario.identificacion"
                 placeholder="Ej. 1017234567"
-                class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition"
-                [ngClass]="erroresFormulario['identificacion'] ? 'border-rose-400 bg-rose-50/30' : 'border-gray-200 focus:border-[#4141A5]'"
+                class="w-full bg-white px-3 py-2 rounded-lg border text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition"
+                [ngClass]="erroresFormulario['identificacion'] ? 'border-[#F5B7B1] bg-[#FEECEB]/30' : 'border-slate-300'"
               />
               @if (erroresFormulario['identificacion']) {
-                <p class="text-[11px] text-rose-600 font-bold mt-1">{{ erroresFormulario['identificacion'] }}</p>
+                <p class="text-xs text-[#B42318] font-medium mt-1">{{ erroresFormulario['identificacion'] }}</p>
               }
             </div>
 
             <!-- Teléfono -->
             <div>
-              <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">
                 Teléfono
               </label>
               <input
@@ -383,39 +373,39 @@
                 name="telefono"
                 [(ngModel)]="formulario.telefono"
                 placeholder="Ej. 3001234567"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:border-[#4141A5] text-sm outline-none transition"
+                class="w-full bg-white px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition"
               />
             </div>
           </div>
 
           <!-- Email * -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-              Correo Electrónico Institucional <span class="text-rose-500">*</span>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+              Correo Electrónico Institucional <span class="text-[#B42318]">*</span>
             </label>
             <input
               type="email"
               name="email"
               [(ngModel)]="formulario.email"
               placeholder="admin.sede@vetericano.gov.co"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition"
-              [ngClass]="erroresFormulario['email'] ? 'border-rose-400 bg-rose-50/30' : 'border-gray-200 focus:border-[#4141A5]'"
+              class="w-full bg-white px-3 py-2 rounded-lg border text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition"
+              [ngClass]="erroresFormulario['email'] ? 'border-[#F5B7B1] bg-[#FEECEB]/30' : 'border-slate-300'"
             />
             @if (erroresFormulario['email']) {
-              <p class="text-[11px] text-rose-600 font-bold mt-1">{{ erroresFormulario['email'] }}</p>
+              <p class="text-xs text-[#B42318] font-medium mt-1">{{ erroresFormulario['email'] }}</p>
             }
           </div>
 
           <!-- Sede Asignada (Sedes Activas Reales) -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">
               Sede Asignada
             </label>
             <select
               name="id_sede"
               [(ngModel)]="formulario.id_sede"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition bg-white"
-              [ngClass]="erroresFormulario['id_sede'] ? 'border-rose-400 bg-rose-50/30' : 'border-gray-200 focus:border-[#4141A5]'"
+              class="w-full px-3 py-2 rounded-lg border text-sm text-slate-800 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition bg-white"
+              [ngClass]="erroresFormulario['id_sede'] ? 'border-[#F5B7B1] bg-[#FEECEB]/30' : 'border-slate-300'"
             >
               <option [ngValue]="null">-- Sin sede específica --</option>
               @for (sede of sedesActivas; track sede.id_sede) {
@@ -425,13 +415,13 @@
               }
             </select>
             @if (erroresFormulario['id_sede']) {
-              <p class="text-[11px] text-rose-600 font-bold mt-1">{{ erroresFormulario['id_sede'] }}</p>
+              <p class="text-xs text-[#B42318] font-medium mt-1">{{ erroresFormulario['id_sede'] }}</p>
             }
           </div>
 
           <!-- Contraseña -->
           <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">
               {{ modoEdicion ? 'Nueva Contraseña (Opcional)' : 'Contraseña Inicial (Opcional)' }}
             </label>
             <input
@@ -439,28 +429,28 @@
               name="password"
               [(ngModel)]="formulario.password"
               [placeholder]="modoEdicion ? 'Dejar en blanco para conservar la actual' : 'Si se deja en blanco se asigna <identificacion><Inicial>'"
-              class="w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition"
-              [ngClass]="erroresFormulario['password'] ? 'border-rose-400 bg-rose-50/30' : 'border-gray-200 focus:border-[#4141A5]'"
+              class="w-full bg-white px-3 py-2 rounded-lg border text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] transition"
+              [ngClass]="erroresFormulario['password'] ? 'border-[#F5B7B1] bg-[#FEECEB]/30' : 'border-slate-300'"
             />
             @if (erroresFormulario['password']) {
-              <p class="text-[11px] text-rose-600 font-bold mt-1">{{ erroresFormulario['password'] }}</p>
+              <p class="text-xs text-[#B42318] font-medium mt-1">{{ erroresFormulario['password'] }}</p>
             }
           </div>
 
           <!-- Botones -->
-          <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
               (click)="cerrarModal()"
               [disabled]="guardando"
-              class="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition cursor-pointer"
+              class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               [disabled]="guardando"
-              class="px-6 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider bg-[#4141A5] hover:bg-[#170B3D] text-white shadow-md transition cursor-pointer disabled:opacity-50"
+              class="px-4 py-2 rounded-lg text-sm font-semibold bg-[#4141A5] hover:bg-[#353583] text-white transition cursor-pointer disabled:opacity-50"
             >
               {{ guardando ? 'Guardando...' : (modoEdicion ? 'Guardar Cambios' : 'Crear Administrador') }}
             </button>

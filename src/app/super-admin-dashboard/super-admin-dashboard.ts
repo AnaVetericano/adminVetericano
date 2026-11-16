@@ -19,11 +19,13 @@ import {
   VeterinarioRendimiento
 } from '../services/super-admin.service';
 import { SedesService, Sede } from '../services/sedes.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-super-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './super-admin-dashboard.html',
   styleUrl: './super-admin-dashboard.css'
 })
@@ -195,12 +197,12 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
             {
               data: valores,
               backgroundColor: [
-                '#4141A5',
-                '#3B82F6',
-                '#10B981',
                 '#170B3D',
-                '#F43F5E',
-                '#64748B'
+                '#4141A5',
+                'rgba(65, 65, 165, 0.55)',
+                'rgba(65, 65, 165, 0.28)',
+                '#94A3B8',
+                '#CBD5E1'
               ],
               borderWidth: 2,
               borderColor: '#ffffff',
@@ -211,14 +213,15 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '64%',
+          cutout: '70%',
           plugins: {
             legend: {
               position: 'bottom',
               labels: {
-                boxWidth: 12,
+                boxWidth: 10,
+                usePointStyle: true,
                 font: { family: 'Nunito', size: 11, weight: 'bold' },
-                color: '#334155',
+                color: '#475569',
                 padding: 12
               }
             }
@@ -260,12 +263,12 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
               backgroundColor: [
                 '#170B3D',
                 '#4141A5',
-                '#6366F1',
-                '#10B981',
-                '#64748B'
+                'rgba(65, 65, 165, 0.55)',
+                'rgba(65, 65, 165, 0.28)',
+                '#94A3B8'
               ],
-              borderRadius: 8,
-              maxBarThickness: 38
+              borderRadius: 4,
+              maxBarThickness: 32
             }
           ]
         },
@@ -278,11 +281,11 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { stepSize: 1, font: { family: 'Nunito', size: 11 } },
-              grid: { color: '#F1F5F9' }
+              ticks: { stepSize: 1, font: { family: 'Nunito', size: 11 }, color: '#64748B' },
+              grid: { color: '#EEF0F3' }
             },
             x: {
-              ticks: { font: { family: 'Nunito', size: 11, weight: 'bold' } },
+              ticks: { font: { family: 'Nunito', size: 11 }, color: '#64748B' },
               grid: { display: false }
             }
           }
@@ -312,8 +315,8 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
               label: usarTipos ? 'Casos por Tipo' : 'Casos por Prioridad',
               data: data.length > 0 ? data : [0],
               backgroundColor: '#4141A5',
-              borderRadius: 8,
-              maxBarThickness: 36
+              borderRadius: 4,
+              maxBarThickness: 32
             }
           ]
         },
@@ -327,11 +330,11 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
           scales: {
             x: {
               beginAtZero: true,
-              ticks: { stepSize: 1, font: { family: 'Nunito', size: 11 } },
-              grid: { color: '#F1F5F9' }
+              ticks: { stepSize: 1, font: { family: 'Nunito', size: 11 }, color: '#64748B' },
+              grid: { color: '#EEF0F3' }
             },
             y: {
-              ticks: { font: { family: 'Nunito', size: 11, weight: 'bold' } },
+              ticks: { font: { family: 'Nunito', size: 11 }, color: '#64748B' },
               grid: { display: false }
             }
           }

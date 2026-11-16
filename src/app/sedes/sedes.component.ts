@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-sedes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './sedes.component.html',
   styleUrl: './sedes.component.css'
 })
@@ -173,11 +175,10 @@ export class SedesComponent implements OnInit {
   guardarSede(): void {
     if (!this.validarFormulario()) {
       Swal.fire({
-        title: 'Campos Incompletos',
-        text: 'Por favor completa todos los campos obligatorios y asegúrate de no repetir el nombre de una sede.',
+        title: 'Campos obligatorios incompletos',
+        text: 'Complete todos los campos obligatorios y verifique que el nombre de la sede no esté duplicado.',
         icon: 'warning',
-        confirmButtonColor: '#4141A5',
-        confirmButtonText: 'Entendido'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -199,10 +200,10 @@ export class SedesComponent implements OnInit {
         this.cerrarModalCrear();
 
         Swal.fire({
-          title: '¡Sede Creada Exitosamente!',
+          title: 'Sede creada',
           html: `
             <div class="text-left text-sm space-y-2">
-              <p>La sede <b>${sedeCreada.nombre}</b> ha sido registrada con estado <span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Activo</span>.</p>
+              <p>La sede <b>${sedeCreada.nombre}</b> ha sido registrada con estado <span class="text-[#067647] font-semibold bg-[#ECFDF3] px-2 py-0.5 rounded-md border border-[#ABEFC6]">Activo</span>.</p>
               <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
                 <p><b>Código:</b> ${sedeCreada.codigo || 'N/A'}</p>
                 <p><b>Ciudad:</b> ${sedeCreada.ciudad}</p>
@@ -211,7 +212,6 @@ export class SedesComponent implements OnInit {
             </div>
           `,
           icon: 'success',
-          confirmButtonColor: '#4141A5',
           confirmButtonText: 'Aceptar',
           timer: 2600
         });
@@ -220,13 +220,12 @@ export class SedesComponent implements OnInit {
       },
       error: (err) => {
         this.guardando = false;
-        const msj = err?.message || 'No se pudo registrar la sede.';
+        const msj = err?.message || 'No fue posible registrar la sede. Intente nuevamente.';
         Swal.fire({
-          title: 'Error al Crear Sede',
+          title: 'No fue posible crear la sede',
           text: msj,
           icon: 'error',
-          confirmButtonColor: '#d33',
-          confirmButtonText: 'Cerrar'
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -241,34 +240,27 @@ export class SedesComponent implements OnInit {
     if (sede.activo) {
       // INACTIVACIÓN: Alerta de confirmación advirtiendo el impacto en los usuarios asociados
       Swal.fire({
-        title: `¿Inactivar la sede "${sede.nombre}"?`,
+        title: `Confirmar inactivación de "${sede.nombre}"`,
         html: `
           <div class="text-left text-sm space-y-3 font-sans">
-            <div class="p-3.5 bg-amber-50 border-l-4 border-[#F1C63C] rounded-r-2xl">
-              <p class="font-extrabold text-[#170B3D] flex items-center gap-1.5">
-                <span>⚠️ Advertencia de impacto a usuarios:</span>
+            <div class="p-3.5 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
+              <p class="font-semibold text-[#170B3D]">
+                Advertencia de impacto a usuarios:
               </p>
-              <p class="text-xs text-amber-900 mt-1 font-medium leading-relaxed">
+              <p class="text-xs text-slate-600 mt-1 leading-relaxed">
                 Al inactivar esta sede, los <b>${sede.total_usuarios || 0} usuarios y veterinarios</b> vinculados a esta ubicación no podrán registrar nuevas atenciones, salidas de maletines ni movimientos clínicos hasta que la sede sea nuevamente reactivada.
               </p>
             </div>
             <p class="text-xs text-slate-500">
-              ¿Confirmas que deseas suspender las operaciones de esta sede?
+              Confirme si desea suspender las operaciones de esta sede.
             </p>
           </div>
         `,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Sí, Inactivar Sede',
+        confirmButtonText: 'Inactivar',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#64748b',
-        reverseButtons: true,
-        customClass: {
-          popup: 'rounded-3xl shadow-2xl border border-slate-200',
-          confirmButton: 'rounded-xl px-5 py-2.5 font-bold',
-          cancelButton: 'rounded-xl px-5 py-2.5 font-bold'
-        }
+        reverseButtons: true
       }).then((result) => {
         if (result.isConfirmed) {
           this.ejecutarCambioEstado(sede, false);
@@ -277,20 +269,13 @@ export class SedesComponent implements OnInit {
     } else {
       // ACTIVACIÓN: Confirmar y reactivar operaciones
       Swal.fire({
-        title: `¿Activar la sede "${sede.nombre}"?`,
+        title: `Confirmar activación de "${sede.nombre}"`,
         text: 'La sede volverá a estar disponible para asignaciones de personal, historias clínicas y operaciones de inventario.',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Sí, Activar Sede',
+        confirmButtonText: 'Activar',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#4141A5',
-        cancelButtonColor: '#64748b',
-        reverseButtons: true,
-        customClass: {
-          popup: 'rounded-3xl shadow-2xl border border-slate-200',
-          confirmButton: 'rounded-xl px-5 py-2.5 font-bold',
-          cancelButton: 'rounded-xl px-5 py-2.5 font-bold'
-        }
+        reverseButtons: true
       }).then((result) => {
         if (result.isConfirmed) {
           this.ejecutarCambioEstado(sede, true);
@@ -330,11 +315,10 @@ export class SedesComponent implements OnInit {
 
         const msj = err?.error?.detail || err?.error?.message || err?.message || 'No se pudo actualizar el estado de la sede en el servidor.';
         Swal.fire({
-          title: 'Error al cambiar estado',
+          title: 'No fue posible cambiar el estado',
           text: msj,
           icon: 'error',
-          confirmButtonColor: '#d33',
-          confirmButtonText: 'Cerrar'
+          confirmButtonText: 'Aceptar'
         });
       }
     });

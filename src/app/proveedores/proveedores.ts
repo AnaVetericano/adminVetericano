@@ -3,11 +3,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-proveedores',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './proveedores.html',
   styleUrl: './proveedores.css',
 })
@@ -122,26 +124,26 @@ export class Proveedores implements OnInit {
     if (this.editar) {
       this.http.put(`${this.apiUrl}${this.proveedor.id_proveedor}/`, payload, { headers: this.getAuthHeaders() }).subscribe({
         next: () => {
-          Swal.fire('¡Actualizado!', 'Proveedor actualizado correctamente', 'success');
+          Swal.fire('Proveedor actualizado', 'Los datos del proveedor se guardaron correctamente', 'success');
           this.listarProveedores();
           this.cerrarModal();
         },
         error: (err) => {
           console.error('Error al actualizar proveedor:', err);
-          const msg = err.error?.detail || err.error?.mensaje || 'Hubo un error al actualizar';
+          const msg = err.error?.detail || err.error?.mensaje || 'No se pudo actualizar el proveedor';
           Swal.fire('Error', msg, 'error');
         }
       });
     } else {
       this.http.post(this.apiUrl, payload, { headers: this.getAuthHeaders() }).subscribe({
         next: () => {
-          Swal.fire('¡Creado!', 'Proveedor creado correctamente', 'success');
+          Swal.fire('Proveedor registrado', 'El proveedor se creó correctamente', 'success');
           this.listarProveedores();
           this.cerrarModal();
         },
         error: (err) => {
           console.error('Error al crear proveedor:', err);
-          const msg = err.error?.detail || err.error?.mensaje || 'Hubo un error al crear';
+          const msg = err.error?.detail || err.error?.mensaje || 'No se pudo registrar el proveedor';
           Swal.fire('Error', msg, 'error');
         }
       });
@@ -153,13 +155,11 @@ export class Proveedores implements OnInit {
     
     // Mostramos confirmación
     Swal.fire({
-      title: '¿Estás seguro?',
-      text: `Vas a ${nuevoEstado ? 'activar' : 'inactivar'} al proveedor ${proveedorExistente.nombre}`,
+      title: 'Confirmar cambio de estado',
+      text: `Se va a ${nuevoEstado ? 'activar' : 'inactivar'} el proveedor ${proveedorExistente.nombre}`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#4141a5',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, cambiar',
+      confirmButtonText: 'Confirmar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -167,7 +167,7 @@ export class Proveedores implements OnInit {
         this.http.patch(`${this.apiUrl}${proveedorExistente.id_proveedor}/`, { activo: nuevoEstado }, { headers: this.getAuthHeaders() }).subscribe({
           next: () => {
             proveedorExistente.activo = nuevoEstado;
-            Swal.fire('¡Cambiado!', 'El estado ha sido actualizado', 'success');
+            Swal.fire('Estado actualizado', 'El estado del proveedor se actualizó correctamente', 'success');
             this.cdr.detectChanges();
           },
           error: (err) => {
