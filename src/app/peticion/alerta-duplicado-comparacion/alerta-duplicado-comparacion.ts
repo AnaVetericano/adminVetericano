@@ -69,7 +69,7 @@ const MAX_OBSERVACION_LEN = 2000;
 const ETIQUETAS_CRITERIOS = new Map<string, string>([
   ['texto', 'Similitud de texto'],
   ['gps', 'Proximidad GPS'],
-  ['imagen', 'Similitud visual (dHash)']
+  ['imagen', 'Similitud visual (DINOv2)']
 ]);
 
 const EXTENSIONES_VIDEO_REGEX = /\.(mp4|webm|mov|m4v|avi|mkv|ogv|3gp)$/i;
@@ -98,6 +98,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
 
   private detalleSub: Subscription | null = null;
   private resolucionSub: Subscription | null = null;
+  private visualSub: Subscription | null = null;
 
   /** Presenta el componente dentro de un overlay modal (`true`) o integrado en flujo normal (`false`). */
   @Input() modoModal: boolean = true;
@@ -133,6 +134,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
   // Estado principal de detalle
   cargando = false;
   resolviendo = false;
+  calculandoVisual = false;
   sinPermiso = false;
 
   detalle: AlertaDuplicadoDetalle | null = null;
@@ -142,12 +144,14 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
   errorCarga: string | null = null;
   errorValidacion: string | null = null;
   errorResolucion: string | null = null;
+  errorCalculoVisual: string | null = null;
   mensajeConflicto409: string | null = null;
   mensajeExito: string | null = null;
 
-  // Formulario de resolución
+  // Formulario de resolución y diálogo de confirmación
   decisionSeleccionada: DecisionResolucionAlerta | null = null;
   peticionPrincipalSeleccionada: number | null = null;
+  mostrarDialogoConfirmacion = false;
   observacion = '';
   readonly maxObservacion = MAX_OBSERVACION_LEN;
 
@@ -173,6 +177,10 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       this.cerrarVisorMedia();
       return;
     }
+    if (this.mostrarDialogoConfirmacion && !this.resolviendo) {
+      this.cancelarDialogoConfirmacion();
+      return;
+    }
     if (this.modoModal && !this.resolviendo) {
       this.solicitarCerrar();
     }
@@ -180,6 +188,51 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
 
   get tieneVisorMediaAbierto(): boolean {
     return this.mediaActiva !== null;
+  }
+
+  get tieneDialogoConfirmacionAbierto(): boolean {
+    return this.mostrarDialogoConfirmacion;
+  }
+
+  get peticionOriginalSeleccionadaVM(): PeticionComparadaVM | null {
+    if (this.peticionPrincipalSeleccionada === null) {
+      return null;
+    }
+    return this.columnasComparacion.find((c) => c.idPeticion === this.peticionPrincipalSeleccionada) ?? null;
+  }
+
+  get peticionDuplicadaResultanteVM(): PeticionComparadaVM | null {
+    if (this.peticionPrincipalSeleccionada === null) {
+      return null;
+    }
+    return this.columnasComparacion.find((c) => c.idPeticion !== null && c.idPeticion !== this.peticionPrincipalSeleccionada) ?? null;
+  }
+
+  get peticionDuplicadaIdGuardada(): number | null {
+    if (!this.detalle || this.detalle.estado_revision !== 'CONFIRMADO') {
+      return null;
+    }
+    if (this.detalle.peticion_duplicada_id) {
+      return this.detalle.peticion_duplicada_id;
+    }
+    if (this.detalle.comparacion?.peticion_duplicada_id) {
+      return this.detalle.comparacion.peticion_duplicada_id;
+    }
+    const princ = this.detalle.peticion_principal_id;
+    if (princ === this.detalle.peticion_menor_id) {
+      return this.detalle.peticion_mayor_id;
+    }
+    if (princ === this.detalle.peticion_mayor_id) {
+      return this.detalle.peticion_menor_id;
+    }
+    return null;
+  }
+
+  get ambasPeticionesTienenFoto(): boolean {
+    if (this.columnasComparacion.length < 2) {
+      return false;
+    }
+    return this.columnasComparacion.every((col) => col.totalFotos > 0);
   }
 
   get esSoloLectura(): boolean {
@@ -201,6 +254,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       return;
     }
     this.decisionSeleccionada = decision;
+    this.mostrarDialogoConfirmacion = false;
     this.errorValidacion = null;
     this.errorResolucion = null;
 
@@ -210,7 +264,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  /** Selecciona una de las dos peticiones comparadas como `peticion_principal` (solo al confirmar). */
+  /** Selecciona una de las dos peticiones comparadas como `peticion_principal` (sin asumir la más antigua). */
   seleccionarPeticionPrincipal(idPeticion: number | null): void {
     if (!this.puedeEditarResolucion || this.resolviendo || !idPeticion) {
       return;
@@ -222,12 +276,13 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       this.decisionSeleccionada = 'CONFIRMADO';
     }
     this.peticionPrincipalSeleccionada = idPeticion;
+    this.mostrarDialogoConfirmacion = false;
     this.errorValidacion = null;
     this.errorResolucion = null;
     this.cdr.markForCheck();
   }
 
-  /** Envía `POST /api/peticiones/duplicados/alertas/{id_alerta}/resolver/` evitando doble envío y manejando HTTP 409. */
+  /** Valida el formulario; para CONFIRMADO abre el diálogo de confirmación antes de enviar al backend. */
   confirmarResolucion(): void {
     if (this.resolviendo || !this.puedeEditarResolucion || !this.detalle) {
       return;
@@ -239,28 +294,108 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const payload = this.validarYConstruirPayload();
+    if (!payload) {
+      return;
+    }
+
+    if (payload.estado_revision === 'CONFIRMADO') {
+      this.mostrarDialogoConfirmacion = true;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.ejecutarResolucion(payload);
+  }
+
+  /** Confirma el diálogo de confirmación de petición original y ejecuta el POST al backend. */
+  confirmarDialogoOriginal(): void {
+    if (this.resolviendo || !this.puedeEditarResolucion || !this.detalle) {
+      return;
+    }
+    const payload = this.validarYConstruirPayload();
+    if (!payload || payload.estado_revision !== 'CONFIRMADO') {
+      this.mostrarDialogoConfirmacion = false;
+      return;
+    }
+    this.ejecutarResolucion(payload);
+  }
+
+  /** Cierra el diálogo de confirmación sin enviar la decisión. */
+  cancelarDialogoConfirmacion(): void {
+    if (this.resolviendo) {
+      return;
+    }
+    this.mostrarDialogoConfirmacion = false;
+    this.cdr.markForCheck();
+  }
+
+  /** Calcula bajo demanda la similitud visual DINOv2 para la alerta pendiente. */
+  calcularSimilitudVisualDinov2(): void {
+    if (
+      !this.puedeEditarResolucion ||
+      this.calculandoVisual ||
+      this.resolviendo ||
+      !this.detalle ||
+      !this.ambasPeticionesTienenFoto
+    ) {
+      return;
+    }
+    this.calculandoVisual = true;
+    this.errorCalculoVisual = null;
+    this.visualSub?.unsubscribe();
+
+    this.visualSub = this.alertasService.compararVisualDinov2(this.detalle.id_alerta).subscribe({
+      next: (resp) => {
+        this.calculandoVisual = false;
+        const baseDetalle = resp?.alerta ?? this.detalle;
+        if (resp?.comparado && baseDetalle) {
+          const actualizada = this.alertasService.aplicarResultadoVisualEnDetalle(baseDetalle, resp);
+          this.aplicarDetalle(actualizada, true);
+        } else {
+          if (resp?.alerta) {
+            this.aplicarDetalle(resp.alerta, true);
+          }
+          this.errorCalculoVisual =
+            resp?.error || resp?.mensaje || 'No fue posible calcular la similitud visual DINOv2.';
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err: ErrorDuplicadosApi) => {
+        this.calculandoVisual = false;
+        this.errorCalculoVisual =
+          err?.mensaje || 'El servicio DINOv2 no está disponible en este momento.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private validarYConstruirPayload(): ResolverAlertaDuplicadoPayload | null {
+    if (!this.detalle) {
+      return null;
+    }
     this.errorValidacion = null;
     this.errorResolucion = null;
     this.mensajeConflicto409 = null;
     this.mensajeExito = null;
 
     if (!this.decisionSeleccionada) {
-      this.errorValidacion = 'Selecciona si deseas confirmar el duplicado o descartar la alerta.';
-      return;
+      this.errorValidacion = 'Selecciona si deseas confirmar la petición original o descartar la alerta.';
+      return null;
     }
 
     const obsLimpia = this.observacion.trim();
     if (obsLimpia.length > MAX_OBSERVACION_LEN) {
       this.errorValidacion = `La observación no puede superar los ${MAX_OBSERVACION_LEN} caracteres.`;
-      return;
+      return null;
     }
 
     let payload: ResolverAlertaDuplicadoPayload;
     if (this.decisionSeleccionada === 'CONFIRMADO') {
       if (this.peticionPrincipalSeleccionada === null) {
         this.errorValidacion =
-          'Debes elegir cuál de las dos peticiones quedará registrada como petición principal antes de confirmar.';
-        return;
+          'Debes elegir cuál de las dos peticiones será la petición principal (original) antes de confirmar.';
+        return null;
       }
       payload = {
         estado_revision: 'CONFIRMADO',
@@ -268,7 +403,6 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
         observacion: obsLimpia || null
       };
     } else {
-      // Al descartar nunca se envía peticion_principal
       payload = {
         estado_revision: 'DESCARTADO',
         observacion: obsLimpia || null
@@ -287,8 +421,19 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
     );
     if (!validacion.valido) {
       this.errorValidacion = validacion.error || 'Los datos de resolución no son válidos.';
+      return null;
+    }
+    return payload;
+  }
+
+  private ejecutarResolucion(payload: ResolverAlertaDuplicadoPayload): void {
+    if (this.resolviendo || !this.puedeEditarResolucion || !this.detalle) {
       return;
     }
+    const parIds: readonly [number, number] = [
+      this.detalle.peticion_menor_id,
+      this.detalle.peticion_mayor_id
+    ];
 
     this.resolviendo = true;
     this.resolucionSub?.unsubscribe();
@@ -299,6 +444,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (resp) => {
           this.resolviendo = false;
+          this.mostrarDialogoConfirmacion = false;
           this.mensajeExito = resp.mensaje || 'Resolución registrada correctamente.';
           this.aplicarDetalle(resp.alerta);
           this.alertaResuelta.emit(resp);
@@ -306,6 +452,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
         },
         error: (err: ErrorDuplicadosApi) => {
           this.resolviendo = false;
+          this.mostrarDialogoConfirmacion = false;
           if (err?.status === 409) {
             this.manejarConflicto409(err);
           } else {
@@ -369,6 +516,17 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
     );
   }
 
+  formatearProximidadGpsPorcentaje(detalle: AlertaDuplicadoDetalle): string {
+    const metricas = this.obtenerMetricas(detalle);
+    return this.alertasService.formatearProximidadGpsPorcentaje(metricas, 1, TEXTOS_NO_DISPONIBLE);
+  }
+
+  obtenerRadioReferenciaGps(detalle: AlertaDuplicadoDetalle): number {
+    const metricas = this.obtenerMetricas(detalle);
+    const radio = Number(metricas.radio_gps_metros);
+    return Number.isFinite(radio) && radio >= 1 ? Math.round(radio) : 200;
+  }
+
   formatearDistanciaGpsMetros(detalle: AlertaDuplicadoDetalle): string {
     const metricas = this.obtenerMetricas(detalle);
     if (metricas.distancia_metros === null || metricas.distancia_metros === undefined) {
@@ -386,12 +544,20 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
 
   tieneSimilitudImagen(detalle: AlertaDuplicadoDetalle): boolean {
     const metricas = this.obtenerMetricas(detalle);
-    return metricas.similitud_imagen !== null && metricas.similitud_imagen !== undefined;
+    return this.alertasService.tieneComparacionVisualDinov2(metricas);
   }
 
   formatearSimilitudImagenMetrica(detalle: AlertaDuplicadoDetalle): string {
     const metricas = this.obtenerMetricas(detalle);
-    return this.alertasService.formatearSimilitudImagen(metricas, TEXTOS_NO_DISPONIBLE);
+    return this.alertasService.formatearSimilitudVisualDinov2(metricas, 'No calculada', 1);
+  }
+
+  tieneSoloComparacionDhash(detalle: AlertaDuplicadoDetalle): boolean {
+    const metricas = this.obtenerMetricas(detalle);
+    if (this.tieneSimilitudImagen(detalle)) {
+      return false;
+    }
+    return metricas.distancia_hamming !== null && metricas.distancia_hamming !== undefined;
   }
 
   formatearDiferenciaTiempo(detalle: AlertaDuplicadoDetalle): string {
@@ -470,6 +636,10 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
 
   private cargarDetalle(preservarConflicto: boolean = false): void {
     this.detalleSub?.unsubscribe();
+    this.visualSub?.unsubscribe();
+    this.calculandoVisual = false;
+    this.mostrarDialogoConfirmacion = false;
+    this.errorCalculoVisual = null;
     this.urlsMediaConError.clear();
     this.mediaActiva = null;
     this.errorValidacion = null;
@@ -540,6 +710,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
 
     this.decisionSeleccionada = null;
     this.peticionPrincipalSeleccionada = null;
+    this.mostrarDialogoConfirmacion = false;
     this.recargarDetalle(true);
   }
 
@@ -822,5 +993,7 @@ export class AlertaDuplicadoComparacionComponent implements OnInit, OnDestroy {
     this.detalleSub = null;
     this.resolucionSub?.unsubscribe();
     this.resolucionSub = null;
+    this.visualSub?.unsubscribe();
+    this.visualSub = null;
   }
 }

@@ -660,4 +660,98 @@ describe('AlertasDuplicadosService (Etapa 1)', () => {
       })
     ).toBeNull();
   });
+
+  it('debe calcular proximidad GPS %, distinguir DINOv2 vs No calculada y consumir compararVisualDinov2', () => {
+    expect(service.calcularPorcentajeProximidadGps(0, 200)).toBe(100);
+    expect(service.calcularPorcentajeProximidadGps(50, 200)).toBe(75);
+    expect(service.calcularPorcentajeProximidadGps(250, 200)).toBe(0);
+    expect(service.calcularPorcentajeProximidadGps(null, 200)).toBeNull();
+
+    expect(
+      service.formatearSimilitudVisualDinov2({
+        similitud_imagen: 0.912,
+        distancia_hamming: null,
+        metodo_imagen: 'dinov2_small',
+        dinov2_calculada: true,
+        porcentaje_similitud_visual: 91.2
+      })
+    ).toBe('91.2%');
+    expect(
+      service.formatearSimilitudVisualDinov2({
+        similitud_imagen: 0.9375,
+        distancia_hamming: 4,
+        metodo_imagen: 'dhash'
+      })
+    ).toBe('No calculada');
+    expect(service.formatearSimilitudVisualDinov2({ similitud_imagen: null })).toBe('No calculada');
+
+    let respuesta: unknown;
+    service.compararVisualDinov2(77).subscribe((r) => (respuesta = r));
+
+    const req = httpMock.expectOne(`${baseUrl}/duplicados/alertas/77/comparar-visual/`);
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      comparado: true,
+      similitud_imagen_porcentaje: 91.2,
+      metodo_imagen: 'dinov2_small',
+      distancia_gps_metros: 20,
+      coincidencia_imagen: true,
+      similitud_imagen: 0.912,
+      alerta_modificada: false,
+      mensaje: 'Similitud visual DINOv2 calculada correctamente.',
+      alerta: {
+        ...crearAlertaMock({ id_alerta: 77 }),
+        peticion_menor: {
+          ...crearAlertaMock().peticion_menor!,
+          evidencias: []
+        },
+        peticion_mayor: {
+          ...crearAlertaMock().peticion_mayor!,
+          evidencias: []
+        },
+        comparacion: {
+          peticion_menor_id: 10,
+          peticion_mayor_id: 20,
+          mismo_tipo: true,
+          mismo_estado: false,
+          ambas_asignadas: false,
+          mismo_veterinario_asignado: false,
+          diferencia_tiempo_horas: 1,
+          metricas: {
+            similitud_texto: 0.85,
+            coincidencia_texto: true,
+            distancia_metros: 20,
+            radio_gps_metros: 200,
+            porcentaje_proximidad_gps: 90,
+            coincidencia_gps: true,
+            distancia_hamming: null,
+            similitud_imagen: null,
+            coincidencia_imagen: false,
+            metodo_imagen: null,
+            dinov2_calculada: false,
+            porcentaje_similitud_visual: null,
+            score_combinado: 0.89,
+            criterios_coincidencia: ['texto', 'gps']
+          }
+        }
+      }
+    });
+    expect((respuesta as { comparado: boolean }).comparado).toBe(true);
+    expect(service.alertaDetalleActiva()?.comparacion.metricas.porcentaje_similitud_visual).toBe(91.2);
+    expect(service.alertaDetalleActiva()?.comparacion.metricas.metodo_imagen).toBe('dinov2_small');
+    expect(service.alertaDetalleActiva()?.estado_revision).toBe('PENDIENTE');
+
+    let error422: { status: number; codigo: string; mensaje: string } | undefined;
+    service.compararVisualDinov2(77).subscribe({
+      error: (err) => (error422 = err)
+    });
+    const reqErr = httpMock.expectOne(`${baseUrl}/duplicados/alertas/77/comparar-visual/`);
+    reqErr.flush(
+      { error: 'Ambas peticiones deben contar con al menos una fotografía válida para calcular DINOv2.' },
+      { status: 422, statusText: 'Unprocessable Entity' }
+    );
+    expect(error422?.status).toBe(422);
+    expect(error422?.codigo).toBe('UNPROCESSABLE_ENTITY');
+    expect(error422?.mensaje).toContain('fotografía válida');
+  });
 });

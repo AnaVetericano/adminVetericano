@@ -509,6 +509,24 @@ describe('Integración Etapa 4: Sidebar, acceso global y reactividad de duplicad
     reqResolver.flush(respResolver);
     fixture.detectChanges();
 
+    flushPeticionesNoDuplicadas();
+    const reqsPostResolver = httpMock.match(
+      (req) => req.method === 'GET' && req.url === `${basePeticionesUrl}/duplicados/alertas/`
+    );
+    for (const r of reqsPostResolver) {
+      r.flush({
+        count: 2,
+        next: null,
+        previous: null,
+        page: 1,
+        page_size: r.request.params.get('page_size') === '100' ? 100 : 10,
+        total_pages: 1,
+        resumen: { PENDIENTE: 1, CONFIRMADO: 0, DESCARTADO: 1, total: 2 },
+        results: [alerta10Resuelta, alerta11]
+      });
+    }
+    fixture.detectChanges();
+
     const badgeSidebar = fixture.debugElement.query(By.css('[data-testid="sidebar-peticiones-duplicados-badge"]'));
     expect(badgeSidebar.nativeElement.textContent.trim()).toBe('1');
   });

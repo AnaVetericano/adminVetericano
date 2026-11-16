@@ -8,6 +8,7 @@ import {
   AlertaDuplicadoDetalle,
   AlertaDuplicadoResumen,
   CodigoErrorDuplicados,
+  CompararVisualAlertaResponse,
   DetectarDuplicadosRequest,
   DetectarDuplicadosResponse,
   ErrorDuplicadosApi,
@@ -19,12 +20,15 @@ import {
   ResolverAlertaDuplicadoPayload,
   ResolverAlertaDuplicadoResponse,
   ResumenConteosAlertas,
+  calcularPorcentajeProximidadGps,
   convertirSimilitudAPorcentaje,
   crearResumenAlertasVacio,
   extraerIdAlertaDeNotificacion,
   formatearDistanciaMetros,
   formatearPorcentajeSimilitud,
-  formatearSimilitudImagen
+  formatearSimilitudImagen,
+  formatearSimilitudVisualDinov2,
+  tieneComparacionVisualDinov2
 } from '../models/duplicados.model';
 
 const ESTADOS_ALERTA_VALIDOS: ReadonlySet<EstadoRevisionAlerta> = new Set([
@@ -57,6 +61,18 @@ const MENSAJES_HTTP_DEFECTO: Record<number, { codigo: CodigoErrorDuplicados; men
   409: {
     codigo: 'CONFLICT',
     mensaje: 'La alerta ya fue resuelta previamente o presentó un conflicto de concurrencia.'
+  },
+  422: {
+    codigo: 'UNPROCESSABLE_ENTITY',
+    mensaje: 'No es posible comparar visualmente las imágenes disponibles de esta alerta.'
+  },
+  502: {
+    codigo: 'SERVICE_UNAVAILABLE',
+    mensaje: 'El servicio de comparación visual DINOv2 (VetericanoIA) no respondió correctamente.'
+  },
+  503: {
+    codigo: 'SERVICE_UNAVAILABLE',
+    mensaje: 'El servicio de comparación visual DINOv2 (VetericanoIA) no está disponible temporalmente.'
   },
   0: {
     codigo: 'NETWORK_ERROR',
@@ -307,8 +323,8 @@ export class AlertasDuplicadosService {
 
   /**
    * POST `/api/peticiones/duplicados/alertas/{id_alerta}/resolver/`
-   * Resuelve manualmente una alerta como `CONFIRMADO` (exigiendo `peticion_principal` del par)
-   * o `DESCARTADO` (prohibiendo `peticion_principal`). No altera estados ni asignaciones.
+   * Resuelve manualmente una alerta como `CONFIRMADO` (exigiendo `peticion_principal` del par
+   * y marcando la otra petición como duplicada sin eliminar datos ni evidencias) o `DESCARTADO`.
    */
   resolverAlerta(
     idAlerta: number,
@@ -349,6 +365,137 @@ export class AlertasDuplicadosService {
 
     this.resolucionesEnVuelo.set(idAlerta, peticion$);
     return peticion$;
+  }
+
+  /**
+   * POST `/api/peticiones/duplicados/alertas/{id_alerta}/comparar-visual/`
+   * Solicita al backend calcular la similitud visual real con DINOv2 para la alerta
+   * sin modificar ni resolver el registro persistido.
+   */
+  compararVisualDinov2(idAlerta: number): Observable<CompararVisualAlertaResponse> {
+    const errorAcceso = this.validarAccesoEndpoint();
+    if (errorAcceso) {
+      return throwError(() => errorAcceso);
+    }
+
+    const idValido = this.validarIdPositivo(idAlerta, 'id_alerta');
+    if (!idValido) {
+      return throwError(() =>
+        this.crearErrorLocal(400, 'VALIDATION_ERROR', "El identificador 'id_alerta' debe ser un entero positivo.")
+      );
+    }
+
+    const url = `${this.basePeticionesUrl}/duplicados/alertas/${idValido}/comparar-visual/`;
+    return this.http.post<CompararVisualAlertaResponse>(url, {}).pipe(
+      tap((resp) => {
+        const activa = this.alertaDetalleActivaState();
+        const base = resp?.alerta ?? (activa && activa.id_alerta === idValido ? activa : null);
+        if (base) {
+          const enriquecida = resp?.comparado
+            ? this.aplicarResultadoVisualEnDetalle(base, resp)
+            : base;
+          this.registrarAlertasEnMapa([enriquecida]);
+          this.alertaDetalleActivaState.set(enriquecida);
+        }
+        this.errorActualState.set(null);
+      }),
+      catchError((err) => this.manejarYPropagarError(err))
+    );
+  }
+
+  /**
+   * Fusiona en memoria el resultado devuelto por `comparar-visual/` dentro de un detalle
+   * de alerta sin alterar su estado de revisión.
+   */
+  aplicarResultadoVisualEnDetalle(
+    alerta: AlertaDuplicadoDetalle,
+    resp: CompararVisualAlertaResponse
+  ): AlertaDuplicadoDetalle {
+    if (!resp?.comparado) {
+      return alerta;
+    }
+
+    const metricasBase: MetricasDuplicado = alerta.comparacion?.metricas ?? {
+      similitud_texto: alerta.similitud_texto,
+      coincidencia_texto: alerta.coincidencia_texto,
+      distancia_metros: alerta.distancia_metros,
+      coincidencia_gps: alerta.coincidencia_gps,
+      distancia_hamming: alerta.distancia_hamming,
+      similitud_imagen: alerta.similitud_imagen,
+      coincidencia_imagen: alerta.coincidencia_imagen,
+      score_combinado: alerta.score_combinado,
+      criterios_coincidencia: []
+    };
+
+    const porcentajeVisual =
+      resp.similitud_imagen_porcentaje ??
+      resp.porcentaje_similitud_visual ??
+      metricasBase.porcentaje_similitud_visual ??
+      (typeof resp.similitud_imagen === 'number'
+        ? Math.round(Math.max(0, Math.min(1, resp.similitud_imagen)) * 10000) / 100
+        : null);
+
+    const similitudImagen =
+      resp.similitud_imagen ??
+      metricasBase.similitud_imagen ??
+      (typeof porcentajeVisual === 'number'
+        ? Math.round((porcentajeVisual / 100) * 10000) / 10000
+        : null);
+
+    const similitudCoseno =
+      resp.similitud_visual_coseno ?? metricasBase.similitud_visual_coseno ?? similitudImagen;
+    const metodoImagen = resp.metodo_imagen || metricasBase.metodo_imagen || 'dinov2_small';
+    const coincidenciaImagen =
+      typeof resp.coincidencia_imagen === 'boolean'
+        ? resp.coincidencia_imagen
+        : metricasBase.coincidencia_imagen;
+
+    const distanciaMetros =
+      resp.distancia_gps_metros ?? metricasBase.distancia_metros ?? alerta.distancia_metros ?? null;
+    const radioGps = resp.radio_gps_metros ?? metricasBase.radio_gps_metros ?? alerta.radio_gps_metros ?? 200;
+    const porcentajeGps =
+      resp.porcentaje_proximidad_gps ??
+      metricasBase.porcentaje_proximidad_gps ??
+      alerta.porcentaje_proximidad_gps ??
+      this.calcularPorcentajeProximidadGps(distanciaMetros, radioGps);
+
+    const criteriosPrevios = Array.isArray(metricasBase.criterios_coincidencia)
+      ? metricasBase.criterios_coincidencia.filter((c) => String(c).toLowerCase() !== 'imagen')
+      : [];
+    const criterios = coincidenciaImagen ? [...criteriosPrevios, 'imagen'] : criteriosPrevios;
+
+    return {
+      ...alerta,
+      distancia_metros: distanciaMetros,
+      radio_gps_metros: radioGps,
+      porcentaje_proximidad_gps: porcentajeGps,
+      distancia_hamming: null,
+      similitud_imagen: similitudImagen,
+      similitud_visual_coseno: similitudCoseno,
+      porcentaje_similitud_visual: porcentajeVisual,
+      metodo_imagen: metodoImagen,
+      coincidencia_imagen: coincidenciaImagen,
+      comparacion: {
+        ...alerta.comparacion,
+        metricas: {
+          ...metricasBase,
+          distancia_metros: distanciaMetros,
+          radio_gps_metros: radioGps,
+          porcentaje_proximidad_gps: porcentajeGps,
+          distancia_hamming: null,
+          similitud_imagen: similitudImagen,
+          similitud_visual_coseno: similitudCoseno,
+          similitud_visual_dinov2: similitudCoseno,
+          porcentaje_similitud_visual: porcentajeVisual,
+          metodo_imagen: metodoImagen,
+          dinov2_calculada: true,
+          visual_calculada: true,
+          estado_comparacion_visual: 'Calculada (DINOv2)',
+          coincidencia_imagen: coincidenciaImagen,
+          criterios_coincidencia: criterios
+        }
+      }
+    };
   }
 
   /**
@@ -552,6 +699,48 @@ export class AlertasDuplicadosService {
     fallback: string = 'Sin comparación visual'
   ): string {
     return formatearSimilitudImagen(metrica, fallback);
+  }
+
+  calcularPorcentajeProximidadGps(
+    distancia: number | null | undefined,
+    radioMetros: number | null | undefined = 200,
+    decimales: number = 1
+  ): number | null {
+    return calcularPorcentajeProximidadGps(distancia, radioMetros, decimales);
+  }
+
+  formatearProximidadGpsPorcentaje(
+    metrica: Pick<MetricasDuplicado, 'distancia_metros' | 'radio_gps_metros' | 'porcentaje_proximidad_gps'> | null | undefined,
+    decimales: number = 1,
+    fallback: string = 'No disponible'
+  ): string {
+    if (!metrica) {
+      return fallback;
+    }
+    const rawPct = metrica.porcentaje_proximidad_gps;
+    if (rawPct !== null && rawPct !== undefined && Number.isFinite(Number(rawPct))) {
+      const acotado = Math.max(0, Math.min(100, Number(rawPct)));
+      const factor = Math.pow(10, Math.max(0, Math.min(4, Math.trunc(decimales))));
+      return `${Math.round(acotado * factor) / factor}%`;
+    }
+    const calc = calcularPorcentajeProximidadGps(
+      metrica.distancia_metros,
+      metrica.radio_gps_metros ?? 200,
+      decimales
+    );
+    return calc === null ? fallback : `${calc}%`;
+  }
+
+  tieneComparacionVisualDinov2(metrica: Partial<MetricasDuplicado> | null | undefined): boolean {
+    return tieneComparacionVisualDinov2(metrica);
+  }
+
+  formatearSimilitudVisualDinov2(
+    metrica: Partial<MetricasDuplicado> | null | undefined,
+    fallback: string = 'No calculada',
+    decimales: number = 1
+  ): string {
+    return formatearSimilitudVisualDinov2(metrica, fallback, decimales);
   }
 
   extraerIdAlertaDeNotificacion(
