@@ -480,8 +480,21 @@
         }
       </div>
 
-      <!-- ACCIONES DERECHA: ALERTAS DE MEDICAMENTOS + BOTÓN DE PERFIL -->
+      <!-- ACCIONES DERECHA: ACCIÓN DE PÁGINA + ALERTAS DE MEDICAMENTOS + BOTÓN DE PERFIL -->
       <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
+
+        <!-- BOTÓN DE ACCIÓN RÁPIDA DE LA PÁGINA (ej. Ver Casos y Peticiones) -->
+        @if (encabezadoPagina.actual()?.botonTexto; as textoBtn) {
+          <a
+            [routerLink]="encabezadoPagina.actual()?.botonRuta || '/inicio-admin/peticion'"
+            class="px-3.5 py-2 bg-[#170B3D] hover:bg-[#25155c] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+          >
+            <span>{{ textoBtn }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+        }
 
         <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
         @if (authService.isVeterinario() || authService.isAdmin()) {
