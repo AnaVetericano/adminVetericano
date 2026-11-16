@@ -118,7 +118,8 @@ export class Compra implements OnInit {
         Swal.fire({
           title: 'Error de conexión',
           text: 'No se pudieron cargar los datos de compras e inventario. Verifique la conexión e intente nuevamente.',
-          icon: 'error'
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -379,7 +380,8 @@ export class Compra implements OnInit {
       Swal.fire({
         title: 'Mínimo de detalle',
         text: 'La factura debe tener al menos un medicamento registrado.',
-        icon: 'info'
+        icon: 'info',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -405,7 +407,8 @@ export class Compra implements OnInit {
       Swal.fire({
         title: 'Campos obligatorios incompletos',
         text: 'Seleccione el proveedor emisor de la factura.',
-        icon: 'warning'
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -414,7 +417,8 @@ export class Compra implements OnInit {
       Swal.fire({
         title: 'Detalles requeridos',
         text: 'Agregue al menos un medicamento a la factura.',
-        icon: 'warning'
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -430,7 +434,8 @@ export class Compra implements OnInit {
         Swal.fire({
           title: 'Medicamento requerido',
           text: `En la fila #${numFila} seleccione un medicamento del catálogo.`,
-          icon: 'warning'
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
         });
         return;
       }
@@ -440,7 +445,8 @@ export class Compra implements OnInit {
         Swal.fire({
           title: 'Medicamento repetido',
           text: `El medicamento de la fila #${numFila} ya está en la lista. Agrupe la cantidad en una sola fila.`,
-          icon: 'warning'
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
         });
         return;
       }
@@ -451,7 +457,8 @@ export class Compra implements OnInit {
         Swal.fire({
           title: 'Cantidad inválida',
           text: `En la fila #${numFila} la cantidad debe ser un número entero mayor a 0.`,
-          icon: 'warning'
+          icon: 'warning',
+          confirmButtonText: 'Aceptar'
         });
         return;
       }
@@ -475,9 +482,10 @@ export class Compra implements OnInit {
 
           Swal.fire({
             title: 'Compra actualizada',
-            text: `Factura #${idEditado} y sus medicamentos fueron actualizados.`,
+            text: `La factura #${idEditado} y sus medicamentos fueron actualizados.`,
             icon: 'success',
-            timer: 2300
+            timer: 2300,
+            confirmButtonText: 'Aceptar'
           });
 
           this.obtenerDatos();
@@ -489,7 +497,8 @@ export class Compra implements OnInit {
           Swal.fire({
             title: 'No fue posible actualizar la compra',
             text: msj,
-            icon: 'error'
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -513,9 +522,10 @@ export class Compra implements OnInit {
 
           Swal.fire({
             title: 'Registro guardado',
-            text: `Factura #${resultado.compra.id_compra} guardada con ${payloadDetalles.length} detalle(s).`,
+            text: `Factura #${resultado.compra.id_compra} guardada con ${payloadDetalles.length} ${payloadDetalles.length === 1 ? 'detalle' : 'detalles'}.`,
             icon: 'success',
-            timer: 2300
+            timer: 2300,
+            confirmButtonText: 'Aceptar'
           });
 
           this.obtenerDatos();
@@ -527,7 +537,8 @@ export class Compra implements OnInit {
           Swal.fire({
             title: 'No fue posible guardar el registro',
             text: msj,
-            icon: 'error'
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -571,7 +582,8 @@ export class Compra implements OnInit {
       Swal.fire({
         title: 'Factura anulada',
         text: `La compra #${idCompra} ya se encuentra anulada en el sistema.`,
-        icon: 'info'
+        icon: 'info',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -580,12 +592,13 @@ export class Compra implements OnInit {
 
     Swal.fire({
       title: `Confirmar anulación de factura #${idCompra}`,
-      text: `Se verificará el stock en bodega y se registrará el contra-asiento de auditoría para los ${cantidadDetalles} medicamentos asociados.`,
+      text: `Se verificará el stock en bodega y se registrará el contra-asiento de auditoría para ${cantidadDetalles} ${cantidadDetalles === 1 ? 'medicamento asociado' : 'medicamentos asociados'}.`,
       input: 'text',
       inputPlaceholder: 'Ingrese el motivo de anulación...',
       icon: 'warning',
+      customClass: { popup: 'qa-destructivo' },
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: 'Anular factura',
       cancelButtonText: 'Cancelar',
       inputValidator: (valor) => {
         if (!valor || !valor.trim()) {
@@ -612,7 +625,8 @@ export class Compra implements OnInit {
           Swal.fire({
             title: 'Factura anulada',
             text: `La compra #${idCompra} fue anulada y los inventarios fueron compensados.`,
-            icon: 'success'
+            icon: 'success',
+            confirmButtonText: 'Aceptar'
           });
           this.obtenerDatos();
         },
@@ -631,15 +645,15 @@ export class Compra implements OnInit {
           Swal.fire({
             title: 'Anulación rechazada',
             html: `
-              <div class="text-left text-sm space-y-2">
-                <p class="font-semibold text-[#B42318]">La base de datos o el sistema rechazó la anulación:</p>
-                <div class="p-3 bg-[#FEECEB] border border-[#F5B7B1] rounded-xl text-[#B42318] text-xs font-mono">
-                  ${msj}
-                </div>
-                <p class="text-xs text-slate-500">Si los medicamentos ya fueron asignados a maletines o formulados, reintégrelos antes de anular la factura.</p>
-              </div>
+              <p>La base de datos o el sistema rechazó la anulación.</p>
+              <dl class="qa-datos">
+                <dt>Motivo</dt>
+                <dd class="qa-tono">${msj}</dd>
+              </dl>
+              <p class="qa-nota">Si los medicamentos ya fueron asignados a maletines o formulados, reintégrelos antes de anular la factura.</p>
             `,
-            icon: 'error'
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
           });
         }
       });

@@ -1336,8 +1336,9 @@ export class HistoriaClinicaListComponent implements OnInit {
         const errorDetail = err?.error?.motivoConsulta || err?.error?.detail || err?.error?.mensaje || 'No fue posible guardar la atención en el servidor.';
         Swal.fire({
           icon: 'error',
-          title: 'Error al registrar',
-          text: Array.isArray(errorDetail) ? errorDetail.join(', ') : errorDetail
+          title: 'No fue posible registrar la atención',
+          text: Array.isArray(errorDetail) ? errorDetail.join(', ') : errorDetail,
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -1524,7 +1525,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Nombre requerido',
-        text: 'Asigne o ingrese el nombre o alias del animal rescatado.'
+        text: 'Asigne o ingrese el nombre o alias del animal rescatado.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -1685,7 +1687,8 @@ export class HistoriaClinicaListComponent implements OnInit {
         title: disponibleAdopBool ? 'Enviado a Adopción' : 'Ficha del paciente actualizada',
         text: disponibleAdopBool
           ? `${this.animalEnEdicion.nombre} recibió el alta médica (Estable), su historia clínica permanece en el listado normal y ya figura Disponible en el módulo de Adopciones.`
-          : `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron en el sistema.`
+          : `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron en el sistema.`,
+        confirmButtonText: 'Aceptar'
       });
     };
 
@@ -1752,20 +1755,18 @@ export class HistoriaClinicaListComponent implements OnInit {
     Swal.fire({
       title: `¿Dar alta y enviar a Adopción a ${historia.animal_nombre}?`,
       html: `
-        <div style="text-align:left; font-size:13px; color:#334155; line-height:1.5;">
-          <p style="margin-bottom:8px;">
-            • <strong>Alta de Hospitalización CBA:</strong> Pasará a estado <strong>Estable</strong> (fuera de peligro) y saldrá de <em>Hospitalizados</em>.<br/>
-            • <strong>Historia Clínica (${historia.numero_historia}):</strong> Permanecerá abierta en el listado <em>Normal</em> con todo su historial por si vuelve a consulta o reingreso.<br/>
-            • <strong>Módulo de Adopciones:</strong> Quedará publicado inmediatamente como <strong>Disponible</strong>.
-          </p>
-          <label style="display:block; font-weight:700; color:#170B3D; margin-top:10px; margin-bottom:4px;">Descripción para la ficha de Adopción:</label>
-        </div>
+        <p>
+          • <strong>Alta de Hospitalización CBA:</strong> Pasará a estado <strong>Estable</strong> (fuera de peligro) y saldrá de <em>Hospitalizados</em>.<br/>
+          • <strong>Historia Clínica (${historia.numero_historia}):</strong> Permanecerá abierta en el listado <em>Normal</em> con todo su historial por si vuelve a consulta o reingreso.<br/>
+          • <strong>Módulo de Adopciones:</strong> Quedará publicado inmediatamente como <strong>Disponible</strong>.
+        </p>
+        <p class="qa-nota">Descripción para la ficha de Adopción:</p>
       `,
       input: 'textarea',
       inputValue: descripcionPorDefecto,
-      inputPlaceholder: 'Describe el carácter, recuperación y estado del animal para su adopción...',
+      inputPlaceholder: 'Describa el carácter, recuperación y estado del animal para su adopción...',
       showCancelButton: true,
-      confirmButtonText: 'Confirmar Alta y Enviar a Adopción',
+      confirmButtonText: 'Confirmar alta y enviar a adopción',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (!result.isConfirmed) return;
@@ -1932,7 +1933,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Nombre requerido',
-        text: 'Ingrese el nombre de la mascota o paciente.'
+        text: 'Ingrese el nombre de la mascota o paciente.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -1941,7 +1943,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Datos del tutor requeridos',
-        text: 'Ingrese al menos el nombre y documento de identidad del tutor o acudiente.'
+        text: 'Ingrese al menos el nombre y documento de identidad del tutor o acudiente.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2034,8 +2037,9 @@ export class HistoriaClinicaListComponent implements OnInit {
         console.error('Error al registrar paciente:', err);
         Swal.fire({
           icon: 'error',
-          title: 'Error al registrar',
-          text: err?.error?.detail || err?.message || 'No fue posible registrar el paciente. Verifique su conexión al servidor.'
+          title: 'No fue posible registrar el paciente',
+          text: err?.error?.detail || err?.message || 'No fue posible registrar el paciente. Verifique su conexión al servidor.',
+          confirmButtonText: 'Aceptar'
         });
       }
     });

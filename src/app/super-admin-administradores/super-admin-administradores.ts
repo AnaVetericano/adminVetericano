@@ -360,7 +360,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: nuevoEstado ? 'Activar' : 'Desactivar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' }
     }).then((result) => {
       if (!result.isConfirmed) return;
 
@@ -383,7 +384,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
 
             Swal.fire({
               icon: 'success',
-              title: nuevoEstado ? 'Administrador Activado' : 'Administrador Inactivado',
+              title: nuevoEstado ? 'Administrador activado' : 'Administrador inactivado',
               text: `El estado de ${actualizado.nombre} ${actualizado.apellido || ''} se actualizó en el servidor.`,
               timer: 2000,
               showConfirmButton: false

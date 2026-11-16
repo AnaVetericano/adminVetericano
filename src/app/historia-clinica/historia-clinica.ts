@@ -724,7 +724,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       title: 'Nueva consulta médica',
       text: `Se iniciará un nuevo registro de atención para ${this.paciente?.nombre || 'el paciente'}, conservando todos sus antecedentes y datos base.`,
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: 'Iniciar consulta',
       cancelButtonText: 'Cancelar'
     }).then((res) => {
       if (res.isConfirmed) {
@@ -2023,6 +2023,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       icon: 'warning',
       title: 'Confirmar eliminación',
       text: `Se quitará "${examen.nombre}" de la orden de exámenes solicitados.`,
+      customClass: { popup: 'qa-destructivo' },
       showCancelButton: true,
       confirmButtonText: 'Eliminar',
       cancelButtonText: 'Cancelar'
@@ -2040,7 +2041,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     Swal.fire({
       icon: 'success',
       title: 'Evaluación física registrada',
-      text: 'Se han conservado los estados de los 12 sistemas orgánicos para el expediente.'
+      text: 'Se han conservado los estados de los 12 sistemas orgánicos para el expediente.',
+      confirmButtonText: 'Aceptar'
     });
   }
 
@@ -2364,7 +2366,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'info',
         title: 'Medicamento ya prescrito',
-        text: 'Este fármaco ya se encuentra agregado al plan terapéutico.'
+        text: 'Este fármaco ya se encuentra agregado al plan terapéutico.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2421,7 +2424,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'warning',
         title: 'Confirmar eliminación de fármaco',
-        html: `Ya se registró la administración de <b>${med.cantidadEfectivaAdministrada} uds</b> en el inventario.<br><br>¿Desea retirar este tratamiento del registro?`,
+        html: `<p>Ya se registró la administración de <b>${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}</b> en el inventario. ¿Desea retirar este tratamiento del registro?</p>`,
+        customClass: { popup: 'qa-destructivo' },
         showCancelButton: true,
         confirmButtonText: 'Eliminar',
         cancelButtonText: 'Cancelar'
@@ -2454,7 +2458,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'info',
         title: 'Ya administrado',
-        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado del maletín.`
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}) y descontado del maletín.`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2464,7 +2469,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'warning',
         title: 'Cantidad inválida',
-        text: 'Ingrese una cantidad numérica mayor a 0 para registrar la administración.'
+        text: 'Ingrese una cantidad numérica mayor a 0 para registrar la administración.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2474,7 +2480,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Sin existencias en maletín',
-        text: `No hay unidades disponibles en el maletín para el medicamento "${med.nombre}".`
+        text: `No hay unidades disponibles en el maletín para el medicamento "${med.nombre}".`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2483,7 +2490,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Stock insuficiente en maletín de campo',
-        text: `No hay suficiente stock en el maletín (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Ajuste la cantidad a descontar.`
+        html: `<p>Ajuste la cantidad a descontar antes de continuar.</p><dl class="qa-datos"><dt>Disponibles</dt><dd class="qa-tono">${stockActual} ${stockActual === 1 ? 'unidad' : 'unidades'}</dd><dt>Solicitadas</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2492,7 +2500,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     Swal.fire({
       title: 'Confirmar administración y descuento',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b>.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades del maletín de campo y actualizará el inventario en tiempo real.</span>`,
+      html: `<p>Se registrará la administración física de <b>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</b> de <b>${nombreMed}</b>.</p><p class="qa-nota">Esta acción descontará las unidades del maletín de campo y actualizará el inventario en tiempo real.</p>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
@@ -2521,7 +2529,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
               Swal.fire({
                 icon: 'success',
                 title: 'Descuento registrado',
-                html: `Se descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> del maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`
+                html: `<p>Se descontó el medicamento del maletín de campo.</p><dl class="qa-datos"><dt>Medicamento</dt><dd>${nombreMed}</dd><dt>Descontado</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd><dt>Saldo restante</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
+                confirmButtonText: 'Aceptar'
               });
             }
           });
@@ -2532,7 +2541,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           Swal.fire({
             icon: 'error',
             title: 'No fue posible registrar el consumo',
-            text: 'No se pudo registrar la administración en el inventario del maletín. Verifique la conexión e intente nuevamente.'
+            text: 'No se pudo registrar la administración en el inventario del maletín. Verifique la conexión e intente nuevamente.',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -2548,16 +2558,13 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const s = Number(stock) || 0;
     Swal.fire({
       icon: 'warning',
-      title: 'Alerta de stock bajo',
+      title: 'Stock bajo en inventario',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <div class="p-3 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
-            <p class="font-semibold text-[#170B3D]">
-              Quedan <b>${s}</b> unidades de este producto. Solicite reaprovisionamiento al inventario general.
-            </p>
-          </div>
-          <p class="text-xs text-slate-500">Producto en inventario: <b>${nombre}</b></p>
-        </div>
+        <p>Solicite reaprovisionamiento al inventario general.</p>
+        <dl class="qa-datos">
+          <dt>Producto</dt><dd>${nombre}</dd>
+          <dt>Stock disponible</dt><dd class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</dd>
+        </dl>
       `,
       confirmButtonText: 'Aceptar'
     });
@@ -2596,7 +2603,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     Swal.fire({
       icon: 'success',
       title: 'Medicamento alternativo seleccionado',
-      text: `Se seleccionó ${nombre} con ${stock} uds disponibles.`,
+      text: `Se seleccionó ${nombre} con ${stock} ${stock === 1 ? 'unidad' : 'unidades'} ${stock === 1 ? 'disponible' : 'disponibles'}.`,
       timer: 1600,
       showConfirmButton: false
     });
@@ -2616,8 +2623,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (this.historiaAnulada) {
       Swal.fire({
         title: 'Historia clínica anulada',
-        text: 'No es posible modificar una historia clínica en estado anulado (Jira HE06-HU013 Escenario 3.0).',
-        icon: 'warning'
+        html: '<p>No es posible modificar una historia clínica en estado anulado.</p><p class="qa-nota">Referencia: <code>Jira HE06-HU013 Escenario 3.0</code></p>',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2626,7 +2634,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         title: 'Stock insuficiente',
         text: 'Existen fármacos en el tratamiento con cantidades solicitadas superiores al stock disponible. Ajuste las cantidades antes de guardar.',
-        icon: 'warning'
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2948,18 +2957,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           ? 'Se ha registrado la nueva consulta clínica en la base de datos.'
           : 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.';
 
-        let htmlAlerta = `<p class="mb-3 text-slate-700">${textoAlerta}</p>`;
+        let htmlAlerta = `<p>${textoAlerta}</p>`;
         if (detallesDescuentoAuto.length > 0) {
           htmlAlerta += `
-            <div class="mt-3 p-3 bg-white border border-slate-200 border-l-4 border-l-[#067647] rounded-xl text-left text-xs">
-              <p class="font-semibold text-[#170B3D] mb-1.5">
-                Descuento automático de maletín (${farmacosDescontadosAuto} uds):
-              </p>
-              <ul class="list-disc list-inside text-slate-600 space-y-0.5">
-                ${detallesDescuentoAuto.map(d => `<li>${d}</li>`).join('')}
-              </ul>
-              <p class="mt-2 text-[11px] text-slate-500 font-medium">El inventario del kit de campo ha sido actualizado en tiempo real.</p>
-            </div>
+            <p class="qa-nota"><strong>Descuento automático de maletín (${farmacosDescontadosAuto} ${farmacosDescontadosAuto === 1 ? 'unidad' : 'unidades'}):</strong></p>
+            <ul class="list-disc list-inside">
+              ${detallesDescuentoAuto.map(d => `<li>${d}</li>`).join('')}
+            </ul>
+            <p class="qa-nota">El inventario del kit de campo ha sido actualizado en tiempo real.</p>
           `;
         }
 
@@ -2983,7 +2988,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         Swal.fire({
           title: 'No fue posible guardar el registro',
           text: msg,
-          icon: 'error'
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
         });
         this.cdr.detectChanges();
       }
@@ -3048,8 +3054,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       title: 'Restablecer valores',
       text: 'Se descartarán las modificaciones actuales y se restaurarán los datos originales cargados.',
       icon: 'question',
+      customClass: { popup: 'qa-destructivo' },
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: 'Restablecer',
       cancelButtonText: 'Cancelar'
     }).then(res => {
       if (res.isConfirmed) {

@@ -644,14 +644,15 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
         Swal.fire({
           icon: 'success',
           title: 'Estado actualizado',
-          text: `La petición #${this.peticionSeleccionada?.id_peticion} fue actualizada a '${this.nuevoEstadoSeleccionado}'.`
+          text: `La petición #${this.peticionSeleccionada?.id_peticion} fue actualizada a '${this.nuevoEstadoSeleccionado}'.`,
+          confirmButtonText: 'Aceptar'
         });
         this.cargarPeticiones();
       },
       error: (err) => {
         this.guardandoEstado = false;
         const msg = err.error?.detail || err.error?.error || 'No se pudo actualizar el estado de la petición.';
-        Swal.fire({ icon: 'error', title: 'No fue posible actualizar el estado', text: msg });
+        Swal.fire({ icon: 'error', title: 'No fue posible actualizar el estado', text: msg, confirmButtonText: 'Aceptar' });
       }
     });
   }
@@ -861,7 +862,8 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       Swal.fire({
         icon: 'warning',
         title: 'Campos obligatorios incompletos',
-        text: 'Seleccione un medicamento y una cantidad mayor a cero.'
+        text: 'Seleccione un medicamento y una cantidad mayor a cero.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -886,7 +888,8 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
         Swal.fire({
           icon: 'success',
           title: 'Solicitud radicada',
-          text: `La solicitud ante Farmacia CBA fue radicada bajo el código #${resp?.id_solicitud || ''}.`
+          text: `La solicitud ante Farmacia CBA fue radicada bajo el código #${resp?.id_solicitud || ''}.`,
+          confirmButtonText: 'Aceptar'
         });
         this.cargarSolicitudes();
         this.cargarDatosMaletin();
@@ -897,7 +900,8 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
         Swal.fire({
           icon: 'error',
           title: 'No fue posible radicar la solicitud',
-          text: msg
+          text: msg,
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -909,6 +913,7 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
       title: 'Confirmar cancelación',
       text: `Se cancelará la solicitud #${id}. Esta acción no se puede deshacer.`,
       icon: 'question',
+      customClass: { popup: 'qa-destructivo' },
       showCancelButton: true,
       confirmButtonText: 'Cancelar solicitud',
       cancelButtonText: 'Volver'
@@ -919,13 +924,14 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
             Swal.fire({
               icon: 'success',
               title: 'Solicitud cancelada',
-              text: `La solicitud #${id} fue cancelada.`
+              text: `La solicitud #${id} fue cancelada.`,
+              confirmButtonText: 'Aceptar'
             });
             this.cargarSolicitudes();
           },
           error: (err) => {
             const msg = err.error?.detail || err.error?.error || 'No se pudo cancelar la solicitud.';
-            Swal.fire({ icon: 'error', title: 'No fue posible cancelar la solicitud', text: msg });
+            Swal.fire({ icon: 'error', title: 'No fue posible cancelar la solicitud', text: msg, confirmButtonText: 'Aceptar' });
           }
         });
       }

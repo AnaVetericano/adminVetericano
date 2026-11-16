@@ -202,14 +202,12 @@ export class SedesComponent implements OnInit {
         Swal.fire({
           title: 'Sede creada',
           html: `
-            <div class="text-left text-sm space-y-2">
-              <p>La sede <b>${sedeCreada.nombre}</b> ha sido registrada con estado <span class="text-[#067647] font-semibold bg-[#ECFDF3] px-2 py-0.5 rounded-md border border-[#ABEFC6]">Activo</span>.</p>
-              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
-                <p><b>Código:</b> ${sedeCreada.codigo || 'N/A'}</p>
-                <p><b>Ciudad:</b> ${sedeCreada.ciudad}</p>
-                <p><b>Dirección:</b> ${sedeCreada.direccion}</p>
-              </div>
-            </div>
+            <p>La sede <b>${sedeCreada.nombre}</b> ha sido registrada con estado <b>Activo</b>.</p>
+            <dl class="qa-datos">
+              <dt>Código</dt><dd>${sedeCreada.codigo || 'N/A'}</dd>
+              <dt>Ciudad</dt><dd>${sedeCreada.ciudad}</dd>
+              <dt>Dirección</dt><dd>${sedeCreada.direccion}</dd>
+            </dl>
           `,
           icon: 'success',
           confirmButtonText: 'Aceptar',
@@ -242,25 +240,15 @@ export class SedesComponent implements OnInit {
       Swal.fire({
         title: `Confirmar inactivación de "${sede.nombre}"`,
         html: `
-          <div class="text-left text-sm space-y-3 font-sans">
-            <div class="p-3.5 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
-              <p class="font-semibold text-[#170B3D]">
-                Advertencia de impacto a usuarios:
-              </p>
-              <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                Al inactivar esta sede, los <b>${sede.total_usuarios || 0} usuarios y veterinarios</b> vinculados a esta ubicación no podrán registrar nuevas atenciones, salidas de maletines ni movimientos clínicos hasta que la sede sea nuevamente reactivada.
-              </p>
-            </div>
-            <p class="text-xs text-slate-500">
-              Confirme si desea suspender las operaciones de esta sede.
-            </p>
-          </div>
+          <p><b>Advertencia de impacto a usuarios:</b></p>
+          <p>Al inactivar esta sede, ${(sede.total_usuarios || 0) === 1 ? 'el' : 'los'} <b>${sede.total_usuarios || 0} ${(sede.total_usuarios || 0) === 1 ? 'usuario o veterinario vinculado' : 'usuarios y veterinarios vinculados'}</b> a esta ubicación no ${(sede.total_usuarios || 0) === 1 ? 'podrá' : 'podrán'} registrar nuevas atenciones, salidas de maletines ni movimientos clínicos hasta que la sede sea nuevamente reactivada.</p>
+          <p class="qa-nota">Confirme si desea suspender las operaciones de esta sede.</p>
         `,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Inactivar',
         cancelButtonText: 'Cancelar',
-        reverseButtons: true
+        customClass: { popup: 'qa-destructivo' }
       }).then((result) => {
         if (result.isConfirmed) {
           this.ejecutarCambioEstado(sede, false);
@@ -274,8 +262,7 @@ export class SedesComponent implements OnInit {
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Activar',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true
+        cancelButtonText: 'Cancelar'
       }).then((result) => {
         if (result.isConfirmed) {
           this.ejecutarCambioEstado(sede, true);
