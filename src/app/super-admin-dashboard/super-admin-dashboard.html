@@ -1,7 +1,7 @@
 <div class="w-full flex-1 bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white relative">
 
   <!-- BARRA DE ACCIONES RÁPIDAS -->
-  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full">
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-0 w-full">
     <app-page-title titulo="Dashboard" etiqueta="Superadministrador" />
     <div class="flex items-center justify-end gap-2.5 max-w-screen-2xl mx-auto flex-wrap">
       <a
@@ -27,7 +27,7 @@
   </header>
 
   <!-- CONTENIDO PRINCIPAL CON SCROLL -->
-  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 space-y-5">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-3 pb-5 space-y-5">
 
     @if (errorMensaje) {
       <div class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] px-4 py-3 rounded-xl flex items-center justify-between gap-3 shadow-xs">

@@ -5,7 +5,7 @@
   <!-- 1. ENCABEZADO INSTITUCIONAL OFICIAL                                       -->
   <!-- ========================================================================= -->
   <header
-    class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full print:hidden">
+    class="shrink-0 px-4 sm:px-6 pt-3 pb-0 w-full print:hidden">
     <div class="flex flex-wrap items-center justify-end gap-2 max-w-screen-2xl mx-auto">
       <app-page-title
         titulo="Alcaldía de Popayán"
@@ -44,7 +44,7 @@
   <!-- ========================================================================= -->
   <!-- 2. CONTENIDO PRINCIPAL (SCROLLABLE CON SCROLLSPY AUTOMÁTICO)              -->
   <!-- ========================================================================= -->
-  <main (scroll)="alHacerScroll($event)" class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 overflow-y-auto space-y-5">
+  <main (scroll)="alHacerScroll($event)" class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-3 pb-5 overflow-y-auto space-y-5">
 
     <!-- SPINNER DE CARGA INICIAL -->
     <div *ngIf="cargando"

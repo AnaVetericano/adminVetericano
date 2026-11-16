@@ -1,29 +1,20 @@
-<div class="min-h-full bg-[#F4F5F7] px-4 sm:px-6 py-5 font-['Nunito',sans-serif] text-slate-800 antialiased">
+<div class="min-h-full bg-[#F4F5F7] px-4 sm:px-6 pt-4 pb-5 font-['Nunito',sans-serif] text-slate-800 antialiased">
 
   <!-- CONTENEDOR PRINCIPAL -->
   <div class="max-w-screen-2xl mx-auto">
 
     <!-- ENCABEZADO -->
-    <div class="flex flex-wrap items-center justify-end gap-2 mb-5">
+    <div class="py-0 mb-0">
 
       <app-page-title titulo="Adopciones" subtitulo="Gestiona las mascotas disponibles para adopción" />
-
-      <!-- BOTÓN AGREGAR -->
-      <button
-        (click)="openModal()"
-        class="bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer"
-      >
-        <span class="text-base">+</span>
-        Agregar mascota
-      </button>
 
     </div>
 
 
     <!-- BUSCADOR -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-4 mb-5">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-3 mb-4 flex flex-wrap items-center justify-between gap-3">
 
-      <div class="relative">
+      <div class="relative flex-1 min-w-[220px]">
 
         <input
           type="text"
@@ -49,6 +40,15 @@
         </svg>
 
       </div>
+
+      <!-- BOTÓN AGREGAR -->
+      <button
+        (click)="openModal()"
+        class="bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer shrink-0 ml-auto"
+      >
+        <span class="text-base">+</span>
+        Agregar mascota
+      </button>
 
     </div>
 
