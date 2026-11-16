@@ -107,6 +107,25 @@ html, body {
     inset 2px 2px 5px rgba(23, 11, 61, 0.07),
     inset -2px -2px 5px rgba(255, 255, 255, 0.85);
 
+  /* Misma intensidad que lo anterior, aplicada a más piezas (ver más abajo) */
+  /* Paneles blancos: la levitación en reposo de los botones, sin el bisel */
+  --panel-raise:
+    4px 4px 10px rgba(23, 11, 61, 0.10),
+    -4px -4px 10px rgba(255, 255, 255, 0.95);
+  --panel-border: color-mix(in srgb, var(--surface-border) 70%, #FFFFFF);
+  /* Campos de texto y búsqueda: el mismo hundido de las tarjetitas */
+  --field-sunk: var(--sunk);
+  /* Cuadritos de ícono: la levitación de un botón presionado (tamaño chico) */
+  --tile-raise:
+    2px 2px 5px rgba(23, 11, 61, 0.10),
+    -2px -2px 5px rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* Canales finos (interruptor, barras de progreso): hundido a su escala */
+  --track-sunk:
+    inset 1px 1px 3px rgba(23, 11, 61, 0.10),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.6);
+  --knob-raise: 1px 1px 3px rgba(23, 11, 61, 0.18);
+
   --lev-rest: var(--raise-light);
   --lev-hover: var(--raise-light-hover);
   --lev-press: var(--raise-press);
@@ -206,6 +225,59 @@ div:is([class^="bg-slate-50 "], [class*=" bg-slate-50 "], [class$=" bg-slate-50"
   :is(button, a, [role="button"], label, summary, select, .cursor-pointer, .btn-levitate, .swal2-styled):hover {
     transform: none !important;
   }
+}
+
+/* ========================================================================= */
+/* PANELES, CAMPOS Y CONTROLES (misma referencia, misma intensidad)          */
+/* ========================================================================= */
+/*
+ * Tarjetas blancas grandes: levitan suave sobre el gris de la página. Solo las
+ * de primer nivel: las que están dentro de otra tarjeta blanca, de un modal o
+ * de un menú flotante quedan planas. No se mueven al pasar el cursor (no se
+ * pueden pulsar). El borde se aclara un poco; los acentos `border-l-*` se respetan.
+ */
+:is(div, section, article, form):is([class^="bg-white "], [class*=" bg-white "], [class$=" bg-white"]):is([class*="rounded-lg"], [class*="rounded-xl"], [class*="rounded-2xl"]):is([class^="border "], [class*=" border "], [class$=" border"]):not(.cursor-pointer, .fixed, .absolute, .sticky, [class*="inset-0"], [class*="shadow-lg"], [class*="shadow-xl"], [class*="shadow-2xl"], [class*="focus-within:"], [class*="rounded-t-"], [class*="rounded-b-"], .no-levitate, aside *, .fixed *, .no-levitate *, :is([class*="bg-white"][class*="rounded-"], [class*="kpi-card-"], [class*="shadow-lg"]) *),
+[class*="kpi-card-"]:not(.cursor-pointer, aside *, .fixed *, .no-levitate, .no-levitate *, :is([class*="bg-white"][class*="rounded-"], [class*="shadow-lg"]) *) {
+  box-shadow: var(--panel-raise) !important;
+  border-top-color: var(--panel-border) !important;
+  border-right-color: var(--panel-border) !important;
+  border-bottom-color: var(--panel-border) !important;
+}
+:is(div, section, article, form):is([class^="bg-white "], [class*=" bg-white "], [class$=" bg-white"]):is([class*="rounded-lg"], [class*="rounded-xl"], [class*="rounded-2xl"]):is([class^="border "], [class*=" border "], [class$=" border"]):not([class*="border-l-"], [class*="kpi-card-"], .cursor-pointer, .fixed, .absolute, .sticky, [class*="inset-0"], [class*="shadow-lg"], [class*="shadow-xl"], [class*="shadow-2xl"], [class*="focus-within:"], [class*="rounded-t-"], [class*="rounded-b-"], .no-levitate, aside *, .fixed *, .no-levitate *, :is([class*="bg-white"][class*="rounded-"], [class*="kpi-card-"], [class*="shadow-lg"]) *) {
+  border-left-color: var(--panel-border) !important;
+}
+
+/* Campos de texto, áreas de texto y cajas de búsqueda: levemente hundidos.
+   El anillo índigo al enfocar se conserva encima del hundido. */
+:is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="color"], [type="hidden"], [type="image"]), textarea):not(.bg-transparent, .sr-only, aside *, .no-levitate, .no-levitate *),
+div[class*="focus-within:ring"]:is([class^="border "], [class*=" border "], [class$=" border"]):not(aside *, .no-levitate, .no-levitate *) {
+  /* el anillo de Tailwind (focus:ring-*) se lee en el propio campo */
+  box-shadow: var(--field-sunk), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000) !important;
+}
+
+/* Cuadritos de ícono (no clicables): levitan como un botón chico, igual que en
+   la referencia. Ganan sobre el hundido de las tarjetitas `bg-slate-50`. */
+:is(div, span):is([class*="w-8 h-8"], [class*="w-9 h-9"], [class*="w-10 h-10"], [class*="w-11 h-11"], [class*="w-12 h-12"])[class*="justify-center"]:is([class*="rounded-md"], [class*="rounded-lg"], [class*="rounded-xl"]):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], .cursor-pointer, aside *, .no-levitate, .no-levitate *) {
+  box-shadow: var(--tile-raise) !important;
+}
+
+/* Selector de opciones (pestañas en cápsula): canal hundido; la opción activa
+   ya levita por el sistema de botones y las inactivas quedan planas. */
+.segmentado {
+  box-shadow: var(--sunk) !important;
+}
+
+/* Interruptor: canal hundido y perilla con relieve */
+label > input.peer.sr-only + div[class*="rounded-full"] {
+  box-shadow: var(--track-sunk) !important;
+}
+label > input.peer.sr-only + div[class*="rounded-full"]::after {
+  box-shadow: var(--knob-raise);
+}
+
+/* Barras de progreso: canal hundido (el relleno queda plano) */
+div[class*="rounded-full"][class*="overflow-hidden"]:has(> div[style*="width"]) {
+  box-shadow: var(--track-sunk) !important;
 }
 
 /* ========================================================================= */
@@ -441,7 +513,7 @@ thead th {
   box-sizing: border-box !important;
   border: 1px solid #CBD5E1 !important;
   border-radius: 8px !important;
-  box-shadow: none !important;
+  box-shadow: var(--field-sunk) !important;
   font-size: 14px !important;
   color: #170B3D !important;
   padding: 8px 12px !important;
@@ -452,7 +524,7 @@ thead th {
 .swal2-select:focus,
 .swal2-textarea:focus {
   border-color: #4141A5 !important;
-  box-shadow: 0 0 0 3px rgba(65, 65, 165, 0.18) !important;
+  box-shadow: var(--field-sunk), 0 0 0 3px rgba(65, 65, 165, 0.18) !important;
   outline: none !important;
 }
 
