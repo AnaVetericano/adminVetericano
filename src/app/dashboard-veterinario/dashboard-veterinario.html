@@ -3,20 +3,13 @@
   <!-- ========================================================================= -->
   <!-- 1. CABECERA PRINCIPAL DEL DASHBOARD VETERINARIO                           -->
   <!-- ========================================================================= -->
-  <header class="px-4 sm:px-6 pt-5 pb-2 relative z-10">
-    <div class="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-3">
-
-      <!-- Saludo e Información del Médico Veterinario -->
-      <div class="flex items-center gap-3">
-        <div>
-          <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-            {{ saludoHorario }}, {{ veterinarioNombre }}
-          </h1>
-          <p class="text-sm text-slate-500 mt-0.5">
-            Gestión clínica, Maletín de insumos y peticiones asignadas
-          </p>
-        </div>
-      </div>
+  <header class="px-4 sm:px-6 pt-3 pb-1 relative z-10">
+    <app-page-title
+      [titulo]="saludoHorario + ', ' + veterinarioNombre"
+      subtitulo="Gestión clínica, Maletín de insumos y peticiones asignadas"
+      animal="perro"
+    />
+    <div class="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-end gap-2">
 
       <!-- Acciones Rápidas de Cabecera -->
       <div class="flex items-center gap-2 flex-wrap">

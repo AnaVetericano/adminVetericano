@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 interface Pet {
   id?: number;
@@ -21,7 +22,7 @@ interface Pet {
 @Component({
   selector: 'app-adopciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './adopciones.html',
   styleUrl: './adopciones.css',
 })

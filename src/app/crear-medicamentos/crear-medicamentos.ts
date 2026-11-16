@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface OpcionViaAdministracion {
   valor: string;
@@ -20,7 +21,7 @@ export interface OpcionViaAdministracion {
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './crear-medicamentos.html',
   styleUrl: './crear-medicamentos.css',
 })

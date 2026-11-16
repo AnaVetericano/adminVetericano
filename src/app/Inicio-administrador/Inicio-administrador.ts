@@ -7,6 +7,7 @@ import { AlertasDuplicadosService } from '../services/alertas-duplicados.service
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { EncabezadoPaginaService } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inicio-administrador',
@@ -20,6 +21,8 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   public authService = inject(AuthService);
   public inventoryService = inject(VeterinaryInventoryService);
   public alertasDuplicadosService = inject(AlertasDuplicadosService);
+  /** Título de la página activa que se muestra en la barra superior (solo presentación). */
+  public encabezadoPagina = inject(EncabezadoPaginaService);
 
   private alertasMaletinSub: Subscription | null = null;
   private duplicadosIndiceSub: Subscription | null = null;

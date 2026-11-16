@@ -13,12 +13,13 @@ import { finalize, forkJoin, of, Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
+import { PageTitleComponent } from '../page-title/page-title';
 
 
 @Component({
   selector: 'app-acta-seres-sintientes',
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule, CommonModule],
+  imports: [FormsModule, ReactiveFormsModule, CommonModule, PageTitleComponent],
   templateUrl: './acta-seres-sintientes.html',
   styleUrl: './acta-seres-sintientes.css',
 })

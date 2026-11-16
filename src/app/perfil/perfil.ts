@@ -3,11 +3,12 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { AuthService, UserSession } from '../services/auth';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageTitleComponent],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css'
 })

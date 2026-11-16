@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface HistoriaClinicaItem {
   id_historia: number;
@@ -46,7 +47,7 @@ export interface HistoriaClinicaItem {
 @Component({
   selector: 'app-historia-clinica-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './historia-clinica-list.html',
   styleUrl: './historia-clinica-list.css'
 })

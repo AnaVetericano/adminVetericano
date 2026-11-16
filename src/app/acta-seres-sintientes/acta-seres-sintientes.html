@@ -2,26 +2,12 @@
 
   <!-- HEADER / NAVBAR INSTITUCIONAL -->
   <header
-    class="max-w-screen-2xl mx-auto pt-0 pb-2 flex flex-wrap items-center justify-between gap-3">
-    <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
-        <img [src]="popalog.logopop" alt="Escudo Popayán" class="w-full h-full object-contain" />
-      </div>
-      <div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-            Alcaldía de Popayán
-          </h1>
-          <span
-            class="bg-[#4141A5]/5 text-[#4141A5] text-xs font-semibold px-2.5 py-0.5 rounded-md border border-[#4141A5]/20">
-            Historia Clínica Veterinaria Oficial
-          </span>
-        </div>
-        <p class="text-sm text-slate-500">
-          Centro de Bienestar Animal (CBA) · Secretaría de Salud y Zoonosis
-        </p>
-      </div>
-    </div>
+    class="max-w-screen-2xl mx-auto pt-0 pb-1 flex flex-wrap items-center justify-end gap-2">
+    <app-page-title
+      titulo="Alcaldía de Popayán"
+      etiqueta="Historia Clínica Veterinaria Oficial"
+      [imagen]="popalog.logopop"
+      subtitulo="Centro de Bienestar Animal (CBA) · Secretaría de Salud y Zoonosis" />
     <div class="flex items-center gap-2.5">
       <!-- Botón: Crear Historia Clínica -->
       <button 

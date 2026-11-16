@@ -20,11 +20,12 @@ import {
   VeterinarioRendimiento
 } from '../services/super-admin.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-super-admin-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './super-admin-reportes.html',
   styleUrl: './super-admin-reportes.css'
 })

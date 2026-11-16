@@ -19,11 +19,12 @@ import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-historia-clinica',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageTitleComponent],
   templateUrl: './historia-clinica.html',
   styleUrls: ['./historia-clinica.css']
 })

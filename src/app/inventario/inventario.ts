@@ -8,11 +8,12 @@ import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })

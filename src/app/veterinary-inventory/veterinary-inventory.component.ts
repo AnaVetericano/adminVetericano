@@ -12,11 +12,12 @@ import {
 } from '../services/veterinary-inventory.service';
 import { AuthService } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-veterinary-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './veterinary-inventory.component.html',
   styleUrl: './veterinary-inventory.component.css'
 })

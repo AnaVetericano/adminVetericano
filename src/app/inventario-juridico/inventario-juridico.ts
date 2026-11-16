@@ -7,11 +7,12 @@ import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService, VeterinaryKitItem } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inventario-juridico',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './inventario-juridico.html',
   styleUrl: './inventario-juridico.css',
 })

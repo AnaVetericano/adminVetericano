@@ -5,11 +5,12 @@ import Swal from 'sweetalert2';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-sedes',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './sedes.component.html',
   styleUrl: './sedes.component.css'
 })

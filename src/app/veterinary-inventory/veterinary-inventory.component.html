@@ -1,38 +1,21 @@
 <div class="w-full bg-[#F4F5F7] min-h-full text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white relative">
 
   <!-- BARRA SUPERIOR / ENCABEZADO -->
-  <header class="shrink-0 px-4 sm:px-6 pt-5 pb-2 w-full">
-    <div class="flex flex-wrap items-center justify-between gap-3 max-w-screen-2xl mx-auto">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
-          <!-- Icono de Maletín / Kit Médico de Campo -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-              Inventario Veterinario
-            </h1>
-            <span class="bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20 text-[11px] font-semibold px-2 py-0.5 rounded-md">
-              Kit de Campo
-            </span>
-          </div>
-          <p class="text-sm text-slate-500">
-            Maletín asignado a: <span class="font-semibold text-[#4141A5]">{{ veterinarioNombre }}</span> · Saldo en tiempo real para atención de animales
-          </p>
-          <p class="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141A5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Los consumos de medicamentos se descuentan y registran directamente desde la atención en Historia Clínica o Acta de Seres Sintientes.
-          </p>
-        </div>
-      </div>
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full">
+    <app-page-title
+      titulo="Inventario Veterinario"
+      etiqueta="Kit de Campo"
+      [subtitulo]="'Maletín asignado a: ' + veterinarioNombre + ' · Saldo en tiempo real para atención de animales'" />
+    <div class="flex flex-wrap items-center justify-between gap-2 max-w-screen-2xl mx-auto">
+      <p class="text-xs text-slate-400 flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#4141A5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Los consumos de medicamentos se descuentan y registran directamente desde la atención en Historia Clínica o Acta de Seres Sintientes.
+      </p>
 
       <!-- BOTONES DE ACCIÓN RÁPIDA, SELECTOR SUPERVISOR Y CENTRO DE ALERTAS -->
-      <div class="flex items-center gap-2.5 flex-wrap">
+      <div class="flex items-center gap-2.5 flex-wrap ml-auto">
         <div *ngIf="esAdmin && veterinariosDisponibles.length > 0" class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-3 py-2">
           <span class="text-xs font-semibold text-slate-500 hidden sm:inline">Supervisar maletín de:</span>
           <select

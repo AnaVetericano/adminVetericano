@@ -20,11 +20,12 @@ import {
 } from '../services/super-admin.service';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-super-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, AnimalIconComponent],
+  imports: [CommonModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './super-admin-dashboard.html',
   styleUrl: './super-admin-dashboard.css'
 })

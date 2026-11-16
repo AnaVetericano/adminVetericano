@@ -8,11 +8,12 @@ import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
 import { Graficas } from '../graficas/graficas';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent],
+  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent, PageTitleComponent],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })

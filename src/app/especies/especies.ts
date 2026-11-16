@@ -7,11 +7,12 @@ import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { AuthService, CrearEspecie, ActualizarEspecie } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
 selector: 'app-especies',
 standalone: true,
-imports: [FormsModule, CommonModule, AnimalIconComponent],
+imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
 templateUrl: './especies.html',
 styleUrl: './especies.css',
 })

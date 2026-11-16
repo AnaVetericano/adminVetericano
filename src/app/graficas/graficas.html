@@ -1,24 +1,12 @@
 <div class="h-full w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white overflow-hidden relative">
 
   <!-- ENCABEZADO CON ICONO Y SUBTÍTULO INSTITUCIONAL -->
-  <header class="shrink-0 px-4 sm:px-6 pt-5 pb-2 w-full">
-    <div class="flex items-center gap-3 max-w-screen-2xl mx-auto">
-      <app-animal-icon tipo="perro" modo="una-vez" [tamano]="44" />
-      <div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-            Panel de Estadísticas
-          </h1>
-          <span class="bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20 text-xs font-semibold px-2 py-0.5 rounded-md">
-            Supervisión Admin
-          </span>
-        </div>
-        <p class="text-sm text-slate-500">
-          Visualización y análisis de métricas registradas en el sistema
-        </p>
-      </div>
-    </div>
-  </header>
+  <app-page-title
+    titulo="Panel de Estadísticas"
+    etiqueta="Supervisión Admin"
+    subtitulo="Visualización y análisis de métricas registradas en el sistema"
+    animal="perro"
+  />
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col overflow-y-auto space-y-5">

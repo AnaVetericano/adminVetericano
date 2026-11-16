@@ -452,13 +452,35 @@
     <!-- BARRA SUPERIOR CON PERFIL EN LA ESQUINA DERECHA -->
     <header class="bg-white border-b border-slate-200 h-14 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
       
-      <!-- Espacio izquierdo: reserva el lugar del botón de menú en móvil.
-           Las alertas de duplicados se consultan desde Peticiones (pestaña "Alertas de duplicados")
-           y el contador del ítem Peticiones en la barra lateral. -->
-      <div class="flex items-center gap-3 pl-12 lg:pl-0"></div>
+      <!-- TÍTULO DE LA PÁGINA ACTIVA (lo declara cada página con <app-page-title>).
+           pl-12 reserva el lugar del botón de menú en móvil. -->
+      <div class="flex items-center gap-3 pl-12 lg:pl-0 pr-3 min-w-0 flex-1">
+        @if (encabezadoPagina.actual(); as enc) {
+          @if (enc.animal) {
+            <app-animal-icon [tipo]="enc.animal" modo="una-vez" [tamano]="34" class="hidden sm:inline-flex shrink-0" />
+          }
+          @if (enc.imagen) {
+            <img [src]="enc.imagen" alt="" class="hidden sm:block w-6 h-7 object-contain shrink-0" />
+          }
+          <div class="min-w-0 leading-tight">
+            <div class="flex items-center gap-2 min-w-0">
+              <h1 class="text-[15px] sm:text-base font-bold text-[#170B3D] truncate">{{ enc.titulo }}</h1>
+              @if (enc.etiqueta) {
+                <span class="hidden lg:inline-flex shrink-0 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">{{ enc.etiqueta }}</span>
+              }
+              @if (enc.detalle) {
+                <span class="hidden lg:inline-flex shrink-0 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">{{ enc.detalle }}</span>
+              }
+            </div>
+            @if (enc.subtitulo) {
+              <p class="hidden md:block text-xs text-slate-500 truncate mt-0.5">{{ enc.subtitulo }}</p>
+            }
+          </div>
+        }
+      </div>
 
       <!-- ACCIONES DERECHA: ALERTAS DE MEDICAMENTOS + BOTÓN DE PERFIL -->
-      <div class="flex items-center gap-2.5 sm:gap-3">
+      <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
 
         <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
         @if (authService.isVeterinario() || authService.isAdmin()) {

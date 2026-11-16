@@ -3,27 +3,14 @@
   <!-- ========================================================================= -->
   <!-- 1. ENCABEZADO INSTITUCIONAL DEL DASHBOARD JURÍDICO                        -->
   <!-- ========================================================================= -->
-  <header class="shrink-0 px-4 sm:px-6 pt-5 pb-2">
-    <div class="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-3">
-      
-      <!-- Título y subtítulo -->
-      <div class="flex items-center gap-3">
-        <app-animal-icon tipo="perro" modo="una-vez" [tamano]="44" />
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-              Dashboard 
-            </h1>
-            <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-              Supervisión Legal
-            </span>
-          </div>
-          <p class="text-sm text-slate-500">
-            Seguimiento de peticiones radicadas, asignación veterinaria y control de seres sintientes en CBA
-          </p>
-        </div>
-      </div>
-
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1">
+    <app-page-title
+      titulo="Dashboard"
+      etiqueta="Supervisión Legal"
+      subtitulo="Seguimiento de peticiones radicadas, asignación veterinaria y control de seres sintientes en CBA"
+      animal="perro"
+    />
+    <div class="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-end gap-2">
       <!-- Acciones de Cabecera -->
       <div class="flex items-center gap-2.5">
         <!-- Botón Actualizar -->

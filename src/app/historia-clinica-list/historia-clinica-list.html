@@ -3,38 +3,12 @@
   <!-- ========================================================================= -->
   <!-- 1. ENCABEZADO INSTITUCIONAL                                               -->
   <!-- ========================================================================= -->
-  <header class="shrink-0 px-4 sm:px-6 pt-5 pb-2 w-full">
-    <div class="flex flex-wrap items-center justify-between gap-3 max-w-screen-2xl mx-auto">
-      
-      <!-- Marca y Título del Módulo -->
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-              {{ mostrarHospitalizados ? 'Pacientes Hospitalizados CBA' : 'Historias Clínicas' }}
-            </h1>
-            <span
-              *ngIf="!mostrarHospitalizados"
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-              Base de Datos
-            </span>
-            <span
-              *ngIf="mostrarHospitalizados"
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5]"></span>
-              Ingresados al CBA
-            </span>
-          </div>
-          <p class="text-sm text-slate-500">
-            {{ mostrarHospitalizados ? 'Animales que ingresaron al Centro de Bienestar Animal (CBA) para hospitalización y custodia' : 'Consulta y seguimiento de historias clínicas almacenadas en el sistema' }}
-          </p>
-        </div>
-      </div>
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full">
+    <div class="flex flex-wrap items-center justify-end gap-2 max-w-screen-2xl mx-auto">
+      <app-page-title
+        [titulo]="mostrarHospitalizados ? 'Pacientes Hospitalizados CBA' : 'Historias Clínicas'"
+        [etiqueta]="mostrarHospitalizados ? 'Ingresados al CBA' : 'Base de Datos'"
+        [subtitulo]="mostrarHospitalizados ? 'Animales que ingresaron al Centro de Bienestar Animal (CBA) para hospitalización y custodia' : 'Consulta y seguimiento de historias clínicas almacenadas en el sistema'" />
 
       <!-- Acciones de Cabecera -->
       <div class="flex items-center gap-2.5 flex-wrap">

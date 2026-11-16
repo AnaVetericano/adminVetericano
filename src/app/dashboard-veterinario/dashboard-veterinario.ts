@@ -15,6 +15,7 @@ import {
   SolicitudKitPayload
 } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface PeticionItem {
   id_peticion: number;
@@ -54,7 +55,7 @@ export interface MedicamentoMaletinUI {
 @Component({
   selector: 'app-dashboard-veterinario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './dashboard-veterinario.html',
   styleUrl: './dashboard-veterinario.css'
 })

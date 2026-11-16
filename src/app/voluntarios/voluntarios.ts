@@ -9,6 +9,7 @@ import {
   PostulacionVoluntariado
 } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-voluntarios',
@@ -17,7 +18,8 @@ import { AnimalIconComponent } from '../animal-icon/animal-icon';
     CommonModule,
     RouterLink,
     FormsModule,
-    AnimalIconComponent
+    AnimalIconComponent,
+    PageTitleComponent
   ],
   templateUrl: './voluntarios.html',
   styleUrl: './voluntarios.css'

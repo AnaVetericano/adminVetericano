@@ -1,29 +1,13 @@
 <div class="h-full w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white overflow-hidden relative">
 
   <!-- ENCABEZADO -->
-  <header class="shrink-0 px-4 sm:px-6 pt-5 pb-2 w-full">
-    <div class="flex flex-wrap items-center justify-between gap-3 max-w-screen-2xl mx-auto">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-white border border-slate-200 text-[#4141A5] rounded-lg flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-              Reportes Institucionales
-            </h1>
-            <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-              Super Admin
-            </span>
-          </div>
-          <p class="text-sm text-slate-500">
-            Auditoría de peticiones atendidas, indicadores de gestión y desempeño veterinario con filtros en tiempo real
-          </p>
-        </div>
-      </div>
-
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full">
+    <app-page-title
+      titulo="Reportes Institucionales"
+      etiqueta="Super Admin"
+      subtitulo="Auditoría de peticiones atendidas, indicadores de gestión y desempeño veterinario con filtros en tiempo real"
+    />
+    <div class="flex flex-wrap items-center justify-end gap-2 max-w-screen-2xl mx-auto">
       <button
         type="button"
         (click)="consultarReportes()"

@@ -13,11 +13,12 @@ import {
   DetalleCompraConMedicamento
 } from '../services/compras.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-compra',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './compra.html',
   styleUrl: './compra.css',
 })

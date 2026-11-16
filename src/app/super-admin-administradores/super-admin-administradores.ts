@@ -11,11 +11,12 @@ import {
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-super-admin-administradores',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './super-admin-administradores.html',
   styleUrl: './super-admin-administradores.css'
 })

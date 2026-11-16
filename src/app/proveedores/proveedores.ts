@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-proveedores',
   standalone: true,
-  imports: [FormsModule, CommonModule, AnimalIconComponent],
+  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './proveedores.html',
   styleUrl: './proveedores.css',
 })

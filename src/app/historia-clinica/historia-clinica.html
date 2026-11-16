@@ -5,34 +5,14 @@
   <!-- 1. ENCABEZADO INSTITUCIONAL OFICIAL                                       -->
   <!-- ========================================================================= -->
   <header
-    class="shrink-0 px-4 sm:px-6 pt-5 pb-2 w-full print:hidden">
-    <div class="flex flex-wrap items-center justify-between gap-3 max-w-screen-2xl mx-auto">
-
-      <!-- Marca y Escudo Institucional -->
-      <div class="flex items-center gap-3">
-        <div
-          class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0 overflow-hidden">
-          <img [src]="popalog.logopop" alt="Escudo Popayán" class="w-6 h-7 object-contain" />
-        </div>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl sm:text-2xl font-bold text-[#170B3D]">
-              Alcaldía de Popayán
-            </h1>
-            <span
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold border bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20">
-              Editando Historia Clínica Oficial
-            </span>
-            <span *ngIf="paciente?.nombre"
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold border bg-slate-50 text-slate-700 border-slate-200">
-              {{ paciente?.nombre }} ({{ paciente?.especie }})
-            </span>
-          </div>
-          <p class="text-sm text-slate-500">
-            Expediente Clínico · Centro de Bienestar Animal (CBA) · Secretaría de Salud y Zoonosis
-          </p>
-        </div>
-      </div>
+    class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full print:hidden">
+    <div class="flex flex-wrap items-center justify-end gap-2 max-w-screen-2xl mx-auto">
+      <app-page-title
+        titulo="Alcaldía de Popayán"
+        etiqueta="Editando Historia Clínica Oficial"
+        [detalle]="paciente?.nombre ? (paciente?.nombre + ' (' + paciente?.especie + ')') : null"
+        [imagen]="popalog.logopop"
+        subtitulo="Expediente Clínico · Centro de Bienestar Animal (CBA) · Secretaría de Salud y Zoonosis" />
 
       <!-- Acciones de Cabecera -->
       <div class="flex items-center gap-2">

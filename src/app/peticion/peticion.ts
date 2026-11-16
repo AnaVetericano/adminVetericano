@@ -23,6 +23,7 @@ import {
 } from '../models/duplicados.model';
 import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparacion/alerta-duplicado-comparacion';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-peticion',
@@ -34,7 +35,8 @@ import { AnimalIconComponent } from '../animal-icon/animal-icon';
     DashboardJuridicoComponent,
     AlertaDuplicadoComparacionComponent,
     RouterLink,
-    AnimalIconComponent
+    AnimalIconComponent,
+    PageTitleComponent
   ],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'
