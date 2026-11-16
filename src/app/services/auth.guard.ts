@@ -61,6 +61,13 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return true;
   }
 
+  // Sin rol identificable no se supone ninguno: cerrar sesión y pedir iniciar de nuevo
+  if (!authService.userRole()) {
+    authService.logout();
+    router.navigate(['/iniciodesesionadministrador']);
+    return false;
+  }
+
   // Notificación de acceso no autorizado
   Swal.fire({
     title: 'Acceso restringido',
