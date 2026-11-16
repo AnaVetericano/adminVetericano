@@ -125,8 +125,7 @@
       <!-- Estado: Cargando detalle -->
       <div *ngIf="cargando" data-testid="estado-cargando"
         class="bg-white rounded-xl border border-slate-200 p-8 text-center space-y-3 shadow-xs">
-        <div
-          class="inline-block w-8 h-8 border-4 border-[#4141A5]/25 border-t-[#4141A5] rounded-full animate-spin"></div>
+        <app-animal-icon tipo="huellas" [tamano]="40" etiqueta="Cargando comparación" />
         <p class="text-sm font-bold text-[#170B3D]">Cargando comparación de la alerta...</p>
         <p class="text-xs text-slate-500 font-medium">
           Consultando peticiones, evidencias multimedia y métricas de similitud.

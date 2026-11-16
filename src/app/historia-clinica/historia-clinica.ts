@@ -20,11 +20,12 @@ import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
 import { PageTitleComponent } from '../page-title/page-title';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-historia-clinica',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageTitleComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageTitleComponent, AnimalIconComponent],
   templateUrl: './historia-clinica.html',
   styleUrls: ['./historia-clinica.css']
 })
