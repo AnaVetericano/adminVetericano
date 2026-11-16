@@ -4,8 +4,9 @@ import { AuthService, UserRole } from './auth';
 import Swal from 'sweetalert2';
 
 // Guard de sesión persistente vía localStorage.
-// La sesión SOLO se cierra con "Cerrar sesión" del sidebar (onLogout),
-// que borra token/refresh_token. Cerrar la ventana NO cierra sesión.
+// La sesión se cierra con "Cerrar sesión" del sidebar (onLogout) o cuando
+// el interceptor no puede renovar el token (refresh vencido o rechazado).
+// Cerrar la ventana NO cierra sesión.
 export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
   const token = localStorage.getItem('token');

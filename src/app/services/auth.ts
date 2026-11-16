@@ -218,7 +218,12 @@ export class AuthService {
   // Señales públicas de solo lectura
   public currentUser = this.currentUserSignal.asReadonly();
   public isAuthenticated = computed(() => !!this.currentUserSignal() || !!localStorage.getItem('token'));
-  public userRole = computed(() => this.obtenerRolDesdeToken() || this.currentUserSignal()?.rol || '');
+  public userRole = computed(() => {
+    // Leer la señal siempre (antes del token) para que el rol se recalcule
+    // cuando cambie la sesión, por ejemplo al renovar el token.
+    const sesion = this.currentUserSignal();
+    return this.obtenerRolDesdeToken() || sesion?.rol || '';
+  });
   public isSuperAdmin = computed(() => {
     const token = localStorage.getItem('token');
     const payload = this.extraerPayloadToken(token);
@@ -372,6 +377,38 @@ export class AuthService {
       localStorage.setItem('user_session', JSON.stringify(sesion));
     } catch { }
     return sesion;
+  }
+
+  /**
+   * Guarda los tokens que entrega /api/token/refresh/ y alinea la sesión
+   * (rol e id_rol) con el token nuevo, que el backend arma con el rol actual
+   * de la base de datos.
+   */
+  guardarTokensRenovados(access: string, refresh?: string): void {
+    localStorage.setItem('token', access);
+    if (refresh) {
+      localStorage.setItem('refresh_token', refresh);
+    }
+
+    const actual = this.currentUserSignal();
+    if (!actual) {
+      this.currentUserSignal.set(this.obtenerSesionInicial());
+      return;
+    }
+
+    const payload = this.extraerPayloadToken(access);
+    const rolToken = this.obtenerRolDesdeToken();
+    const idRolToken = Number(payload?.id_rol);
+    const sesion: UserSession = {
+      ...actual,
+      rol: rolToken || actual.rol,
+      ...(!isNaN(idRolToken) && idRolToken > 0 ? { id_rol: idRolToken } : {})
+    };
+    // Objeto nuevo para que las señales derivadas (userRole, isAdmin…) se recalculen
+    this.currentUserSignal.set(sesion);
+    try {
+      localStorage.setItem('user_session', JSON.stringify(sesion));
+    } catch { }
   }
 
   /**
