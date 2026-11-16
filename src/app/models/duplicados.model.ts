@@ -13,10 +13,12 @@ export type CriterioCoincidenciaDuplicado = 'texto' | 'gps' | 'imagen' | string;
 /** Códigos normalizados para errores HTTP de los endpoints de duplicados. */
 export type CodigoErrorDuplicados =
   | 'VALIDATION_ERROR'
+  | 'UNPROCESSABLE_ENTITY'
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
   | 'NOT_FOUND'
   | 'CONFLICT'
+  | 'SERVICE_UNAVAILABLE'
   | 'NETWORK_ERROR'
   | 'UNKNOWN';
 
@@ -85,19 +87,32 @@ export interface PeticionAlertaDetalle extends PeticionAlertaResumen {
 
 export interface MetricasDuplicado {
   similitud_texto: number | null;
+  porcentaje_similitud_texto?: number | null;
   coincidencia_texto: boolean;
   distancia_metros: number | null;
+  radio_gps_metros?: number | null;
+  porcentaje_proximidad_gps?: number | null;
   coincidencia_gps: boolean;
   distancia_hamming: number | null;
   similitud_imagen: number | null;
   coincidencia_imagen: boolean;
+  metodo_imagen?: string | null;
+  dinov2_calculada?: boolean;
+  visual_calculada?: boolean;
+  similitud_visual_coseno?: number | null;
+  similitud_visual_dinov2?: number | null;
+  porcentaje_similitud_visual?: number | null;
+  estado_comparacion_visual?: string | null;
   score_combinado: number;
+  porcentaje_score_combinado?: number | null;
   criterios_coincidencia: CriterioCoincidenciaDuplicado[];
 }
 
 export interface ComparacionAlertaDuplicado {
   peticion_menor_id: number | null;
   peticion_mayor_id: number | null;
+  peticion_principal_id?: number | null;
+  peticion_duplicada_id?: number | null;
   mismo_tipo: boolean;
   mismo_estado: boolean;
   ambas_asignadas: boolean;
@@ -114,12 +129,18 @@ export interface AlertaDuplicadoResumen {
   peticion_mayor_id: number;
   peticion_origen_id: number | null;
   peticion_principal_id: number | null;
+  peticion_duplicada_id?: number | null;
   similitud_texto: number | null;
   coincidencia_texto: boolean;
   distancia_metros: number | null;
+  radio_gps_metros?: number | null;
+  porcentaje_proximidad_gps?: number | null;
   coincidencia_gps: boolean;
   distancia_hamming: number | null;
   similitud_imagen: number | null;
+  similitud_visual_coseno?: number | null;
+  porcentaje_similitud_visual?: number | null;
+  metodo_imagen?: string | null;
   coincidencia_imagen: boolean;
   score_combinado: number;
   criterios_coincidencia: CriterioCoincidenciaDuplicado[];
@@ -192,7 +213,34 @@ export interface ResolverAlertaDuplicadoResponse {
   cambiada: boolean;
   estado_anterior: EstadoRevisionAlerta;
   estado_nuevo: EstadoRevisionAlerta;
+  peticion_original_id?: number | null;
+  peticion_duplicada_id?: number | null;
+  historial_ids?: number[];
   alerta: AlertaDuplicadoDetalle;
+}
+
+export interface CompararVisualAlertaResponse {
+  id_alerta?: number;
+  comparado: boolean;
+  dinov2_calculada?: boolean;
+  visual_calculada?: boolean;
+  codigo?: string | null;
+  motivo?: string | null;
+  error?: string | null;
+  mensaje: string;
+  similitud_imagen_porcentaje?: number | null;
+  porcentaje_similitud_visual?: number | null;
+  similitud_imagen?: number | null;
+  similitud_visual_coseno?: number | null;
+  coincidencia_imagen?: boolean;
+  metodo_imagen?: string | null;
+  distancia_gps_metros?: number | null;
+  radio_gps_metros?: number | null;
+  porcentaje_proximidad_gps?: number | null;
+  peticiones_sin_fotos?: number[];
+  estado_revision?: EstadoRevisionAlerta;
+  alerta_modificada?: boolean;
+  alerta?: AlertaDuplicadoDetalle;
 }
 
 export interface DetectarDuplicadosRequest {
@@ -359,6 +407,79 @@ export function formatearDistanciaMetros(
     return `${(metros / 1000).toFixed(2)} km`;
   }
   return `${Math.round(metros * 10) / 10} m`;
+}
+
+/** Calcula el porcentaje real de proximidad GPS dentro del radio de referencia (default 200 m). */
+export function calcularPorcentajeProximidadGps(
+  distancia: number | null | undefined,
+  radioMetros: number | null | undefined = 200,
+  decimales: number = 1
+): number | null {
+  if (distancia === null || distancia === undefined) {
+    return null;
+  }
+  const dist = Number(distancia);
+  if (!Number.isFinite(dist) || dist < 0) {
+    return null;
+  }
+  const radioRaw = Number(radioMetros);
+  const radio = Number.isFinite(radioRaw) && radioRaw >= 1 ? radioRaw : 200;
+  const ratio = Math.max(0, Math.min(1, 1 - dist / radio));
+  const factor = Math.pow(10, Math.max(0, Math.min(4, Math.trunc(decimales))));
+  return Math.round(ratio * 100 * factor) / factor;
+}
+
+/** Determina estrictamente si las métricas incluyen similitud visual real calculada con DINOv2. */
+export function tieneComparacionVisualDinov2(
+  metrica: Partial<MetricasDuplicado> | null | undefined
+): boolean {
+  if (!metrica) {
+    return false;
+  }
+  if (typeof metrica.dinov2_calculada === 'boolean') {
+    return metrica.dinov2_calculada;
+  }
+  const metodo = String(metrica.metodo_imagen ?? '').trim().toLowerCase();
+  if (metodo === 'dinov2_small') {
+    return (
+      metrica.porcentaje_similitud_visual !== null &&
+      metrica.porcentaje_similitud_visual !== undefined
+    ) || (metrica.similitud_imagen !== null && metrica.similitud_imagen !== undefined);
+  }
+  if (metodo === 'dhash' || metodo === 'dhash_fallback') {
+    return false;
+  }
+  const tieneHamming = metrica.distancia_hamming !== null && metrica.distancia_hamming !== undefined;
+  if (tieneHamming) {
+    return false;
+  }
+  return (
+    (metrica.porcentaje_similitud_visual !== null && metrica.porcentaje_similitud_visual !== undefined) ||
+    (metrica.similitud_imagen !== null && metrica.similitud_imagen !== undefined)
+  );
+}
+
+/** Formatea la similitud visual DINOv2 real o devuelve 'No calculada' sin inventar porcentajes. */
+export function formatearSimilitudVisualDinov2(
+  metrica: Partial<MetricasDuplicado> | null | undefined,
+  fallback: string = 'No calculada',
+  decimales: number = 1
+): string {
+  if (!tieneComparacionVisualDinov2(metrica) || !metrica) {
+    return fallback;
+  }
+  if (
+    metrica.porcentaje_similitud_visual !== null &&
+    metrica.porcentaje_similitud_visual !== undefined
+  ) {
+    const pctRaw = Number(metrica.porcentaje_similitud_visual);
+    if (Number.isFinite(pctRaw)) {
+      const acotado = Math.max(0, Math.min(100, pctRaw));
+      const factor = Math.pow(10, Math.max(0, Math.min(4, Math.trunc(decimales))));
+      return `${Math.round(acotado * factor) / factor}%`;
+    }
+  }
+  return formatearPorcentajeSimilitud(metrica.similitud_imagen, decimales, fallback);
 }
 
 /** Formatea el resultado perceptual dHash únicamente para visualización. */

@@ -1591,20 +1591,20 @@ export class ActaSeresSintientes implements OnInit {
       titulo = 'El servidor rechazó algunos datos';
       mensajeHtml = detalle.length
         ? detalle.map(linea => this.escaparHtml(linea)).join('<br>')
-        : 'Verifica los campos obligatorios del formulario.';
+        : 'Verifique los campos obligatorios del formulario.';
     } else if (error.status === 401 || error.status === 403) {
-      mensajeHtml = 'Tu sesión ha expirado o no tiene permisos. Por favor, inicia sesión nuevamente.';
+      mensajeHtml = 'Su sesión ha expirado o no tiene permisos. Inicie sesión nuevamente.';
     } else if (error.status === 0) {
       const servidor = environment.backendUrl || 'el servidor en la nube';
-      mensajeHtml = `No se pudo conectar con el servidor en <b>${this.escaparHtml(servidor)}</b>.<br>Verifica la conexión a internet o el estado del backend desplegado.`;
+      mensajeHtml = `No se pudo conectar con el servidor en <b>${this.escaparHtml(servidor)}</b>.<br>Verifique la conexión a internet o el estado del backend desplegado.`;
     } else if (error.status >= 500) {
-      mensajeHtml = 'El servidor en la nube reportó un error interno (500). Revisa los registros del backend.';
+      mensajeHtml = 'El servidor en la nube reportó un error interno (500). Revise los registros del backend.';
     }
 
     Swal.fire({
       icon: 'error',
       title: titulo,
-      html: `<div style="text-align:left;font-size:13px">${mensajeHtml}</div>`,
+      html: `<p>${mensajeHtml}</p>`,
       confirmButtonText: 'Aceptar'
     });
   }
@@ -2003,9 +2003,11 @@ export class ActaSeresSintientes implements OnInit {
           title: 'Historia clínica y consulta guardadas',
           icon: 'success',
           html:
-            `Historia clínica: <b>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</b><br>` +
-            `Consulta N°: <b>${this.escaparHtml(String(respConsulta?.id_consulta || 'registrada'))}</b><br>` +
-            `<b>Guardado exitoso con sistemas, diagnósticos y tratamientos</b>`,
+            `<dl class="qa-datos">` +
+            `<dt>Historia clínica</dt><dd>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</dd>` +
+            `<dt>Consulta N°</dt><dd>${this.escaparHtml(String(respConsulta?.id_consulta || 'registrada'))}</dd>` +
+            `</dl>` +
+            `<p class="qa-nota">Guardado exitoso con sistemas, diagnósticos y tratamientos.</p>`,
           confirmButtonText: 'Aceptar'
         });
 
@@ -2030,8 +2032,10 @@ export class ActaSeresSintientes implements OnInit {
           title: 'Historia clínica registrada',
           icon: 'success',
           html:
-            `Historia clínica N°: <b>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</b> guardada en el sistema.<br>` +
-            `<b>Atención: La consulta clínica no pudo adjuntarse (${errConsulta?.status || 'ver consola'}).</b>`,
+            `<dl class="qa-datos">` +
+            `<dt>Historia clínica N°</dt><dd>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</dd>` +
+            `</dl>` +
+            `<p class="qa-nota">Atención: la consulta clínica no pudo adjuntarse (<code>${errConsulta?.status || 'ver consola'}</code>).</p>`,
           confirmButtonText: 'Aceptar'
         });
         this.reiniciarFormularioClinico();
@@ -2507,11 +2511,15 @@ export class ActaSeresSintientes implements OnInit {
           title: 'Historia clínica creada',
           icon: 'success',
           html:
-            `Paciente: <b>${this.escaparHtml(nombreAnimal)}</b><br>` +
-            `Historia Clínica: <b>${this.escaparHtml(String(numHc || 'Registrada'))}</b><br>` +
-            (idSeguimiento ? `Acta Oficial N°: <b>#${idSeguimiento}</b><br>` : '') +
-            (urlsFotos.length > 0 || urlsVideos.length > 0 ? `<b>${urlsFotos.length} fotos y ${urlsVideos.length} videos adjuntos</b><br>` : '') +
-            `<b>Paciente registrado con constantes, diagnóstico y tratamientos</b>`,
+            `<dl class="qa-datos">` +
+            `<dt>Paciente</dt><dd>${this.escaparHtml(nombreAnimal)}</dd>` +
+            `<dt>Historia clínica</dt><dd>${this.escaparHtml(String(numHc || 'Registrada'))}</dd>` +
+            (idSeguimiento ? `<dt>Acta oficial N°</dt><dd>#${idSeguimiento}</dd>` : '') +
+            (urlsFotos.length > 0 || urlsVideos.length > 0
+              ? `<dt>Evidencias adjuntas</dt><dd>${urlsFotos.length} ${urlsFotos.length === 1 ? 'foto' : 'fotos'} y ${urlsVideos.length} ${urlsVideos.length === 1 ? 'video' : 'videos'}</dd>`
+              : '') +
+            `</dl>` +
+            `<p class="qa-nota">Paciente registrado con constantes, diagnóstico y tratamientos.</p>`,
           confirmButtonText: 'Aceptar'
         });
 
@@ -2524,8 +2532,8 @@ export class ActaSeresSintientes implements OnInit {
           title: 'Registro completado',
           icon: 'success',
           html:
-            `Paciente <b>${this.escaparHtml(nombreAnimal)}</b> registrado en el sistema con acta oficial.<br>` +
-            `<b>Los datos y evidencias han sido guardados.</b>`,
+            `<p>Paciente <b>${this.escaparHtml(nombreAnimal)}</b> registrado en el sistema con acta oficial.</p>` +
+            `<p class="qa-nota">Los datos y evidencias han sido guardados.</p>`,
           confirmButtonText: 'Aceptar'
         });
         this.deseleccionarPaciente();
@@ -2897,7 +2905,7 @@ export class ActaSeresSintientes implements OnInit {
 
           Swal.fire({
             title: 'Historia clínica generada',
-            html: `Se formalizó la historia clínica de <b>${this.escaparHtml(nombre)}</b> (${this.escaparHtml(String(numHc))}).<br><b>El paciente ha pasado a la pestaña de Completados.</b>`,
+            html: `<p>Se formalizó la historia clínica de <b>${this.escaparHtml(nombre)}</b> (${this.escaparHtml(String(numHc))}).</p><p class="qa-nota">El paciente ha pasado a la pestaña de Completados.</p>`,
             icon: 'success',
             confirmButtonText: 'Aceptar'
           });
@@ -4136,7 +4144,7 @@ export class ActaSeresSintientes implements OnInit {
       Swal.fire({
         icon: 'info',
         title: 'Medicamento ya administrado',
-        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado de inventario.`,
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}) y descontado de inventario.`,
         confirmButtonText: 'Aceptar'
       });
       return;
@@ -4178,7 +4186,7 @@ export class ActaSeresSintientes implements OnInit {
 
     Swal.fire({
       title: 'Confirmar administración y descuento',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><b>Esta acción descontará las unidades de los lotes activos en el inventario de la clínica.</b>`,
+      html: `<p>Se registrará la administración física de <b>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</b> de <b>${nombreMed}</b> al paciente.</p><p class="qa-nota">Esta acción descontará las unidades de los lotes activos en el inventario de la clínica.</p>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
@@ -4205,7 +4213,12 @@ export class ActaSeresSintientes implements OnInit {
               Swal.fire({
                 icon: 'success',
                 title: 'Administración registrada',
-                html: `Se administraron y descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> del maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
+                html:
+                  `<dl class="qa-datos">` +
+                  `<dt>Medicamento</dt><dd>${nombreMed}</dd>` +
+                  `<dt>Cantidad administrada</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd>` +
+                  `<dt>Saldo restante en maletín</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd>` +
+                  `</dl>`,
                 confirmButtonText: 'Aceptar'
               });
             }
@@ -4217,7 +4230,7 @@ export class ActaSeresSintientes implements OnInit {
           Swal.fire({
             icon: 'error',
             title: 'No fue posible descontar del inventario',
-            text: 'No fue posible registrar la administración en el inventario del maletín.',
+            text: 'No fue posible registrar la administración en el inventario del maletín. Intente nuevamente.',
             confirmButtonText: 'Aceptar'
           });
         }
@@ -4231,10 +4244,11 @@ export class ActaSeresSintientes implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Confirmar retiro de medicamento',
-        html: `Atención: Ya se registró la administración y se descontaron <b>${med.cantidadEfectivaAdministrada} uds</b> de <b>${med.nombre}</b> en el inventario físico.<br><br>Confirme si desea retirar este tratamiento del formulario.`,
+        html: `<p>Ya se registró la administración y se descontaron <b>${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}</b> de <b>${med.nombre}</b> en el inventario físico.</p><p class="qa-nota">Confirme si desea retirar este tratamiento del formulario.</p>`,
         showCancelButton: true,
         confirmButtonText: 'Eliminar',
-        cancelButtonText: 'Cancelar'
+        cancelButtonText: 'Cancelar',
+        customClass: { popup: 'qa-destructivo' }
       }).then((res) => {
         if (res.isConfirmed) {
           this.medicamentosSeleccionados.splice(indice, 1);
@@ -4259,14 +4273,11 @@ export class ActaSeresSintientes implements OnInit {
       icon: 'warning',
       title: 'Alerta de stock bajo',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <div class="p-3 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
-            <p class="font-semibold text-[#170B3D]">
-              Quedan <b>${s}</b> unidades de este producto. Solicite reaprovisionamiento al inventario general.
-            </p>
-          </div>
-          <p class="text-xs text-slate-600">Producto en maletín: <b>${nombre}</b></p>
-        </div>
+        <dl class="qa-datos">
+          <dt>Producto en maletín</dt><dd>${nombre}</dd>
+          <dt>Stock disponible</dt><dd class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</dd>
+        </dl>
+        <p class="qa-nota">Solicite reaprovisionamiento al inventario general.</p>
       `,
       confirmButtonText: 'Aceptar'
     });
@@ -4302,7 +4313,7 @@ export class ActaSeresSintientes implements OnInit {
     Swal.fire({
       icon: 'success',
       title: 'Medicamento alternativo seleccionado',
-      text: `Se seleccionó ${nombre} con ${stock} uds disponibles.`,
+      text: `Se seleccionó ${nombre} con ${stock} ${stock === 1 ? 'unidad disponible' : 'unidades disponibles'}.`,
       timer: 1600,
       showConfirmButton: false
     });
@@ -4394,7 +4405,7 @@ export class ActaSeresSintientes implements OnInit {
       Swal.fire({
         icon: 'error',
         title: 'No fue posible guardar',
-        text: 'No fue posible guardar la evaluación.',
+        text: 'No fue posible guardar la evaluación. Intente nuevamente.',
         confirmButtonText: 'Aceptar'
       });
     }
@@ -4451,7 +4462,7 @@ export class ActaSeresSintientes implements OnInit {
     this.cdr.detectChanges();
     Swal.fire({
       icon: 'success',
-      title: 'Sistemas en Campo Normalizados',
+      title: 'Sistemas en campo normalizados',
       text: 'Todos los 19 hallazgos se marcaron como Normales (NO presenta anomalías).',
       timer: 1200,
       showConfirmButton: false
@@ -4687,7 +4698,7 @@ export class ActaSeresSintientes implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Eliminar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true
+      customClass: { popup: 'qa-destructivo' }
     }).then((resultado) => {
       if (resultado.isConfirmed) {
         this.examenesSolicitados.splice(indice, 1);

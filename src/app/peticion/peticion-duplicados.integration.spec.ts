@@ -655,7 +655,7 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
     const compDebug = fixture.debugElement.query(By.directive(AlertaDuplicadoComparacionComponent));
     expect(compDebug).toBeTruthy();
 
-    // Seleccionar petición #101 como principal y confirmar duplicado mediante clics reales en DOM (mocked POST)
+    // Seleccionar petición #101 como original y abrir diálogo de confirmación
     const compInstance = compDebug.componentInstance as AlertaDuplicadoComparacionComponent;
     const btnElegirMenor = compDebug.query(By.css('[data-testid="btn-elegir-principal-menor"]'));
     expect(btnElegirMenor).toBeTruthy();
@@ -663,11 +663,15 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
     compInstance.observacion = 'Confirmado en prueba de integración';
     fixture.detectChanges();
 
-    const btnConfirmar = compDebug
-      .queryAll(By.css('button'))
-      .find((b) => (b.nativeElement.textContent as string).includes('Confirmar Duplicado'));
+    const btnConfirmar = compDebug.query(By.css('[data-testid="btn-enviar-resolucion"]'));
     expect(btnConfirmar).toBeTruthy();
+    expect(btnConfirmar!.nativeElement.textContent).toContain('Confirmar petición original');
     btnConfirmar!.nativeElement.click();
+    fixture.detectChanges();
+
+    const btnConfirmarDialogo = compDebug.query(By.css('[data-testid="btn-confirmar-dialogo-original"]'));
+    expect(btnConfirmarDialogo).toBeTruthy();
+    btnConfirmarDialogo.nativeElement.click();
     fixture.detectChanges();
 
     const reqPostResolver = httpMock.expectOne(
@@ -685,6 +689,7 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
       peticion_menor_id: 101,
       peticion_mayor_id: 205,
       peticion_principal_id: 101,
+      peticion_duplicada_id: 205,
       observacion_revision: 'Confirmado en prueba de integración'
     });
     const respConfirmada: ResolverAlertaDuplicadoResponse = {
@@ -692,9 +697,17 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
       cambiada: true,
       estado_anterior: 'PENDIENTE',
       estado_nuevo: 'CONFIRMADO',
+      peticion_original_id: 101,
+      peticion_duplicada_id: 205,
       alerta: crearDetalleMock(alertaConfirmada)
     };
     reqPostResolver.flush(respConfirmada);
+    fixture.detectChanges();
+
+    // Tras confirmar, Angular excluye #205 inmediatamente y refresca listados e índice automáticamente
+    expect(fixture.componentInstance.peticionesLista.some((p: any) => p.id_peticion === 205)).toBe(false);
+    flushPeticionesNoDuplicadas(peticionesBase.filter((p) => Number(p['id_peticion']) !== 205));
+    flushIndiceAlertas([alertaConfirmada, alerta11], { PENDIENTE: 1, CONFIRMADO: 1, DESCARTADO: 0, total: 2 });
     fixture.detectChanges();
 
     // Comparador pasa a modo solo lectura inmediatamente
@@ -958,6 +971,19 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
       estado_nuevo: 'DESCARTADO',
       alerta: crearDetalleMock(alertaDescartada)
     });
+    fixture.detectChanges();
+
+    flushPeticionesNoDuplicadas();
+    flushIndiceAlertas([alertaDescartada], { PENDIENTE: 0, CONFIRMADO: 0, DESCARTADO: 1, total: 1 });
+    const reqBandejaPostDescarte = httpMock.match(
+      (req) =>
+        req.method === 'GET' &&
+        req.url === `${basePeticionesUrl}/duplicados/alertas/` &&
+        req.params.get('page_size') !== '100'
+    );
+    for (const req of reqBandejaPostDescarte) {
+      req.flush(crearListadoResponse([], { PENDIENTE: 0, CONFIRMADO: 0, DESCARTADO: 1, total: 1 }));
+    }
     fixture.detectChanges();
 
     // En filtro PENDIENTE la fila desaparece inmediatamente y el badge pasa a 0
@@ -1401,6 +1427,8 @@ describe('Integración Etapa 3: Peticion + Alertas de Duplicados', () => {
         { count: 10, page: 1, page_size: 10, total_pages: 1 }
       )
     );
+    flushPeticionesNoDuplicadas();
+    flushIndiceAlertas([alertaPag1, alertaPag2Descartada], { PENDIENTE: 10, CONFIRMADO: 0, DESCARTADO: 1, total: 11 });
     fixture.detectChanges();
 
     expect(fixture.debugElement.queryAll(By.css('table tbody tr')).length).toBe(1);

@@ -5,7 +5,7 @@
   <!-- 1. ENCABEZADO INSTITUCIONAL OFICIAL                                       -->
   <!-- ========================================================================= -->
   <header
-    class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full print:hidden">
+    class="shrink-0 px-4 sm:px-6 pt-3 pb-0 w-full print:hidden">
     <div class="flex flex-wrap items-center justify-end gap-2 max-w-screen-2xl mx-auto">
       <app-page-title
         titulo="Alcaldía de Popayán"
@@ -44,12 +44,12 @@
   <!-- ========================================================================= -->
   <!-- 2. CONTENIDO PRINCIPAL (SCROLLABLE CON SCROLLSPY AUTOMÁTICO)              -->
   <!-- ========================================================================= -->
-  <main (scroll)="alHacerScroll($event)" class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 overflow-y-auto space-y-5">
+  <main (scroll)="alHacerScroll($event)" class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-3 pb-5 overflow-y-auto space-y-5">
 
     <!-- SPINNER DE CARGA INICIAL -->
     <div *ngIf="cargando"
       class="flex flex-col items-center justify-center p-16 space-y-4 bg-white rounded-xl border border-slate-200">
-      <div class="w-12 h-12 border-4 border-[#4141A5]/20 border-t-[#4141A5] rounded-full animate-spin"></div>
+      <app-animal-icon tipo="huellas" [tamano]="40" etiqueta="Cargando expediente clínico" />
       <p class="text-sm font-semibold text-slate-500">Cargando expediente clínico del animal...</p>
     </div>
 
@@ -1475,7 +1475,7 @@
         <!-- Estado Vacío -->
         <div *ngIf="!consultasAnteriores || consultasAnteriores.length === 0"
           class="bg-white border border-slate-200 rounded-xl p-10 text-center space-y-4">
-          <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 mx-auto flex items-center justify-center"><svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
+          <app-animal-icon tipo="gato" [tamano]="48" />
           <div class="max-w-md mx-auto space-y-1">
             <h4 class="text-base font-bold text-[#170B3D]">No hay consultas históricas registradas</h4>
             <p class="text-xs text-slate-500 leading-relaxed">
@@ -2126,7 +2126,7 @@
         <!-- Estado Vacío -->
         <div *ngIf="!historialModificaciones || historialModificaciones.length === 0"
           class="bg-white border border-slate-200 rounded-xl p-10 text-center space-y-3">
-          <div class="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 mx-auto flex items-center justify-center"><svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
+          <app-animal-icon tipo="gato" [tamano]="48" />
           <h4 class="text-base font-bold text-[#170B3D]">No hay modificaciones auditadas previas</h4>
           <p class="text-sm text-slate-500 max-w-md mx-auto">
             Este expediente se encuentra en su versión inicial o no ha recibido modificaciones posteriores que requieran justificación de auditoría.

@@ -42,7 +42,7 @@
             </span>
           </div>
           <p class="text-xs sm:text-sm text-slate-500 truncate">
-            Supervisión jurídica y administrativa lado a lado sin modificar los casos originales
+            Comparación jurídica y administrativa lado a lado conservando íntegramente datos y evidencias
           </p>
         </div>
       </div>
@@ -125,8 +125,7 @@
       <!-- Estado: Cargando detalle -->
       <div *ngIf="cargando" data-testid="estado-cargando"
         class="bg-white rounded-xl border border-slate-200 p-8 text-center space-y-3 shadow-xs">
-        <div
-          class="inline-block w-8 h-8 border-4 border-[#4141A5]/25 border-t-[#4141A5] rounded-full animate-spin"></div>
+        <app-animal-icon tipo="huellas" [tamano]="40" etiqueta="Cargando comparación" />
         <p class="text-sm font-bold text-[#170B3D]">Cargando comparación de la alerta...</p>
         <p class="text-xs text-slate-500 font-medium">
           Consultando peticiones, evidencias multimedia y métricas de similitud.
@@ -198,48 +197,66 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <!-- Similitud de texto -->
+            <!-- Similitud textual -->
             <div class="rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#4141A5] p-3.5">
               <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                Similitud de texto
+                Similitud textual
               </span>
               <p class="text-2xl font-bold text-[#170B3D] mt-1" data-testid="metrica-similitud-texto">
                 {{ formatearSimilitudTexto(detalle) }}
               </p>
-              <span class="text-xs font-medium"
+              <span class="text-xs font-medium block mt-0.5"
                 [ngClass]="detalle.coincidencia_texto ? 'text-[#4141A5]' : 'text-slate-400'">
-                {{ detalle.coincidencia_texto ? 'Coincidencia textual relevante' : 'Sin coincidencia textual fuerte' }}
+                {{ detalle.coincidencia_texto ? 'Coincidencia textual relevante (pg_trgm)' : 'Sin coincidencia textual fuerte' }}
               </span>
             </div>
 
-            <!-- Distancia GPS en metros -->
+            <!-- Proximidad GPS real + distancia + radio de referencia de 200 m -->
             <div class="rounded-xl bg-white border border-slate-200 p-3.5"
               [ngClass]="detalle.coincidencia_gps ? 'border-l-4 border-l-[#067647]' : ''">
               <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                Distancia GPS
+                Proximidad GPS
               </span>
-              <p class="text-2xl font-bold text-[#170B3D] mt-1" data-testid="metrica-distancia-gps">
-                {{ formatearDistanciaGpsMetros(detalle) }}
+              <p class="text-2xl font-bold text-[#170B3D] mt-1" data-testid="metrica-proximidad-gps">
+                {{ formatearProximidadGpsPorcentaje(detalle) }}
               </p>
-              <span class="text-xs font-medium"
+              <p class="text-xs font-semibold text-slate-700 mt-0.5" data-testid="metrica-distancia-gps">
+                Distancia: {{ formatearDistanciaGpsMetros(detalle) }} · Radio ref.: {{ obtenerRadioReferenciaGps(detalle) }} m
+              </p>
+              <span class="text-[11px] font-medium block mt-0.5"
                 [ngClass]="detalle.coincidencia_gps ? 'text-[#067647]' : 'text-slate-400'">
-                {{ detalle.coincidencia_gps ? 'Dentro de proximidad geográfica' : 'Sin cercanía GPS confirmada' }}
+                {{ detalle.coincidencia_gps ? 'Dentro del radio de 200 m' : 'Fuera de radio o sin GPS' }}
               </span>
             </div>
 
-            <!-- Similitud de imagen -->
+            <!-- Similitud visual real calculada por DINOv2 (o No calculada) -->
             <div class="rounded-xl bg-white border border-slate-200 p-3.5"
-              [ngClass]="detalle.coincidencia_imagen ? 'border-l-4 border-l-[#067647]' : ''">
+              [ngClass]="tieneSimilitudImagen(detalle) && detalle.coincidencia_imagen ? 'border-l-4 border-l-[#067647]' : ''">
               <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-                Similitud de imagen
+                Similitud visual (DINOv2)
               </span>
-              <p class="text-2xl font-bold text-[#170B3D] mt-1" data-testid="metrica-similitud-imagen">
-                {{ tieneSimilitudImagen(detalle) ? formatearSimilitudImagenMetrica(detalle) : 'No disponible' }}
+              <p class="text-2xl font-bold mt-1"
+                [ngClass]="tieneSimilitudImagen(detalle) ? 'text-[#170B3D]' : 'text-slate-500'"
+                data-testid="metrica-similitud-imagen">
+                {{ formatearSimilitudImagenMetrica(detalle) }}
               </p>
-              <span class="text-xs font-medium"
-                [ngClass]="detalle.coincidencia_imagen ? 'text-[#067647]' : 'text-slate-400'">
-                {{ detalle.coincidencia_imagen ? 'Coincidencia visual perceptual' : 'Sin comparación visual positiva' }}
+              <span class="text-xs font-medium block mt-0.5"
+                [ngClass]="tieneSimilitudImagen(detalle) ? (detalle.coincidencia_imagen ? 'text-[#067647]' : 'text-[#4141A5]') : 'text-slate-400'">
+                {{ tieneSimilitudImagen(detalle)
+                  ? (detalle.coincidencia_imagen ? 'Coincidencia visual DINOv2 Small' : 'Calculada con DINOv2 Small')
+                  : (tieneSoloComparacionDhash(detalle) ? 'Comparación DINOv2 pendiente (solo dHash previo)' : 'Comparación visual DINOv2 no ejecutada') }}
               </span>
+              <button *ngIf="puedeEditarResolucion && !tieneSimilitudImagen(detalle) && ambasPeticionesTienenFoto"
+                type="button"
+                data-testid="btn-calcular-dinov2"
+                (click)="calcularSimilitudVisualDinov2()"
+                [disabled]="calculandoVisual || resolviendo"
+                class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[#4141A5]/30 bg-[#4141A5]/5 hover:bg-[#4141A5]/10 text-[#4141A5] text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-50">
+                {{ calculandoVisual ? 'Calculando DINOv2...' : 'Calcular con DINOv2' }}
+              </button>
+              <p *ngIf="errorCalculoVisual" data-testid="error-calculo-dinov2" class="text-[11px] text-[#B42318] font-semibold mt-1">
+                {{ errorCalculoVisual }}
+              </p>
             </div>
 
             <!-- Score combinado + diferencia horaria -->
@@ -250,7 +267,10 @@
               <p class="text-2xl font-bold text-[#170B3D] mt-1" data-testid="metrica-score-combinado">
                 {{ formatearScoreCombinado(detalle) }}
               </p>
-              <span class="text-xs text-slate-500 font-medium">
+              <span class="text-xs text-slate-600 font-medium block mt-0.5">
+                Ponderación multiseñal
+              </span>
+              <span class="text-[11px] text-slate-500 font-medium block mt-0.5">
                 Diferencia: {{ formatearDiferenciaTiempo(detalle) }}
               </span>
             </div>
@@ -297,8 +317,17 @@
                     Detección más reciente
                   </span>
                   <span *ngIf="esSoloLectura && col.esPrincipalGuardada"
-                    class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
-                    ★ Petición Principal
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    Petición Original Conservada
+                  </span>
+                  <span *ngIf="esSoloLectura && peticionDuplicadaIdGuardada === col.idPeticion"
+                    class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
+                    Marcada como duplicada
+                  </span>
+                  <span *ngIf="puedeEditarResolucion && decisionSeleccionada === 'CONFIRMADO' && peticionPrincipalSeleccionada !== null && peticionPrincipalSeleccionada !== col.idPeticion"
+                    class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]">
+                    Se marcará como duplicada
                   </span>
                 </div>
                 <h3 class="text-base font-bold text-[#170B3D] break-words">
@@ -309,7 +338,7 @@
                 </p>
               </div>
 
-              <!-- Botón contextual para elegir como principal cuando esté pendiente -->
+              <!-- Botón contextual para elegir cualquiera de las dos peticiones como original -->
               <button *ngIf="puedeEditarResolucion && col.idPeticion"
                 type="button"
                 (click)="seleccionarPeticionPrincipal(col.idPeticion)"
@@ -320,8 +349,8 @@
                   : 'bg-white hover:bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/30'"
                 class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-50">
                 {{ decisionSeleccionada === 'CONFIRMADO' && peticionPrincipalSeleccionada === col.idPeticion
-                  ? '✓ Principal seleccionada'
-                  : 'Elegir como principal' }}
+                  ? 'Original seleccionada'
+                  : 'Seleccionar como original' }}
               </button>
             </div>
 
@@ -487,7 +516,7 @@
                 {{ esSoloLectura ? 'Resolución Registrada (Solo lectura)' : 'Resolución de la Alerta de Duplicado' }}
               </h3>
               <p class="text-xs text-slate-500">
-                Esta acción registra únicamente la revisión de duplicidad y no fusiona, elimina, reasigna ni altera estados de las peticiones.
+                Al confirmar una petición original, esta se conserva disponible para asignación veterinaria y la otra queda marcada como duplicada (sin eliminar físicamente sus datos ni evidencias).
               </p>
             </div>
             <span [ngClass]="claseEstadoRevision(detalle.estado_revision)"
@@ -505,8 +534,12 @@
                   {{ etiquetaEstadoRevision(detalle.estado_revision) }}
                 </p>
                 <p *ngIf="detalle.estado_revision === 'CONFIRMADO'"
-                  class="text-xs font-semibold text-[#4141A5] mt-1">
-                  Petición principal: {{ radicadoDePeticionId(detalle.peticion_principal_id) }}
+                  class="text-xs font-semibold text-[#067647] mt-1">
+                  Original conservada: {{ radicadoDePeticionId(detalle.peticion_principal_id) }}
+                </p>
+                <p *ngIf="detalle.estado_revision === 'CONFIRMADO' && peticionDuplicadaIdGuardada"
+                  class="text-xs font-semibold text-[#B42318] mt-0.5">
+                  Marcada duplicada: {{ radicadoDePeticionId(peticionDuplicadaIdGuardada) }}
                 </p>
               </div>
 
@@ -563,13 +596,13 @@
                     ? 'border-[#4141A5] bg-[#4141A5]/5 ring-2 ring-[#4141A5]/20'
                     : 'border-slate-200 bg-slate-50 hover:border-[#4141A5]/40'">
                   <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs font-bold text-[#170B3D]">Confirmar duplicado</span>
+                    <span class="text-xs font-bold text-[#170B3D]">Confirmar petición original</span>
                     <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold badge-status-success">
                       CONFIRMADO
                     </span>
                   </div>
                   <p class="text-xs text-slate-600 mt-1">
-                    Corresponden al mismo hecho. Exige designar cuál petición es la principal.
+                    Conserva la petición elegida (sin asumir la más antigua) y marca la otra como duplicada sin eliminar datos.
                   </p>
                 </button>
 
@@ -598,7 +631,7 @@
             <div *ngIf="decisionSeleccionada === 'CONFIRMADO'" data-testid="selector-peticion-principal"
               class="p-4 rounded-xl bg-[#4141A5]/5 border border-[#4141A5]/20 space-y-2.5">
               <span class="text-[11px] font-semibold uppercase tracking-wide text-[#170B3D] block">
-                2. Elige la petición principal (obligatorio para confirmar)
+                2. Selecciona cuál de las dos peticiones será la original conservada (sin importar antigüedad)
               </span>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <button *ngFor="let col of columnasComparacion"
@@ -664,7 +697,7 @@
                   {{ resolviendo
                     ? 'Guardando decisión...'
                     : (decisionSeleccionada === 'CONFIRMADO'
-                        ? 'Confirmar Duplicado'
+                        ? 'Confirmar petición original'
                         : (decisionSeleccionada === 'DESCARTADO' ? 'Descartar Alerta' : 'Selecciona una decisión')) }}
                 </span>
               </button>
@@ -674,6 +707,77 @@
         </section>
 
       </ng-container>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- DIÁLOGO DE CONFIRMACIÓN PARA PETICIÓN ORIGINAL                          -->
+    <!-- ======================================================================= -->
+    <div *ngIf="mostrarDialogoConfirmacion && peticionOriginalSeleccionadaVM"
+      data-testid="dialogo-confirmar-original"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="adc-confirm-dialog-title"
+      class="fixed inset-0 z-[55] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4"
+      (click)="cancelarDialogoConfirmacion(); $event.stopPropagation()">
+      <div (click)="$event.stopPropagation()"
+        class="bg-white rounded-xl border border-slate-200 shadow-lg max-w-lg w-full p-5 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-lg bg-[#4141A5]/10 text-[#4141A5] flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="space-y-1">
+            <h4 id="adc-confirm-dialog-title" class="text-sm font-bold text-[#170B3D]">
+              ¿Confirmar petición original y marcar duplicada?
+            </h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Esta decisión quedará registrada en el historial y no podrá repetirse ni revertirse desde este panel.
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <div class="rounded-lg bg-[#ECFDF3] border border-[#ABEFC6] p-3">
+            <span class="text-[11px] font-bold uppercase text-[#067647] block">Se conservará como petición original</span>
+            <p class="font-bold text-[#170B3D] mt-0.5">
+              {{ peticionOriginalSeleccionadaVM.radicado }} (#{{ peticionOriginalSeleccionadaVM.idPeticion }})
+            </p>
+            <p class="text-[11px] text-slate-600 mt-0.5">
+              Permanecerá disponible en el módulo normal de Peticiones para asignación veterinaria.
+            </p>
+          </div>
+
+          <div *ngIf="peticionDuplicadaResultanteVM" class="rounded-lg bg-[#FFF4E5] border border-[#FCD9A6] p-3">
+            <span class="text-[11px] font-bold uppercase text-[#9A5B13] block">Se marcará como duplicada</span>
+            <p class="font-bold text-[#170B3D] mt-0.5">
+              {{ peticionDuplicadaResultanteVM.radicado }} (#{{ peticionDuplicadaResultanteVM.idPeticion }})
+            </p>
+            <p class="text-[11px] text-slate-600 mt-0.5">
+              Será excluida de las listas de asignación veterinaria conservando todos sus datos y evidencias sin eliminación física.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+          <button type="button"
+            data-testid="btn-cancelar-confirmacion-original"
+            (click)="cancelarDialogoConfirmacion()"
+            [disabled]="resolviendo"
+            class="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50">
+            Cancelar
+          </button>
+          <button type="button"
+            data-testid="btn-confirmar-dialogo-original"
+            (click)="confirmarDialogoOriginal()"
+            [disabled]="resolviendo"
+            class="px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2">
+            <span *ngIf="resolviendo"
+              class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>{{ resolviendo ? 'Confirmando...' : 'Sí, confirmar petición original' }}</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ======================================================================= -->

@@ -216,12 +216,15 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
 
     const root: HTMLElement = fixture.nativeElement;
     const textoSimilitud = root.querySelector('[data-testid="metrica-similitud-texto"]')?.textContent?.trim();
+    const textoProximidad = root.querySelector('[data-testid="metrica-proximidad-gps"]')?.textContent?.trim();
     const textoDistancia = root.querySelector('[data-testid="metrica-distancia-gps"]')?.textContent?.trim();
     const textoImagen = root.querySelector('[data-testid="metrica-similitud-imagen"]')?.textContent?.trim();
 
     expect(textoSimilitud).toBe('85.4%');
-    expect(textoDistancia).toBe('45.3 m');
-    expect(textoImagen).toBe('No disponible');
+    expect(textoProximidad).toBe('77.4%');
+    expect(textoDistancia).toContain('45.3 m');
+    expect(textoDistancia).toContain('200 m');
+    expect(textoImagen).toBe('No calculada');
 
     const tarjetaMenor = root.querySelector('[data-testid="tarjeta-peticion-menor"]')?.textContent || '';
     const tarjetaMayor = root.querySelector('[data-testid="tarjeta-peticion-mayor"]')?.textContent || '';
@@ -306,19 +309,41 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="mensaje-error-resolucion"]')?.textContent
     ).toContain('petición principal');
+    expect(fixture.nativeElement.querySelector('[data-testid="dialogo-confirmar-original"]')).toBeNull();
     httpMock.expectNone(`${baseUrl}/duplicados/alertas/42/resolver/`);
 
-    // 2. Elegir petición principal y escribir observación
-    const btnPrincipalMenor: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '[data-testid="radio-principal-menor"]'
+    // 2. Elegir petición principal (incluso la mayor/más reciente 102) y escribir observación
+    const btnPrincipalMayor: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="radio-principal-mayor"]'
     );
-    btnPrincipalMenor.click();
+    btnPrincipalMayor.click();
     component.observacion = '  Mismo caso reportado por vecinos distintos.  ';
     fixture.detectChanges();
 
-    // Enviar e intentar segundo clic inmediato -> solo 1 POST
+    expect(btnEnviar.textContent?.trim()).toContain('Confirmar petición original');
+
+    // Clic abre diálogo de confirmación; cancelar NO envía POST
     btnEnviar.click();
-    component.confirmarResolucion();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="dialogo-confirmar-original"]')).toBeTruthy();
+    httpMock.expectNone(`${baseUrl}/duplicados/alertas/42/resolver/`);
+
+    const btnCancelarDialogo: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="btn-cancelar-confirmacion-original"]'
+    );
+    btnCancelarDialogo.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="dialogo-confirmar-original"]')).toBeNull();
+    httpMock.expectNone(`${baseUrl}/duplicados/alertas/42/resolver/`);
+
+    // Reabrir diálogo y confirmar; segundo intento inmediato se bloquea -> solo 1 POST
+    btnEnviar.click();
+    fixture.detectChanges();
+    const btnConfirmarDialogo: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="btn-confirmar-dialogo-original"]'
+    );
+    btnConfirmarDialogo.click();
+    component.confirmarDialogoOriginal();
     fixture.detectChanges();
 
     expect(component.resolviendo).toBe(true);
@@ -326,13 +351,14 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
     expect(reqPost.request.method).toBe('POST');
     expect(reqPost.request.body).toEqual({
       estado_revision: 'CONFIRMADO',
-      peticion_principal: 101,
+      peticion_principal: 102,
       observacion: 'Mismo caso reportado por vecinos distintos.'
     });
 
     const alertaConfirmada = crearAlertaDetalleMock({
       estado_revision: 'CONFIRMADO',
-      peticion_principal_id: 101,
+      peticion_principal_id: 102,
+      peticion_duplicada_id: 101,
       observacion_revision: 'Mismo caso reportado por vecinos distintos.',
       fecha_revision: '2026-11-14T12:00:00Z',
       revisado_por: {
@@ -342,7 +368,7 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
         nombre_completo: 'Ana López',
         email: 'juridico@vetericano.test'
       },
-      peticion_menor: crearPeticionDetalleMock(101, { es_peticion_principal: true })
+      peticion_mayor: crearPeticionDetalleMock(102, { es_peticion_principal: true, es_peticion_origen: true })
     });
 
     reqPost.flush({
@@ -350,6 +376,8 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
       cambiada: true,
       estado_anterior: 'PENDIENTE',
       estado_nuevo: 'CONFIRMADO',
+      peticion_original_id: 102,
+      peticion_duplicada_id: 101,
       alerta: alertaConfirmada
     });
     fixture.detectChanges();
@@ -358,7 +386,10 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
     expect(component.esSoloLectura).toBe(true);
     expect(emitidosResuelta.length).toBe(1);
     expect(emitidosResuelta[0].estado_nuevo).toBe('CONFIRMADO');
-    expect(fixture.nativeElement.querySelector('[data-testid="panel-solo-lectura"]')).toBeTruthy();
+    const panelSoloLectura = fixture.nativeElement.querySelector('[data-testid="panel-solo-lectura"]');
+    expect(panelSoloLectura).toBeTruthy();
+    expect(panelSoloLectura.textContent).toContain('RAD-2026-000102 (#102)');
+    expect(panelSoloLectura.textContent).toContain('RAD-2026-000101 (#101)');
     expect(fixture.nativeElement.querySelector('[data-testid="panel-edicion-resolucion"]')).toBeNull();
   });
 
@@ -429,6 +460,8 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
     component.seleccionarPeticionPrincipal(101);
     component.observacion = 'Intento simultáneo';
     component.confirmarResolucion();
+    fixture.detectChanges();
+    component.confirmarDialogoOriginal();
 
     // Respuesta 409 desde el servidor
     const reqPost = httpMock.expectOne(`${baseUrl}/duplicados/alertas/42/resolver/`);
@@ -560,5 +593,118 @@ describe('AlertaDuplicadoComparacionComponent (Etapa 2)', () => {
 
     expect(component.mediaActiva).toBeNull();
     expect(cierres).toBe(0);
+  });
+
+  it('debe mostrar porcentaje real DINOv2 cuando está calculado y permitir calcularlo bajo demanda sin inventar datos', () => {
+    const alertaSinDinov2 = crearAlertaDetalleMock({
+      comparacion: {
+        peticion_menor_id: 101,
+        peticion_mayor_id: 102,
+        mismo_tipo: true,
+        mismo_estado: false,
+        ambas_asignadas: false,
+        mismo_veterinario_asignado: false,
+        diferencia_tiempo_horas: 1.5,
+        metricas: {
+          similitud_texto: 0.72,
+          coincidencia_texto: true,
+          distancia_metros: 20,
+          radio_gps_metros: 200,
+          porcentaje_proximidad_gps: 90,
+          coincidencia_gps: true,
+          distancia_hamming: 4,
+          similitud_imagen: 0.9375,
+          coincidencia_imagen: true,
+          metodo_imagen: 'dhash',
+          dinov2_calculada: false,
+          porcentaje_similitud_visual: null,
+          score_combinado: 0.81,
+          criterios_coincidencia: ['texto', 'gps']
+        }
+      }
+    });
+
+    cargarAlertaEnComponente(alertaSinDinov2);
+
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('[data-testid="metrica-proximidad-gps"]')?.textContent?.trim()).toBe('90%');
+    expect(root.querySelector('[data-testid="metrica-similitud-imagen"]')?.textContent?.trim()).toBe('No calculada');
+
+    const btnCalcularDinov2: HTMLButtonElement | null = root.querySelector('[data-testid="btn-calcular-dinov2"]');
+    expect(btnCalcularDinov2).toBeTruthy();
+    btnCalcularDinov2!.click();
+    fixture.detectChanges();
+
+    const reqVisual = httpMock.expectOne(`${baseUrl}/duplicados/alertas/42/comparar-visual/`);
+    expect(reqVisual.request.method).toBe('POST');
+
+    reqVisual.flush({
+      comparado: true,
+      similitud_imagen_porcentaje: 91.4,
+      porcentaje_similitud_visual: 91.4,
+      similitud_imagen: 0.914,
+      similitud_visual_coseno: 0.914,
+      coincidencia_imagen: true,
+      metodo_imagen: 'dinov2_small',
+      distancia_gps_metros: 20,
+      alerta_modificada: false,
+      mensaje: 'Similitud visual DINOv2 calculada correctamente.',
+      alerta: alertaSinDinov2
+    });
+    fixture.detectChanges();
+
+    expect(root.querySelector('[data-testid="metrica-similitud-imagen"]')?.textContent?.trim()).toBe('91.4%');
+    expect(root.querySelector('[data-testid="btn-calcular-dinov2"]')).toBeNull();
+    expect(component.detalle?.estado_revision).toBe('PENDIENTE');
+  });
+
+  it('debe mostrar mensaje JSON explicativo si comparar-visual retorna 422 o 503 sin modificar el estado', () => {
+    const alertaSinDinov2 = crearAlertaDetalleMock({
+      comparacion: {
+        peticion_menor_id: 101,
+        peticion_mayor_id: 102,
+        mismo_tipo: true,
+        mismo_estado: false,
+        ambas_asignadas: false,
+        mismo_veterinario_asignado: false,
+        diferencia_tiempo_horas: 2,
+        metricas: {
+          similitud_texto: 0.72,
+          coincidencia_texto: true,
+          distancia_metros: 20,
+          radio_gps_metros: 200,
+          porcentaje_proximidad_gps: 90,
+          coincidencia_gps: true,
+          distancia_hamming: null,
+          similitud_imagen: null,
+          coincidencia_imagen: false,
+          metodo_imagen: null,
+          dinov2_calculada: false,
+          porcentaje_similitud_visual: null,
+          score_combinado: 0.81,
+          criterios_coincidencia: ['texto', 'gps']
+        }
+      }
+    });
+
+    cargarAlertaEnComponente(alertaSinDinov2);
+    const root: HTMLElement = fixture.nativeElement;
+    const btnCalcularDinov2: HTMLButtonElement | null = root.querySelector('[data-testid="btn-calcular-dinov2"]');
+    expect(btnCalcularDinov2).toBeTruthy();
+    btnCalcularDinov2!.click();
+    fixture.detectChanges();
+
+    const reqVisual = httpMock.expectOne(`${baseUrl}/duplicados/alertas/42/comparar-visual/`);
+    reqVisual.flush(
+      { error: 'VetericanoIA temporalmente fuera de servicio.' },
+      { status: 503, statusText: 'Service Unavailable' }
+    );
+    fixture.detectChanges();
+
+    expect(root.querySelector('[data-testid="error-calculo-dinov2"]')?.textContent).toContain(
+      'VetericanoIA temporalmente fuera de servicio.'
+    );
+    expect(root.querySelector('[data-testid="metrica-similitud-imagen"]')?.textContent?.trim()).toBe('No calculada');
+    expect(component.detalle?.estado_revision).toBe('PENDIENTE');
   });
 });

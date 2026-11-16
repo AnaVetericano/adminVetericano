@@ -47,9 +47,7 @@ export class InicioDeSesionAdministradorComponent {
         title: 'Campos obligatorios incompletos',
         text: 'Ingrese su correo electrónico y contraseña para continuar.',
         icon: 'info',
-        confirmButtonText: 'Aceptar',
-        background: '#ffffff',
-        color: '#170B3D'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -79,11 +77,9 @@ export class InicioDeSesionAdministradorComponent {
         const mensaje = mensajeRaw || 'Credenciales incorrectas, intenta de nuevo.';
         Swal.fire({
           title: 'Credenciales inválidas',
-          text: mensaje,
+          text: mensaje === 'Credenciales incorrectas, intenta de nuevo.' ? 'Credenciales incorrectas. Verifique sus datos e intente nuevamente.' : mensaje,
           icon: 'error',
-          confirmButtonText: 'Aceptar',
-          background: '#ffffff',
-          color: '#170B3D'
+          confirmButtonText: 'Aceptar'
         });
       }
     });

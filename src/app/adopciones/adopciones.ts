@@ -294,7 +294,8 @@ export class Adopciones implements OnInit {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'qa-destructivo' }
     }).then((result) => {
       if (result.isConfirmed) {
         if (!petToDelete.id) {

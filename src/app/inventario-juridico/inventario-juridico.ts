@@ -469,12 +469,12 @@ export class InventarioJuridicoComponent implements OnInit {
                 icon: 'success',
                 title: 'Stock devuelto a bodega',
                 html: `
-                  <div class="text-left text-sm space-y-2">
-                    <p><strong>Producto:</strong> ${nombreProd}</p>
-                    <p><strong>Veterinario origen:</strong> ${nombreVet}</p>
-                    <p><strong>Cantidad retirada:</strong> <span class="text-[#B42318] font-bold">-${cant} unidades</span></p>
-                    <p><strong>Nuevo stock en Bodega CBA:</strong> <span class="text-[#4141A5] font-bold">${nuevoStockBodega} unidades</span></p>
-                  </div>
+                  <dl class="qa-datos">
+                    <dt>Producto</dt><dd>${nombreProd}</dd>
+                    <dt>Veterinario origen</dt><dd>${nombreVet}</dd>
+                    <dt>Cantidad retirada</dt><dd>-${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                    <dt>Nuevo stock en Bodega CBA</dt><dd>${nuevoStockBodega} ${nuevoStockBodega === 1 ? 'unidad' : 'unidades'}</dd>
+                  </dl>
                 `,
                 confirmButtonText: 'Aceptar'
               });
@@ -552,14 +552,14 @@ export class InventarioJuridicoComponent implements OnInit {
               icon: 'success',
               title: 'Stock asignado al veterinario',
               html: `
-                <div class="text-left text-sm space-y-2">
-                  <p><strong>Producto:</strong> ${nombreProd}</p>
-                  <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                  <p><strong>Cantidad transferida:</strong> <span class="text-[#4141A5] font-bold">${cant} unidades</span></p>
-                  <div class="p-2.5 bg-[#4141A5]/5 border border-[#4141A5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
-                    El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
-                  </div>
-                </div>
+                <dl class="qa-datos">
+                  <dt>Producto</dt><dd>${nombreProd}</dd>
+                  <dt>Veterinario destino</dt><dd>${nombreVet}</dd>
+                  <dt>Cantidad transferida</dt><dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                </dl>
+                <p class="qa-nota">
+                  El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
+                </p>
               `,
               confirmButtonText: 'Aceptar'
             });
@@ -620,12 +620,12 @@ export class InventarioJuridicoComponent implements OnInit {
                       icon: 'success',
                       title: 'Lote asignado al veterinario',
                       html: `
-                        <div class="text-left text-sm space-y-2">
-                          <p><strong>Producto:</strong> ${nombreProd}</p>
-                          <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                          <p><strong>Cantidad entregada:</strong> <span class="text-[#4141A5] font-bold">${cant} unidades</span></p>
-                          <p><strong>Nuevo saldo en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
-                        </div>
+                        <dl class="qa-datos">
+                          <dt>Producto</dt><dd>${nombreProd}</dd>
+                          <dt>Veterinario destino</dt><dd>${nombreVet}</dd>
+                          <dt>Cantidad entregada</dt><dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                          <dt>Nuevo saldo en CBA</dt><dd>${nuevoStock} ${nuevoStock === 1 ? 'unidad' : 'unidades'}</dd>
+                        </dl>
                       `,
                       confirmButtonText: 'Aceptar'
                     });
@@ -803,7 +803,7 @@ export class InventarioJuridicoComponent implements OnInit {
 
     Swal.fire({
       icon: 'success',
-      title: 'Reporte Excel Generado',
+      title: 'Reporte Excel generado',
       text: 'El archivo Excel/CSV del inventario general se descargó correctamente.',
       timer: 2000,
       showConfirmButton: false
@@ -957,7 +957,7 @@ export class InventarioJuridicoComponent implements OnInit {
 
     Swal.fire({
       icon: 'success',
-      title: 'Reporte Excel Generado',
+      title: 'Reporte Excel generado',
       text: `Inventario del Dr.(a) ${nombreVet} descargado correctamente.`,
       timer: 2000,
       showConfirmButton: false
@@ -1102,7 +1102,7 @@ export class InventarioJuridicoComponent implements OnInit {
   private abrirVentanaImpresion(html: string): void {
     const ventana = window.open('', '_blank', 'width=1000,height=800');
     if (!ventana) {
-      Swal.fire('Bloqueo de Pop-ups', 'Por favor habilita las ventanas emergentes en tu navegador para ver y guardar el reporte en PDF.', 'warning');
+      Swal.fire('Bloqueo de ventanas emergentes', 'Habilite las ventanas emergentes en su navegador para ver y guardar el reporte en PDF.', 'warning');
       return;
     }
     ventana.document.write(html);

@@ -564,6 +564,14 @@ export class Peticion implements OnInit, OnDestroy {
   // =========================================================================
 
   abrirModalAsignar(peticion: any): void {
+    if (this.esPeticionDuplicada(peticion)) {
+      this.mostrarAlerta(
+        'Petición marcada como duplicada',
+        'No se puede asignar un veterinario a una petición marcada como duplicada.',
+        'warning'
+      );
+      return;
+    }
     this.peticionSeleccionada = peticion;
     this.veterinarioSeleccionado = null;
     this.mostrarModalAsignar = true;
@@ -611,11 +619,22 @@ export class Peticion implements OnInit, OnDestroy {
         this.asignando = false;
         const detalle = err.error?.error || err.error?.detail || err.error?.mensaje || 'Error al asignar la petición.';
         this.mostrarAlerta('No fue posible asignar la petición', detalle, 'error');
+        if (err?.status === 409) {
+          this.obtenerPeticiones();
+        }
       }
     });
   }
 
   abrirModalReasignar(peticion: any): void {
+    if (this.esPeticionDuplicada(peticion)) {
+      this.mostrarAlerta(
+        'Petición marcada como duplicada',
+        'No se puede reasignar un veterinario a una petición marcada como duplicada.',
+        'warning'
+      );
+      return;
+    }
     this.peticionParaReasignar = peticion;
     this.nuevoVeterinarioSeleccionado = null;
     this.motivoReasignacion = '';
@@ -1308,6 +1327,10 @@ export class Peticion implements OnInit, OnDestroy {
     } else if (this.alertaComparacionId !== null) {
       if (this.comparadorDuplicadoRef?.tieneVisorMediaAbierto) {
         this.comparadorDuplicadoRef.cerrarVisorMedia();
+      } else if (this.comparadorDuplicadoRef?.tieneDialogoConfirmacionAbierto) {
+        if (!this.comparadorDuplicadoRef.resolviendo) {
+          this.comparadorDuplicadoRef.cancelarDialogoConfirmacion();
+        }
       } else if (!this.comparadorDuplicadoRef?.resolviendo) {
         this.cerrarComparadorDuplicado();
       }
@@ -1585,7 +1608,7 @@ export class Peticion implements OnInit, OnDestroy {
       document.body.style.overflow = this.evidenciaSeleccionada ? 'hidden' : '';
     }
 
-    // Si durante la vista hubo recarga (p. ej. HTTP 409) que reveló cambio de estado, sincronizar bandeja/índice
+    // Si durante la vista hubo recarga (p. ej. HTTP 409) que reveló cambio de estado, sincronizar bandeja/índice/peticiones
     if (
       idCerrada !== null &&
       detalleActual &&
@@ -1595,6 +1618,10 @@ export class Peticion implements OnInit, OnDestroy {
     ) {
       this.sincronizarAlertaResueltaEnListados(detalleActual, true);
       this.cargarIndiceDuplicados(true);
+      this.obtenerPeticiones();
+      if (this.puedeConsultarNotificacionesJuridicas) {
+        this.obtenerNotificaciones();
+      }
     }
 
     if (actualizarUrl) {
@@ -1607,8 +1634,45 @@ export class Peticion implements OnInit, OnDestroy {
   onAlertaDuplicadoResuelta(resp: ResolverAlertaDuplicadoResponse): void {
     this.estadoOriginalAlertaAbierta = resp.estado_nuevo;
     this.resumenAlertas = { ...this.alertasDuplicadosService.resumen() };
-    this.sincronizarAlertaResueltaEnListados(resp.alerta, resp.cambiada);
+    const bandejaYaRecargada = this.sincronizarAlertaResueltaEnListados(resp.alerta, resp.cambiada);
+
+    // Excluir inmediatamente de la vista en memoria cualquier petición recién marcada como duplicada
+    const idDuplicada = resp.peticion_duplicada_id ?? resp.alerta?.peticion_duplicada_id ?? null;
+    if (resp.estado_nuevo === 'CONFIRMADO' && idDuplicada) {
+      this.peticionesLista = this.peticionesLista.filter((p: any) => Number(p?.id_peticion) !== Number(idDuplicada));
+    }
+
+    // Refrescar automáticamente los listados correspondientes desde el backend
+    this.obtenerPeticiones();
+    this.cargarIndiceDuplicados(true);
+    if (this.vistaModulo === 'duplicados' && !bandejaYaRecargada) {
+      this.cargarBandejaAlertas();
+    }
+    if (this.puedeConsultarNotificacionesJuridicas) {
+      this.obtenerNotificaciones();
+    }
+    if (this.modalDetalleAbierto && this.peticionDetalle?.id_peticion) {
+      const idAbierta = Number(this.peticionDetalle.id_peticion);
+      if (
+        idAbierta === Number(resp.alerta?.peticion_menor_id) ||
+        idAbierta === Number(resp.alerta?.peticion_mayor_id)
+      ) {
+        this.cargarDetalleCompleto(idAbierta);
+      }
+    }
+
     this.cdr.detectChanges();
+  }
+
+  esPeticionDuplicada(p: any): boolean {
+    if (!p) {
+      return false;
+    }
+    if (p.es_duplicada === true) {
+      return true;
+    }
+    const estado = String(p.estado || '').trim().toLowerCase();
+    return estado === 'duplicada' || estado === 'duplicado';
   }
 
   radicadoPeticionEnAlerta(
@@ -1667,7 +1731,8 @@ export class Peticion implements OnInit, OnDestroy {
   private sincronizarAlertaResueltaEnListados(
     alertaActualizada: AlertaDuplicadoResumen,
     cambiada: boolean
-  ): void {
+  ): boolean {
+    let recargoBandeja = false;
     this.alertasPeticionDetalle = this.alertasPeticionDetalle.map((a) =>
       a.id_alerta === alertaActualizada.id_alerta ? alertaActualizada : a
     );
@@ -1680,6 +1745,7 @@ export class Peticion implements OnInit, OnDestroy {
         if (this.alertasBandeja.length === 0 && this.paginaAlertas > 1) {
           this.paginaAlertas -= 1;
           this.cargarBandejaAlertas();
+          recargoBandeja = true;
         }
       }
     } else {
@@ -1687,6 +1753,7 @@ export class Peticion implements OnInit, OnDestroy {
         a.id_alerta === alertaActualizada.id_alerta ? alertaActualizada : a
       );
     }
+    return recargoBandeja;
   }
 
   private actualizarQueryParams(cambios: Record<string, string | number | null>): void {
