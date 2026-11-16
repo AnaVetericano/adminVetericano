@@ -345,7 +345,7 @@ describe('Integración Etapa 5: Dashboard Jurídico + Alertas de Duplicados', ()
 
     // Métricas jurídicas actuales intactas
     const pageText = fixture.nativeElement.textContent as string;
-    expect(pageText).toContain('Total Peticiones');
+    expect(pageText).toContain('Flujo de Peticiones');
     expect(pageText).toContain('12');
     expect(pageText).toContain('Dra. Laura Gómez');
     expect(pageText).toContain('Atención Urgente');
@@ -466,7 +466,7 @@ describe('Integración Etapa 5: Dashboard Jurídico + Alertas de Duplicados', ()
 
     // Estado de carga activo mientras las métricas jurídicas ya están visibles
     expect(fixture.debugElement.query(By.css('[data-testid="cargando-duplicados-dashboard"]'))).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Total Peticiones');
+    expect(fixture.nativeElement.textContent).toContain('Flujo de Peticiones');
     expect(fixture.nativeElement.textContent).toContain('12');
 
     const reqFail = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${basePeticionesUrl}/duplicados/alertas/`);
