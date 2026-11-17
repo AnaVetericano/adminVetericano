@@ -12,9 +12,9 @@
   />
 
   <!-- ========================================================================= -->
-  <!-- 2. CONTENIDO PRINCIPAL: 3 COLUMNAS [~25% | ~50% | ~25%]                    -->
+  <!-- 2. CONTENIDO PRINCIPAL: ESTRUCTURA POR PISOS (3 PISOS HORIZONTALES)       -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 space-y-4">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 space-y-4">
 
     <!-- Fila superior: selector de vistas por rol y actualizar -->
     <div class="flex items-center justify-between gap-3 flex-wrap">
@@ -62,13 +62,95 @@
       </button>
     </div>
 
-    <!-- Grid de 3 Columnas perfectamente alineadas al fondo -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <!-- ===================================================================== -->
+    <!-- PISO 1: CINTA DE 5 KPIs DE ATENCIÓN CLÍNICA (ANCHO COMPLETO)           -->
+    <!-- ===================================================================== -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
 
-      <!-- ===================================================================== -->
-      <!-- COLUMNA IZQUIERDA (Inmediatez: Alertas y Maletín) [lg:col-span-3]      -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-3 min-w-0 flex flex-col gap-4 h-full">
+      <!-- KPI 1: [Total] Asignadas -->
+      <div (click)="setFiltroPeticion('TODAS')"
+        [ngClass]="filtroEstadoPeticion === 'TODAS' ? 'ring-2 ring-[#4141A5]' : ''"
+        class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
+        title="Ver todos los casos">
+        <div class="flex items-center justify-between text-slate-400">
+          <span class="text-[11px] font-bold uppercase tracking-wide truncate">Total</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+        </div>
+        <div class="mt-1.5">
+          <div class="text-xl sm:text-2xl font-bold text-[#170B3D]">{{ totalAsignadas }}</div>
+          <p class="text-[11px] text-slate-400 font-semibold truncate">Asignadas</p>
+        </div>
+      </div>
+
+      <!-- KPI 2: [Pend] Por Atender -->
+      <div (click)="setFiltroPeticion('PENDIENTES')"
+        [ngClass]="filtroEstadoPeticion === 'PENDIENTES' ? 'ring-2 ring-[#F1C63C]' : ''"
+        class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
+        title="Filtrar por casos pendientes">
+        <div class="flex items-center justify-between text-[#9A5B13]">
+          <span class="text-[11px] font-bold uppercase tracking-wide truncate">Pend</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="mt-1.5">
+          <div class="text-xl sm:text-2xl font-bold text-[#9A5B13]">{{ totalPendientes }}</div>
+          <p class="text-[11px] text-[#9A5B13]/80 font-semibold truncate">Por Atender</p>
+        </div>
+      </div>
+
+      <!-- KPI 3: [Proc] En Proceso -->
+      <div (click)="setFiltroPeticion('PROCESO')"
+        [ngClass]="filtroEstadoPeticion === 'PROCESO' ? 'ring-2 ring-[#4141A5]' : ''"
+        class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
+        title="Filtrar por casos en proceso">
+        <div class="flex items-center justify-between text-[#4141A5]">
+          <span class="text-[11px] font-bold uppercase tracking-wide truncate">Proc</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+        </div>
+        <div class="mt-1.5">
+          <div class="text-xl sm:text-2xl font-bold text-[#4141A5]">{{ totalEnProceso }}</div>
+          <p class="text-[11px] text-[#4141A5]/80 font-semibold truncate">En Proceso</p>
+        </div>
+      </div>
+
+      <!-- KPI 4: [OK] Atendidas -->
+      <div (click)="setFiltroPeticion('ATENDIDAS')"
+        [ngClass]="filtroEstadoPeticion === 'ATENDIDAS' ? 'ring-2 ring-[#067647]' : ''"
+        class="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
+        title="Filtrar por casos atendidos">
+        <div class="flex items-center justify-between text-[#067647]">
+          <span class="text-[11px] font-bold uppercase tracking-wide truncate">OK</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="mt-1.5">
+          <div class="text-xl sm:text-2xl font-bold text-[#067647]">{{ totalAtendidas }}</div>
+          <p class="text-[11px] text-[#067647]/80 font-semibold truncate">Atendidas</p>
+        </div>
+      </div>
+
+      <!-- KPI 5: [Urg] Urgencias -->
+      <div (click)="setFiltroPeticion('URGENTES')"
+        [ngClass]="filtroEstadoPeticion === 'URGENTES' ? 'ring-2 ring-[#B42318]' : ''"
+        class="col-span-2 sm:col-span-1 bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
+        title="Filtrar por urgencias">
+        <div class="flex items-center justify-between text-[#B42318]">
+          <span class="text-[11px] font-bold uppercase tracking-wide truncate">Urg</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+        </div>
+        <div class="mt-1.5">
+          <div class="text-xl sm:text-2xl font-bold text-[#B42318]">{{ totalUrgentes }}</div>
+          <p class="text-[11px] text-[#B42318] font-semibold truncate">Críticos</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- PISO 2: ALERTAS Y MALETÍN [4] | GRÁFICAS DUALES [5] | FARMACIA CBA [3]-->
+    <!-- ===================================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+      <!-- COLUMNA IZQUIERDA (Inmediatez: Alertas y Maletín) [lg:col-span-4] -->
+      <div class="lg:col-span-4 min-w-0 flex flex-col gap-4">
 
         <!-- 1. Alertas de Medicamentos & Stock de Maletín -->
         <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
@@ -92,7 +174,7 @@
           </p>
 
           <!-- Lista scrolleable de alertas -->
-          <div class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+          <div class="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
 
             <!-- Estado sin alertas -->
             <div *ngIf="medicamentosConAlerta.length === 0" class="p-5 text-center text-xs text-slate-400">
@@ -146,8 +228,8 @@
           </div>
         </div>
 
-        <!-- 2. Dotación de Maletín de Campo (Expandible hasta el fondo) -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col justify-between">
+        <!-- 2. Dotación de Maletín de Campo (Compacto, sin estiramiento vacío) -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
           <div>
             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
               <div class="flex items-center gap-2 min-w-0">
@@ -200,136 +282,163 @@
 
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- COLUMNA CENTRAL (Núcleo Analítico y Casos Clínicos) [lg:col-span-6]   -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-6 min-w-0 flex flex-col gap-4 h-full">
+      <!-- COLUMNA CENTRAL (Gráficas Duales) [lg:col-span-5] -->
+      <div class="lg:col-span-5 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
 
-        <!-- 1. Cinta de 5 KPIs de Atención Clínica: [Total][Pend][Proc][OK][Urg] -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-
-          <!-- KPI 1: [Total] Asignadas -->
-          <div (click)="setFiltroPeticion('TODAS')"
-            [ngClass]="filtroEstadoPeticion === 'TODAS' ? 'ring-2 ring-[#4141A5]' : ''"
-            class="bg-white rounded-lg p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
-            title="Ver todos los casos">
-            <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[11px] font-bold uppercase tracking-wide truncate">Total</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+        <!-- Gráfica A: Distribución de Casos (Dona) -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">Distribución de Casos</h3>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-[#4141A5]/10 text-[#4141A5]">Dona</span>
+              </div>
+              <p class="text-[11px] text-slate-400 font-medium truncate">Proporción por estado actual</p>
             </div>
-            <div class="mt-1.5">
-              <div class="text-xl sm:text-2xl font-bold text-[#170B3D]">{{ totalAsignadas }}</div>
-              <p class="text-[11px] text-slate-400 font-semibold truncate">Asignadas</p>
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z"/></svg>
           </div>
-
-          <!-- KPI 2: [Pend] Por Atender -->
-          <div (click)="setFiltroPeticion('PENDIENTES')"
-            [ngClass]="filtroEstadoPeticion === 'PENDIENTES' ? 'ring-2 ring-[#F1C63C]' : ''"
-            class="bg-white rounded-lg p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
-            title="Filtrar por casos pendientes">
-            <div class="flex items-center justify-between text-[#9A5B13]">
-              <span class="text-[11px] font-bold uppercase tracking-wide truncate">Pend</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div class="mt-1.5">
-              <div class="text-xl sm:text-2xl font-bold text-[#9A5B13]">{{ totalPendientes }}</div>
-              <p class="text-[11px] text-[#9A5B13]/80 font-semibold truncate">Por Atender</p>
-            </div>
+          <div class="relative h-52 sm:h-64 w-full my-auto pt-3 flex items-center justify-center overflow-hidden">
+            <canvas #chartPeticiones></canvas>
           </div>
-
-          <!-- KPI 3: [Proc] En Proceso -->
-          <div (click)="setFiltroPeticion('PROCESO')"
-            [ngClass]="filtroEstadoPeticion === 'PROCESO' ? 'ring-2 ring-[#4141A5]' : ''"
-            class="bg-white rounded-lg p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
-            title="Filtrar por casos en proceso">
-            <div class="flex items-center justify-between text-[#4141A5]">
-              <span class="text-[11px] font-bold uppercase tracking-wide truncate">Proc</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
-            </div>
-            <div class="mt-1.5">
-              <div class="text-xl sm:text-2xl font-bold text-[#4141A5]">{{ totalEnProceso }}</div>
-              <p class="text-[11px] text-[#4141A5]/80 font-semibold truncate">En Proceso</p>
-            </div>
-          </div>
-
-          <!-- KPI 4: [OK] Atendidas -->
-          <div (click)="setFiltroPeticion('ATENDIDAS')"
-            [ngClass]="filtroEstadoPeticion === 'ATENDIDAS' ? 'ring-2 ring-[#067647]' : ''"
-            class="bg-white rounded-lg p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
-            title="Filtrar por casos atendidos">
-            <div class="flex items-center justify-between text-[#067647]">
-              <span class="text-[11px] font-bold uppercase tracking-wide truncate">OK</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <div class="mt-1.5">
-              <div class="text-xl sm:text-2xl font-bold text-[#067647]">{{ totalAtendidas }}</div>
-              <p class="text-[11px] text-[#067647]/80 font-semibold truncate">Atendidas</p>
-            </div>
-          </div>
-
-          <!-- KPI 5: [Urg] Urgencias -->
-          <div (click)="setFiltroPeticion('URGENTES')"
-            [ngClass]="filtroEstadoPeticion === 'URGENTES' ? 'ring-2 ring-[#B42318]' : ''"
-            class="col-span-2 sm:col-span-1 bg-white rounded-lg p-3 sm:p-3.5 border border-slate-200 shadow-xs flex flex-col justify-between cursor-pointer transition min-w-0"
-            title="Filtrar por urgencias">
-            <div class="flex items-center justify-between text-[#B42318]">
-              <span class="text-[11px] font-bold uppercase tracking-wide truncate">Urg</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
-            </div>
-            <div class="mt-1.5">
-              <div class="text-xl sm:text-2xl font-bold text-[#B42318]">{{ totalUrgentes }}</div>
-              <p class="text-[11px] text-[#B42318] font-semibold truncate">Críticos</p>
-            </div>
-          </div>
-
         </div>
 
-        <!-- 2. Gráficas Duales en Tonos Azules: [Distribución de Casos (Dona)] [Tipología y Prioridad (Dona)] -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <!-- Gráfica A: Distribución de Casos (Dona) -->
-          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0">
-            <div>
-              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">Distribución de Casos</h3>
-                    <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-[#4141A5]/10 text-[#4141A5]">Dona</span>
-                  </div>
-                  <p class="text-[11px] text-slate-400 font-medium truncate">Proporción por estado actual</p>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z"/></svg>
+        <!-- Gráfica B: Tipología y Prioridad (Dona) -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">Tipología y Prioridad</h3>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-700">Dona</span>
               </div>
-              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
-                <canvas #chartPeticiones></canvas>
-              </div>
+              <p class="text-[11px] text-slate-400 font-medium truncate">Clasificación de atenciones</p>
             </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
           </div>
-
-          <!-- Gráfica B: Tipología y Prioridad (Dona) -->
-          <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0">
-            <div>
-              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">Tipología y Prioridad</h3>
-                    <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-700">Dona</span>
-                  </div>
-                  <p class="text-[11px] text-slate-400 font-medium truncate">Clasificación de atenciones</p>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
-              </div>
-              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
-                <canvas #chartTipos></canvas>
-              </div>
-            </div>
+          <div class="relative h-52 sm:h-64 w-full my-auto pt-3 flex items-center justify-center overflow-hidden">
+            <canvas #chartTipos></canvas>
           </div>
-
         </div>
 
-        <!-- 3. Bandeja Casos Prioritarios (Expandible hasta el fondo) -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col">
+      </div>
+
+      <!-- COLUMNA DERECHA (Trámites Farmacia CBA) [lg:col-span-3] -->
+      <div class="lg:col-span-3 min-w-0">
+
+        <!-- 1. Trámites ante Farmacia CBA -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 h-full flex flex-col justify-between">
+          <div class="flex-1 flex flex-col min-h-0">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3 shrink-0">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
+                  <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">
+                    Trámites Farmacia CBA
+                  </h3>
+                </div>
+                <p class="text-[11px] text-slate-400 font-medium truncate">
+                  Reposiciones de kit
+                </p>
+              </div>
+              <span class="text-xs font-semibold text-slate-400 shrink-0">
+                {{ solicitudesKit.length }} pedidos
+              </span>
+            </div>
+
+            <!-- Filtros de Estado (Pend/Aprob/Entr) -->
+            <div class="flex items-center gap-1 mb-2.5 overflow-x-auto pb-1 shrink-0">
+              <button
+                type="button"
+                (click)="setFiltroSolicitud('TODAS')"
+                [ngClass]="filtroEstadoSolicitud === 'TODAS' ? 'bg-[#170B3D] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
+                Todas
+              </button>
+              <button
+                type="button"
+                (click)="setFiltroSolicitud('PENDIENTES')"
+                [ngClass]="filtroEstadoSolicitud === 'PENDIENTES' ? 'bg-[#F1C63C] text-[#170B3D] font-bold' : 'bg-[#FFF4E5] text-[#9A5B13] hover:bg-[#FCD9A6]/40'"
+                class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
+                Pend
+              </button>
+              <button
+                type="button"
+                (click)="setFiltroSolicitud('APROBADAS')"
+                [ngClass]="filtroEstadoSolicitud === 'APROBADAS' ? 'bg-[#4141A5] text-white' : 'bg-[#4141A5]/10 text-[#4141A5] hover:bg-[#4141A5]/20'"
+                class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
+                Aprob
+              </button>
+              <button
+                type="button"
+                (click)="setFiltroSolicitud('ENTREGADAS')"
+                [ngClass]="filtroEstadoSolicitud === 'ENTREGADAS' ? 'bg-[#067647] text-white' : 'bg-[#ECFDF3] text-[#067647] hover:bg-[#ABEFC6]/40'"
+                class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
+                Entr
+              </button>
+            </div>
+
+            <!-- Lista scrolleable de solicitudes -->
+            <div class="space-y-2.5 flex-1 max-h-[320px] overflow-y-auto pr-1">
+              <div *ngFor="let s of solicitudesFiltradas" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 transition-all min-w-0">
+                <div class="flex items-center justify-between text-[11px]">
+                  <span class="px-2 py-0.5 rounded-full font-bold bg-[#4141A5]/10 text-[#4141A5] shrink-0">
+                    #{{ s.id_solicitud || s.id }}
+                  </span>
+                  <span class="text-slate-400 font-medium text-[11px]">
+                    {{ (s.fecha_solicitud || s.fecha || s.created_at) | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+
+                <!-- Medicamentos solicitados -->
+                <div *ngIf="s.items && s.items.length > 0" class="mt-1.5 space-y-0.5">
+                  <div *ngFor="let it of s.items" class="text-xs font-semibold text-[#170B3D] truncate" [title]="it.nombre_medicamento || it.medicamento_nombre">
+                    • {{ it.nombre_medicamento || it.medicamento_nombre || ('Fármaco #' + it.id_medicamento) }}
+                    <span class="text-[#4141A5]">({{ it.cantidad_solicitada || it.cantidad }} uds)</span>
+                  </div>
+                </div>
+                <p *ngIf="!s.items || s.items.length === 0" class="text-[11px] text-slate-600 mt-1 line-clamp-1">
+                  {{ s.justificacion || 'Reposición general para maletín' }}
+                </p>
+
+                <!-- Estado badge -->
+                <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span class="text-slate-400">{{ s.tipo || 'REPOSICION' }}</span>
+                  <span class="px-2 py-0.5 rounded-md font-semibold text-[10px] border" [ngClass]="obtenerClaseBadgeSolicitud(s.estado)">
+                    {{ s.estado || 'PENDIENTE' }}
+                  </span>
+                </div>
+              </div>
+
+              <div *ngIf="solicitudesFiltradas.length === 0" class="py-6 text-center text-slate-400 font-medium text-xs">
+                No tienes solicitudes de reposición en este filtro.
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón inferior para radicar pedido -->
+          <div class="mt-3 pt-2.5 border-t border-slate-100 shrink-0">
+            <button
+              type="button"
+              (click)="abrirModalNuevaSolicitud()"
+              class="w-full py-2.5 px-3 bg-[#4141A5] hover:bg-[#353583] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition cursor-pointer flex items-center justify-center gap-1.5">
+              <span>+ Radicar Pedido</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- PISO 3: BANDEJA CASOS PRIORITARIOS [9] | REGISTRO CLÍNICO CBA [3]      -->
+    <!-- ===================================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+      <!-- Bandeja Casos Prioritarios [lg:col-span-9] -->
+      <div class="lg:col-span-9 min-w-0">
+
+        <!-- 3. Bandeja Casos Prioritarios -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 h-full flex flex-col">
 
           <!-- Barra superior de búsqueda y conteo -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 mb-3 shrink-0">
@@ -388,7 +497,7 @@
           </div>
 
           <!-- Tabla protegida con acciones: [Detalle][Estado][Historia] -->
-          <div class="flex-1 min-h-[220px] overflow-y-auto pr-1">
+          <div class="flex-1 min-h-[220px] max-h-[320px] overflow-y-auto pr-1">
 
             <!-- Estado de carga -->
             <div *ngIf="cargandoPeticiones" class="py-12 text-center">
@@ -435,16 +544,16 @@
 
                     <!-- Tipo -->
                     <td class="py-2.5 px-3">
-                      <span class="font-semibold text-slate-800 line-clamp-1 truncate max-w-[150px]" [title]="p.tipo">
+                      <span class="font-semibold text-slate-800 line-clamp-1 truncate max-w-[260px]" [title]="p.tipo">
                         {{ p.tipo || 'Petición General' }}
                       </span>
-                      <span class="text-[11px] text-slate-400 line-clamp-1 truncate max-w-[150px]">
+                      <span class="text-[11px] text-slate-400 line-clamp-1 truncate max-w-[260px]">
                         {{ p.descripcion || 'Sin detalle adicional' }}
                       </span>
                     </td>
 
                     <!-- Ubicación -->
-                    <td class="py-2.5 px-3 max-w-[160px]">
+                    <td class="py-2.5 px-3 max-w-[260px]">
                       <span class="text-[11px] text-slate-600 line-clamp-1 truncate block" [title]="p.ubicacion_direccion">
                         {{ p.ubicacion_direccion || 'No especificada' }}
                       </span>
@@ -495,112 +604,11 @@
 
       </div>
 
-      <!-- ===================================================================== -->
-      <!-- COLUMNA DERECHA (Farmacia CBA y Registro Clínico) [lg:col-span-3]     -->
-      <!-- ===================================================================== -->
-      <div class="lg:col-span-3 min-w-0 flex flex-col gap-4 h-full">
+      <!-- Registro Clínico CBA [lg:col-span-3] -->
+      <div class="lg:col-span-3 min-w-0">
 
-        <!-- 1. Trámites ante Farmacia CBA -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
-                <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">
-                  Trámites Farmacia CBA
-                </h3>
-              </div>
-              <p class="text-[11px] text-slate-400 font-medium truncate">
-                Reposiciones de kit
-              </p>
-            </div>
-            <span class="text-xs font-semibold text-slate-400 shrink-0">
-              {{ solicitudesKit.length }} pedidos
-            </span>
-          </div>
-
-          <!-- Filtros de Estado (Pend/Aprob/Entr) -->
-          <div class="flex items-center gap-1 mb-2.5 overflow-x-auto pb-1">
-            <button
-              type="button"
-              (click)="setFiltroSolicitud('TODAS')"
-              [ngClass]="filtroEstadoSolicitud === 'TODAS' ? 'bg-[#170B3D] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-              class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
-              Todas
-            </button>
-            <button
-              type="button"
-              (click)="setFiltroSolicitud('PENDIENTES')"
-              [ngClass]="filtroEstadoSolicitud === 'PENDIENTES' ? 'bg-[#F1C63C] text-[#170B3D] font-bold' : 'bg-[#FFF4E5] text-[#9A5B13] hover:bg-[#FCD9A6]/40'"
-              class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
-              Pend
-            </button>
-            <button
-              type="button"
-              (click)="setFiltroSolicitud('APROBADAS')"
-              [ngClass]="filtroEstadoSolicitud === 'APROBADAS' ? 'bg-[#4141A5] text-white' : 'bg-[#4141A5]/10 text-[#4141A5] hover:bg-[#4141A5]/20'"
-              class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
-              Aprob
-            </button>
-            <button
-              type="button"
-              (click)="setFiltroSolicitud('ENTREGADAS')"
-              [ngClass]="filtroEstadoSolicitud === 'ENTREGADAS' ? 'bg-[#067647] text-white' : 'bg-[#ECFDF3] text-[#067647] hover:bg-[#ABEFC6]/40'"
-              class="px-2 py-0.5 rounded-lg text-[10px] font-semibold transition cursor-pointer">
-              Entr
-            </button>
-          </div>
-
-          <!-- Lista scrolleable de solicitudes -->
-          <div class="space-y-2.5 max-h-[210px] overflow-y-auto pr-1">
-            <div *ngFor="let s of solicitudesFiltradas" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 transition-all min-w-0">
-              <div class="flex items-center justify-between text-[11px]">
-                <span class="px-2 py-0.5 rounded-full font-bold bg-[#4141A5]/10 text-[#4141A5] shrink-0">
-                  #{{ s.id_solicitud || s.id }}
-                </span>
-                <span class="text-slate-400 font-medium text-[11px]">
-                  {{ (s.fecha_solicitud || s.fecha || s.created_at) | date:'dd/MM/yyyy' }}
-                </span>
-              </div>
-
-              <!-- Medicamentos solicitados -->
-              <div *ngIf="s.items && s.items.length > 0" class="mt-1.5 space-y-0.5">
-                <div *ngFor="let it of s.items" class="text-xs font-semibold text-[#170B3D] truncate" [title]="it.nombre_medicamento || it.medicamento_nombre">
-                  • {{ it.nombre_medicamento || it.medicamento_nombre || ('Fármaco #' + it.id_medicamento) }}
-                  <span class="text-[#4141A5]">({{ it.cantidad_solicitada || it.cantidad }} uds)</span>
-                </div>
-              </div>
-              <p *ngIf="!s.items || s.items.length === 0" class="text-[11px] text-slate-600 mt-1 line-clamp-1">
-                {{ s.justificacion || 'Reposición general para maletín' }}
-              </p>
-
-              <!-- Estado badge -->
-              <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span class="text-slate-400">{{ s.tipo || 'REPOSICION' }}</span>
-                <span class="px-2 py-0.5 rounded-md font-semibold text-[10px] border" [ngClass]="obtenerClaseBadgeSolicitud(s.estado)">
-                  {{ s.estado || 'PENDIENTE' }}
-                </span>
-              </div>
-            </div>
-
-            <div *ngIf="solicitudesFiltradas.length === 0" class="py-6 text-center text-slate-400 font-medium text-xs">
-              No tienes solicitudes de reposición en este filtro.
-            </div>
-          </div>
-
-          <!-- Botón inferior para radicar pedido -->
-          <div class="mt-3 pt-2.5 border-t border-slate-100">
-            <button
-              type="button"
-              (click)="abrirModalNuevaSolicitud()"
-              class="w-full py-2.5 px-3 bg-[#4141A5] hover:bg-[#353583] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition cursor-pointer flex items-center justify-center gap-1.5">
-              <span>+ Radicar Pedido</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. Registro Clínico CBA (Expandible hasta el fondo) -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col justify-between">
+        <!-- 2. Registro Clínico CBA -->
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 h-full flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3 shrink-0">
               <div class="min-w-0">
