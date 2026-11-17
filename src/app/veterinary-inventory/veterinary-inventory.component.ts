@@ -1,8 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   VeterinaryInventoryService,
   VeterinaryKitItem,
@@ -25,6 +27,13 @@ export class VeterinaryInventoryComponent implements OnInit {
   private inventoryService = inject(VeterinaryInventoryService);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['kit.*', 'inventario.movimiento_bodega', 'catalogo.medicamentos_actualizado'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type.startsWith('catalogo.') ? this.cargarCatalogoGeneral() : this.cargarDatos()));
+  }
 
   // Estados de carga y datos
   cargando = true;

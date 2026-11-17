@@ -1,4 +1,5 @@
 import { Component, ElementRef, ViewChild, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, inject, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
@@ -6,6 +7,7 @@ import { Chart } from 'chart.js/auto';
 import { CommonModule, NgIf } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   ErrorDuplicadosApi,
   ResumenConteosAlertas,
@@ -76,7 +78,12 @@ export class Graficas implements OnInit, AfterViewInit, OnDestroy {
     return this.totalUsuarios > 0 ? Math.round((this.totalOperativo / this.totalUsuarios) * 100) : 0;
   }
 
-  constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {}
+  constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {
+    inject(RealtimeEventosService)
+      .on(['admin.usuario_gestionado', 'peticion.posible_duplicado', 'peticion.duplicado_resuelto'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type.startsWith('admin.') ? this.ListAllUsersActives() : this.cargarResumenDuplicados(true)));
+  }
 
   ngOnInit() {
     this.ListAllUsersActives();

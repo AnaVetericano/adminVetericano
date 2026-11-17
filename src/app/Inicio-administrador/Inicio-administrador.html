@@ -496,6 +496,11 @@
           </a>
         }
 
+        <!-- CAMPANA CENTRAL DE NOTIFICACIONES EN TIEMPO REAL -->
+        @if (notificacionesRealtime.habilitado) {
+          <app-notificaciones-campana />
+        }
+
         <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
         @if (authService.isVeterinario() || authService.isAdmin()) {
           <div class="relative">
@@ -592,8 +597,8 @@
           </div>
         }
 
-        <!-- Separador entre Alertas y el perfil (solo cuando existe el botón de Alertas) -->
-        @if (authService.isVeterinario() || authService.isAdmin()) {
+        <!-- Separador entre Alertas y el perfil -->
+        @if (notificacionesRealtime.habilitado || authService.isVeterinario() || authService.isAdmin()) {
           <span class="hidden sm:block w-px h-6 bg-slate-200" aria-hidden="true"></span>
         }
 

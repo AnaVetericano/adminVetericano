@@ -1,9 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import {
   ComprasService,
   Compra as CompraModel,
@@ -50,7 +52,12 @@ export class Compra implements OnInit {
   constructor(
     private comprasService: ComprasService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['inventario.movimiento_bodega', 'catalogo.medicamentos_actualizado'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.obtenerDatos());
+  }
 
   ngOnInit(): void {
     this.obtenerDatos();

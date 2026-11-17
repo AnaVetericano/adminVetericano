@@ -10,10 +10,13 @@ import {
   inject,
   computed
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Chart } from 'chart.js/auto';
 import { Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import {
   DashboardJuridicoService,
   ResumenDashboardJuridico,
@@ -119,7 +122,12 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     private dashboardService: DashboardJuridicoService,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['peticion.*', 'clinica.atencion_registrada', 'adopcion.catalogo_actualizado'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarDatos(true));
+  }
 
   ngOnInit(): void {
     this.cargarDatos(false);

@@ -1,10 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import { VeterinaryInventoryService, VeterinaryKitItem } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -20,6 +22,22 @@ export class InventarioJuridicoComponent implements OnInit {
   private svc = inject(ComprasService);
   private vetInvSvc = inject(VeterinaryInventoryService);
   private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['inventario.*', 'kit.*', 'catalogo.medicamentos_actualizado', 'admin.usuario_gestionado'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => {
+        if (ev.event_type.startsWith('admin.')) {
+          this.cargarListaVeterinarios();
+          return;
+        }
+        this.cargarInventarioGeneral();
+        if (this.idVeterinarioSeleccionado) {
+          this.cargarInventarioDeVeterinario(this.idVeterinarioSeleccionado);
+        }
+      });
+  }
 
   // Control de pestañas
   pestanaActiva: 'general' | 'veterinarios' = 'general';
