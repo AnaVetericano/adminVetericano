@@ -13,10 +13,10 @@
   <!-- ========================================================================= -->
   <!-- CONTENIDO PRINCIPAL: ESTRUCTURA POR PISOS (3 PISOS HORIZONTALES)          -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 flex flex-col overflow-y-auto space-y-4">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 flex flex-col overflow-y-auto gap-4">
 
     <!-- Fila superior: selector de vistas por rol y actualizar -->
-    <div class="flex items-center justify-between gap-3 flex-wrap shrink-0">
+    <div class="hidden">
       <!-- Selector rápido de vistas de Dashboard por Rol (Supervisión Integral) -->
       <div class="flex items-center gap-2.5 min-w-0">
         <span class="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">Vista por rol</span>
@@ -65,7 +65,7 @@
     <section
       *ngIf="puedeGestionarDuplicados"
       data-testid="graficas-duplicados-card"
-      class="shrink-0 bg-white rounded-xl px-4 py-3 border border-slate-200 border-l-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-colors"
+      class="hidden"
       [ngClass]="totalPendientesDuplicados > 0 ? 'border-l-[#9A5B13]' : 'border-l-[#4141A5]'">
       <div class="flex items-center gap-3 min-w-0">
         <div

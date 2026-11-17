@@ -16,7 +16,7 @@
   <!-- 2. CONTENIDO PRINCIPAL: 3 COLUMNAS [~25% | ~50% | ~25%]                    -->
   <!--    Aprovecha todo el espacio vertical superior                             -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 space-y-4">
+  <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 flex flex-col gap-4">
 
     <!-- Mensaje de Error si ocurre -->
     <div *ngIf="errorCarga" class="px-4 py-3 bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl flex items-center justify-between text-[#170B3D] text-xs font-semibold">
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Selector rápido de vistas de Dashboard por Rol (Supervisión Integral) -->
-    <div *ngIf="authService.isAdmin()" class="flex items-center gap-2.5 min-w-0">
+    <div *ngIf="authService.isAdmin()" class="hidden">
       <span class="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">Vista por rol</span>
       <div class="segmentado inline-flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 overflow-x-auto max-w-full">
         <a
@@ -61,7 +61,7 @@
     </div>
 
     <!-- Grid de 3 Columnas perfectamente alineadas al fondo -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
 
       <!-- ===================================================================== -->
       <!-- COLUMNA IZQUIERDA (Operativo & Urgencias) [~25% ancho -> lg:col-span-3]-->
@@ -175,7 +175,7 @@
         </div>
 
         <!-- 3. Seres en CBA -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 min-h-[285px] flex flex-col justify-between">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center gap-2">
@@ -324,11 +324,11 @@
         </div>
 
         <!-- 3. Fila Dual de Gráficas: [A: Peticiones (Dona)] [B: Seres en CBA (Polar Area)] -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 items-stretch">
           
           <!-- Gráfica A: Peticiones (Dona) -->
-          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0">
-            <div>
+          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
+            <div class="flex-1 flex flex-col">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div class="min-w-0">
                   <h3 class="text-xs font-bold text-[#170B3D] truncate">A: Peticiones</h3>
@@ -338,15 +338,15 @@
                   Dona
                 </span>
               </div>
-              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
+              <div class="relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
                 <canvas #chartPeticiones></canvas>
               </div>
             </div>
           </div>
 
           <!-- Gráfica B: Seres en CBA (Polar Area) -->
-          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0">
-            <div>
+          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
+            <div class="flex-1 flex flex-col">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div class="min-w-0">
                   <h3 class="text-xs font-bold text-[#170B3D] truncate">B: Seres en CBA</h3>
@@ -356,7 +356,7 @@
                   Polar Area
                 </span>
               </div>
-              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
+              <div class="relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
                 <canvas #chartCBA></canvas>
               </div>
             </div>
@@ -388,7 +388,7 @@
           </div>
 
           <!-- Lista scrolleable limpia con altura mínima para nivelar -->
-          <div class="space-y-2.5 min-h-[190px] max-h-[210px] overflow-y-auto pr-1">
+          <div class="space-y-2.5 min-h-[180px] max-h-[200px] overflow-y-auto pr-1">
             <div *ngFor="let item of metricas.cba.ultimosIngresos" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 hover:shadow-xs transition-all min-w-0">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="px-2 py-0.5 rounded-full font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20 shrink-0">
@@ -432,7 +432,7 @@
           </div>
 
           <!-- Lista de barras horizontales expandible a la misma altura de las columnas centrales -->
-          <div class="space-y-3 min-h-[410px] max-h-[480px] overflow-y-auto pr-1">
+          <div class="space-y-3 flex-1 min-h-[260px] max-h-[355px] overflow-y-auto pr-1">
             <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-lg border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all min-w-0">
               <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
               <div class="flex items-center justify-between gap-2 min-w-0">
