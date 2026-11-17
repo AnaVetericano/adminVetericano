@@ -438,7 +438,7 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
 
     const colores = labels.map((label, idx) => {
       const l = label.toLowerCase();
-      if (l.includes('tratam') || l.includes('crit') || l.includes('grave')) return 'rgba(65, 65, 165, 0.55)';
+      if (l.includes('tratam') || l.includes('crit') || l.includes('grave')) return 'rgba(180, 35, 24, 0.85)';
       if (l.includes('observ') || l.includes('evalua')) return 'rgba(65, 65, 165, 0.85)';
       if (l.includes('adop') || l.includes('recuperad') || l.includes('favor')) return '#170B3D';
       return this.obtenerColorGrafica(label, idx);
