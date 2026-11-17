@@ -6,11 +6,13 @@ import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService, VeterinaryKitItem } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inventario-juridico',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './inventario-juridico.html',
   styleUrl: './inventario-juridico.css',
 })
@@ -383,8 +385,7 @@ export class InventarioJuridicoComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Stock no disponible',
-        text: 'Este registro no cuenta con unidades disponibles en CBA para asignar a un veterinario.',
-        confirmButtonColor: '#4141a5'
+        text: 'Este registro no cuenta con unidades disponibles en CBA para asignar a un veterinario.'
       });
       return;
     }
@@ -466,17 +467,16 @@ export class InventarioJuridicoComponent implements OnInit {
               this.cerrarModalAsignar();
               Swal.fire({
                 icon: 'success',
-                title: '¡Stock Devuelto a Bodega!',
+                title: 'Stock devuelto a bodega',
                 html: `
-                  <div class="text-left text-sm space-y-2">
-                    <p><strong>Producto:</strong> ${nombreProd}</p>
-                    <p><strong>Veterinario origen:</strong> ${nombreVet}</p>
-                    <p><strong>Cantidad retirada:</strong> <span class="text-rose-600 font-extrabold">-${cant} unidades</span></p>
-                    <p><strong>Nuevo stock en Bodega CBA:</strong> <span class="text-[#4141a5] font-extrabold">${nuevoStockBodega} unidades</span></p>
-                  </div>
+                  <dl class="qa-datos">
+                    <dt>Producto</dt><dd>${nombreProd}</dd>
+                    <dt>Veterinario origen</dt><dd>${nombreVet}</dd>
+                    <dt>Cantidad retirada</dt><dd>-${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                    <dt>Nuevo stock en Bodega CBA</dt><dd>${nuevoStockBodega} ${nuevoStockBodega === 1 ? 'unidad' : 'unidades'}</dd>
+                  </dl>
                 `,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#4141a5'
+                confirmButtonText: 'Aceptar'
               });
               this.cargarInventarioGeneral();
               if (this.idVeterinarioSeleccionado === idVetDestino) {
@@ -550,19 +550,18 @@ export class InventarioJuridicoComponent implements OnInit {
 
             Swal.fire({
               icon: 'success',
-              title: '¡Stock Asignado al Veterinario!',
+              title: 'Stock asignado al veterinario',
               html: `
-                <div class="text-left text-sm space-y-2">
-                  <p><strong>Producto:</strong> ${nombreProd}</p>
-                  <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                  <p><strong>Cantidad transferida:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
-                  <div class="p-2.5 bg-[#4141a5]/10 border border-[#4141a5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
-                    El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
-                  </div>
-                </div>
+                <dl class="qa-datos">
+                  <dt>Producto</dt><dd>${nombreProd}</dd>
+                  <dt>Veterinario destino</dt><dd>${nombreVet}</dd>
+                  <dt>Cantidad transferida</dt><dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                </dl>
+                <p class="qa-nota">
+                  El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
+                </p>
               `,
-              confirmButtonText: 'Entendido',
-              confirmButtonColor: '#4141a5'
+              confirmButtonText: 'Aceptar'
             });
 
             this.cargarInventarioGeneral();
@@ -619,17 +618,16 @@ export class InventarioJuridicoComponent implements OnInit {
                     this.cerrarModalAsignar();
                     Swal.fire({
                       icon: 'success',
-                      title: '¡Lote Asignado al Veterinario!',
+                      title: 'Lote asignado al veterinario',
                       html: `
-                        <div class="text-left text-sm space-y-2">
-                          <p><strong>Producto:</strong> ${nombreProd}</p>
-                          <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                          <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
-                          <p><strong>Nuevo saldo en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
-                        </div>
+                        <dl class="qa-datos">
+                          <dt>Producto</dt><dd>${nombreProd}</dd>
+                          <dt>Veterinario destino</dt><dd>${nombreVet}</dd>
+                          <dt>Cantidad entregada</dt><dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                          <dt>Nuevo saldo en CBA</dt><dd>${nuevoStock} ${nuevoStock === 1 ? 'unidad' : 'unidades'}</dd>
+                        </dl>
                       `,
-                      confirmButtonText: 'Entendido',
-                      confirmButtonColor: '#4141a5'
+                      confirmButtonText: 'Aceptar'
                     });
                     this.cargarInventarioGeneral();
                     if (this.idVeterinarioSeleccionado === idVetDestino) {
@@ -805,7 +803,7 @@ export class InventarioJuridicoComponent implements OnInit {
 
     Swal.fire({
       icon: 'success',
-      title: 'Reporte Excel Generado',
+      title: 'Reporte Excel generado',
       text: 'El archivo Excel/CSV del inventario general se descargó correctamente.',
       timer: 2000,
       showConfirmButton: false
@@ -820,15 +818,15 @@ export class InventarioJuridicoComponent implements OnInit {
 
     const fechaActual = new Date().toLocaleString('es-CO');
     const filasHtml = this.filas.map((f, i) => `
-      <tr style="border-bottom: 1px solid #e5e7eb; ${i % 2 === 0 ? 'background-color: #fafafa;' : ''}">
+      <tr style="border-bottom: 1px solid #E2E8F0; ${i % 2 === 0 ? 'background-color: #F8FAFC;' : ''}">
         <td style="padding: 8px 10px; font-weight: bold; color: #170B3D;">#${f.idInv || '—'}</td>
         <td style="padding: 8px 10px;">
           <strong style="color: #170B3D;">${f.nombre}</strong><br>
-          <span style="font-size: 11px; color: #6b7280;">${f.descripcion || ''}</span>
+          <span style="font-size: 11px; color: #64748B;">${f.descripcion || ''}</span>
         </td>
         <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #170B3D;">${f.sinLote ? '0' : f.stock} uds</td>
         <td style="padding: 8px 10px; text-align: center;">${f.cantidadEntrada} uds</td>
-        <td style="padding: 8px 10px; text-align: center; color: #4b5563;">${f.vencimiento || '—'}</td>
+        <td style="padding: 8px 10px; text-align: center; color: #475569;">${f.vencimiento || '—'}</td>
         <td style="padding: 8px 10px; text-align: center;">
           <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: bold; ${
             f.estado === 'disponible' ? 'background: rgba(65,65,165,0.1); color: #4141a5;' :
@@ -838,8 +836,8 @@ export class InventarioJuridicoComponent implements OnInit {
             ${f.estadoDb || f.estado}
           </span>
         </td>
-        <td style="padding: 8px 10px; font-size: 11px; color: #4b5563;">${f.proveedor || '—'}</td>
-        <td style="padding: 8px 10px; font-size: 11px; color: #4b5563;">${f.facturaTexto || '—'}</td>
+        <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${f.proveedor || '—'}</td>
+        <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${f.facturaTexto || '—'}</td>
       </tr>
     `).join('');
 
@@ -959,7 +957,7 @@ export class InventarioJuridicoComponent implements OnInit {
 
     Swal.fire({
       icon: 'success',
-      title: 'Reporte Excel Generado',
+      title: 'Reporte Excel generado',
       text: `Inventario del Dr.(a) ${nombreVet} descargado correctamente.`,
       timer: 2000,
       showConfirmButton: false
@@ -977,13 +975,13 @@ export class InventarioJuridicoComponent implements OnInit {
     const fechaActual = new Date().toLocaleString('es-CO');
 
     const filasHtml = this.itemsVeterinarioFiltrados.map((item, i) => `
-      <tr style="border-bottom: 1px solid #e5e7eb; ${i % 2 === 0 ? 'background-color: #fafafa;' : ''}">
+      <tr style="border-bottom: 1px solid #E2E8F0; ${i % 2 === 0 ? 'background-color: #F8FAFC;' : ''}">
         <td style="padding: 8px 10px; font-weight: bold; color: #170B3D;">#${item.id_medicamento}</td>
         <td style="padding: 8px 10px;">
           <strong style="color: #170B3D;">${item.nombre}</strong><br>
-          <span style="font-size: 11px; color: #6b7280;">${item.presentacion || item.tipo || ''}</span>
+          <span style="font-size: 11px; color: #64748B;">${item.presentacion || item.tipo || ''}</span>
         </td>
-        <td style="padding: 8px 10px; text-align: center; color: #4b5563;">${item.tipo || 'General'}</td>
+        <td style="padding: 8px 10px; text-align: center; color: #475569;">${item.tipo || 'General'}</td>
         <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #475569;">${item.cantidadEntregada || 0} uds</td>
         <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #170B3D;">${item.cantidadConsumida || 0} uds</td>
         <td style="padding: 8px 10px; text-align: center; font-weight: 800; font-size: 13px; color: #4141a5;">
@@ -1104,7 +1102,7 @@ export class InventarioJuridicoComponent implements OnInit {
   private abrirVentanaImpresion(html: string): void {
     const ventana = window.open('', '_blank', 'width=1000,height=800');
     if (!ventana) {
-      Swal.fire('Bloqueo de Pop-ups', 'Por favor habilita las ventanas emergentes en tu navegador para ver y guardar el reporte en PDF.', 'warning');
+      Swal.fire('Bloqueo de ventanas emergentes', 'Habilite las ventanas emergentes en su navegador para ver y guardar el reporte en PDF.', 'warning');
       return;
     }
     ventana.document.write(html);

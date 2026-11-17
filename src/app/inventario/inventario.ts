@@ -7,11 +7,13 @@ import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })
@@ -353,7 +355,7 @@ export class Inventario implements OnInit {
         icon: 'warning',
         title: 'Stock no disponible',
         text: 'Este registro no cuenta con unidades disponibles en CBA para asignar a un veterinario.',
-        confirmButtonColor: '#4141a5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -446,17 +448,20 @@ export class Inventario implements OnInit {
               this.cerrarModalAsignar();
               Swal.fire({
                 icon: 'success',
-                title: '¡Stock Devuelto a Bodega!',
+                title: 'Stock devuelto a bodega',
                 html: `
-                  <div class="text-left text-sm space-y-2">
-                    <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
-                    <p><strong>Veterinario origen:</strong> ${nombreVet}</p>
-                    <p><strong>Cantidad retirada:</strong> <span class="text-rose-600 font-extrabold">-${cant} unidades</span></p>
-                    <p><strong>Nuevo stock en Bodega CBA:</strong> <span class="text-[#4141a5] font-extrabold">${nuevoStockBodega} unidades</span></p>
-                  </div>
+                  <dl class="qa-datos">
+                    <dt>Producto</dt>
+                    <dd>${this.loteSeleccionado?.nombre}</dd>
+                    <dt>Veterinario origen</dt>
+                    <dd>${nombreVet}</dd>
+                    <dt>Cantidad retirada</dt>
+                    <dd>-${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                    <dt>Nuevo stock en bodega CBA</dt>
+                    <dd>${nuevoStockBodega} ${nuevoStockBodega === 1 ? 'unidad' : 'unidades'}</dd>
+                  </dl>
                 `,
-                confirmButtonText: 'Entendido',
-                confirmButtonColor: '#4141a5'
+                confirmButtonText: 'Aceptar'
               });
               this.cargar();
             },
@@ -523,19 +528,19 @@ export class Inventario implements OnInit {
 
             Swal.fire({
               icon: 'success',
-              title: '¡Stock Asignado al Veterinario!',
+              title: 'Stock asignado al veterinario',
               html: `
-                <div class="text-left text-sm space-y-2">
-                  <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
-                  <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                  <p><strong>Cantidad transferida:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
-                  <div class="p-2.5 bg-[#4141a5]/10 border border-[#4141a5]/20 rounded-xl text-[#170B3D] text-xs mt-3">
-                    El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.
-                  </div>
-                </div>
+                <dl class="qa-datos">
+                  <dt>Producto</dt>
+                  <dd>${this.loteSeleccionado?.nombre}</dd>
+                  <dt>Veterinario destino</dt>
+                  <dd>${nombreVet}</dd>
+                  <dt>Cantidad transferida</dt>
+                  <dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                </dl>
+                <p class="qa-nota">El stock fue descontado por FIFO en la bodega e ingresado al kit del veterinario con registro en Kardex y sincronización móvil.</p>
               `,
-              confirmButtonText: 'Entendido',
-              confirmButtonColor: '#4141a5'
+              confirmButtonText: 'Aceptar'
             });
 
             // Recargar inventario para reflejar saldos actualizados
@@ -590,17 +595,20 @@ export class Inventario implements OnInit {
                     this.cerrarModalAsignar();
                     Swal.fire({
                       icon: 'success',
-                      title: '¡Lote Asignado al Veterinario!',
+                      title: 'Lote asignado al veterinario',
                       html: `
-                        <div class="text-left text-sm space-y-2">
-                          <p><strong>Producto:</strong> ${this.loteSeleccionado?.nombre}</p>
-                          <p><strong>Veterinario destino:</strong> ${nombreVet}</p>
-                          <p><strong>Cantidad entregada:</strong> <span class="text-[#4141a5] font-extrabold">${cant} unidades</span></p>
-                          <p><strong>Nuevo saldo en CBA:</strong> <span class="text-[#170B3D] font-bold">${nuevoStock} unidades</span></p>
-                        </div>
+                        <dl class="qa-datos">
+                          <dt>Producto</dt>
+                          <dd>${this.loteSeleccionado?.nombre}</dd>
+                          <dt>Veterinario destino</dt>
+                          <dd>${nombreVet}</dd>
+                          <dt>Cantidad entregada</dt>
+                          <dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+                          <dt>Nuevo saldo en CBA</dt>
+                          <dd>${nuevoStock} ${nuevoStock === 1 ? 'unidad' : 'unidades'}</dd>
+                        </dl>
                       `,
-                      confirmButtonText: 'Entendido',
-                      confirmButtonColor: '#4141a5'
+                      confirmButtonText: 'Aceptar'
                     });
                     this.cargar();
                   },

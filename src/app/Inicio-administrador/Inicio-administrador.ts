@@ -1,24 +1,34 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLinkActive, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { EncabezadoPaginaService } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule],
+  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule, AnimalIconComponent],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })
-export class InicioAdministradorComponent implements OnInit {
+export class InicioAdministradorComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   public authService = inject(AuthService);
   public inventoryService = inject(VeterinaryInventoryService);
+  public alertasDuplicadosService = inject(AlertasDuplicadosService);
+  /** Título de la página activa que se muestra en la barra superior (solo presentación). */
+  public encabezadoPagina = inject(EncabezadoPaginaService);
+
+  private alertasMaletinSub: Subscription | null = null;
+  private duplicadosIndiceSub: Subscription | null = null;
 
   // Control para abrir y cerrar el menú en móviles
-  menuAbierto: boolean = true;
+  menuAbierto: boolean = false; // UI: en móvil el menú inicia cerrado (en escritorio no aplica)
 
   // Control para el menú desplegable del perfil en la esquina superior derecha
   menuPerfilAbierto: boolean = false;
@@ -37,13 +47,44 @@ export class InicioAdministradorComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isVeterinario() || this.authService.isAdmin()) {
-      this.inventoryService.alertasMaletin$.subscribe(alertas => {
+      this.alertasMaletinSub = this.inventoryService.alertasMaletin$.subscribe(alertas => {
         this.medicamentosAlertas = alertas || [];
       });
       if (this.medicamentosAlertas.length === 0) {
         this.cargarAlertasIniciales();
       }
     }
+
+    if (this.puedeVerAlertasDuplicados) {
+      this.cargarAlertasDuplicadosIniciales();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.alertasMaletinSub?.unsubscribe();
+    this.duplicadosIndiceSub?.unsubscribe();
+  }
+
+  get puedeVerAlertasDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get totalAlertasDuplicadosPendientes(): number {
+    return this.puedeVerAlertasDuplicados
+      ? this.alertasDuplicadosService.totalPendientes()
+      : 0;
+  }
+
+  cargarAlertasDuplicadosIniciales(): void {
+    if (!this.puedeVerAlertasDuplicados) {
+      return;
+    }
+    this.duplicadosIndiceSub?.unsubscribe();
+    this.duplicadosIndiceSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, false)
+      .subscribe({
+        error: () => {}
+      });
   }
 
   cargarAlertasIniciales(): void {
@@ -125,20 +166,16 @@ export class InicioAdministradorComponent implements OnInit {
   onLogout(): void {
     this.cerrarMenuPerfil();
     Swal.fire({
-      title: '¿Cerrar sesión?',
-      text: '¿Estás seguro de que deseas cerrar sesión?',
+      title: 'Cerrar sesión',
+      text: 'Se cerrará la sesión activa en este dispositivo.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, cerrar sesión',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#4141A5',
-      cancelButtonColor: '#ffffff',
-      customClass: {
-        cancelButton: '!text-black !border !border-gray-400'
-      }
+      confirmButtonText: 'Cerrar sesión',
+      cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.logout();
+        this.alertasDuplicadosService.limpiarEstado();
         this.router.navigate(['/']);
       }
     });

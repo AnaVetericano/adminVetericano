@@ -8,6 +8,8 @@ import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface HistoriaClinicaItem {
   id_historia: number;
@@ -45,7 +47,7 @@ export interface HistoriaClinicaItem {
 @Component({
   selector: 'app-historia-clinica-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './historia-clinica-list.html',
   styleUrl: './historia-clinica-list.css'
 })
@@ -1162,9 +1164,9 @@ export class HistoriaClinicaListComponent implements OnInit {
     const s = this.consultaDetalleSeleccionada?.sistemas || this.consultaDetalleSeleccionada?.organosSistemas || {};
     const val = String(s[clave] || 'NE').toUpperCase();
     if (val === 'N' || val === 'NORMAL') {
-      return { label: 'Normal', clase: 'bg-emerald-50 text-emerald-700 border-emerald-200', icono: '✓' };
+      return { label: 'Normal', clase: 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]', icono: '✓' };
     } else if (val === 'A' || val === 'ANORMAL') {
-      return { label: 'Anormal', clase: 'bg-rose-50 text-rose-700 border-rose-200', icono: '⚠' };
+      return { label: 'Anormal', clase: 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]', icono: '⚠' };
     }
     return { label: 'No evaluado', clase: 'bg-slate-50 text-slate-500 border-slate-200', icono: '—' };
   }
@@ -1335,7 +1337,7 @@ export class HistoriaClinicaListComponent implements OnInit {
 
         Swal.fire({
           icon: 'success',
-          title: '¡Atención registrada!',
+          title: 'Atención registrada',
           text: `Se agregó la ${this.nuevoRegistroHistorial.tipo} a la línea de tiempo del paciente.`,
           timer: 1800,
           showConfirmButton: false
@@ -1347,8 +1349,9 @@ export class HistoriaClinicaListComponent implements OnInit {
         const errorDetail = err?.error?.motivoConsulta || err?.error?.detail || err?.error?.mensaje || 'No fue posible guardar la atención en el servidor.';
         Swal.fire({
           icon: 'error',
-          title: 'Error al registrar',
-          text: Array.isArray(errorDetail) ? errorDetail.join(', ') : errorDetail
+          title: 'No fue posible registrar la atención',
+          text: Array.isArray(errorDetail) ? errorDetail.join(', ') : errorDetail,
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -1535,8 +1538,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Nombre requerido',
-        text: 'Por favor asigna o ingresa el nombre o alias del animal rescatado.',
-        confirmButtonColor: '#4141a5'
+        text: 'Asigne o ingrese el nombre o alias del animal rescatado.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -1694,11 +1697,11 @@ export class HistoriaClinicaListComponent implements OnInit {
 
       Swal.fire({
         icon: 'success',
-        title: disponibleAdopBool ? '¡Enviado a Adopción!' : '¡Ficha del paciente actualizada!',
+        title: disponibleAdopBool ? 'Enviado a Adopción' : 'Ficha del paciente actualizada',
         text: disponibleAdopBool
           ? `${this.animalEnEdicion.nombre} recibió el alta médica (Estable), su historia clínica permanece en el listado normal y ya figura Disponible en el módulo de Adopciones.`
-          : `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron exitosamente en el sistema.`,
-        confirmButtonColor: '#4141a5'
+          : `Los datos del animal ${this.animalEnEdicion.nombre} se guardaron en el sistema.`,
+        confirmButtonText: 'Aceptar'
       });
     };
 
@@ -1787,22 +1790,18 @@ export class HistoriaClinicaListComponent implements OnInit {
     Swal.fire({
       title: `¿Dar alta y enviar a Adopción a ${historia.animal_nombre}?`,
       html: `
-        <div style="text-align:left; font-size:13px; color:#334155; line-height:1.5;">
-          <p style="margin-bottom:8px;">
-            • <strong>Alta de Hospitalización CBA:</strong> Pasará a estado <strong>Estable</strong> (fuera de peligro) y saldrá de <em>Hospitalizados</em>.<br/>
-            • <strong>Historia Clínica (${historia.numero_historia}):</strong> Permanecerá abierta en el listado <em>Normal</em> con todo su historial por si vuelve a consulta o reingreso.<br/>
-            • <strong>Módulo de Adopciones:</strong> Quedará publicado inmediatamente como <strong>Disponible</strong>.
-          </p>
-          <label style="display:block; font-weight:700; color:#170B3D; margin-top:10px; margin-bottom:4px;">Descripción para la ficha de Adopción:</label>
-        </div>
+        <p>
+          • <strong>Alta de Hospitalización CBA:</strong> Pasará a estado <strong>Estable</strong> (fuera de peligro) y saldrá de <em>Hospitalizados</em>.<br/>
+          • <strong>Historia Clínica (${historia.numero_historia}):</strong> Permanecerá abierta en el listado <em>Normal</em> con todo su historial por si vuelve a consulta o reingreso.<br/>
+          • <strong>Módulo de Adopciones:</strong> Quedará publicado inmediatamente como <strong>Disponible</strong>.
+        </p>
+        <p class="qa-nota">Descripción para la ficha de Adopción:</p>
       `,
       input: 'textarea',
       inputValue: descripcionPorDefecto,
-      inputPlaceholder: 'Describe el carácter, recuperación y estado del animal para su adopción...',
+      inputPlaceholder: 'Describa el carácter, recuperación y estado del animal para su adopción...',
       showCancelButton: true,
-      confirmButtonColor: '#4141a5',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Confirmar Alta y Enviar a Adopción',
+      confirmButtonText: 'Confirmar alta y enviar a adopción',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (!result.isConfirmed) return;
@@ -1919,9 +1918,8 @@ export class HistoriaClinicaListComponent implements OnInit {
 
       Swal.fire({
         icon: 'success',
-        title: '¡Alta médica y enviado a Adopción!',
+        title: 'Alta médica y envío a Adopción',
         text: `${historia.animal_nombre} ya está disponible en Adopciones y su historia clínica (${historia.numero_historia}) quedó guardada en el apartado normal.`,
-        confirmButtonColor: '#4141a5',
         showCancelButton: true,
         confirmButtonText: 'Ir a Adopciones',
         cancelButtonText: 'Ver en Historias Normales'
@@ -1976,8 +1974,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Nombre requerido',
-        text: 'Por favor ingresa el nombre de la mascota o paciente.',
-        confirmButtonColor: '#4141a5'
+        text: 'Ingrese el nombre de la mascota o paciente.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -1986,8 +1984,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Datos del tutor requeridos',
-        text: 'Ingresa al menos el nombre y documento de identidad del tutor o acudiente.',
-        confirmButtonColor: '#4141a5'
+        text: 'Ingrese al menos el nombre y documento de identidad del tutor o acudiente.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2056,9 +2054,8 @@ export class HistoriaClinicaListComponent implements OnInit {
 
         Swal.fire({
           icon: 'success',
-          title: '¡Paciente registrado!',
-          text: `El expediente de ${this.nuevoPaciente.nombre} fue creado con éxito en la base de datos.`,
-          confirmButtonColor: '#4141a5',
+          title: 'Paciente registrado',
+          text: `El expediente de ${this.nuevoPaciente.nombre} fue creado en la base de datos.`,
           showCancelButton: true,
           confirmButtonText: 'Abrir Historia Clínica',
           cancelButtonText: 'Seguir en el listado'
@@ -2081,9 +2078,9 @@ export class HistoriaClinicaListComponent implements OnInit {
         console.error('Error al registrar paciente:', err);
         Swal.fire({
           icon: 'error',
-          title: 'Error al registrar',
+          title: 'No fue posible registrar el paciente',
           text: err?.error?.detail || err?.message || 'No fue posible registrar el paciente. Verifique su conexión al servidor.',
-          confirmButtonColor: '#4141a5'
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -2093,15 +2090,15 @@ export class HistoriaClinicaListComponent implements OnInit {
   obtenerClaseEstado(estado?: string): string {
     const e = (estado || '').toLowerCase().trim();
     if (e.includes('estable')) {
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
     }
     if (e.includes('crítico') || e.includes('critico') || e.includes('grave')) {
-      return 'bg-rose-50 text-rose-700 border-rose-200';
+      return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
     }
     if (e.includes('observación') || e.includes('observacion') || e.includes('reservado')) {
-      return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
     }
-    return 'bg-blue-50 text-blue-700 border-blue-200';
+    return 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20';
   }
 
   formatearFecha(fechaStr?: string | null): string {

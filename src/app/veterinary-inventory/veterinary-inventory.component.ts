@@ -11,11 +11,13 @@ import {
   SolicitudKitPayload
 } from '../services/veterinary-inventory.service';
 import { AuthService } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-veterinary-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './veterinary-inventory.component.html',
   styleUrl: './veterinary-inventory.component.css'
 })
@@ -239,28 +241,21 @@ export class VeterinaryInventoryComponent implements OnInit {
   mostrarAlertaStockBajoSweetAlert(item: VeterinaryKitItem): void {
     Swal.fire({
       icon: 'warning',
-      title: '¡Alerta de Stock Bajo!',
+      title: 'Alerta de stock bajo',
       html: `
-        <div class="text-left text-sm space-y-3 font-sans">
-          <div class="p-3 bg-[#FFF4E5] border-l-4 border-[#FCD9A6] rounded-r-xl">
-            <p class="font-bold text-[#9A5B13]">
-              Recuerda que te quedan ${item.saldoDisponible} unidades de este producto. Es hora de solicitar reaprovisionamiento al inventario general.
-            </p>
-          </div>
-          <div class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-            <p><b>Producto:</b> ${item.nombre}</p>
-            <p><b>Presentación:</b> ${item.presentacion || 'Unidad de campo'}</p>
-            <p><b>Saldo Actual:</b> <span class="font-extrabold text-[#9A5B13] bg-[#FFF4E5] border border-[#FCD9A6] px-2 py-0.5 rounded-md">${item.saldoDisponible} uds</span></p>
-            <p><b>Kit / Lote:</b> ${item.lote || 'Kit de Campo'}</p>
-          </div>
-        </div>
+        <p>${item.saldoDisponible === 1 ? 'Queda' : 'Quedan'} ${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'} de este producto. Solicite reaprovisionamiento al inventario general.</p>
+        <dl class="qa-datos">
+          <dt>Producto</dt>
+          <dd>${item.nombre}</dd>
+          <dt>Presentación</dt>
+          <dd>${item.presentacion || 'Unidad de campo'}</dd>
+          <dt>Saldo actual</dt>
+          <dd class="qa-tono">${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'}</dd>
+          <dt>Kit / Lote</dt>
+          <dd>${item.lote || 'Kit de Campo'}</dd>
+        </dl>
       `,
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#4141A5',
-      background: '#ffffff',
-      customClass: {
-        popup: 'rounded-3xl shadow-2xl border border-slate-200'
-      }
+      confirmButtonText: 'Aceptar'
     });
   }
 
@@ -319,13 +314,13 @@ export class VeterinaryInventoryComponent implements OnInit {
     this.validarCantidadConsumo();
     if (!this.validacionConsumo || !this.validacionConsumo.valido) {
       const mensaje = this.validacionConsumo?.mensajeError ||
-        `No cuentas con suficiente stock en tu inventario de campo (Disponibles: ${this.itemSeleccionadoParaConsumo.saldoDisponible}, Solicitados: ${this.cantidadConsumo}). Por favor, ajusta la cantidad o utiliza una alternativa de medicamento disponible.`;
+        `No cuenta con suficiente stock en su inventario de campo (Disponibles: ${this.itemSeleccionadoParaConsumo.saldoDisponible}, Solicitados: ${this.cantidadConsumo}). Ajuste la cantidad o utilice una alternativa de medicamento disponible.`;
       
       Swal.fire({
         icon: 'error',
         title: 'Acción bloqueada',
         text: mensaje,
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -334,23 +329,23 @@ export class VeterinaryInventoryComponent implements OnInit {
     const cant = Number(this.cantidadConsumo);
 
     Swal.fire({
-      title: '¿Confirmar formulación / consumo?',
+      title: 'Confirmar formulación o consumo',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <p>Se registrará el consumo de <b>${cant} unidades</b> de:</p>
-          <p class="font-extrabold text-[#170B3D] text-base">${item.nombre}</p>
-          <p class="text-xs text-slate-500">Saldo actual en maletín: <b>${item.saldoDisponible} uds</b> &rarr; Nuevo saldo: <b>${item.saldoDisponible - cant} uds</b></p>
-        </div>
+        <dl class="qa-datos">
+          <dt>Medicamento</dt>
+          <dd>${item.nombre}</dd>
+          <dt>Consumo a registrar</dt>
+          <dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
+          <dt>Saldo actual en maletín</dt>
+          <dd>${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'}</dd>
+          <dt>Nuevo saldo</dt>
+          <dd>${item.saldoDisponible - cant} ${(item.saldoDisponible - cant) === 1 ? 'unidad' : 'unidades'}</dd>
+        </dl>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, confirmar y descontar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#4141A5',
-      cancelButtonColor: '#64748b',
-      customClass: {
-        popup: 'rounded-3xl'
-      }
+      confirmButtonText: 'Registrar consumo',
+      cancelButtonText: 'Cancelar'
     }).then((res) => {
       if (!res.isConfirmed) return;
 
@@ -364,16 +359,16 @@ export class VeterinaryInventoryComponent implements OnInit {
 
             Swal.fire({
               icon: 'success',
-              title: '¡Consumo Registrado!',
-              text: `Se descontaron ${cant} unidad(es) de ${item.nombre} de tu inventario de campo.`,
-              confirmButtonColor: '#4141A5'
+              title: 'Consumo registrado',
+              text: `Se ${cant === 1 ? 'descontó' : 'descontaron'} ${cant} ${cant === 1 ? 'unidad' : 'unidades'} de ${item.nombre} del inventario de campo.`,
+              confirmButtonText: 'Aceptar'
             });
           } else {
             Swal.fire({
               icon: 'error',
-              title: 'Error al registrar',
-              text: 'No se pudo completar el registro del consumo.',
-              confirmButtonColor: '#4141A5'
+              title: 'No fue posible registrar el consumo',
+              text: 'Verifique los datos e intente nuevamente.',
+              confirmButtonText: 'Aceptar'
             });
           }
         },
@@ -383,8 +378,8 @@ export class VeterinaryInventoryComponent implements OnInit {
           Swal.fire({
             icon: 'error',
             title: 'Error de comunicación',
-            text: 'Ocurrió un error al actualizar el inventario.',
-            confirmButtonColor: '#4141A5'
+            text: 'Verifique la conexión e intente nuevamente.',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -422,7 +417,7 @@ export class VeterinaryInventoryComponent implements OnInit {
     const cant = Number(this.cantidadAjuste);
 
     if (cant <= 0) {
-      Swal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0.', confirmButtonColor: '#4141A5' });
+      Swal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0.', confirmButtonText: 'Aceptar' });
       return;
     }
 
@@ -430,8 +425,8 @@ export class VeterinaryInventoryComponent implements OnInit {
       Swal.fire({
         icon: 'error',
         title: 'Cantidad superior al saldo',
-        text: `No puedes retirar ${cant} unidades porque solo tienes ${item.saldoDisponible} unidades disponibles en tu maletín.`,
-        confirmButtonColor: '#4141A5'
+        text: `No es posible retirar ${cant} ${cant === 1 ? 'unidad' : 'unidades'} porque solo hay ${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad disponible' : 'unidades disponibles'} en el maletín.`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -459,23 +454,23 @@ export class VeterinaryInventoryComponent implements OnInit {
         this.cargarDatos();
 
         const accionTxt = this.tipoOperacionAjuste === 'RETIRO'
-          ? `Se retiraron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} uds.`
-          : `Se agregaron ${cant} unidad(es) de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} uds.`;
+          ? `Se ${cant === 1 ? 'retiró' : 'retiraron'} ${cant} ${cant === 1 ? 'unidad' : 'unidades'} de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'}.`
+          : `Se ${cant === 1 ? 'agregó' : 'agregaron'} ${cant} ${cant === 1 ? 'unidad' : 'unidades'} de ${item.nombre}. Nuevo saldo: ${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'}.`;
 
         Swal.fire({
           icon: 'success',
-          title: '¡Ajuste Realizado con Éxito!',
+          title: 'Ajuste registrado',
           text: accionTxt,
-          confirmButtonColor: '#4141A5'
+          confirmButtonText: 'Aceptar'
         });
       },
       error: (err) => {
         this.guardandoAjuste = false;
         Swal.fire({
           icon: 'error',
-          title: 'Error al ajustar',
-          text: err?.error?.detail || err?.message || 'No se pudo completar el ajuste.',
-          confirmButtonColor: '#4141A5'
+          title: 'No fue posible completar el ajuste',
+          text: err?.error?.detail || err?.message || 'Verifique los datos e intente nuevamente.',
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -506,9 +501,9 @@ export class VeterinaryInventoryComponent implements OnInit {
     if (!this.medicamentoSolicitudId || this.cantidadSolicitud <= 0) {
       Swal.fire({
         icon: 'warning',
-        title: 'Datos Incompletos',
-        text: 'Por favor selecciona un medicamento y una cantidad mayor a cero.',
-        confirmButtonColor: '#4141A5'
+        title: 'Campos obligatorios incompletos',
+        text: 'Seleccione un medicamento y una cantidad mayor a cero.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -532,20 +527,20 @@ export class VeterinaryInventoryComponent implements OnInit {
         this.modalNuevaSolicitudAbierto = false;
         Swal.fire({
           icon: 'success',
-          title: '¡Solicitud Radicada!',
-          text: `La solicitud ante Farmacia CBA ha sido radicada exitosamente bajo el código #${resp?.id_solicitud || ''}.`,
-          confirmButtonColor: '#4141A5'
+          title: 'Solicitud radicada',
+          text: `La solicitud ante Farmacia CBA fue radicada bajo el código #${resp?.id_solicitud || ''}.`,
+          confirmButtonText: 'Aceptar'
         });
         this.cargarDatos();
       },
       error: (err) => {
         this.guardandoSolicitud = false;
-        const msg = err.error?.detail || err.error?.error || err.error?.mensaje || 'Error al radicar la solicitud de reposición.';
+        const msg = err.error?.detail || err.error?.error || err.error?.mensaje || 'No fue posible radicar la solicitud de reposición.';
         Swal.fire({
           icon: 'error',
-          title: 'Error al Radicar',
+          title: 'No fue posible radicar la solicitud',
           text: msg,
-          confirmButtonColor: '#4141A5'
+          confirmButtonText: 'Aceptar'
         });
       }
     });

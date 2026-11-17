@@ -7,11 +7,13 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
 import { Graficas } from '../graficas/graficas';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule, Graficas],
+  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent, PageTitleComponent],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
@@ -189,11 +191,10 @@ listarUsuarios(): void {
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
   next: (response) => {
     Swal.fire({
-      title: '¡Éxito!',
+      title: 'Registro guardado',
       text: 'Usuario creado correctamente' + response,
       icon: 'success',
-      confirmButtonText: 'Aceptar',
-      confirmButtonColor: '#4141A5'
+      confirmButtonText: 'Aceptar'
     }).then(() => {
       // Es una buena práctica ejecutar estas acciones después de que el usuario cierra la alerta
       this.listarUsuarios();
@@ -212,24 +213,21 @@ error: (error) => {
       // Si el mensaje es un arreglo, lo unimos. Si no, lo mostramos directo.
       const textoError = Array.isArray(mensajes) ? mensajes.join(', ') : mensajes;
       // Formato: <li><strong>campo:</strong> mensaje de error</li>
-      return `<li><strong>${campo}:</strong> ${textoError}</li>`;
+      return `<dt>${campo}</dt><dd class="qa-tono">${textoError}</dd>`;
     });
 
     if (listaErrores.length > 0) {
       // Envolvemos los elementos en una etiqueta <ul> (lista desordenada)
-      mensajeErrorHtml = `<ul style="text-align: left;">${listaErrores.join('')}</ul>`;
+      mensajeErrorHtml = `<dl class="qa-datos">${listaErrores.join('')}</dl>`;
     }
   }
 
   // 3. Mostrar el SweetAlert usando la propiedad 'html'
   Swal.fire({
-    title: 'Oops...',
+    title: 'No fue posible guardar el registro',
     html: mensajeErrorHtml, // IMPORTANTE: Cambiar 'text' por 'html'
     icon: 'error',
-    confirmButtonText: 'Cerrar',
-    confirmButtonColor: '#991b1b',
-    background: '#FFFFFF',
-    color: '#170B3D'
+    confirmButtonText: 'Aceptar'
   });
 }
     });
@@ -256,12 +254,9 @@ actualizarUsuario(): void {
 
       Swal.fire({
         icon: 'success',
-        title: '¡Usuario actualizado!',
+        title: 'Usuario actualizado',
         text: 'Los datos del usuario se actualizaron correctamente.',
         confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#4141A5',
-        background: '#FFFFFF',
-        color: '#170B3D',
         timer: 2500,
         timerProgressBar: true
       });
@@ -276,12 +271,9 @@ actualizarUsuario(): void {
 
       Swal.fire({
         icon: 'error',
-        title: 'Error al actualizar',
-        text: 'No se pudo actualizar el usuario. Intenta nuevamente.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#4141A5',
-        background: '#FFFFFF',
-        color: '#170B3D'
+        title: 'No fue posible actualizar el registro',
+        text: 'No se pudo actualizar el usuario. Intente nuevamente.',
+        confirmButtonText: 'Aceptar'
       });
 
     }
@@ -313,18 +305,12 @@ actualizarUsuario(): void {
     const accionCapitalizada = nuevoEstado ? 'activado' : 'inactivado';
 
     Swal.fire({
-      title: `¿Estás seguro de que deseas ${accion} este usuario?`,
+      title: `Confirmar ${accion} usuario`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: nuevoEstado ? '#16a34a' : '#991b1b',
-      background: '#FFFFFF',
-      color: '#170B3D',
-      cancelButtonColor: '#ffffff',
-      confirmButtonText: `Sí, ${accion}`,
+      confirmButtonText: nuevoEstado ? 'Activar' : 'Inactivar',
       cancelButtonText: 'Cancelar',
-        customClass: {
-      cancelButton: '!text-black !border !border-gray-400'
-    }
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' }
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.inactivarUsuario(id_usuario, nuevoEstado).subscribe({
@@ -338,8 +324,8 @@ actualizarUsuario(): void {
           error: (error) => {
             console.error(`Error al ${accion} usuario:`, error);
             Swal.fire({
-              title: 'Error',
-              text: `No se pudo ${accion} el usuario.`,
+              title: 'No fue posible completar la acción',
+              text: `No se pudo ${accion} el usuario. Intente nuevamente.`,
               icon: 'error'
             });
           }
@@ -350,17 +336,12 @@ actualizarUsuario(): void {
   cerrarSesion(): void {
 
   Swal.fire({
-    title: '¿Cerrar sesión?',
-    text: '¿Estás seguro de que deseas cerrar tu sesión?',
+    title: 'Cerrar sesión',
+    text: 'Se finalizará la sesión actual en el sistema.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Sí, cerrar sesión',
-    cancelButtonText: 'No, cancelar',
-    confirmButtonColor: '#4141A5',
-    cancelButtonColor: '#C4C4C4',
-    reverseButtons: true,
-    background: '#FFFFFF',
-    color: '#170B3D'
+    confirmButtonText: 'Cerrar sesión',
+    cancelButtonText: 'Cancelar'
   }).then((result) => {
 
     if (result.isConfirmed) {
@@ -464,22 +445,12 @@ filtrarPorRol(idRol: number | null): void {
     }
 
     Swal.fire({
-      title: '¿Confirmar cambio de rol?',
-      html: `¿Estás seguro de que deseas cambiar el rol de <b>${usuario.nombre} ${usuario.apellido}</b> a <span class="text-indigo-700 font-bold">${nuevoNombreRol}</span>?`,
+      title: 'Confirmar cambio de rol',
+      html: `Se asignará a <b>${usuario.nombre} ${usuario.apellido}</b> el rol <b>${nuevoNombreRol}</b>.`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Sí, cambiar rol',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#1d1b4f',
-      cancelButtonColor: '#C4C4C4',
-      reverseButtons: true,
-      background: '#FFFFFF',
-      color: '#170B3D',
-      customClass: {
-        popup: 'rounded-2xl shadow-2xl',
-        confirmButton: 'rounded-xl px-5 py-2.5 font-semibold shadow-md',
-        cancelButton: 'rounded-xl px-5 py-2.5 font-semibold text-gray-700'
-      }
+      confirmButtonText: 'Cambiar rol',
+      cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
         this.ejecutarCambioRol(usuario, nuevoIdRol, nuevoNombreRol);
@@ -505,12 +476,9 @@ filtrarPorRol(idRol: number | null): void {
 
         Swal.fire({
           icon: 'success',
-          title: '¡Rol actualizado!',
+          title: 'Rol actualizado',
           text: `El rol de ${usuario.nombre} se actualizó a ${nuevoNombreRol} correctamente.`,
           confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#4141A5',
-          background: '#FFFFFF',
-          color: '#170B3D',
           timer: 2200,
           timerProgressBar: true
         });
@@ -521,12 +489,9 @@ filtrarPorRol(idRol: number | null): void {
         console.error('Error al actualizar rol:', error);
         Swal.fire({
           icon: 'error',
-          title: 'Error al cambiar rol',
-          text: 'No se pudo actualizar el rol del usuario. Intenta nuevamente.',
-          confirmButtonText: 'Entendido',
-          confirmButtonColor: '#4141A5',
-          background: '#FFFFFF',
-          color: '#170B3D'
+          title: 'No fue posible actualizar el rol',
+          text: 'No se pudo actualizar el rol del usuario. Intente nuevamente.',
+          confirmButtonText: 'Aceptar'
         });
       }
     });

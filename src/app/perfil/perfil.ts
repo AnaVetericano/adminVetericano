@@ -3,11 +3,12 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { AuthService, UserSession } from '../services/auth';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageTitleComponent],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css'
 })
@@ -129,8 +130,7 @@ export class PerfilComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Formato no válido',
-        text: 'Por favor selecciona un archivo de imagen (PNG, JPG o WEBP).',
-        confirmButtonColor: '#4141A5'
+        text: 'Seleccione un archivo de imagen (PNG, JPG o WEBP).'
       });
       return;
     }
@@ -139,9 +139,8 @@ export class PerfilComponent implements OnInit {
     if (file.size > 5 * 1024 * 1024) {
       Swal.fire({
         icon: 'warning',
-        title: 'Imagen muy pesada',
-        text: 'El tamaño de la imagen no debe superar los 5 MB.',
-        confirmButtonColor: '#4141A5'
+        title: 'Archivo demasiado grande',
+        text: 'El tamaño de la imagen no debe superar los 5 MB.'
       });
       return;
     }
@@ -168,9 +167,8 @@ export class PerfilComponent implements OnInit {
     if (!this.usuario.nombre.trim()) {
       Swal.fire({
         icon: 'warning',
-        title: 'Campo requerido',
-        text: 'Por favor ingresa tu nombre.',
-        confirmButtonColor: '#4141A5'
+        title: 'Campo obligatorio',
+        text: 'Ingrese su nombre.'
       });
       return;
     }
@@ -178,9 +176,8 @@ export class PerfilComponent implements OnInit {
     if (!this.usuario.email.trim()) {
       Swal.fire({
         icon: 'warning',
-        title: 'Campo requerido',
-        text: 'Por favor ingresa un correo electrónico válido.',
-        confirmButtonColor: '#4141A5'
+        title: 'Campo obligatorio',
+        text: 'Ingrese un correo electrónico válido.'
       });
       return;
     }
@@ -262,9 +259,8 @@ export class PerfilComponent implements OnInit {
 
           Swal.fire({
             icon: 'success',
-            title: '¡Perfil actualizado!',
-            text: 'Tu foto de perfil se guardó correctamente en Cloudinary y tus datos se sincronizaron con éxito.',
-            confirmButtonColor: '#4141A5',
+            title: 'Perfil actualizado',
+            text: 'La foto de perfil y los datos se guardaron correctamente.',
             timer: 2300,
             showConfirmButton: false
           });
@@ -275,12 +271,11 @@ export class PerfilComponent implements OnInit {
           this.subiendoACloudinary = false;
           this.cdr.detectChanges();
 
-          const mensajeError = err?.error?.detail || err?.error?.message || 'No fue posible guardar los cambios en el servidor. Por favor intenta nuevamente.';
+          const mensajeError = err?.error?.detail || err?.error?.message || 'No fue posible guardar los cambios en el servidor. Intente nuevamente.';
           Swal.fire({
             icon: 'error',
-            title: 'Error al actualizar',
-            text: mensajeError,
-            confirmButtonColor: '#4141A5'
+            title: 'No fue posible actualizar el perfil',
+            text: mensajeError
           });
         }
       });
@@ -290,9 +285,8 @@ export class PerfilComponent implements OnInit {
       this.cdr.detectChanges();
       Swal.fire({
         icon: 'success',
-        title: '¡Perfil actualizado!',
-        text: 'Los cambios se han guardado en tu sesión activa.',
-        confirmButtonColor: '#4141A5',
+        title: 'Perfil actualizado',
+        text: 'Los cambios se guardaron en su sesión activa.',
         timer: 2000,
         showConfirmButton: false
       });

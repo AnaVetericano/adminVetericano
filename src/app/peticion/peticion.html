@@ -1,62 +1,76 @@
 <div
-  class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white relative min-h-screen">
+  class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white relative min-h-full">
 
   <!-- ========================================================================= -->
   <!-- ENCABEZADO PRINCIPAL DEL MÓDULO JURÍDICO                                  -->
   <!-- ========================================================================= -->
-  <header
-    class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 max-w-7xl mx-auto">
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-0 w-full">
+    <div class="flex flex-wrap items-center justify-between gap-2 max-w-screen-2xl mx-auto">
+      <app-page-title
+        [titulo]="esVeterinario ? 'Seguimiento de Peticiones Asignadas' : 'Gestión y Seguimiento de Peticiones'"
+        [etiqueta]="esVeterinario ? 'Área Veterinaria' : null"
+        [subtitulo]="esVeterinario ? 'Consulta de peticiones asignadas, atención médica, evidencias y seguimiento de visitas de campo' : (puedeAsignarOReasignar ? 'Control de casos, asignación y reasignación de veterinarios, atención prioritaria y seguimiento de estados' : 'Gestión de casos asignados, atención clínica y seguimiento de visitas de campo')" />
 
-      <!-- Título e Identificación Institucional -->
-      <div class="flex items-center gap-3.5">
-        <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
-          <!-- Icono Jurídico para Jurídico / Administrador -->
-          <svg *ngIf="!esVeterinario" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-          </svg>
-          <!-- Icono Clínico / Veterinario para Médico Veterinario -->
-          <svg *ngIf="esVeterinario" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h4m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
-              {{ esVeterinario ? 'Seguimiento de Peticiones Asignadas' : 'Gestión y Seguimiento de Peticiones' }}
-            </h1>
+      <ng-container *ngIf="vistaJuridica === 'peticiones'">
+        <!-- Selector de vista del módulo Peticiones (Solo Administrador y Jurídico) -->
+        <div *ngIf="mostrarLista && puedeGestionarDuplicados"
+          role="tablist"
+          aria-label="Vistas del módulo de peticiones"
+          class="inline-flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200">
+          <button type="button"
+            role="tab"
+            [attr.aria-selected]="vistaModulo === 'listado'"
+            (click)="cambiarVistaModulo('listado')"
+            [ngClass]="vistaModulo === 'listado'
+              ? 'bg-[#170B3D] text-white'
+              : 'text-slate-600 hover:text-[#170B3D] hover:bg-slate-50'"
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span>Peticiones</span>
+          </button>
+
+          <button type="button"
+            role="tab"
+            [attr.aria-selected]="vistaModulo === 'duplicados'"
+            (click)="cambiarVistaModulo('duplicados')"
+            [ngClass]="vistaModulo === 'duplicados'
+              ? 'bg-[#4141A5] text-white'
+              : 'text-slate-600 hover:text-[#170B3D] hover:bg-slate-50'"
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            <span>Alertas de duplicados</span>
             <span
-              *ngIf="esVeterinario"
-              class="hidden md:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Área Veterinaria
+              [ngClass]="vistaModulo === 'duplicados'
+                ? 'bg-white/20 text-white'
+                : (totalPendientesDuplicados > 0 ? 'bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]' : 'bg-slate-100 text-slate-600')"
+              class="px-2 py-0.5 rounded-full text-[11px] font-semibold leading-none">
+              {{ totalPendientesDuplicados }}
             </span>
-          </div>
-          <p class="text-xs sm:text-sm text-gray-500 font-medium">
-            {{ esVeterinario ? 'Consulta de peticiones asignadas, atención médica, evidencias y seguimiento de visitas de campo' : (puedeAsignarOReasignar ? 'Control de casos, asignación y reasignación de veterinarios, atención prioritaria y seguimiento de estados' : 'Gestión de casos asignados, atención clínica y seguimiento de visitas de campo') }}
-          </p>
+          </button>
         </div>
-      </div>
+      </ng-container>
 
       <!-- Acciones de Cabecera y Notificaciones -->
-      <div class="flex items-center gap-2.5 self-end sm:self-center">
+      <div class="flex items-center gap-2.5 self-end sm:self-center ml-auto">
 
         <!-- BOTÓN DE NOTIFICACIONES (Preparación visual de SCRUM-212) -->
         <div class="relative">
           <button type="button" (click)="togglePanelNotificaciones()"
-            class="relative p-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+            class="relative p-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 text-sm font-semibold transition-colors cursor-pointer"
             title="Notificaciones de nuevas peticiones y urgencias">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor" stroke-width="2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             <span *ngIf="notificacionesNoLeidas > 0" class="absolute -top-1 -right-1 flex h-4 w-4">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B42318]/60 opacity-75"></span>
               <span
-                class="relative inline-flex rounded-full h-4 w-4 bg-red-600 text-white text-[9px] font-black items-center justify-center">
+                class="relative inline-flex rounded-full h-4 w-4 bg-[#B42318] text-white text-[9px] font-bold items-center justify-center">
                 {{ notificacionesNoLeidas }}
               </span>
             </span>
@@ -64,62 +78,68 @@
 
           <!-- PANEL DESPLEGABLE DE NOTIFICACIONES REALES -->
           <div *ngIf="panelNotificacionesAbierto"
-            class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-gray-100 py-3 z-50 animate-fade-in">
-            <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+            class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-slate-200 py-3 z-50 animate-fade-in">
+            <div class="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider">Centro de
+                <span class="text-[11px] font-semibold text-[#170B3D] uppercase tracking-wide">Centro de
                   Notificaciones</span>
-                <span class="px-1.5 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-md">{{
+                <span class="px-1.5 py-0.5 bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1] text-[10px] font-semibold rounded-md">{{
                   notificacionesNoLeidas }} nuevas</span>
               </div>
               <button type="button" *ngIf="notificacionesNoLeidas > 0" (click)="marcarTodasNotificacionesLeidas()"
-                class="text-[10px] font-bold text-[#4141a5] hover:underline cursor-pointer">
+                class="text-xs font-semibold text-[#4141A5] hover:underline cursor-pointer">
                 Marcar todas leídas
               </button>
             </div>
 
             <!-- Estado de carga -->
-            <div *ngIf="cargandoNotificaciones" class="p-6 text-center text-xs text-gray-400">
+            <div *ngIf="cargandoNotificaciones" class="p-6 text-center text-xs text-slate-400">
               <div
-                class="inline-block animate-spin w-4 h-4 border-2 border-[#4141a5] border-t-transparent rounded-full mb-1">
+                class="inline-block animate-spin w-4 h-4 border-2 border-[#4141A5] border-t-transparent rounded-full mb-1">
               </div>
               <p>Consultando notificaciones...</p>
             </div>
 
             <!-- Lista vacía -->
             <div *ngIf="!cargandoNotificaciones && notificaciones.length === 0"
-              class="p-6 text-center text-xs text-gray-400">
-              <span class="text-2xl block mb-1">🔕</span>
-              <p class="font-bold text-gray-600">No hay notificaciones</p>
-              <p class="text-[10px] text-gray-400 mt-0.5">Estás al día con todos los casos y eventos.</p>
+              class="p-6 text-center text-xs text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mx-auto mb-1.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.73 21a2 2 0 01-3.46 0M18.63 13A17.888 17.888 0 0118 8M6.26 6.26A5.86 5.86 0 006 8c0 7-3 9-3 9h14M18 8a6 6 0 00-9.33-5M1 1l22 22" />
+              </svg>
+              <p class="font-bold text-slate-600">No hay notificaciones</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Estás al día con todos los casos y eventos.</p>
             </div>
 
             <!-- Lista de notificaciones reales -->
             <div *ngIf="!cargandoNotificaciones && notificaciones.length > 0"
-              class="max-h-72 overflow-y-auto divide-y divide-gray-50">
+              class="max-h-72 overflow-y-auto divide-y divide-slate-100">
               <div *ngFor="let notif of notificaciones" (click)="marcarNotificacionLeida(notif)"
-                class="p-3.5 hover:bg-gray-50/80 transition-colors cursor-pointer"
-                [ngClass]="{'bg-[#4141a5]/5': !notif.leida}">
+                class="p-3.5 hover:bg-slate-50 transition-colors cursor-pointer"
+                [ngClass]="{'bg-[#4141A5]/5': !notif.leida}">
                 <div class="flex items-start justify-between gap-2">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <span *ngIf="notif.tipo?.includes('URG') || notif.mensaje?.toLowerCase()?.includes('urgente')"
-                      class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-100 text-red-700 uppercase">
+                    <span *ngIf="esNotificacionPosibleDuplicado(notif)"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]">
+                      Posible duplicado
+                    </span>
+                    <span *ngIf="!esNotificacionPosibleDuplicado(notif) && (notif.tipo?.includes('URG') || notif.mensaje?.toLowerCase()?.includes('urgente'))"
+                      class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
                       🚨 Urgente
                     </span>
-                    <span *ngIf="notif.tipo"
-                      class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-600">
+                    <span *ngIf="notif.tipo && !esNotificacionPosibleDuplicado(notif)"
+                      class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-50 border border-slate-200 text-slate-600">
                       {{ notif.tipo }}
                     </span>
                   </div>
-                  <span class="text-[10px] text-gray-400 font-medium shrink-0">
+                  <span class="text-[11px] text-slate-400 font-medium shrink-0">
                     {{ tiempoRelativo(notif.fecha_creacion) || formatearFechaCorta(notif.fecha_creacion) }}
                   </span>
                 </div>
                 <p class="text-xs font-semibold text-[#170B3D] mt-1.5">{{ notif.mensaje }}</p>
-                <div class="mt-2 flex items-center justify-between text-[10px]">
-                  <span *ngIf="notif.numero_radicado" class="font-bold text-[#4141a5]">{{ notif.numero_radicado
+                <div class="mt-2 flex items-center justify-between text-[11px]">
+                  <span *ngIf="notif.numero_radicado" class="font-bold text-[#4141A5]">{{ notif.numero_radicado
                     }}</span>
-                  <span class="text-[9px]" [ngClass]="notif.leida ? 'text-gray-400' : 'text-emerald-600 font-bold'">
+                  <span class="text-[10px]" [ngClass]="notif.leida ? 'text-slate-400' : 'text-[#4141A5] font-semibold'">
                     {{ notif.leida ? 'Leída' : '● Nueva' }}
                   </span>
                 </div>
@@ -127,21 +147,27 @@
             </div>
 
             <!-- Pie de notificaciones -->
-            <div class="px-4 py-2 border-t border-gray-100 bg-gray-50/50 rounded-b-3xl text-center">
-              <p class="text-[10px] text-gray-400 font-medium">
+            <div class="px-4 py-2 border-t border-slate-200 bg-slate-50 rounded-b-xl flex items-center justify-between gap-2">
+              <p class="text-[10px] text-slate-500 font-medium">
                 Notificaciones sincronizadas con el servidor central
               </p>
+              <button *ngIf="puedeGestionarDuplicados"
+                type="button"
+                (click)="cambiarVistaModulo('duplicados'); panelNotificacionesAbierto = false"
+                class="text-xs font-semibold text-[#4141A5] hover:underline shrink-0 cursor-pointer">
+                Ver duplicados ({{ totalPendientesDuplicados }})
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Botón Recargar Peticiones -->
         <button *ngIf="mostrarLista && vistaJuridica === 'peticiones'" type="button" (click)="recargarPeticiones()" [disabled]="cargandoPeticiones"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
           title="Recargar listado desde el backend">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141a5]"
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]"
             [ngClass]="{'animate-spin': cargandoPeticiones}" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            stroke-width="2">
+            stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
@@ -150,7 +176,7 @@
 
         <!-- Alternar entre Listado y Registrar Petición -->
         <button *ngIf="vistaJuridica === 'peticiones'" type="button" (click)="toggleVistaPeticiones()"
-          class="px-5 py-2.5 bg-white border border-[#4141a5]/30 text-[#4141a5] font-bold rounded-2xl text-xs uppercase tracking-wider shadow-xs hover:bg-[#4141a5] hover:text-white transition-all active:scale-95 cursor-pointer">
+          class="px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold rounded-lg text-sm transition-colors cursor-pointer">
           {{ mostrarLista ? '+ Registrar nueva petición' : '← Volver al listado' }}
         </button>
       </div>
@@ -158,7 +184,7 @@
   </header>
 
   <!-- CONTENEDOR PRINCIPAL -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col lg:pl-20 transition-all duration-300">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-4 pb-5 flex flex-col">
 
     <!-- VISTA DASHBOARD JURÍDICO EMBEBIDO -->
     <div *ngIf="vistaJuridica === 'dashboard'" class="w-full animate-fade-in">
@@ -171,78 +197,110 @@
     <!-- ========================================================================= -->
     <!-- 3.1. PANEL PRINCIPAL DE JURÍDICO: RESUMEN Y MÉTRICAS VISUALES            -->
     <!-- ========================================================================= -->
-    <div *ngIf="mostrarLista" class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6" [ngClass]="puedeAsignarOReasignar ? 'lg:grid-cols-5' : 'lg:grid-cols-4'">
+    <div *ngIf="mostrarLista && vistaModulo === 'listado'" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5" [ngClass]="puedeAsignarOReasignar ? 'lg:grid-cols-5' : 'lg:grid-cols-4'">
 
       <!-- 1. Total registradas -->
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Total Casos</span>
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Total Casos</span>
           <span
-            class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-bold">📋</span>
+            class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </span>
         </div>
         <div class="mt-2">
-          <div class="text-2xl font-black text-[#170B3D]">{{ totalPeticiones }}</div>
-          <p class="text-[11px] text-gray-400 font-medium">Registradas en el sistema</p>
+          <div class="text-2xl font-bold text-[#170B3D]">{{ totalPeticiones }}</div>
+          <p class="text-xs text-slate-500">Registradas en el sistema</p>
         </div>
       </div>
 
       <!-- 2. Pendientes de asignar (Solo Administrador y Jurídico) -->
       <div *ngIf="puedeAsignarOReasignar" (click)="filtrarPorEstadoAsignacion('Sin asignar')"
-        class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-amber-300 transition-all cursor-pointer flex flex-col justify-between"
-        [ngClass]="{'ring-2 ring-amber-400': filtroEstadoAsignacion === 'Sin asignar'}">
+        class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#9A5B13] shadow-xs hover:border-slate-300 transition-colors cursor-pointer flex flex-col justify-between"
+        [ngClass]="{'ring-2 ring-[#FCD9A6]': filtroEstadoAsignacion === 'Sin asignar'}">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Por Asignar</span>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-[#9A5B13]"></span>
+            Por Asignar
+          </span>
           <span
-            class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold">⏳</span>
+            class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#9A5B13] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
         </div>
         <div class="mt-2">
-          <div class="text-2xl font-black text-amber-600">{{ totalPendientes }}</div>
-          <p class="text-[11px] text-gray-400 font-medium">Requieren veterinario</p>
+          <div class="text-2xl font-bold text-[#170B3D]">{{ totalPendientes }}</div>
+          <p class="text-xs text-slate-500">Requieren veterinario</p>
         </div>
       </div>
 
       <!-- 3. Asignadas en curso -->
       <div (click)="filtrarPorEstadoAsignacion('Asignadas')"
-        class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between"
-        [ngClass]="{'ring-2 ring-blue-400': filtroEstadoAsignacion === 'Asignadas'}">
+        class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#4141A5] shadow-xs hover:border-slate-300 transition-colors cursor-pointer flex flex-col justify-between"
+        [ngClass]="{'ring-2 ring-[#4141A5]/25': filtroEstadoAsignacion === 'Asignadas'}">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">Asignadas</span>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+            Asignadas
+          </span>
           <span
-            class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">🩺</span>
+            class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </span>
         </div>
         <div class="mt-2">
-          <div class="text-2xl font-black text-blue-600">{{ totalAsignadas }}</div>
-          <p class="text-[11px] text-gray-400 font-medium">Con veterinario a cargo</p>
+          <div class="text-2xl font-bold text-[#170B3D]">{{ totalAsignadas }}</div>
+          <p class="text-xs text-slate-500">Con veterinario a cargo</p>
         </div>
       </div>
 
       <!-- 4. Casos Urgentes -->
       <div (click)="filtrarPorPrioridad(filtroPrioridad === 'Urgentes' ? 'Todos' : 'Urgentes')"
-        class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-red-300 transition-all cursor-pointer flex flex-col justify-between"
-        [ngClass]="{'ring-2 ring-red-400': filtroPrioridad === 'Urgentes'}">
+        class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#B42318] shadow-xs hover:border-slate-300 transition-colors cursor-pointer flex flex-col justify-between"
+        [ngClass]="{'ring-2 ring-[#F5B7B1]': filtroPrioridad === 'Urgentes'}">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-red-600">Urgentes</span>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>
+            Urgentes
+          </span>
           <span
-            class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm font-bold animate-pulse">🚨</span>
+            class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#B42318] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </span>
         </div>
         <div class="mt-2">
-          <div class="text-2xl font-black text-red-600">{{ totalUrgentes }}</div>
-          <p class="text-[11px] text-gray-400 font-medium">Atención prioritaria</p>
+          <div class="text-2xl font-bold text-[#170B3D]">{{ totalUrgentes }}</div>
+          <p class="text-xs text-slate-500">Atención prioritaria</p>
         </div>
       </div>
 
       <!-- 5. Casos atrasados (≥ 5 días) -->
       <div (click)="toggleFiltroAtrasadas()"
-        class="col-span-2 sm:col-span-1 bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-rose-400 transition-all cursor-pointer flex flex-col justify-between"
-        [ngClass]="{'ring-2 ring-rose-500 bg-rose-50/20': filtroAtrasadas}">
+        class="col-span-2 sm:col-span-1 bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#B42318] shadow-xs hover:border-slate-300 transition-colors cursor-pointer flex flex-col justify-between"
+        [ngClass]="{'ring-2 ring-[#F5B7B1]': filtroAtrasadas}">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-700">Atrasadas (≥ 5d)</span>
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>
+            Atrasadas (≥ 5d)
+          </span>
           <span
-            class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-sm font-bold">⚠️</span>
+            class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#B42318] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
         </div>
         <div class="mt-2">
-          <div class="text-2xl font-black text-rose-700">{{ totalAtrasadas }}</div>
-          <p class="text-[11px] text-rose-600 font-medium">Posible reasignación</p>
+          <div class="text-2xl font-bold text-[#170B3D]">{{ totalAtrasadas }}</div>
+          <p class="text-xs text-slate-500">Posible reasignación</p>
         </div>
       </div>
 
@@ -251,37 +309,37 @@
     <!-- ========================================================================= -->
     <!-- 3.2. LISTADO DE PETICIONES CON FILTROS Y TARJETAS                        -->
     <!-- ========================================================================= -->
-    <ng-container *ngIf="mostrarLista">
+    <ng-container *ngIf="mostrarLista && vistaModulo === 'listado'">
 
       <!-- BARRA DE BÚSQUEDA Y FILTROS AVANZADOS -->
       <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 mb-4 shrink-0">
 
         <!-- Caja de Búsqueda -->
         <div
-          class="flex items-center bg-white rounded-2xl border border-gray-200 flex-1 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300">
-          <div class="flex items-center px-4 flex-1 gap-3 min-w-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          class="flex items-center bg-white rounded-lg border border-slate-300 flex-1 h-11 hover:border-slate-400 focus-within:border-[#4141A5] focus-within:ring-2 focus-within:ring-[#4141A5]/20 transition-colors">
+          <div class="flex items-center px-3.5 flex-1 gap-2.5 min-w-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 shrink-0" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input type="text" [(ngModel)]="filtroBusqueda"
               placeholder="Buscar por radicado, tipo, estado, dirección o veterinario..."
-              class="w-full outline-none text-xs sm:text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+              class="w-full outline-none text-sm text-slate-800 placeholder:text-slate-400 bg-transparent truncate">
 
             <button *ngIf="filtroBusqueda" type="button" (click)="limpiarBusqueda()"
-              class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0 cursor-pointer">
+              class="text-xs font-semibold text-slate-500 hover:text-[#4141A5] transition-colors border-l border-slate-200 pl-3 py-1 shrink-0 cursor-pointer">
               Limpiar
             </button>
           </div>
 
-          <div class="h-5 w-px bg-gray-200 shrink-0"></div>
+          <div class="h-5 w-px bg-slate-200 shrink-0"></div>
 
           <!-- Filtro rápido por Asignación -->
           <div class="relative">
             <button type="button" (click)="toggleMenuFiltro()"
-              class="px-4 text-xs font-bold text-gray-600 hover:text-[#4141a5] transition-colors flex items-center gap-2 shrink-0 h-full cursor-pointer">
+              class="px-3.5 text-xs font-semibold text-slate-700 hover:text-[#4141A5] transition-colors flex items-center gap-2 shrink-0 h-full cursor-pointer">
               <span>{{ filtroEstadoAsignacion }}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20"
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 20 20"
                 fill="currentColor">
                 <path fill-rule="evenodd"
                   d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -290,25 +348,25 @@
             </button>
 
             <div *ngIf="menuFiltroAbierto"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
+              class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-fade-in">
               <div
-                class="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                 Asignación
               </div>
               <button (click)="filtrarPorEstadoAsignacion('Todos')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] flex items-center justify-between cursor-pointer">
+                class="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#4141A5]/5 hover:text-[#4141A5] flex items-center justify-between cursor-pointer">
                 <span>Todos</span>
-                <span *ngIf="filtroEstadoAsignacion === 'Todos'" class="text-[#4141a5]">✓</span>
+                <span *ngIf="filtroEstadoAsignacion === 'Todos'" class="text-[#4141A5]">✓</span>
               </button>
               <button (click)="filtrarPorEstadoAsignacion('Sin asignar')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] flex items-center justify-between cursor-pointer">
+                class="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#4141A5]/5 hover:text-[#4141A5] flex items-center justify-between cursor-pointer">
                 <span>Sin asignar</span>
-                <span *ngIf="filtroEstadoAsignacion === 'Sin asignar'" class="text-[#4141a5]">✓</span>
+                <span *ngIf="filtroEstadoAsignacion === 'Sin asignar'" class="text-[#4141A5]">✓</span>
               </button>
               <button (click)="filtrarPorEstadoAsignacion('Asignadas')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] flex items-center justify-between cursor-pointer">
+                class="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#4141A5]/5 hover:text-[#4141A5] flex items-center justify-between cursor-pointer">
                 <span>Ya asignadas</span>
-                <span *ngIf="filtroEstadoAsignacion === 'Asignadas'" class="text-[#4141a5]">✓</span>
+                <span *ngIf="filtroEstadoAsignacion === 'Asignadas'" class="text-[#4141A5]">✓</span>
               </button>
             </div>
           </div>
@@ -320,9 +378,9 @@
           <!-- Menú selector de Estados Previstos -->
           <div class="relative">
             <button type="button" (click)="toggleMenuFiltroEstado()"
-              class="px-3.5 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer">
-              <span>Estado: <strong class="text-[#4141a5]">{{ filtroEstadoPeticion }}</strong></span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-400" viewBox="0 0 20 20"
+              class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-2 cursor-pointer">
+              <span>Estado: <strong class="text-[#4141A5]">{{ filtroEstadoPeticion }}</strong></span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 20 20"
                 fill="currentColor">
                 <path fill-rule="evenodd"
                   d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -331,22 +389,22 @@
             </button>
 
             <div *ngIf="menuFiltroEstadoAbierto"
-              class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
+              class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-fade-in">
               <div
-                class="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                class="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                 Flujo de Estados Previsto
               </div>
               <button (click)="filtrarPorEstadoPeticion('Todos')"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] flex items-center justify-between cursor-pointer">
+                class="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#4141A5]/5 hover:text-[#4141A5] flex items-center justify-between cursor-pointer">
                 <span>Todos los estados</span>
-                <span *ngIf="filtroEstadoPeticion === 'Todos'" class="text-[#4141a5]">✓</span>
+                <span *ngIf="filtroEstadoPeticion === 'Todos'" class="text-[#4141A5]">✓</span>
               </button>
               <button *ngFor="let est of estadosCatalogoPrevistos" (click)="filtrarPorEstadoPeticion(est)"
-                class="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 hover:bg-[#4141a5]/5 hover:text-[#4141a5] flex items-center justify-between cursor-pointer">
+                class="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-[#4141A5]/5 hover:text-[#4141A5] flex items-center justify-between cursor-pointer">
                 <span>{{ est }}</span>
-                <span *ngIf="filtroEstadoPeticion === est" class="text-[#4141a5]">✓</span>
+                <span *ngIf="filtroEstadoPeticion === est" class="text-[#4141A5]">✓</span>
               </button>
-              <div class="px-3 pt-2 mt-1 border-t border-gray-100 text-[9px] text-gray-400 italic">
+              <div class="px-3 pt-2 mt-1 border-t border-slate-100 text-[10px] text-slate-400 italic">
                 * Pendiente de unificación con catálogo backend
               </div>
             </div>
@@ -354,31 +412,33 @@
 
           <!-- Botón Filtro Urgentes -->
           <button type="button" (click)="filtrarPorPrioridad(filtroPrioridad === 'Urgentes' ? 'Todos' : 'Urgentes')"
-            [ngClass]="filtroPrioridad === 'Urgentes' ? 'bg-red-600 text-white shadow-xs ring-2 ring-red-300' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
-            class="px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
-            <span>🚨 Urgentes</span>
-            <span *ngIf="totalUrgentes > 0" class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
-              [ngClass]="filtroPrioridad === 'Urgentes' ? 'bg-white text-red-600' : 'bg-red-100 text-red-700'">
+            [ngClass]="filtroPrioridad === 'Urgentes' ? 'bg-[#B42318] text-white border-[#B42318]' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+            class="px-3 py-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="filtroPrioridad === 'Urgentes' ? 'bg-white' : 'bg-[#B42318]'"></span>
+            <span>Urgentes</span>
+            <span *ngIf="totalUrgentes > 0" class="px-1.5 py-0.2 rounded-full text-[11px] font-semibold"
+              [ngClass]="filtroPrioridad === 'Urgentes' ? 'bg-white/20 text-white' : 'bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]'">
               {{ totalUrgentes }}
             </span>
           </button>
 
           <!-- Botón Filtro Atrasadas (5+ días) -->
           <button type="button" (click)="toggleFiltroAtrasadas()"
-            [ngClass]="filtroAtrasadas ? 'bg-rose-700 text-white shadow-xs ring-2 ring-rose-300' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'"
-            class="px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            [ngClass]="filtroAtrasadas ? 'bg-[#B42318] text-white border-[#B42318]' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+            class="px-3 py-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Mostrar solo casos con 5 o más días sin avances">
-            <span>⚠️ Atrasadas (≥ 5d)</span>
-            <span *ngIf="totalAtrasadas > 0" class="px-1.5 py-0.2 rounded-full text-[10px] font-black"
-              [ngClass]="filtroAtrasadas ? 'bg-white text-rose-700' : 'bg-rose-100 text-rose-700'">
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="filtroAtrasadas ? 'bg-white' : 'bg-[#B42318]'"></span>
+            <span>Atrasadas (≥ 5d)</span>
+            <span *ngIf="totalAtrasadas > 0" class="px-1.5 py-0.2 rounded-full text-[11px] font-semibold"
+              [ngClass]="filtroAtrasadas ? 'bg-white/20 text-white' : 'bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]'">
               {{ totalAtrasadas }}
             </span>
           </button>
 
           <!-- Contador de Resultados -->
           <span
-            class="text-xs font-bold text-gray-500 bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs">
-            <strong class="text-[#4141a5]">{{ peticionesFiltradas.length }}</strong> de {{ totalPeticiones }}
+            class="text-xs font-semibold text-slate-600 bg-white px-3.5 py-2 rounded-lg border border-slate-200">
+            <strong class="text-[#4141A5]">{{ peticionesFiltradas.length }}</strong> de {{ totalPeticiones }}
           </span>
 
         </div>
@@ -387,122 +447,146 @@
 
       <!-- SPINNER DE CARGA -->
       <div *ngIf="cargandoPeticiones"
-        class="bg-white rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center p-12 space-y-3 mb-6">
-        <div class="w-12 h-12 border-4 border-[#4141a5]/20 border-t-[#4141a5] rounded-full animate-spin"></div>
-        <p class="text-sm font-bold text-gray-600">Consultando peticiones desde el backend...</p>
-        <p class="text-xs text-gray-400 font-medium">Sincronizando con el servidor en la nube...</p>
+        class="bg-white rounded-xl shadow-xs border border-slate-200 flex flex-col items-center justify-center p-12 space-y-3 mb-6">
+        <app-animal-icon tipo="huellas" [tamano]="40" />
+        <p class="text-sm font-semibold text-slate-700">Consultando peticiones desde el backend...</p>
+        <p class="text-xs text-slate-500">Sincronizando con el servidor en la nube...</p>
       </div>
 
       <!-- CUADRÍCULA DE TARJETAS DE PETICIONES -->
       <div *ngIf="!cargandoPeticiones && peticionesFiltradas.length > 0" class="mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           <div *ngFor="let p of peticionesFiltradas"
-            class="bg-white rounded-2xl p-5 border shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-            [ngClass]="esAtrasada(p) ? 'border-rose-300 ring-1 ring-rose-200' : (esUrgente(p) ? 'border-red-300 ring-1 ring-red-100' : 'border-gray-100 hover:border-[#4141a5]/40')">
+            class="bg-white rounded-xl p-4 sm:p-5 border shadow-xs transition-colors flex flex-col justify-between space-y-4"
+            [ngClass]="esAtrasada(p) ? 'border-slate-200 border-l-4 border-l-[#B42318]' : (esUrgente(p) ? 'border-slate-200 border-l-4 border-l-[#B42318]' : 'border-slate-200 hover:border-[#4141A5]/40')">
 
             <div>
               <!-- Header de la tarjeta: Radicado + Estado + Urgencia + Alerta de Atraso -->
-              <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span
-                      class="text-[10px] font-extrabold text-[#4141a5] uppercase tracking-wider block">Petición</span>
+                      class="text-[11px] font-semibold text-[#4141A5] uppercase tracking-wide block">Petición</span>
                     <!-- Badge Urgente si aplica -->
                     <span *ngIf="esUrgente(p)"
-                      class="px-2 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 uppercase border border-red-200 flex items-center gap-1">
-                      🚨 Urgente
+                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span>
+                      Urgente
                     </span>
                     <!-- Badge Atraso si aplica (3.5) -->
                     <span *ngIf="esAtrasada(p)"
-                      class="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1"
+                      class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]"
                       title="Lleva 5 o más días sin avances">
-                      ⚠️ ≥ 5 días sin avance
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span>
+                      ≥ 5 días sin avance
+                    </span>
+                    <!-- Indicador Posible duplicado pendiente (Solo Admin y Jurídico) -->
+                    <button *ngIf="puedeGestionarDuplicados && tienePosibleDuplicadoPendiente(p)"
+                      type="button"
+                      (click)="abrirAlertaDesdeTarjeta(p, $event)"
+                      title="Revisar alerta de posible duplicado"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6] hover:opacity-90 transition-opacity cursor-pointer">
+                      <span class="w-1.5 h-1.5 rounded-full bg-[#9A5B13]"></span>
+                      Posible duplicado
+                      <span *ngIf="cantidadAlertasPendientesPeticion(p) > 1">
+                        ({{ cantidadAlertasPendientesPeticion(p) }})
+                      </span>
+                    </button>
+                    <span *ngIf="puedeGestionarDuplicados && !tienePosibleDuplicadoPendiente(p) && tieneDuplicadoConfirmadoPeticion(p)"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]"
+                      title="Esta petición tiene un duplicado confirmado">
+                      ✓ Duplicado confirmado
                     </span>
                   </div>
-                  <h3 class="text-base font-extrabold text-[#170B3D] truncate mt-0.5">
+                  <h3 class="text-base font-bold text-[#170B3D] truncate mt-0.5">
                     {{ p.numero_radicado || ('RAD-PET-' + p.id_peticion) }}
                   </h3>
-                  <span class="text-[10px] text-gray-400">Apertura: {{ formatearFechaCorta(p.fecha) }}</span>
+                  <span class="text-[11px] text-slate-400">Apertura: {{ formatearFechaCorta(p.fecha) }}</span>
                 </div>
 
                 <!-- Badge de Asignación / Estado -->
                 <span [ngClass]="estadoBadgeClase(p)"
-                  class="px-2.5 py-1 rounded-full text-[10px] font-bold border shrink-0 text-center">
+                  class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border shrink-0 text-center">
                   {{ p.estado || (estaAsignada(p) ? 'Asignada' : 'En revisión') }}
                 </span>
               </div>
 
               <!-- Miniatura + Tipo + Ubicación + ID -->
-              <div class="flex items-center gap-3 py-3 border-b border-gray-50">
+              <div class="flex items-center gap-3 py-3 border-b border-slate-100">
                 <div (click)="fotoDe(p) ? abrirEvidencia(fotoDe(p)) : null"
-                  [ngClass]="{'cursor-pointer hover:ring-2 hover:ring-[#4141a5]/40 transition': fotoDe(p)}"
-                  class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+                  [ngClass]="{'cursor-pointer hover:ring-2 hover:ring-[#4141A5]/40 transition': fotoDe(p)}"
+                  class="w-12 h-12 rounded-lg bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
                   <img *ngIf="fotoDe(p) && !esVideo(fotoDe(p))" [src]="fotoDe(p)" alt="Evidencia"
                     class="w-full h-full object-cover" loading="lazy" (error)="onImgError($event)">
                   <video *ngIf="fotoDe(p) && esVideo(fotoDe(p))" [src]="fotoDe(p)"
                     class="w-full h-full object-cover pointer-events-none" preload="metadata" muted playsinline></video>
-                  <span *ngIf="!fotoDe(p)" class="text-xl">🐾</span>
+                  <svg *ngIf="!fotoDe(p)" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <h4 class="font-bold text-gray-900 text-xs truncate">{{ tipoLabel(p) }}</h4>
-                  <p class="text-[11px] text-gray-500 truncate">{{ p.ubicacion_direccion || p.direccion || 'Sin
-                    dirección registrada' }}</p>
-                  <p class="text-[10px] text-gray-400">ID Caso: #{{ p.id_peticion }}</p>
+                  <h4 class="font-semibold text-[#170B3D] text-xs truncate">{{ tipoLabel(p) }}</h4>
+                  <p class="text-[11px] text-slate-500 truncate">{{ p.ubicacion_direccion || p.direccion || 'Sin dirección registrada' }}</p>
+                  <p class="text-[11px] text-slate-400">ID Caso: #{{ p.id_peticion }}</p>
                 </div>
               </div>
 
               <!-- Resumen de datos clave con Tiempo Transcurrido (3.2 y 3.5) -->
-              <div class="space-y-1.5 py-3 text-[11px] text-gray-600">
+              <div class="space-y-1.5 py-3 text-xs text-slate-600">
                 <div class="flex justify-between gap-2">
-                  <span class="text-gray-400">Veterinario:</span>
-                  <span class="font-semibold text-gray-700 truncate max-w-[150px]">{{ nombreAsignado(p) || 'Sin asignar'
+                  <span class="text-slate-500">Veterinario:</span>
+                  <span class="font-semibold text-slate-700 truncate max-w-[150px]">{{ nombreAsignado(p) || 'Sin asignar'
                     }}</span>
                 </div>
                 <div class="flex justify-between gap-2">
-                  <span class="text-gray-400">Prioridad:</span>
+                  <span class="text-slate-500">Prioridad:</span>
                   <span class="font-semibold truncate max-w-[150px]"
-                    [ngClass]="esUrgente(p) ? 'text-red-600 font-bold' : 'text-gray-700'">
+                    [ngClass]="esUrgente(p) ? 'text-[#B42318] font-semibold' : 'text-slate-700'">
                     {{ esUrgente(p) ? 'Urgente / Alta' : (p.prioridad || 'Estándar') }}
                   </span>
                 </div>
                 <div class="flex justify-between gap-2">
-                  <span class="text-gray-400">Tiempo transcurrido:</span>
+                  <span class="text-slate-500">Tiempo transcurrido:</span>
                   <span class="font-semibold truncate max-w-[150px]"
-                    [ngClass]="esAtrasada(p) ? 'text-rose-600 font-black' : 'text-gray-700'">
-                    {{ diasTranscurridos(p) !== null ? (diasTranscurridos(p) + ' día(s) desde asignación') : 'No
-                    registrado' }}
+                    [ngClass]="esAtrasada(p) ? 'text-[#B42318] font-bold' : 'text-slate-700'">
+                    {{ diasTranscurridos(p) !== null ? (diasTranscurridos(p) + ' día(s) desde asignación') : 'No registrado' }}
                   </span>
                 </div>
                 <div class="flex justify-between gap-2">
-                  <span class="text-gray-400">Evidencias:</span>
+                  <span class="text-slate-500">Evidencias:</span>
                   <button *ngIf="fotoDe(p)" type="button" (click)="abrirEvidencia(fotoDe(p))"
-                    class="font-semibold text-[#4141a5] hover:underline truncate max-w-[150px] cursor-pointer">
+                    class="font-semibold text-[#4141A5] hover:underline truncate max-w-[150px] cursor-pointer">
                     {{ contarFotos(p) }}
                   </button>
-                  <span *ngIf="!fotoDe(p)" class="font-semibold text-gray-500">Sin archivo</span>
+                  <span *ngIf="!fotoDe(p)" class="font-medium text-slate-500">Sin archivo</span>
                 </div>
               </div>
             </div>
 
             <!-- Botones de acción: Ver Detalle / Asignar / Reasignar -->
-            <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
               <button type="button" (click)="abrirModalDetalle(p)"
-                class="flex-1 py-2 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-all border border-gray-200 cursor-pointer text-center">
+                class="flex-1 py-2 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors border border-slate-300 cursor-pointer text-center">
                 Ver Detalle
               </button>
 
-              <!-- Botón Asignar (si está sin asignar - Solo Administrador y Jurídico) -->
-              <button *ngIf="puedeAsignarOReasignar && !estaAsignada(p)" type="button" (click)="abrirModalAsignar(p)"
-                class="flex-1 py-2 px-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white text-xs font-bold transition-all shadow-xs cursor-pointer text-center">
+              <!-- Botón Asignar (si está sin asignar y no es duplicada - Solo Administrador y Jurídico) -->
+              <button *ngIf="puedeAsignarOReasignar && !esPeticionDuplicada(p) && !estaAsignada(p)" type="button" (click)="abrirModalAsignar(p)"
+                class="flex-1 py-2 px-3 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-xs font-semibold transition-colors cursor-pointer text-center">
                 Asignar
               </button>
 
-              <!-- Botón Reasignar (si ya está asignada - Solo Administrador y Jurídico) -->
-              <button *ngIf="puedeAsignarOReasignar && estaAsignada(p)" type="button" (click)="abrirModalReasignar(p)"
-                [ngClass]="esAtrasada(p) ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#4141a5] hover:bg-[#33338b]'"
-                class="flex-1 py-2 px-3 rounded-xl text-white text-xs font-bold transition-all shadow-xs cursor-pointer text-center">
+              <!-- Botón Reasignar (si ya está asignada y no es duplicada - Solo Administrador y Jurídico) -->
+              <button *ngIf="puedeAsignarOReasignar && !esPeticionDuplicada(p) && estaAsignada(p)" type="button" (click)="abrirModalReasignar(p)"
+                [ngClass]="esAtrasada(p) ? 'bg-[#B42318] hover:opacity-90' : 'bg-[#4141A5] hover:bg-[#353583]'"
+                class="flex-1 py-2 px-3 rounded-lg text-white text-xs font-semibold transition-colors cursor-pointer text-center">
                 Reasignar
               </button>
+
+              <span *ngIf="esPeticionDuplicada(p)"
+                class="px-2.5 py-2 rounded-lg bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1] text-[11px] font-semibold text-center">
+                Duplicada · No asignable
+              </span>
             </div>
 
           </div>
@@ -511,19 +595,16 @@
 
       <!-- ESTADO VACÍO (SIN RESULTADOS) -->
       <div *ngIf="!cargandoPeticiones && peticionesFiltradas.length === 0"
-        class="bg-white rounded-2xl shadow-xs border border-gray-100 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-4 mb-6">
-        <div
-          class="w-16 h-16 rounded-3xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center text-2xl shadow-xs">
-          📋
-        </div>
+        class="bg-white rounded-xl shadow-xs border border-slate-200 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-4 mb-6">
+        <app-animal-icon tipo="gato" [tamano]="64" />
         <div class="max-w-md space-y-1">
-          <h3 class="text-base font-extrabold text-[#170B3D]">No se encontraron peticiones</h3>
-          <p class="text-xs text-gray-500">
+          <h3 class="text-base font-bold text-[#170B3D]">No se encontraron peticiones</h3>
+          <p class="text-xs text-slate-500">
             No hay peticiones que coincidan con los criterios de búsqueda y filtros seleccionados.
           </p>
         </div>
         <button type="button" (click)="limpiarTodosFiltros()"
-          class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer">
+          class="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
           Restablecer todos los filtros
         </button>
       </div>
@@ -531,168 +612,429 @@
     </ng-container>
 
     <!-- ========================================================================= -->
+    <!-- 3.2B. BANDEJA DE ALERTAS DE DUPLICADOS (SOLO ADMIN Y JURÍDICO)            -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="mostrarLista && puedeGestionarDuplicados && vistaModulo === 'duplicados'">
+      <section class="space-y-5 mb-6" aria-label="Bandeja de alertas de duplicados">
+
+        <!-- Resumen rápido de alertas -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <button type="button" (click)="filtrarEstadoAlertas('PENDIENTE')"
+            [ngClass]="{'ring-2 ring-[#FCD9A6]': filtroEstadoAlertas === 'PENDIENTE'}"
+            class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#9A5B13] shadow-xs hover:border-slate-300 transition-colors text-left cursor-pointer">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span class="w-2 h-2 rounded-full bg-[#9A5B13]"></span>
+              Pendientes
+            </span>
+            <div class="text-2xl font-bold text-[#170B3D] mt-1">{{ resumenAlertas.PENDIENTE }}</div>
+            <p class="text-xs text-slate-500">Requieren revisión</p>
+          </button>
+
+          <button type="button" (click)="filtrarEstadoAlertas('CONFIRMADO')"
+            [ngClass]="{'ring-2 ring-[#ABEFC6]': filtroEstadoAlertas === 'CONFIRMADO'}"
+            class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#067647] shadow-xs hover:border-slate-300 transition-colors text-left cursor-pointer">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span class="w-2 h-2 rounded-full bg-[#067647]"></span>
+              Confirmadas
+            </span>
+            <div class="text-2xl font-bold text-[#170B3D] mt-1">{{ resumenAlertas.CONFIRMADO }}</div>
+            <p class="text-xs text-slate-500">Duplicados verificados</p>
+          </button>
+
+          <button type="button" (click)="filtrarEstadoAlertas('DESCARTADO')"
+            [ngClass]="{'ring-2 ring-slate-300': filtroEstadoAlertas === 'DESCARTADO'}"
+            class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-slate-400 shadow-xs hover:border-slate-300 transition-colors text-left cursor-pointer">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+              Descartadas
+            </span>
+            <div class="text-2xl font-bold text-[#170B3D] mt-1">{{ resumenAlertas.DESCARTADO }}</div>
+            <p class="text-xs text-slate-500">No son duplicados</p>
+          </button>
+
+          <button type="button" (click)="filtrarEstadoAlertas('TODOS')"
+            [ngClass]="{'ring-2 ring-[#4141A5]/25': filtroEstadoAlertas === 'TODOS'}"
+            class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#4141A5] shadow-xs hover:border-slate-300 transition-colors text-left cursor-pointer">
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+              Total Alertas
+            </span>
+            <div class="text-2xl font-bold text-[#170B3D] mt-1">{{ resumenAlertas.total }}</div>
+            <p class="text-xs text-slate-500">Historial completo</p>
+          </button>
+        </div>
+
+        <!-- Barra de filtros por estado + recarga -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar alertas por estado">
+            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mr-1">Estado:</span>
+
+            <button type="button" (click)="filtrarEstadoAlertas('PENDIENTE')"
+              [ngClass]="filtroEstadoAlertas === 'PENDIENTE'
+                ? 'bg-[#9A5B13] text-white border-[#9A5B13]'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+              class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer">
+              Pendientes
+            </button>
+
+            <button type="button" (click)="filtrarEstadoAlertas('CONFIRMADO')"
+              [ngClass]="filtroEstadoAlertas === 'CONFIRMADO'
+                ? 'bg-[#067647] text-white border-[#067647]'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+              class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer">
+              Confirmadas
+            </button>
+
+            <button type="button" (click)="filtrarEstadoAlertas('DESCARTADO')"
+              [ngClass]="filtroEstadoAlertas === 'DESCARTADO'
+                ? 'bg-slate-700 text-white border-slate-700'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+              class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer">
+              Descartadas
+            </button>
+
+            <button type="button" (click)="filtrarEstadoAlertas('TODOS')"
+              [ngClass]="filtroEstadoAlertas === 'TODOS'
+                ? 'bg-[#170B3D] text-white border-[#170B3D]'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+              class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer">
+              Todas
+            </button>
+          </div>
+
+          <button type="button"
+            (click)="cargarBandejaAlertas(); cargarIndiceDuplicados(true)"
+            [disabled]="cargandoAlertas"
+            class="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer self-start sm:self-auto">
+            {{ cargandoAlertas ? 'Actualizando...' : '↻ Actualizar' }}
+          </button>
+        </div>
+
+        <!-- Estado de carga -->
+        <div *ngIf="cargandoAlertas"
+          class="bg-white rounded-xl border border-slate-200 p-10 text-center shadow-xs">
+          <app-animal-icon tipo="huellas" [tamano]="40" class="mb-3" />
+          <p class="text-sm font-bold text-[#170B3D]">Cargando alertas de duplicados...</p>
+          <p class="text-xs text-slate-500 mt-1">Consultando coincidencias registradas en el sistema.</p>
+        </div>
+
+        <!-- Estado de error -->
+        <div *ngIf="!cargandoAlertas && errorAlertas"
+          class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+          <p class="text-sm font-semibold text-[#170B3D]">{{ errorAlertas }}</p>
+          <button type="button" (click)="cargarBandejaAlertas()"
+            class="px-4 py-2 rounded-lg bg-[#B42318] hover:opacity-90 text-white text-xs font-semibold transition-opacity cursor-pointer shrink-0">
+            Reintentar
+          </button>
+        </div>
+
+        <!-- Estado vacío -->
+        <div *ngIf="!cargandoAlertas && !errorAlertas && alertasBandeja.length === 0"
+          class="bg-white rounded-xl border border-slate-200 p-10 text-center shadow-xs space-y-3">
+          <app-animal-icon tipo="gato" [tamano]="64" />
+          <h3 class="text-sm font-bold text-[#170B3D]">No hay alertas de duplicados para este filtro</h3>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">
+            No se encontraron alertas con estado <span class="font-semibold">{{ filtroEstadoAlertas }}</span>.
+          </p>
+          <button *ngIf="filtroEstadoAlertas !== 'TODOS'"
+            type="button"
+            (click)="filtrarEstadoAlertas('TODOS')"
+            class="px-4 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer">
+            Ver todas las alertas
+          </button>
+        </div>
+
+        <!-- Tabla única responsiva de la bandeja -->
+        <div *ngIf="!cargandoAlertas && !errorAlertas && alertasBandeja.length > 0"
+          class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[780px]">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <th class="py-3 px-4">Alerta</th>
+                  <th class="py-3 px-4">Peticiones comparadas</th>
+                  <th class="py-3 px-4">Estado</th>
+                  <th class="py-3 px-4">Similitud texto</th>
+                  <th class="py-3 px-4">Distancia GPS</th>
+                  <th class="py-3 px-4">Fecha detección</th>
+                  <th class="py-3 px-4 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-sm">
+                <tr *ngFor="let a of alertasBandeja" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <td class="py-3 px-4 font-bold text-[#170B3D] whitespace-nowrap">
+                    #{{ a.id_alerta }}
+                  </td>
+
+                  <td class="py-3 px-4">
+                    <div class="flex flex-wrap items-center gap-1.5 font-semibold text-[#170B3D] text-xs">
+                      <span class="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200">
+                        {{ radicadoPeticionEnAlerta(a, 'menor') }}
+                        <span *ngIf="a.peticion_principal_id === a.peticion_menor_id"
+                          class="ml-1 text-[10px] font-bold text-[#067647] uppercase">Principal</span>
+                      </span>
+                      <span class="text-slate-400 font-medium">vs</span>
+                      <span class="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200">
+                        {{ radicadoPeticionEnAlerta(a, 'mayor') }}
+                        <span *ngIf="a.peticion_principal_id === a.peticion_mayor_id"
+                          class="ml-1 text-[10px] font-bold text-[#067647] uppercase">Principal</span>
+                      </span>
+                    </div>
+                  </td>
+
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border"
+                      [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
+                      {{ a.estado_revision }}
+                    </span>
+                  </td>
+
+                  <td class="py-3 px-4 font-semibold text-[#4141A5] whitespace-nowrap text-xs">
+                    {{ formatearSimilitudAlerta(a) }}
+                  </td>
+
+                  <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap text-xs">
+                    {{ formatearDistanciaAlerta(a) }}
+                  </td>
+
+                  <td class="py-3 px-4 text-slate-600 whitespace-nowrap text-xs">
+                    {{ formatearFechaHora(a.fecha_creacion) }}
+                  </td>
+
+                  <td class="py-3 px-4 text-right whitespace-nowrap">
+                    <button type="button"
+                      (click)="abrirComparadorDuplicado(a.id_alerta)"
+                      [title]="a.estado_revision === 'PENDIENTE' ? 'Comparar peticiones y resolver alerta' : 'Ver comparación en solo lectura'"
+                      class="px-3.5 py-1.5 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-xs font-semibold transition-colors cursor-pointer">
+                      Comparar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación de bandeja -->
+          <div class="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div class="text-slate-600 font-medium">
+              Mostrando <span class="font-bold text-[#170B3D]">{{ alertasBandeja.length }}</span> de
+              <span class="font-bold text-[#170B3D]">{{ totalAlertasBandeja }}</span> alertas ·
+              Página <span class="font-bold text-[#170B3D]">{{ paginaAlertas }}</span> de
+              <span class="font-bold text-[#170B3D]">{{ totalPaginasAlertas }}</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                Por página:
+                <select
+                  [ngModel]="tamanioPaginaAlertas"
+                  (ngModelChange)="cambiarTamanioPaginaAlertas($event)"
+                  aria-label="Alertas por página"
+                  class="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20">
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="20">20</option>
+                  <option [ngValue]="50">50</option>
+                </select>
+              </label>
+
+              <button type="button"
+                (click)="cambiarPaginaAlertas(paginaAlertas - 1)"
+                [disabled]="paginaAlertas <= 1 || cargandoAlertas"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                Anterior
+              </button>
+
+              <button type="button"
+                (click)="cambiarPaginaAlertas(paginaAlertas + 1)"
+                [disabled]="paginaAlertas >= totalPaginasAlertas || cargandoAlertas"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </ng-container>
+
+    <!-- ========================================================================= -->
     <!-- 3.6. FORMULARIO REGISTRAR PETICIÓN (CON OPCIÓN DE PRIORIDAD/URGENCIA)     -->
     <!-- ========================================================================= -->
     <div *ngIf="!mostrarLista"
-      class="w-full max-w-7xl bg-white rounded-3xl shadow-xs overflow-hidden border border-gray-100 p-5 sm:p-8 mb-6">
+      class="w-full max-w-screen-2xl bg-white rounded-xl shadow-xs overflow-hidden border border-slate-200 p-5 sm:p-6 mb-6">
 
-      <div class="mb-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+      <div class="mb-6 pb-4 border-b border-slate-200 flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-extrabold text-[#170B3D] uppercase tracking-wider">Crear Nueva Petición desde Web</h2>
-          <p class="text-xs text-gray-500">Registrar formalmente un caso de maltrato o atención de animal de compañía
+          <h2 class="text-lg font-bold text-[#170B3D]">Crear Nueva Petición desde Web</h2>
+          <p class="text-sm text-slate-500">Registrar formalmente un caso de maltrato o atención de animal de compañía
           </p>
         </div>
         <button *ngIf="vistaJuridica === 'peticiones'" type="button" (click)="toggleVistaPeticiones()"
-          class="text-xs font-bold text-[#4141a5] hover:underline cursor-pointer">
+          class="text-xs font-semibold text-[#4141A5] hover:underline cursor-pointer">
           ← Cancelar y volver al listado
         </button>
       </div>
 
       <!-- Formulario -->
-      <form [formGroup]="reporteForm" (ngSubmit)="enviarReporte()" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <form [formGroup]="reporteForm" (ngSubmit)="enviarReporte()" class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- COLUMNA IZQUIERDA -->
-        <div class="space-y-6">
+        <div class="space-y-5">
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">1. ¿Qué tipo de petición quieres
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">1. ¿Qué tipo de petición quieres
               reportar?</label>
             <div class="grid grid-cols-2 gap-3">
-              <label class="flex items-center p-3 border rounded-2xl cursor-pointer transition-all active:scale-95"
-                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'herido' ? 'border-[#4141a5] bg-[#4141a5]/10 text-[#4141a5] font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 hover:border-[#4141a5]/40 text-gray-700'">
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'herido' ? 'border-[#4141A5] bg-[#4141A5]/5 text-[#4141A5] font-semibold' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'">
                 <input type="radio" formControlName="tipoPeticion" value="herido" class="sr-only">
-                <span class="text-xl mr-2.5">🩹</span>
-                <span class="text-xs uppercase tracking-wider">Animal Herido</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span class="text-xs font-semibold">Animal Herido</span>
               </label>
 
-              <label class="flex items-center p-3 border rounded-2xl cursor-pointer transition-all active:scale-95"
-                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'maltrato' ? 'border-[#4141a5] bg-[#4141a5]/10 text-[#4141a5] font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 hover:border-[#4141a5]/40 text-gray-700'">
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'maltrato' ? 'border-[#4141A5] bg-[#4141A5]/5 text-[#4141A5] font-semibold' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'">
                 <input type="radio" formControlName="tipoPeticion" value="maltrato" class="sr-only">
-                <span class="text-xl mr-2.5">⚠️</span>
-                <span class="text-xs uppercase tracking-wider">Maltrato Animal</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <span class="text-xs font-semibold">Maltrato Animal</span>
               </label>
 
-              <label class="flex items-center p-3 border rounded-2xl cursor-pointer transition-all active:scale-95"
-                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'calle' ? 'border-[#4141a5] bg-[#4141a5]/10 text-[#4141a5] font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 hover:border-[#4141a5]/40 text-gray-700'">
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'calle' ? 'border-[#4141A5] bg-[#4141A5]/5 text-[#4141A5] font-semibold' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'">
                 <input type="radio" formControlName="tipoPeticion" value="calle" class="sr-only">
-                <span class="text-xl mr-2.5">🐾</span>
-                <span class="text-xs uppercase tracking-wider">Condición de Calle</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span class="text-xs font-semibold">Condición de Calle</span>
               </label>
 
-              <label class="flex items-center p-3 border rounded-2xl cursor-pointer transition-all active:scale-95"
-                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'otro' ? 'border-[#4141a5] bg-[#4141a5]/10 text-[#4141a5] font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 hover:border-[#4141a5]/40 text-gray-700'">
+              <label class="flex items-center p-3 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('tipoPeticion')?.value === 'otro' ? 'border-[#4141A5] bg-[#4141A5]/5 text-[#4141A5] font-semibold' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'">
                 <input type="radio" formControlName="tipoPeticion" value="otro" class="sr-only">
-                <span class="text-xl mr-2.5">➕</span>
-                <span class="text-xs uppercase tracking-wider">Otro</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-xs font-semibold">Otro</span>
               </label>
             </div>
 
             <div *ngIf="reporteForm.get('tipoPeticion')?.value === 'otro'" class="mt-3">
               <input type="text" formControlName="otroEspecificacion" placeholder="Especifique el tipo de caso..."
-                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 text-[#170B3D]">
+                class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20">
             </div>
           </div>
 
           <!-- Nivel de Prioridad / Urgencia (3.6) -->
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">2. Nivel de Prioridad / Atención</label>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">2. Nivel de Prioridad / Atención</label>
             <div class="grid grid-cols-3 gap-3">
-              <label class="flex items-center justify-center p-2.5 border rounded-xl cursor-pointer transition-all"
-                [ngClass]="reporteForm.get('prioridad')?.value === 'Baja' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 text-gray-600'">
+              <label class="flex items-center justify-center p-2.5 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('prioridad')?.value === 'Baja' ? 'border-[#ABEFC6] bg-[#ECFDF3] text-[#067647] font-semibold' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'">
                 <input type="radio" formControlName="prioridad" value="Baja" class="sr-only">
                 <span class="text-xs">Baja</span>
               </label>
-              <label class="flex items-center justify-center p-2.5 border rounded-xl cursor-pointer transition-all"
-                [ngClass]="reporteForm.get('prioridad')?.value === 'Media' ? 'border-amber-500 bg-amber-50 text-amber-800 font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 text-gray-600'">
+              <label class="flex items-center justify-center p-2.5 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('prioridad')?.value === 'Media' ? 'border-[#FCD9A6] bg-[#FFF4E5] text-[#9A5B13] font-semibold' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'">
                 <input type="radio" formControlName="prioridad" value="Media" class="sr-only">
                 <span class="text-xs">Media</span>
               </label>
-              <label class="flex items-center justify-center p-2.5 border rounded-xl cursor-pointer transition-all"
-                [ngClass]="reporteForm.get('prioridad')?.value === 'Urgente' ? 'border-red-500 bg-red-50 text-red-800 font-bold shadow-xs' : 'border-gray-200 bg-gray-50/50 text-gray-600'">
+              <label class="flex items-center justify-center gap-1.5 p-2.5 border rounded-lg cursor-pointer transition-colors"
+                [ngClass]="reporteForm.get('prioridad')?.value === 'Urgente' ? 'border-[#F5B7B1] bg-[#FEECEB] text-[#B42318] font-semibold' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'">
                 <input type="radio" formControlName="prioridad" value="Urgente" class="sr-only">
-                <span class="text-xs">🚨 Urgente</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span>
+                <span class="text-xs">Urgente</span>
               </label>
             </div>
-            <p class="text-[11px] text-gray-400 mt-1 italic">
+            <p class="text-xs text-slate-400 mt-1 italic">
               * Los casos urgentes están previstos para activar notificación automática por correo (SCRUM-211)
             </p>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">3. Describe la situación</label>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">3. Describe la situación</label>
             <textarea formControlName="descripcion" rows="4"
               placeholder="Detalla lo sucedido con el animal, síntomas visibles, estado de vulnerabilidad..."
-              class="w-full border border-gray-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 text-[#170B3D] placeholder-gray-400"></textarea>
+              class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"></textarea>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">4. Adjuntar foto o video de
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">4. Adjuntar foto o video de
               evidencia</label>
             <div
-              class="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-[#4141a5]/50 transition-colors bg-gray-50/30">
+              class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:border-[#4141A5]/50 transition-colors bg-slate-50">
               <input type="file" id="evidenciaPeticion" (change)="onFileSelected($event)" accept="image/*,video/*"
                 class="hidden">
               <label for="evidenciaPeticion" class="cursor-pointer flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400 mb-2" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-400 mb-2" fill="none"
+                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round"
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span class="text-xs font-bold text-[#4141a5]">Seleccionar archivo</span>
-                <span class="text-[10px] text-gray-400 mt-1">Imágenes (PNG, JPG) o Videos cortos</span>
+                <span class="text-xs font-semibold text-[#4141A5]">Seleccionar archivo</span>
+                <span class="text-[11px] text-slate-400 mt-1">Imágenes (PNG, JPG) o Videos cortos</span>
               </label>
             </div>
-            <p *ngIf="archivoSeleccionado" class="text-xs text-emerald-600 font-bold mt-2 flex items-center gap-1">
+            <p *ngIf="archivoSeleccionado" class="text-xs text-[#067647] font-semibold mt-2 flex items-center gap-1">
               ✓ Archivo seleccionado: {{ archivoSeleccionado.name }}
             </p>
           </div>
         </div>
 
         <!-- COLUMNA DERECHA: UBICACIÓN -->
-        <div class="space-y-6">
+        <div class="space-y-5">
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-2">5. Ubicación exacta del caso</label>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">5. Ubicación exacta del caso</label>
             <div class="flex gap-2 mb-3">
               <input type="text" formControlName="ubicacion" placeholder="Ej: Carrera 7 # 4-20, Barrio Bolívar, Popayán"
-                class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-gray-50/50 text-[#170B3D]">
+                class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20">
               <button type="button" (click)="buscarUbicacion()"
-                class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs uppercase cursor-pointer">
+                class="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg text-xs cursor-pointer">
                 Buscar
               </button>
             </div>
 
             <div class="flex gap-2 mb-3">
               <button type="button" (click)="usarMiUbicacion()" [disabled]="cargandoUbicacion"
-                class="flex-1 py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
-                <span>📍</span>
+                class="flex-1 py-2 px-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
                 <span>{{ cargandoUbicacion ? 'Obteniendo GPS...' : 'Usar mi ubicación actual' }}</span>
               </button>
               <button *ngIf="latitud && longitud" type="button" (click)="abrirGoogleMaps()"
-                class="py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 text-[#4141a5] text-xs font-bold rounded-xl cursor-pointer">
+                class="py-2 px-3 bg-white border border-slate-300 hover:bg-slate-50 text-[#4141A5] text-xs font-semibold rounded-lg cursor-pointer">
                 Google Maps ↗
               </button>
             </div>
 
             <!-- Mapa / Preview -->
             <div
-              class="w-full h-64 bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 flex items-center justify-center relative">
+              class="w-full h-64 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
               <iframe *ngIf="mapaUrl" [src]="mapaUrl" class="w-full h-full border-0" allowfullscreen=""
                 loading="lazy"></iframe>
               <div *ngIf="!mapaUrl" class="text-center p-6">
-                <span class="text-3xl block mb-2">🗺️</span>
-                <p class="text-xs text-gray-500 font-medium">Ingresa una dirección o usa tu ubicación actual para
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <p class="text-xs text-slate-500 font-medium">Ingresa una dirección o usa tu ubicación actual para
                   previsualizar el mapa</p>
               </div>
             </div>
-            <p *ngIf="mensajeUbicacion" class="text-xs text-gray-500 mt-2 font-medium">{{ mensajeUbicacion }}</p>
+            <p *ngIf="mensajeUbicacion" class="text-xs text-slate-500 mt-2 font-medium">{{ mensajeUbicacion }}</p>
           </div>
 
-          <div class="pt-4 border-t border-gray-100 flex justify-end gap-3">
+          <div class="pt-4 border-t border-slate-200 flex justify-end gap-3">
             <button *ngIf="vistaJuridica === 'peticiones'" type="button" (click)="toggleVistaPeticiones()"
-              class="px-5 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs uppercase hover:bg-gray-50 cursor-pointer">
+              class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 cursor-pointer">
               Cancelar
             </button>
             <button type="submit"
-              class="px-6 py-3 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer">
+              class="px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white font-semibold text-sm transition-colors cursor-pointer">
               Registrar Petición
             </button>
           </div>
@@ -711,66 +1053,70 @@
     class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fade-in">
 
     <div
-      class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+      class="bg-white rounded-xl max-w-3xl w-full max-h-[92vh] shadow-lg border border-slate-200 flex flex-col overflow-hidden">
 
       <!-- Encabezado del Modal -->
       <div
-        class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+        class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-white">
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-2xl bg-[#4141a5] text-white flex items-center justify-center font-black shadow-xs text-xs">
+            class="w-9 h-9 rounded-lg bg-[#4141A5]/10 text-[#4141A5] flex items-center justify-center font-bold text-xs">
             PET
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="text-base font-extrabold text-[#170B3D]">
+              <h2 class="text-base font-bold text-[#170B3D]">
                 {{ peticionDetalle.numero_radicado || ('RAD-PET-' + peticionDetalle.id_peticion) }}
               </h2>
               <span *ngIf="esUrgente(peticionDetalle)"
-                class="px-2 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-700 uppercase border border-red-200">
-                🚨 Urgente
+                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span>
+                Urgente
               </span>
               <span *ngIf="esAtrasada(peticionDetalle)"
-                class="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 uppercase border border-rose-200">
-                ⚠️ Atrasada (≥ 5d)
+                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span>
+                Atrasada (≥ 5d)
               </span>
             </div>
-            <p class="text-[11px] text-gray-500">
+            <p class="text-xs text-slate-500">
               Reportado: {{ formatearFecha(peticionDetalle.fecha) }} · ID #{{ peticionDetalle.id_peticion }}
             </p>
           </div>
         </div>
 
         <button type="button" (click)="cerrarModalDetalle()"
-          class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold transition cursor-pointer">
+          class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-semibold transition-colors cursor-pointer">
           ✕
         </button>
       </div>
 
       <!-- Cuerpo del Modal -->
-      <div class="p-6 overflow-y-auto space-y-5 text-xs">
+      <div class="p-5 overflow-y-auto space-y-4 text-xs">
 
         <!-- 1. Tarjeta Resumen del Caso -->
         <div
-          class="bg-[#4141a5]/5 rounded-2xl p-4 border border-[#4141a5]/15 flex items-center justify-between flex-wrap gap-3">
+          class="bg-[#4141A5]/5 rounded-xl p-4 border border-[#4141A5]/20 flex items-center justify-between flex-wrap gap-3">
           <div class="flex items-center gap-3">
             <div (click)="fotoDe(peticionDetalle) ? abrirEvidencia(fotoDe(peticionDetalle)) : null"
               [ngClass]="{'cursor-pointer': fotoDe(peticionDetalle)}"
-              class="w-14 h-14 rounded-2xl bg-white border border-[#4141a5]/20 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+              class="w-14 h-14 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
               <img *ngIf="fotoDe(peticionDetalle) && !esVideo(fotoDe(peticionDetalle))" [src]="fotoDe(peticionDetalle)"
                 class="w-full h-full object-cover" (error)="onImgError($event)">
               <video *ngIf="fotoDe(peticionDetalle) && esVideo(fotoDe(peticionDetalle))" [src]="fotoDe(peticionDetalle)"
                 class="w-full h-full object-cover pointer-events-none" muted playsinline></video>
-              <span *ngIf="!fotoDe(peticionDetalle)" class="text-2xl">🐾</span>
+              <svg *ngIf="!fotoDe(peticionDetalle)" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
             <div>
-              <p class="font-black text-[#170B3D] text-sm">{{ tipoLabel(peticionDetalle) }}</p>
-              <p class="text-gray-500 text-[11px]">
-                Prioridad: <strong [ngClass]="esUrgente(peticionDetalle) ? 'text-red-600' : 'text-gray-700'">{{
+              <p class="font-bold text-[#170B3D] text-sm">{{ tipoLabel(peticionDetalle) }}</p>
+              <p class="text-slate-600 text-xs">
+                Prioridad: <strong [ngClass]="esUrgente(peticionDetalle) ? 'text-[#B42318]' : 'text-slate-700'">{{
                   esUrgente(peticionDetalle) ? 'Urgente / Prioritaria' : (peticionDetalle.prioridad || 'Estándar')
                   }}</strong>
               </p>
-              <p class="text-gray-400 text-[10px]">
+              <p class="text-slate-500 text-[11px]">
                 Tiempo transcurrido: {{ diasTranscurridos(peticionDetalle) !== null ?
                 (diasTranscurridos(peticionDetalle) + ' día(s)') : 'No disponible' }}
               </p>
@@ -778,14 +1124,14 @@
           </div>
           <div class="flex items-center gap-2">
             <span [ngClass]="estadoBadgeClase(peticionDetalle)"
-              class="px-3 py-1.5 rounded-full font-bold border text-xs">
+              class="inline-flex items-center px-2.5 py-1 rounded-md font-semibold border text-xs">
               {{ peticionDetalle.estado || (estaAsignada(peticionDetalle) ? 'Asignada' : 'En revisión') }}
             </span>
             <button type="button" (click)="abrirModalCambiarEstado(peticionDetalle)"
-              class="px-3 py-1.5 bg-white hover:bg-gray-100 text-[#4141a5] border border-[#4141a5]/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              class="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#4141A5] border border-[#4141A5]/30 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
               title="Actualizar estado del caso">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" stroke-width="2">
+                stroke="currentColor" stroke-width="1.75">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -795,60 +1141,60 @@
         </div>
 
         <!-- 2. Línea de Tiempo del Flujo de Estados (3.3 - Preparación Visual) -->
-        <div class="bg-gray-50/70 rounded-2xl p-4 border border-gray-100">
-          <span class="text-[10px] text-gray-400 uppercase font-extrabold tracking-wider block mb-3">
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <span class="text-[11px] text-slate-500 uppercase font-semibold tracking-wide block mb-3">
             Línea de Vida y Etapas del Caso (Flujo Jurídico)
           </span>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px]">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px]">
             <!-- Paso 1 -->
-            <div class="p-2 rounded-xl bg-white border border-emerald-300 shadow-2xs">
-              <span class="block text-emerald-600 font-extrabold">1. En Revisión</span>
-              <span class="text-[9px] text-gray-400">Petición Creada</span>
+            <div class="p-2 rounded-lg bg-white border border-[#ABEFC6]">
+              <span class="block text-[#067647] font-semibold">1. En Revisión</span>
+              <span class="text-[10px] text-slate-400">Petición Creada</span>
             </div>
             <!-- Paso 2 -->
-            <div class="p-2 rounded-xl border shadow-2xs"
-              [ngClass]="estaAsignada(peticionDetalle) ? 'bg-white border-blue-300' : 'bg-gray-50 border-gray-200 opacity-60'">
-              <span class="block font-extrabold"
-                [ngClass]="estaAsignada(peticionDetalle) ? 'text-blue-600' : 'text-gray-500'">2. Asignada</span>
-              <span class="text-[9px] text-gray-400">Veterinario Asignado</span>
+            <div class="p-2 rounded-lg border"
+              [ngClass]="estaAsignada(peticionDetalle) ? 'bg-white border-[#4141A5]/30' : 'bg-slate-50 border-slate-200 opacity-60'">
+              <span class="block font-semibold"
+                [ngClass]="estaAsignada(peticionDetalle) ? 'text-[#4141A5]' : 'text-slate-500'">2. Asignada</span>
+              <span class="text-[10px] text-slate-400">Veterinario Asignado</span>
             </div>
             <!-- Paso 3 -->
-            <div class="p-2 rounded-xl border shadow-2xs bg-gray-50 border-gray-200 opacity-60">
-              <span class="block text-gray-500 font-extrabold">3. En Atención</span>
-              <span class="text-[9px] text-gray-400">Atención / Historia Clínica</span>
+            <div class="p-2 rounded-lg border bg-slate-50 border-slate-200 opacity-60">
+              <span class="block text-slate-500 font-semibold">3. En Atención</span>
+              <span class="text-[10px] text-slate-400">Atención / Historia Clínica</span>
             </div>
             <!-- Paso 4 -->
-            <div class="p-2 rounded-xl border shadow-2xs bg-gray-50 border-gray-200 opacity-60">
-              <span class="block text-gray-500 font-extrabold">4. Finalizada</span>
-              <span class="text-[9px] text-gray-400">Caso Resuelto / Adopción</span>
+            <div class="p-2 rounded-lg border bg-slate-50 border-slate-200 opacity-60">
+              <span class="block text-slate-500 font-semibold">4. Finalizada</span>
+              <span class="text-[10px] text-slate-400">Caso Resuelto / Adopción</span>
             </div>
           </div>
         </div>
 
         <!-- 3. Estado de Asignación y Ubicación -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
-            <span class="text-[10px] text-gray-400 uppercase font-bold block">Veterinario Responsable</span>
-            <p class="font-bold text-gray-800 text-sm mt-0.5">
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+            <span class="text-[11px] text-slate-500 uppercase font-semibold tracking-wide block">Veterinario Responsable</span>
+            <p class="font-semibold text-[#170B3D] text-sm mt-0.5">
               {{ nombreAsignado(peticionDetalle) || 'Sin asignar' }}
             </p>
-            <p *ngIf="peticionDetalle.fecha_asignacion" class="text-[11px] text-gray-500 mt-1">
+            <p *ngIf="peticionDetalle.fecha_asignacion" class="text-xs text-slate-500 mt-1">
               Fecha de asignación: <strong>{{ formatearFecha(peticionDetalle.fecha_asignacion) }}</strong>
             </p>
             <p *ngIf="!peticionDetalle.fecha_asignacion && estaAsignada(peticionDetalle)"
-              class="text-[11px] text-gray-400 mt-1">
+              class="text-xs text-slate-400 mt-1">
               Fecha de asignación no registrada
             </p>
           </div>
 
-          <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
-            <span class="text-[10px] text-gray-400 uppercase font-bold block">Ubicación y Dirección</span>
-            <p class="font-bold text-gray-800 text-sm mt-0.5 break-words">
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+            <span class="text-[11px] text-slate-500 uppercase font-semibold tracking-wide block">Ubicación y Dirección</span>
+            <p class="font-semibold text-[#170B3D] text-sm mt-0.5 break-words">
               {{ peticionDetalle.ubicacion_direccion || peticionDetalle.direccion || 'Sin dirección registrada' }}
             </p>
             <a *ngIf="mapaLink(peticionDetalle)" [href]="mapaLink(peticionDetalle)" target="_blank" rel="noopener"
-              class="inline-block mt-1 text-[11px] font-bold text-[#4141a5] hover:underline cursor-pointer">
+              class="inline-block mt-1 text-xs font-semibold text-[#4141A5] hover:underline cursor-pointer">
               Ver ubicación en Google Maps ↗
             </a>
           </div>
@@ -856,54 +1202,58 @@
 
         <!-- 4. Descripción del Caso y Evidencias -->
         <div class="space-y-3">
-          <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
-            <span class="text-[10px] text-gray-400 uppercase font-bold block">Descripción de los Hechos</span>
-            <p class="text-gray-700 mt-1 font-medium whitespace-pre-line break-words text-xs leading-relaxed">
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+            <span class="text-[11px] text-slate-500 uppercase font-semibold tracking-wide block">Descripción de los Hechos</span>
+            <p class="text-slate-700 mt-1 font-medium whitespace-pre-line break-words text-xs leading-relaxed">
               {{ peticionDetalle.descripcion || 'Sin descripción registrada.' }}
             </p>
           </div>
 
-          <div *ngIf="fotoDe(peticionDetalle)" class="bg-gray-50 rounded-xl p-3.5 border border-gray-100">
-            <span class="text-[10px] text-gray-400 uppercase font-bold block mb-2">Archivos Adjuntos ({{
+          <div *ngIf="fotoDe(peticionDetalle)" class="bg-slate-50 rounded-xl p-3.5 border border-slate-200">
+            <span class="text-[11px] text-slate-500 uppercase font-semibold tracking-wide block mb-2">Archivos Adjuntos ({{
               contarFotos(peticionDetalle) }} · Toca para ampliar)</span>
             <button *ngIf="!esVideo(fotoDe(peticionDetalle))" type="button"
               (click)="abrirEvidencia(fotoDe(peticionDetalle))"
-              class="group relative block rounded-xl overflow-hidden border border-gray-200 shadow-xs w-28 h-28 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+              class="group relative block rounded-lg overflow-hidden border border-slate-200 w-28 h-28 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141A5]">
               <img [src]="fotoDe(peticionDetalle)" alt="Evidencia del caso"
-                class="w-28 h-28 object-cover group-hover:scale-105 transition-transform" loading="lazy"
+                class="w-28 h-28 object-cover" loading="lazy"
                 (error)="onImgError($event)" />
               <span
-                class="absolute inset-0 bg-[#170B3D]/0 group-hover:bg-[#170B3D]/30 transition flex items-center justify-center text-white text-lg opacity-0 group-hover:opacity-100">🔍</span>
+                class="absolute inset-0 bg-[#170B3D]/0 group-hover:bg-[#170B3D]/30 transition flex items-center justify-center text-white opacity-0 group-hover:opacity-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
             </button>
             <button *ngIf="esVideo(fotoDe(peticionDetalle))" type="button"
               (click)="abrirEvidencia(fotoDe(peticionDetalle))"
-              class="group relative block rounded-xl overflow-hidden border border-gray-200 shadow-xs w-40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141a5]">
+              class="group relative block rounded-lg overflow-hidden border border-slate-200 w-40 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#4141A5]">
               <video [src]="fotoDe(peticionDetalle)" class="w-40 h-28 object-cover pointer-events-none"
                 preload="metadata" muted playsinline></video>
               <span
-                class="absolute inset-0 bg-[#170B3D]/30 flex items-center justify-center text-white text-2xl group-hover:scale-110 transition-transform">▶</span>
+                class="absolute inset-0 bg-[#170B3D]/30 flex items-center justify-center text-white text-2xl">▶</span>
             </button>
           </div>
         </div>
 
         <!-- 5. Sección de Historial de Asignaciones y Reasignaciones (GET /api/peticiones/<id>/historial-asignaciones/) -->
-        <div class="bg-slate-50/70 rounded-2xl p-4 border border-gray-200">
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-extrabold uppercase tracking-wider text-[#170B3D]">
+              <span class="text-[11px] font-semibold uppercase tracking-wide text-[#170B3D]">
                 Historial de Asignaciones y Reasignaciones
               </span>
               <span *ngIf="cargandoHistorial"
-                class="text-[10px] text-gray-400 animate-pulse font-medium">Cargando...</span>
+                class="text-[11px] text-slate-400 animate-pulse font-medium">Cargando...</span>
             </div>
             <span *ngIf="historialAsignaciones.length > 0"
-              class="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
+              class="text-[11px] px-2 py-0.5 rounded-md bg-[#4141A5]/5 text-[#4141A5] font-semibold border border-[#4141A5]/20">
               {{ historialAsignaciones.length }} registro(s)
             </span>
           </div>
 
           <!-- Estado de carga -->
-          <div *ngIf="cargandoHistorial" class="py-4 text-center text-xs text-gray-400">
+          <div *ngIf="cargandoHistorial" class="py-4 text-center text-xs text-slate-400">
             Consultando historial en el servidor...
           </div>
 
@@ -911,43 +1261,125 @@
           <div *ngIf="!cargandoHistorial && historialAsignaciones.length > 0"
             class="space-y-2.5 max-h-56 overflow-y-auto pr-1">
             <div *ngFor="let h of historialAsignaciones"
-              class="bg-white rounded-xl p-3 border border-gray-100 shadow-2xs text-xs">
+              class="bg-white rounded-lg p-3 border border-slate-200 text-xs">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="font-bold text-gray-700">{{ h.veterinario_anterior_nombre || 'Sin asignar' }}</span>
-                  <span class="text-blue-500 font-extrabold">➔</span>
-                  <span class="font-bold text-[#4141a5]">{{ h.veterinario_nuevo_nombre || 'Nuevo Veterinario' }}</span>
+                  <span class="font-semibold text-slate-700">{{ h.veterinario_anterior_nombre || 'Sin asignar' }}</span>
+                  <span class="text-[#4141A5] font-bold">➔</span>
+                  <span class="font-semibold text-[#4141A5]">{{ h.veterinario_nuevo_nombre || 'Nuevo Veterinario' }}</span>
                 </div>
-                <span class="text-[10px] text-gray-400 shrink-0">{{ formatearFechaHora(h.fecha) }}</span>
+                <span class="text-[11px] text-slate-400 shrink-0">{{ formatearFechaHora(h.fecha) }}</span>
               </div>
               <p *ngIf="h.motivo"
-                class="text-[11px] text-gray-600 mt-1 italic bg-gray-50/80 p-2 rounded-lg border border-gray-100">
+                class="text-[11px] text-slate-600 mt-1 italic bg-slate-50 p-2 rounded-lg border border-slate-100">
                 "{{ h.motivo }}"
               </p>
-              <div class="mt-1.5 text-[10px] text-gray-400 flex justify-between">
+              <div class="mt-1.5 text-[11px] text-slate-400 flex justify-between">
                 <span>Asignado por: <strong>{{ h.asignado_por_nombre || 'Área Jurídica' }}</strong></span>
-                <span *ngIf="h.numero_radicado" class="text-gray-400">{{ h.numero_radicado }}</span>
+                <span *ngIf="h.numero_radicado" class="text-slate-400">{{ h.numero_radicado }}</span>
               </div>
             </div>
           </div>
 
           <!-- Si no hay historial registrado aún -->
           <div *ngIf="!cargandoHistorial && historialAsignaciones.length === 0" class="py-3 text-center">
-            <p class="text-xs text-gray-500 font-medium">
+            <p class="text-xs text-slate-500 font-medium">
               Este caso aún no registra reasignaciones previas.
             </p>
-            <p class="text-[10px] text-gray-400 mt-0.5">
+            <p class="text-[11px] text-slate-400 mt-0.5">
               Conserva su asignación original o se encuentra pendiente de asignar.
             </p>
+          </div>
+        </div>
+
+        <!-- 6. Alertas de Posibles Duplicados (Solo Admin y Jurídico) -->
+        <div *ngIf="puedeGestionarDuplicados"
+          class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#9A5B13] space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <h4 class="text-[11px] font-semibold text-[#170B3D] uppercase tracking-wide flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#9A5B13]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span>6. Alertas de Posibles Duplicados</span>
+              <span *ngIf="alertasPeticionDetalle.length > 0"
+                class="px-1.5 py-0.5 rounded-full bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6] font-semibold">
+                {{ alertasPeticionDetalle.length }}
+              </span>
+            </h4>
+            <button type="button"
+              (click)="cargarAlertasDetallePeticion(peticionDetalle.id_peticion)"
+              [disabled]="cargandoAlertasDetalle"
+              class="text-xs font-semibold text-[#4141A5] hover:underline disabled:opacity-50 cursor-pointer">
+              {{ cargandoAlertasDetalle ? 'Consultando...' : '↻ Actualizar' }}
+            </button>
+          </div>
+
+          <div *ngIf="cargandoAlertasDetalle" class="py-3 flex items-center gap-2 text-xs text-slate-600">
+            <app-animal-icon tipo="huellas" [tamano]="24" etiqueta="Consultando posibles duplicados" />
+            Consultando posibles duplicados...
+          </div>
+
+          <div *ngIf="!cargandoAlertasDetalle && errorAlertasDetalle"
+            class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 text-slate-700 flex items-center justify-between gap-2">
+            <span class="font-semibold text-[#170B3D]">{{ errorAlertasDetalle }}</span>
+            <button type="button"
+              (click)="cargarAlertasDetallePeticion(peticionDetalle.id_peticion)"
+              class="px-2.5 py-1 rounded-lg bg-[#B42318] hover:opacity-90 text-white font-semibold text-xs cursor-pointer">
+              Reintentar
+            </button>
+          </div>
+
+          <div *ngIf="!cargandoAlertasDetalle && !errorAlertasDetalle && alertasPeticionDetalle.length === 0"
+            class="py-2 text-xs text-slate-500 font-medium">
+            Esta petición no registra alertas de posibles duplicados.
+          </div>
+
+          <div *ngIf="!cargandoAlertasDetalle && !errorAlertasDetalle && alertasPeticionDetalle.length > 0"
+            class="space-y-2.5">
+            <div *ngFor="let a of alertasPeticionDetalle"
+              class="bg-slate-50 rounded-lg p-3 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="font-bold text-[#170B3D]">Alerta #{{ a.id_alerta }}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border"
+                    [ngClass]="claseEstadoAlertaBadge(a.estado_revision)">
+                    {{ a.estado_revision }}
+                  </span>
+                  <span *ngIf="a.peticion_principal_id === peticionDetalle.id_peticion"
+                    class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
+                    Esta petición es la principal
+                  </span>
+                  <span *ngIf="otraPeticionDeAlerta(a, peticionDetalle.id_peticion).esPrincipal"
+                    class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
+                    Principal: {{ otraPeticionDeAlerta(a, peticionDetalle.id_peticion).radicado }}
+                  </span>
+                </div>
+                <p class="text-slate-700 font-medium">
+                  Petición relacionada:
+                  <span class="font-bold text-[#170B3D]">{{ otraPeticionDeAlerta(a, peticionDetalle.id_peticion).radicado }}</span>
+                </p>
+                <p class="text-[11px] text-slate-500">
+                  Similitud: <span class="font-semibold text-[#4141A5]">{{ formatearSimilitudAlerta(a) }}</span> ·
+                  Distancia GPS: <span class="font-semibold text-slate-700">{{ formatearDistanciaAlerta(a) }}</span> ·
+                  Detectada: {{ formatearFechaHora(a.fecha_creacion) }}
+                </p>
+              </div>
+
+              <button type="button"
+                (click)="abrirComparadorDuplicado(a.id_alerta)"
+                class="px-3 py-1.5 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-xs font-semibold transition-colors shrink-0 cursor-pointer">
+                Comparar
+              </button>
+            </div>
           </div>
         </div>
 
       </div>
 
       <!-- Pie del Modal -->
-      <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2.5">
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
         <button type="button" (click)="cerrarModalDetalle()"
-          class="px-4 py-2 bg-white hover:bg-gray-100 text-gray-700 rounded-xl border border-gray-200 text-xs font-bold transition cursor-pointer">
+          class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-300 text-xs font-semibold transition-colors cursor-pointer">
           Cerrar
         </button>
         <!-- Acción clínica para Veterinario: Historia Clínica -->
@@ -955,12 +1387,15 @@
           (click)="cerrarModalDetalle()"
           [routerLink]="['/inicio-admin/acta-seres-sintientes']"
           [queryParams]="{ peticion_id: peticionDetalle.id_peticion, radicado: peticionDetalle.numero_radicado }"
-          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5">
-          <span>🩺 Registrar Historia Clínica</span>
+          class="px-4 py-2 bg-[#067647] hover:opacity-90 text-white rounded-lg text-xs font-semibold transition-opacity cursor-pointer inline-flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Registrar Historia Clínica</span>
         </a>
-        <button *ngIf="puedeAsignarOReasignar" type="button"
+        <button *ngIf="puedeAsignarOReasignar && !esPeticionDuplicada(peticionDetalle)" type="button"
           (click)="cerrarModalDetalle(); estaAsignada(peticionDetalle) ? abrirModalReasignar(peticionDetalle) : abrirModalAsignar(peticionDetalle)"
-          class="px-4 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+          class="px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer">
           {{ estaAsignada(peticionDetalle) ? 'Reasignar Veterinario' : 'Asignar Veterinario' }}
         </button>
       </div>
@@ -974,23 +1409,23 @@
   <div *ngIf="puedeAsignarOReasignar && mostrarModalAsignar"
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
     <div
-      class="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in duration-200">
-      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-        <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-base">
+      class="bg-white rounded-xl shadow-lg border border-slate-200 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in duration-200">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+        <h4 class="font-bold text-[#170B3D] text-base">
           Asignar Veterinario
         </h4>
         <button (click)="cerrarModalAsignar()"
-          class="text-gray-400 hover:text-gray-600 font-bold text-lg cursor-pointer">✕</button>
+          class="text-slate-400 hover:text-slate-600 font-semibold text-lg cursor-pointer">✕</button>
       </div>
 
-      <p class="text-xs text-gray-500 font-medium">
+      <p class="text-xs text-slate-600">
         Caso #{{ peticionSeleccionada?.id_peticion }}: {{ peticionSeleccionada?.descripcion }}
       </p>
 
       <div>
-        <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Seleccionar Médico Veterinario</label>
+        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Seleccionar Médico Veterinario</label>
         <select [(ngModel)]="veterinarioSeleccionado"
-          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-gray-50 text-[#170B3D]">
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20">
           <option [ngValue]="null" disabled>-- Elige un veterinario --</option>
           <option *ngFor="let f of veterinariosDisponibles" [ngValue]="f.id_usuario">
             {{ f.nombre || f.first_name || f.username }} {{ f.apellido || f.last_name || '' }} ({{ f.rol || f.nombre_rol
@@ -998,18 +1433,18 @@
           </option>
         </select>
         <p *ngIf="!cargandoFuncionarios && veterinariosDisponibles.length === 0"
-          class="text-[11px] text-amber-600 font-semibold mt-2">
+          class="text-xs text-[#9A5B13] font-semibold mt-2">
           No hay veterinarios disponibles. Verifica que existan usuarios activos con rol Veterinario.
         </p>
       </div>
 
-      <div class="flex justify-end gap-3 pt-3">
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
         <button (click)="cerrarModalAsignar()"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 cursor-pointer">
+          class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer">
           Cancelar
         </button>
         <button (click)="asignarVeterinario()" [disabled]="asignando || !veterinarioSeleccionado"
-          class="px-5 py-2 bg-[#4141a5] text-white rounded-xl text-xs font-bold uppercase hover:bg-[#33338b] disabled:opacity-50 cursor-pointer">
+          class="px-4 py-2 bg-[#4141A5] text-white rounded-lg text-xs font-semibold hover:bg-[#353583] disabled:opacity-50 cursor-pointer">
           {{ asignando ? 'Asignando...' : 'Confirmar Asignación' }}
         </button>
       </div>
@@ -1022,51 +1457,53 @@
   <div *ngIf="puedeAsignarOReasignar && mostrarModalReasignar"
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
     <div
-      class="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in duration-200">
+      class="bg-white rounded-xl shadow-lg border border-slate-200 max-w-lg w-full p-5 space-y-4 animate-in fade-in zoom-in duration-200">
 
-      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
         <div>
-          <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-base">
+          <h4 class="font-bold text-[#170B3D] text-base">
             Reasignar Caso a Nuevo Veterinario
           </h4>
-          <span class="text-[10px] text-[#4141a5] font-extrabold">SCRUM-210 · Seguimiento Jurídico</span>
+          <span class="text-[11px] text-[#4141A5] font-semibold">SCRUM-210 · Seguimiento Jurídico</span>
         </div>
         <button (click)="cerrarModalReasignar()"
-          class="text-gray-400 hover:text-gray-600 font-bold text-lg cursor-pointer">✕</button>
+          class="text-slate-400 hover:text-slate-600 font-semibold text-lg cursor-pointer">✕</button>
       </div>
 
       <!-- Alerta si el caso está atrasado (3.5) -->
       <div *ngIf="esAtrasada(peticionParaReasignar)"
-        class="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2.5">
-        <span class="text-xl">⚠️</span>
-        <div class="text-[11px] text-rose-800">
-          <strong>Atención:</strong> Este caso tiene {{ diasTranscurridos(peticionParaReasignar) }} días sin avances
+        class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 flex items-center gap-2.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        <div class="text-xs text-slate-600">
+          <strong class="font-semibold text-[#170B3D]">Atención:</strong> Este caso tiene {{ diasTranscurridos(peticionParaReasignar) }} días sin avances
           registrados.
         </div>
       </div>
 
       <!-- Datos actuales del caso -->
-      <div class="bg-gray-50 rounded-2xl p-3.5 space-y-1.5 text-xs text-gray-700">
+      <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-1.5 text-xs text-slate-700">
         <div class="flex justify-between">
-          <span class="text-gray-400">Radicado:</span>
-          <span class="font-bold text-[#170B3D]">{{ peticionParaReasignar?.numero_radicado || ('RAD-PET-' +
+          <span class="text-slate-500">Radicado:</span>
+          <span class="font-semibold text-[#170B3D]">{{ peticionParaReasignar?.numero_radicado || ('RAD-PET-' +
             peticionParaReasignar?.id_peticion) }}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-gray-400">Veterinario actual:</span>
-          <span class="font-bold text-gray-800">{{ nombreAsignado(peticionParaReasignar) || 'Sin asignar' }}</span>
+          <span class="text-slate-500">Veterinario actual:</span>
+          <span class="font-semibold text-slate-800">{{ nombreAsignado(peticionParaReasignar) || 'Sin asignar' }}</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-gray-400">Fecha de asignación previa:</span>
-          <span class="font-medium text-gray-600">{{ formatearFecha(peticionParaReasignar?.fecha_asignacion) }}</span>
+          <span class="text-slate-500">Fecha de asignación previa:</span>
+          <span class="font-medium text-slate-600">{{ formatearFecha(peticionParaReasignar?.fecha_asignacion) }}</span>
         </div>
       </div>
 
       <!-- Selector de nuevo veterinario -->
       <div>
-        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nuevo Médico Veterinario Asignado</label>
+        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Nuevo Médico Veterinario Asignado</label>
         <select [(ngModel)]="nuevoVeterinarioSeleccionado"
-          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-gray-50 text-[#170B3D]">
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20">
           <option [ngValue]="null" disabled>-- Elige el nuevo veterinario responsable --</option>
           <option *ngFor="let f of veterinariosDisponibles" [ngValue]="f.id_usuario">
             {{ f.nombre || f.first_name || f.username }} {{ f.apellido || f.last_name || '' }} ({{ f.rol || f.nombre_rol
@@ -1077,23 +1514,23 @@
 
       <!-- Campo de Motivo de Reasignación -->
       <div>
-        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Motivo de la Reasignación</label>
+        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Motivo de la Reasignación</label>
         <textarea [(ngModel)]="motivoReasignacion" rows="3"
           placeholder="Ej: Cumplimiento del plazo de 5 días sin atención de campo / Reasignación por descanso médico..."
-          class="w-full border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-gray-50 text-[#170B3D] placeholder-gray-400"></textarea>
-        <p class="text-[10px] text-gray-400 mt-1 italic">
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"></textarea>
+        <p class="text-[11px] text-slate-400 mt-1 italic">
           * La reasignación actualizará automáticamente el estado del caso a 'Asignada' y registrará este motivo en el
           historial de trazabilidad.
         </p>
       </div>
 
-      <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
         <button (click)="cerrarModalReasignar()"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 cursor-pointer">
+          class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer">
           Cancelar
         </button>
         <button (click)="confirmarReasignacionVisual()" [disabled]="asignando || !nuevoVeterinarioSeleccionado"
-          class="px-5 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold uppercase disabled:opacity-50 cursor-pointer shadow-xs">
+          class="px-4 py-2 bg-[#B42318] hover:opacity-90 text-white rounded-lg text-xs font-semibold disabled:opacity-50 cursor-pointer">
           {{ asignando ? 'Reasignando...' : 'Confirmar Reasignación' }}
         </button>
       </div>
@@ -1107,51 +1544,51 @@
   <div *ngIf="mostrarModalEstado"
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
     <div
-      class="bg-white rounded-3xl shadow-xl border border-gray-100 max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in duration-200">
-      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-        <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-base">
+      class="bg-white rounded-xl shadow-lg border border-slate-200 max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in duration-200">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+        <h4 class="font-bold text-[#170B3D] text-base">
           Actualizar Estado del Caso
         </h4>
         <button (click)="cerrarModalCambiarEstado()"
-          class="text-gray-400 hover:text-gray-600 font-bold text-lg cursor-pointer">✕</button>
+          class="text-slate-400 hover:text-slate-600 font-semibold text-lg cursor-pointer">✕</button>
       </div>
 
-      <div class="bg-gray-50 rounded-2xl p-3 text-xs text-gray-600 space-y-1">
+      <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-xs text-slate-600 space-y-1">
         <div class="flex justify-between">
-          <span class="text-gray-400">Caso:</span>
-          <span class="font-bold text-[#170B3D]">#{{ peticionParaCambiarEstado?.id_peticion }} ({{
+          <span class="text-slate-500">Caso:</span>
+          <span class="font-semibold text-[#170B3D]">#{{ peticionParaCambiarEstado?.id_peticion }} ({{
             peticionParaCambiarEstado?.numero_radicado || 'Sin radicado' }})</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-gray-400">Estado actual:</span>
-          <span class="font-bold text-gray-800">{{ peticionParaCambiarEstado?.estado || 'En revisión' }}</span>
+          <span class="text-slate-500">Estado actual:</span>
+          <span class="font-semibold text-slate-800">{{ peticionParaCambiarEstado?.estado || 'En revisión' }}</span>
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Nuevo Estado</label>
+        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Nuevo Estado</label>
         <select [(ngModel)]="nuevoEstadoSeleccionado"
-          class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-gray-50 text-[#170B3D]">
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20">
           <option value="" disabled>-- Selecciona el nuevo estado --</option>
           <option *ngFor="let est of estadosCatalogoPrevistos" [value]="est">{{ est }}</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5">Observación / Justificación
+        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Observación / Justificación
           (Opcional)</label>
         <textarea [(ngModel)]="observacionEstado" rows="3"
           placeholder="Ej: Se avanza estado tras verificación clínica de campo..."
-          class="w-full border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#4141a5] bg-gray-50 text-[#170B3D] placeholder-gray-400"></textarea>
+          class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20"></textarea>
       </div>
 
-      <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-200">
         <button (click)="cerrarModalCambiarEstado()"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold uppercase hover:bg-gray-200 cursor-pointer">
+          class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer">
           Cancelar
         </button>
         <button (click)="confirmarCambioEstado()" [disabled]="cambiandoEstado || !nuevoEstadoSeleccionado"
-          class="px-5 py-2 bg-[#4141a5] text-white rounded-xl text-xs font-bold uppercase hover:bg-[#33338b] disabled:opacity-50 cursor-pointer shadow-xs">
+          class="px-4 py-2 bg-[#4141A5] text-white rounded-lg text-xs font-semibold hover:bg-[#353583] disabled:opacity-50 cursor-pointer">
           {{ cambiandoEstado ? 'Actualizando...' : 'Guardar Estado' }}
         </button>
       </div>
@@ -1164,32 +1601,41 @@
   <div *ngIf="evidenciaSeleccionada" (click)="cerrarEvidencia()"
     class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center z-[60] p-4 cursor-zoom-out">
     <div (click)="$event.stopPropagation()"
-      class="relative bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-3xl w-full p-4 sm:p-5 cursor-default">
-      <div class="flex justify-between items-center pb-3 border-b border-gray-100">
-        <h4 class="font-extrabold text-[#170B3D] uppercase tracking-wider text-sm">
+      class="relative bg-white rounded-xl shadow-lg border border-slate-200 max-w-3xl w-full p-4 sm:p-5 cursor-default">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+        <h4 class="font-bold text-[#170B3D] text-sm">
           {{ evidenciaEsVideo ? 'Video del caso ' : 'Foto del caso ' }}
         </h4>
         <button type="button" (click)="cerrarEvidencia()"
-          class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#4141a5] hover:text-white text-gray-500 font-bold transition active:scale-95 cursor-pointer"
+          class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-[#4141A5] hover:text-white text-slate-600 font-semibold transition-colors cursor-pointer"
           title="Cerrar">✕</button>
       </div>
-      <div class="pt-4 flex items-center justify-center bg-gray-50 rounded-2xl mt-4 overflow-hidden min-h-[200px]">
+      <div class="pt-4 flex items-center justify-center bg-slate-50 rounded-xl mt-4 overflow-hidden min-h-[200px]">
         <img *ngIf="!evidenciaEsVideo" [src]="evidenciaSeleccionada" alt="Evidencia en grande"
-          class="max-h-[70vh] w-auto max-w-full object-contain rounded-xl" (error)="cerrarEvidencia()" />
+          class="max-h-[70vh] w-auto max-w-full object-contain rounded-lg" (error)="cerrarEvidencia()" />
         <video *ngIf="evidenciaEsVideo" [src]="evidenciaSeleccionada" controls autoplay playsinline preload="auto"
-          class="max-h-[70vh] w-full max-w-full object-contain rounded-xl bg-black"></video>
+          class="max-h-[70vh] w-full max-w-full object-contain rounded-lg bg-black"></video>
       </div>
       <div class="flex justify-between items-center gap-3 pt-4">
         <a [href]="evidenciaSeleccionada" target="_blank" rel="noopener"
-          class="px-4 py-2 bg-gray-100 hover:bg-[#4141a5]/10 text-[#170B3D] font-bold rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
+          class="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer">
           Abrir original ↗
         </a>
         <button type="button" (click)="cerrarEvidencia()"
-          class="px-5 py-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold rounded-xl text-xs uppercase tracking-wider transition active:scale-95 cursor-pointer">
+          class="px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer">
           Cerrar
         </button>
       </div>
     </div>
   </div>
+
+  <!-- MODAL COMPARADOR VISUAL DE POSIBLES DUPLICADOS (ETAPA 2 / 3) -->
+  <app-alerta-duplicado-comparacion
+    *ngIf="puedeGestionarDuplicados && alertaComparacionId !== null"
+    [idAlerta]="alertaComparacionId"
+    [manejarEscapeExterno]="true"
+    (cerrar)="cerrarComparadorDuplicado()"
+    (alertaResuelta)="onAlertaDuplicadoResuelta($event)">
+  </app-alerta-duplicado-comparacion>
 
 </div>

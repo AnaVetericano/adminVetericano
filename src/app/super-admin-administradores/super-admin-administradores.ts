@@ -10,11 +10,13 @@ import {
 } from '../services/super-admin.service';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-super-admin-administradores',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './super-admin-administradores.html',
   styleUrl: './super-admin-administradores.css'
 })
@@ -103,11 +105,10 @@ export class SuperAdminAdministradoresComponent implements OnInit {
         this.cdr.detectChanges();
         Swal.fire({
           icon: 'error',
-          title: 'Error de conexión',
+          title: 'No fue posible cargar los administradores',
           text:
             err?.error?.detail ||
-            'No fue posible obtener el listado de administradores desde el servidor.',
-          confirmButtonColor: '#4141A5'
+            'Verifique la conexión e intente nuevamente.'
         });
       }
     });
@@ -279,8 +280,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
           Swal.fire({
             icon: 'success',
             title: 'Administrador registrado',
-            text: `La cuenta de ${creado.nombre} ${creado.apellido || ''} ha sido creada con rol Administrador.`,
-            confirmButtonColor: '#4141A5'
+            text: `La cuenta de ${creado.nombre} ${creado.apellido || ''} ha sido creada con rol Administrador.`
           });
         },
         error: (err) => {
@@ -314,8 +314,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
             Swal.fire({
               icon: 'success',
               title: 'Administrador actualizado',
-              text: `Los datos de ${actualizado.nombre} ${actualizado.apellido || ''} fueron actualizados.`,
-              confirmButtonColor: '#4141A5'
+              text: `Los datos de ${actualizado.nombre} ${actualizado.apellido || ''} fueron actualizados.`
             });
           },
           error: (err) => {
@@ -337,9 +336,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
     if (!nuevoEstado && usuarioSesion?.id_usuario && Number(usuarioSesion.id_usuario) === Number(admin.id_usuario)) {
       Swal.fire({
         icon: 'error',
-        title: 'Auto-bloqueo prevenido',
-        text: 'Por seguridad del sistema, no puedes desactivar tu propia cuenta mientras tu sesión esté activa.',
-        confirmButtonColor: '#4141A5'
+        title: 'Acción no permitida',
+        text: 'No es posible desactivar su propia cuenta mientras la sesión esté activa.'
       });
       return;
     }
@@ -348,9 +346,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
     if (!nuevoEstado && admin.activo && this.totalActivos <= 1) {
       Swal.fire({
         icon: 'error',
-        title: 'Quórum mínimo de Administradores',
-        text: 'Operación denegada: Este usuario es el único Administrador activo del sistema. No se permite desactivar al último Administrador activo.',
-        confirmButtonColor: '#4141A5'
+        title: 'Quórum mínimo requerido',
+        text: 'Este usuario es el único Administrador activo del sistema y no puede ser desactivado.'
       });
       return;
     }
@@ -358,14 +355,13 @@ export class SuperAdminAdministradoresComponent implements OnInit {
     const accionTexto = nuevoEstado ? 'activar' : 'desactivar';
 
     Swal.fire({
-      title: `¿Deseas ${accionTexto} a este Administrador?`,
+      title: 'Confirmar cambio de estado',
       html: `El usuario <b>${admin.nombre} ${admin.apellido || ''}</b> (${admin.email}) pasará a estado <b>${nuevoEstado ? 'ACTIVO' : 'INACTIVO'}</b>.`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: nuevoEstado ? '#10B981' : '#E11D48',
-      cancelButtonColor: '#64748B',
-      confirmButtonText: nuevoEstado ? 'Sí, activar' : 'Sí, desactivar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: nuevoEstado ? 'Activar' : 'Desactivar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' }
     }).then((result) => {
       if (!result.isConfirmed) return;
 
@@ -388,7 +384,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
 
             Swal.fire({
               icon: 'success',
-              title: nuevoEstado ? 'Administrador Activado' : 'Administrador Inactivado',
+              title: nuevoEstado ? 'Administrador activado' : 'Administrador inactivado',
               text: `El estado de ${actualizado.nombre} ${actualizado.apellido || ''} se actualizó en el servidor.`,
               timer: 2000,
               showConfirmButton: false
@@ -400,9 +396,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
             const msg = this.extraerMensajeError(err);
             Swal.fire({
               icon: 'error',
-              title: 'Operación rechazada por seguridad',
-              text: msg,
-              confirmButtonColor: '#4141A5'
+              title: 'Operación rechazada',
+              text: msg
             });
           }
         });

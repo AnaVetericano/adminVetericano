@@ -44,18 +44,10 @@ export class InicioDeSesionAdministradorComponent {
     // Validación corregida a 'email'
     if (this.usuario.email === '' || this.usuario.password === '') {
       Swal.fire({
-        title: 'Ingrese su correo y contraseña por favor ',
-        text: 'Por favor ingrese su correo y su contraseña validos.',
+        title: 'Campos obligatorios incompletos',
+        text: 'Ingrese su correo electrónico y contraseña para continuar.',
         icon: 'info',
-        confirmButtonText: 'Continuar',
-        confirmButtonColor: '#1B1947',
-        background: '#ffffff',
-        color: '#1B1947',
-        customClass: {
-          popup: 'rounded-3xl',
-          title: 'font-bold',
-          confirmButton: 'rounded-xl px-6 py-3 font-semibold'
-        }
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -83,20 +75,12 @@ export class InicioDeSesionAdministradorComponent {
         this.authService.logout();
         const mensajeRaw = err.error?.detail || err.error?.mensaje || err.error?.error || err.error?.non_field_errors?.[0] || '';
         const mensaje = mensajeRaw || 'Credenciales incorrectas, intenta de nuevo.';
-         Swal.fire({
-      title: 'Su usuario o contraseña no son validos',
-      text: mensaje,
-      icon: 'error',
-      confirmButtonText: 'Continuar',
-      confirmButtonColor: '#1B1947',
-      background: '#ffffff',
-      color: '#1B1947',
-      customClass: {
-        popup: 'rounded-3xl',
-        title: 'font-bold',
-        confirmButton: 'rounded-xl px-6 py-3 font-semibold'
-      }
-    })  
+        Swal.fire({
+          title: 'Credenciales inválidas',
+          text: mensaje === 'Credenciales incorrectas, intenta de nuevo.' ? 'Credenciales incorrectas. Verifique sus datos e intente nuevamente.' : mensaje,
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
+        });
       }
     });
   }

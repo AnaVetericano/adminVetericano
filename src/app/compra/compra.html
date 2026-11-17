@@ -1,67 +1,52 @@
-<div class="h-[100dvh] w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141a5] selection:text-white overflow-hidden relative">
+<div class="h-full w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white overflow-hidden relative">
 
-  <!-- ENCABEZADO CON ICONO Y SUBTÍTULO -->
-  <header class="bg-white shrink-0 py-4 px-4 sm:px-8 shadow-xs border-b border-gray-100 w-full lg:pl-20 transition-all duration-300">
-    <div class="flex items-center gap-3.5 max-w-7xl mx-auto">
-      <div class="p-3 bg-[#4141a5]/10 text-[#4141a5] rounded-2xl flex items-center justify-center shrink-0 shadow-xs">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="text-lg sm:text-2xl font-extrabold text-[#170B3D] tracking-wider uppercase">
-          Gestión de Compras e Inventario
-        </h1>
-        <p class="text-xs sm:text-sm text-gray-500 font-medium">
-          Historial de compras registradas y abastecimiento de medicamentos
-        </p>
-      </div>
-    </div>
-  </header>
+  <app-page-title
+    titulo="Gestión de Compras e Inventario"
+    subtitulo="Historial de compras registradas y abastecimiento de medicamentos" />
 
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col overflow-hidden lg:pl-20 transition-all duration-300">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col overflow-hidden">
 
     <!-- TARJETAS DE RESUMEN / MÉTRICAS -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 shrink-0">
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5 shrink-0">
       
       <!-- Total Compras -->
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Facturas Registradas</p>
-          <p class="text-lg sm:text-xl font-extrabold text-[#170B3D]">{{ compras.length }}</p>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Facturas Registradas</p>
+          <p class="text-2xl font-bold text-[#170B3D]">{{ compras.length }}</p>
         </div>
       </div>
 
       <!-- Medicamentos en Catálogo -->
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-purple-50 text-[#4141a5] flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 flex items-center gap-3.5">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Medicamentos en Sistema</p>
-          <p class="text-lg sm:text-xl font-extrabold text-[#4141a5]">
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Medicamentos en Sistema</p>
+          <p class="text-2xl font-bold text-[#170B3D]">
             {{ medicamentos.length }}
           </p>
         </div>
       </div>
 
       <!-- Unidades Ingresadas -->
-      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 flex items-center gap-3.5 col-span-2 sm:col-span-1">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
         <div>
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Unidades Ingresadas</p>
-          <p class="text-lg sm:text-xl font-extrabold text-[#170B3D]">{{ totalUnidadesCompradas }}</p>
+          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Unidades Ingresadas</p>
+          <p class="text-2xl font-bold text-[#170B3D]">{{ totalUnidadesCompradas }}</p>
         </div>
       </div>
 
@@ -70,8 +55,8 @@
     <!-- BARRA DE ACCIÓN Y BÚSQUEDA -->
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 shrink-0">
 
-      <div class="flex items-center bg-white rounded-2xl border border-gray-200 w-full sm:w-2/3 h-12 shadow-xs hover:border-[#4141a5]/50 focus-within:border-[#4141a5] focus-within:ring-2 focus-within:ring-[#4141a5]/20 transition-all duration-300 px-4 gap-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="flex items-center bg-white rounded-lg border border-slate-300 w-full sm:w-2/3 h-10 focus-within:border-[#4141A5] focus-within:ring-2 focus-within:ring-[#4141A5]/20 transition-colors px-3 gap-2.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
         <input 
@@ -79,14 +64,14 @@
           [(ngModel)]="filtroBusqueda" 
           (input)="filtrarCompras()" 
           placeholder="Buscar por proveedor, ID de compra, fecha o medicamento..." 
-          class="w-full outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent truncate">
+          class="w-full outline-none text-sm text-slate-800 placeholder:text-slate-400 bg-transparent truncate">
 
         <!-- BOTÓN LIMPIAR -->
         <button 
           *ngIf="filtroBusqueda"
           type="button" 
           (click)="limpiarFiltros()" 
-          class="text-xs font-bold text-gray-400 hover:text-[#4141a5] transition-colors border-l border-gray-200 pl-3 py-1 shrink-0">
+          class="text-xs font-semibold text-slate-400 hover:text-[#4141A5] transition-colors border-l border-slate-200 pl-3 py-1 shrink-0 cursor-pointer">
           Limpiar
         </button>
       </div>
@@ -96,9 +81,9 @@
         <button 
           type="button"
           (click)="obtenerDatos()"
-          class="p-3 bg-white hover:bg-gray-50 text-gray-600 rounded-2xl border border-gray-200 shadow-xs transition-all active:scale-95"
+          class="h-10 w-10 bg-white hover:bg-slate-50 text-slate-700 rounded-lg border border-slate-300 flex items-center justify-center transition-colors cursor-pointer"
           title="Actualizar listado">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
@@ -106,8 +91,8 @@
         <button 
           type="button"
           (click)="abrirModalCrear()" 
-          class="flex items-center justify-center gap-2 bg-[#4141a5] hover:bg-[#33338b] text-white font-bold px-5 py-3 rounded-2xl shadow-md transition-all text-xs sm:text-sm tracking-wider uppercase whitespace-nowrap active:scale-95">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          class="h-10 inline-flex items-center justify-center gap-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm whitespace-nowrap cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
           Nueva Compra
@@ -117,71 +102,66 @@
     </div>
 
     <!-- TABLA DE RESULTADOS (HISTORIAL DE COMPRAS) -->
-    <div class="bg-white rounded-2xl shadow-xs border border-gray-100 flex-1 overflow-hidden flex flex-col mb-4">
+    <div class="bg-white rounded-xl border border-slate-200 flex-1 overflow-hidden flex flex-col mb-4">
       <div class="overflow-x-auto overflow-y-auto flex-1">
         <table class="w-full text-left border-collapse min-w-[700px]">
-          <thead class="bg-gray-50/90 border-b border-gray-100 sticky top-0 z-10">
+          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">N° Factura</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Fecha</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase">Proveedor</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Ítems / Unidades</th>
-              <th class="px-6 py-3.5 text-xs font-bold tracking-wider text-gray-500 uppercase text-center">Opciones</th>
+              <th class="px-4 py-3 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">N° Factura</th>
+              <th class="px-4 py-3 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">Fecha</th>
+              <th class="px-4 py-3 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">Proveedor</th>
+              <th class="px-4 py-3 text-[11px] font-semibold tracking-wide text-slate-500 uppercase text-center">Ítems / Unidades</th>
+              <th class="px-4 py-3 text-[11px] font-semibold tracking-wide text-slate-500 uppercase text-center">Opciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 text-sm">
+          <tbody class="divide-y divide-slate-100 text-sm">
             <tr *ngIf="cargando">
-              <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">
-                <div class="flex items-center justify-center gap-2">
-                  <svg class="animate-spin h-5 w-5 text-[#4141a5]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                  </svg>
+              <td colspan="5" class="px-4 py-8 text-center text-slate-400 font-medium">
+                <div class="flex flex-col items-center justify-center gap-2">
+                  <app-animal-icon tipo="huellas" [tamano]="32" etiqueta="Cargando historial de compras" />
                   <span>Cargando historial de compras...</span>
                 </div>
               </td>
             </tr>
             <tr *ngIf="!cargando && compras.length === 0">
-              <td colspan="5" class="px-6 py-8 text-center text-gray-400 font-medium">
+              <td colspan="5" class="px-4 py-8 text-center text-slate-400 font-medium">
                 <div class="flex flex-col items-center justify-center gap-2 py-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
+                  <app-animal-icon tipo="conejo" [tamano]="56" />
                   <p>No se encontraron compras registradas.</p>
-                  <button (click)="abrirModalCrear()" class="text-xs font-bold text-[#4141a5] hover:underline uppercase mt-1">
+                  <button (click)="abrirModalCrear()" class="text-xs font-semibold text-[#4141A5] hover:underline uppercase mt-1 cursor-pointer">
                     + Registrar primera compra
                   </button>
                 </div>
               </td>
             </tr>
-            <tr *ngFor="let c of compras" class="hover:bg-[#4141a5]/5 transition-colors group">
+            <tr *ngFor="let c of compras" class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
               <!-- N° Factura -->
-              <td class="px-6 py-3.5 font-extrabold text-[#170B3D]">
-                <span class="px-2.5 py-1 rounded-lg text-xs font-mono tracking-wide border"
-                  [ngClass]="c.estado === 'ANULADA' ? 'bg-rose-50 text-rose-700 border-rose-200 line-through' : 'bg-gray-100 text-gray-700 border-gray-200'">
+              <td class="px-4 py-3 font-semibold text-[#170B3D]">
+                <span class="px-2 py-0.5 rounded-md text-xs font-mono tracking-wide border"
+                  [ngClass]="c.estado === 'ANULADA' ? 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1] line-through' : 'bg-slate-50 text-slate-700 border-slate-200'">
                   #{{ c.id_compra }}
                 </span>
-                <span *ngIf="c.estado === 'ANULADA'" class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                <span *ngIf="c.estado === 'ANULADA'" class="ml-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
                   ANULADA
                 </span>
               </td>
 
               <!-- Fecha -->
-              <td class="px-6 py-3.5 text-gray-600 whitespace-nowrap">
+              <td class="px-4 py-3 text-slate-700 whitespace-nowrap">
                 {{ c.fecha ? (c.fecha | date:'dd/MM/yyyy, hh:mm a') : 'Fecha no registrada' }}
               </td>
 
               <!-- Proveedor -->
-              <td class="px-6 py-3.5 text-gray-700">
-                <div class="font-bold text-[#170B3D]">{{ c.proveedor?.nombre || getNombreProveedor(c.id_proveedor) }}</div>
-                <div class="text-xs text-gray-400" *ngIf="c.proveedor?.telefono || c.proveedor?.email">
+              <td class="px-4 py-3 text-slate-700">
+                <div class="font-semibold text-[#170B3D]">{{ c.proveedor?.nombre || getNombreProveedor(c.id_proveedor) }}</div>
+                <div class="text-xs text-slate-400" *ngIf="c.proveedor?.telefono || c.proveedor?.email">
                   {{ c.proveedor?.telefono || c.proveedor?.email }}
                 </div>
               </td>
 
               <!-- Ítems / Unidades -->
-              <td class="px-6 py-3.5 text-center">
-                <span class="px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 border bg-indigo-50/60 text-[#4141a5] border-indigo-100">
+              <td class="px-4 py-3 text-center">
+                <span class="px-2 py-0.5 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 border bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20">
                   <span>{{ c.totalItems }} prod.</span>
                   <span>•</span>
                   <span>{{ c.totalUnidades }} uds</span>
@@ -189,15 +169,15 @@
               </td>
 
               <!-- Opciones -->
-              <td class="px-6 py-3.5">
+              <td class="px-4 py-3">
                 <div class="flex items-center justify-center">
                   <!-- Ver Detalle -->
                   <button 
                     (click)="abrirModalDetalle(c)" 
                     type="button" 
-                    class="bg-gray-100 hover:bg-[#4141a5] hover:text-white text-gray-600 p-2 rounded-xl transition-all shadow-xs active:scale-95" 
+                    class="bg-white border border-slate-200 hover:bg-[#4141A5] hover:text-white hover:border-[#4141A5] text-slate-600 p-2 rounded-lg transition-colors cursor-pointer" 
                     title="Ver detalle de la factura">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.257-5.064 7-9.542 7-4.477 0-8.268-2.743-9.542-7z" />
                     </svg>
@@ -213,32 +193,32 @@
   </main>
 
   <!-- MODAL DE REGISTRO (CON TABLA DINÁMICA DE DETALLES) -->
-  <div *ngIf="modalRegistroAbierto" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-5 sm:p-7 border border-gray-100 relative flex flex-col max-h-[95vh]">
+  <div *ngIf="modalRegistroAbierto" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-4xl p-5 sm:p-6 border border-slate-200 relative flex flex-col max-h-[95vh]">
       
       <!-- BOTÓN CERRAR -->
       <button 
         (click)="cerrarModalRegistro()" 
         type="button" 
-        class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 transition-colors">
+        class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 font-semibold text-lg p-1 z-10 transition-colors cursor-pointer">
         ✕
       </button>
 
       <!-- ENCABEZADO DEL MODAL -->
-      <div class="flex items-center gap-3 mb-4 pr-8 shrink-0">
-        <div class="w-10 h-10 rounded-xl bg-[#4141a5]/10 text-[#4141a5] flex items-center justify-center shrink-0">
-          <svg *ngIf="editandoId === null" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200 pr-8 shrink-0">
+        <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center shrink-0">
+          <svg *ngIf="editandoId === null" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
           </svg>
-          <svg *ngIf="editandoId !== null" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <svg *ngIf="editandoId !== null" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
           </svg>
         </div>
         <div>
-          <h2 class="text-lg sm:text-xl font-extrabold text-[#170B3D] uppercase tracking-wider">
+          <h2 class="text-lg sm:text-xl font-bold text-[#170B3D]">
             {{ editandoId !== null ? 'Actualizar Factura #' + editandoId : 'Registrar Factura de Compra' }}
           </h2>
-          <p class="text-xs text-gray-400 font-medium">
+          <p class="text-xs text-slate-500">
             {{ editandoId !== null ? 'Modifica el proveedor o los medicamentos que integran esta compra' : 'Ingresa el proveedor y los medicamentos que integran la compra' }}
           </p>
         </div>
@@ -248,16 +228,16 @@
       <div class="space-y-4 overflow-y-auto flex-1 pr-1 py-1">
         
         <!-- DATOS DE LA CABECERA DE LA FACTURA -->
-        <div class="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           
           <!-- SELECTOR DE PROVEEDOR -->
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">
               Proveedor *
             </label>
             <select 
               [(ngModel)]="idProveedorSeleccionado" 
-              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white">
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] bg-white">
               <option [ngValue]="null" disabled selected>-- Selecciona un proveedor --</option>
               <option *ngFor="let p of proveedores" [ngValue]="getIdProveedor(p)">
                 {{ p.nombre }} {{ p.telefono ? '(' + p.telefono + ')' : '' }}
@@ -267,31 +247,31 @@
 
           <!-- FECHA DE REGISTRO -->
           <div>
-            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">
               Fecha de Registro
             </label>
             <input 
               type="datetime-local" 
               [(ngModel)]="fechaRegistro" 
-              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white" 
+              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] bg-white" 
             />
           </div>
 
         </div>
 
         <!-- SECCIÓN: TABLA DINÁMICA DE DETALLES -->
-        <div class="border border-gray-100 rounded-2xl p-4 bg-white shadow-xs">
+        <div class="border border-slate-200 rounded-xl p-4 bg-white">
           
           <!-- BARRA SUPERIOR DE LA TABLA DINÁMICA -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
             <div>
-              <h3 class="text-xs sm:text-sm font-extrabold text-[#170B3D] uppercase tracking-wider flex items-center gap-2">
+              <h3 class="text-sm font-bold text-[#170B3D] flex items-center gap-2">
                 <span>Medicamentos Facturados</span>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-[#4141a5]/10 text-[#4141a5] font-bold">
+                <span class="text-xs px-2 py-0.5 rounded-md bg-[#4141A5]/5 border border-[#4141A5]/20 text-[#4141A5] font-semibold">
                   {{ filasDetalle.length }} fila(s)
                 </span>
               </h3>
-              <p class="text-[11px] text-gray-400 font-medium">
+              <p class="text-xs text-slate-500">
                 Especifica la cantidad y el precio unitario pactado con el proveedor
               </p>
             </div>
@@ -300,8 +280,8 @@
             <button 
               type="button" 
               (click)="agregarFilaDetalle()" 
-              class="flex items-center gap-1.5 bg-[#4141a5]/10 hover:bg-[#4141a5] text-[#4141a5] hover:text-white font-bold px-3 py-2 rounded-xl transition-all text-xs tracking-wider uppercase active:scale-95">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              class="inline-flex items-center gap-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold px-3 py-1.5 rounded-lg transition-colors text-xs cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
               </svg>
               Agregar Fila
@@ -309,9 +289,9 @@
           </div>
 
           <!-- TABLA DINÁMICA -->
-          <div class="overflow-x-auto rounded-xl border border-gray-200">
+          <div class="overflow-x-auto rounded-lg border border-slate-200">
             <table class="w-full text-left border-collapse min-w-[720px]">
-              <thead class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
+              <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                 <tr>
                   <th class="w-10 px-3 py-2.5 text-center">#</th>
                   <th class="px-3 py-2.5 w-4/12">Medicamento *</th>
@@ -321,10 +301,10 @@
                   <th class="w-12 px-3 py-2.5 text-center">Quitar</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 text-sm">
-                <tr *ngFor="let fila of filasDetalle; let i = index" class="hover:bg-gray-50/70 transition-colors">
+              <tbody class="divide-y divide-slate-100 text-sm">
+                <tr *ngFor="let fila of filasDetalle; let i = index" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                   <!-- Índice -->
-                  <td class="px-3 py-2 text-center font-bold text-gray-400 text-xs">
+                  <td class="px-3 py-2 text-center font-semibold text-slate-400 text-xs">
                     {{ i + 1 }}
                   </td>
 
@@ -332,7 +312,7 @@
                   <td class="px-3 py-2">
                     <select 
                       [(ngModel)]="fila.id_medicamento" 
-                      class="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white">
+                      class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] bg-white">
                       <option [ngValue]="null" disabled selected>
                         {{ medicamentos.length === 0 ? 'Cargando medicamentos...' : '-- Elegir medicamento --' }}
                       </option>
@@ -344,7 +324,7 @@
 
                   <!-- Descripción del Medicamento -->
                   <td class="px-3 py-2">
-                    <div class="text-xs text-gray-600 line-clamp-2" [title]="getDescripcionMedicamento(fila.id_medicamento)">
+                    <div class="text-xs text-slate-600 line-clamp-2" [title]="getDescripcionMedicamento(fila.id_medicamento)">
                       {{ getDescripcionMedicamento(fila.id_medicamento) }}
                     </div>
                   </td>
@@ -357,7 +337,7 @@
                       step="1"
                       [(ngModel)]="fila.cantidad" 
                       placeholder="1"
-                      class="w-20 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white" 
+                      class="w-20 text-center border border-slate-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] bg-white" 
                     />
                   </td>
 
@@ -367,7 +347,7 @@
                       type="date" 
                       [(ngModel)]="fila.fecha_vencimiento" 
                       title="Fecha de Vencimiento"
-                      class="w-36 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141a5]/30 focus:border-[#4141a5] bg-white text-gray-700" 
+                      class="w-36 text-center border border-slate-300 rounded-lg px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#4141A5]/20 focus:border-[#4141A5] bg-white text-slate-800" 
                     />
                   </td>
 
@@ -376,9 +356,9 @@
                     <button 
                       type="button" 
                       (click)="eliminarFilaDetalle(i)" 
-                      class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors active:scale-95" 
+                      class="p-1.5 text-slate-400 hover:text-[#B42318] hover:bg-[#FEECEB] rounded-lg transition-colors cursor-pointer" 
                       title="Eliminar fila">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -389,7 +369,7 @@
           </div>
 
           <!-- NOTA SI NO HAY FILAS -->
-          <div *ngIf="filasDetalle.length === 0" class="text-center py-6 text-gray-400 text-xs">
+          <div *ngIf="filasDetalle.length === 0" class="text-center py-6 text-slate-400 text-xs">
             No has agregado medicamentos a la factura. Haz clic en "Agregar Fila" para comenzar.
           </div>
 
@@ -398,15 +378,15 @@
       </div>
 
       <!-- PIE DEL MODAL (RESUMEN DE FACTURA Y BOTONES DE ACCIÓN) -->
-      <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+      <div class="mt-4 pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
         
         <!-- RESUMEN DE TOTALES -->
         <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
-          <div class="text-xs text-gray-500 font-bold uppercase">
+          <div class="text-xs text-slate-500 font-semibold uppercase">
             Ítems: <span class="text-[#170B3D]">{{ filasDetalle.length }} prod.</span>
           </div>
-          <div class="text-sm font-extrabold text-[#170B3D] px-3.5 py-1.5 rounded-xl bg-[#4141a5]/10 border border-[#4141a5]/20">
-            Total Unidades: <span class="text-[#4141a5]">{{ calcularTotalUnidadesFactura() }} uds</span>
+          <div class="text-sm font-bold text-[#170B3D] px-3 py-1 rounded-lg bg-[#4141A5]/5 border border-[#4141A5]/20">
+            Total Unidades: <span class="text-[#4141A5]">{{ calcularTotalUnidadesFactura() }} uds</span>
           </div>
         </div>
 
@@ -416,7 +396,7 @@
             type="button"
             (click)="cerrarModalRegistro()" 
             [disabled]="guardando"
-            class="px-4 sm:px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider disabled:opacity-50">
+            class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold transition-colors text-sm disabled:opacity-50 cursor-pointer">
             Cancelar
           </button>
 
@@ -424,7 +404,7 @@
             type="button"
             (click)="guardarCompra()" 
             [disabled]="guardando"
-            class="flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95 disabled:opacity-50">
+            class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white font-semibold transition-colors text-sm disabled:opacity-50 cursor-pointer">
             <svg *ngIf="guardando" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
@@ -444,86 +424,89 @@
   </div>
 
   <!-- MODAL DE DETALLE (VISUALIZACIÓN DE FACTURA COMPLETA) -->
-  <div *ngIf="modalDetalleAbierto && compraSeleccionada" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl p-5 sm:p-8 border border-gray-100 relative flex flex-col max-h-[95vh]">
+  <div *ngIf="modalDetalleAbierto && compraSeleccionada" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 z-50 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl p-5 sm:p-6 border border-slate-200 relative flex flex-col max-h-[95vh]">
       
       <!-- BOTÓN CERRAR -->
       <button 
         (click)="cerrarModalDetalle()" 
         type="button" 
-        class="absolute top-5 right-5 text-gray-400 hover:text-gray-700 font-bold text-lg p-1 z-10 transition-colors">
+        class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 font-semibold text-lg p-1 z-10 transition-colors cursor-pointer">
         ✕
       </button>
 
       <!-- ENCABEZADO DE LA FACTURA -->
-      <div class="flex items-start justify-between mb-4 border-b border-gray-100 pb-4 pr-8 shrink-0">
+      <div class="flex items-start justify-between mb-4 border-b border-slate-200 pb-4 pr-8 shrink-0">
         <div>
-          <span class="px-2.5 py-1 rounded-lg bg-[#4141a5]/10 text-xs font-mono font-bold text-[#4141a5]">
+          <span class="px-2 py-0.5 rounded-md bg-[#4141A5]/5 border border-[#4141A5]/20 text-xs font-mono font-semibold text-[#4141A5]">
             COMPROBANTE DE COMPRA
           </span>
-          <h2 class="text-xl sm:text-2xl font-black text-[#170B3D] uppercase tracking-wider mt-1">
+          <h2 class="text-xl sm:text-2xl font-bold text-[#170B3D] mt-1">
             Factura #{{ compraSeleccionada.id_compra }}
           </h2>
-          <p class="text-xs text-gray-400 font-medium">
+          <p class="text-xs text-slate-500">
             Registrada el {{ compraSeleccionada.fecha ? (compraSeleccionada.fecha | date:'fullDate') : 'Fecha no especificada' }}
           </p>
         </div>
       </div>
 
       <!-- DATOS DEL PROVEEDOR -->
-      <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 mb-4 shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-4 shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
         <div>
-          <p class="font-bold text-gray-400 uppercase tracking-wider text-[11px]">Proveedor</p>
-          <p class="font-black text-sm text-[#170B3D]">
+          <p class="font-semibold text-slate-500 uppercase tracking-wide text-[11px]">Proveedor</p>
+          <p class="font-bold text-sm text-[#170B3D]">
             {{ compraSeleccionada.proveedor?.nombre || getNombreProveedor(compraSeleccionada.id_proveedor) }}
           </p>
-          <p class="text-gray-500" *ngIf="compraSeleccionada.proveedor?.direccion">
+          <p class="text-slate-500" *ngIf="compraSeleccionada.proveedor?.direccion">
             {{ compraSeleccionada.proveedor?.direccion }}
           </p>
         </div>
         <div class="sm:text-right">
-          <p class="font-bold text-gray-400 uppercase tracking-wider text-[11px]">Contacto</p>
-          <p class="font-medium text-gray-700" *ngIf="compraSeleccionada.proveedor?.telefono">
+          <p class="font-semibold text-slate-500 uppercase tracking-wide text-[11px]">Contacto</p>
+          <p class="font-medium text-slate-700" *ngIf="compraSeleccionada.proveedor?.telefono">
             Tel: {{ compraSeleccionada.proveedor?.telefono }}
           </p>
-          <p class="font-medium text-gray-700" *ngIf="compraSeleccionada.proveedor?.email">
+          <p class="font-medium text-slate-700" *ngIf="compraSeleccionada.proveedor?.email">
             Email: {{ compraSeleccionada.proveedor?.email }}
           </p>
         </div>
       </div>
 
       <!-- DESGLOSE DE PRODUCTOS FACTURADOS -->
-      <div class="flex-1 overflow-y-auto border border-gray-100 rounded-2xl mb-4">
-        <table class="w-full text-left border-collapse text-xs sm:text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100 sticky top-0 z-10 text-xs font-bold text-gray-500 uppercase">
+      <div class="flex-1 overflow-x-auto overflow-y-auto border border-slate-200 rounded-xl mb-4">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
             <tr>
               <th class="px-4 py-3">Medicamento</th>
               <th class="px-4 py-3">Descripción</th>
               <th class="px-4 py-3 text-center">Cantidad</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr *ngFor="let det of compraSeleccionada.detalles" class="hover:bg-gray-50/50">
-              <td class="px-4 py-3">
-                <div class="font-bold text-[#170B3D]">
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let det of compraSeleccionada.detalles" class="border-b border-slate-100 hover:bg-slate-50">
+              <td class="px-4 py-3 text-sm text-slate-700">
+                <div class="font-semibold text-[#170B3D]">
                   {{ det.medicamento?.nombre || getNombreMedicamento(det.id_medicamento) }}
                 </div>
-                <div class="text-[11px] text-gray-400" *ngIf="det.medicamento?.tipo || det.medicamento?.cantidad_ml">
+                <div class="text-xs text-slate-400" *ngIf="det.medicamento?.tipo || det.medicamento?.cantidad_ml">
                   {{ det.medicamento?.tipo }} {{ det.medicamento?.cantidad_ml ? '• ' + det.medicamento?.cantidad_ml + 'ml' : '' }}
                 </div>
               </td>
-              <td class="px-4 py-3 text-xs text-gray-600">
+              <td class="px-4 py-3 text-xs text-slate-600">
                 <div class="max-w-md line-clamp-2" [title]="det.medicamento?.descripcion || getDescripcionMedicamento(det.id_medicamento)">
                   {{ det.medicamento?.descripcion || getDescripcionMedicamento(det.id_medicamento) }}
                 </div>
               </td>
-              <td class="px-4 py-3 text-center font-bold text-gray-700">
+              <td class="px-4 py-3 text-center font-semibold text-slate-700">
                 {{ det.cantidad }} uds
               </td>
             </tr>
             <tr *ngIf="!compraSeleccionada.detalles || compraSeleccionada.detalles.length === 0">
-              <td colspan="3" class="px-4 py-6 text-center text-gray-400">
-                No hay medicamentos registrados para esta compra.
+              <td colspan="3" class="px-4 py-6 text-center text-slate-400">
+                <div class="flex flex-col items-center gap-2 py-6">
+                  <app-animal-icon tipo="conejo" [tamano]="56" />
+                  No hay medicamentos registrados para esta compra.
+                </div>
               </td>
             </tr>
           </tbody>
@@ -531,10 +514,10 @@
       </div>
 
       <!-- PIE DEL MODAL DE DETALLE -->
-      <div class="border-t border-gray-100 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+      <div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
         <div class="flex items-center gap-3">
-          <span class="text-xs text-gray-400 font-bold uppercase">Total Unidades Abastecidas:</span>
-          <span class="text-lg font-black text-[#4141a5]">
+          <span class="text-xs text-slate-500 font-semibold uppercase">Total Unidades Abastecidas:</span>
+          <span class="text-lg font-bold text-[#4141A5]">
             {{ compraSeleccionada.totalUnidades || 0 }} unidades
           </span>
         </div>
@@ -543,8 +526,8 @@
           <button 
             type="button" 
             (click)="imprimirFactura()" 
-            class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold transition text-xs uppercase tracking-wider flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold transition-colors text-sm flex items-center gap-1.5 cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
             Imprimir
@@ -553,7 +536,7 @@
           <button 
             type="button" 
             (click)="cerrarModalDetalle()" 
-            class="px-5 py-2 rounded-xl bg-[#4141a5] hover:bg-[#33338b] text-white font-bold transition text-xs uppercase tracking-wider shadow-md active:scale-95">
+            class="px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white font-semibold transition-colors text-sm cursor-pointer">
             Cerrar
           </button>
         </div>

@@ -1,13 +1,14 @@
 <div class="w-full flex-1 bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white relative">
 
   <!-- BARRA DE ACCIONES RÁPIDAS -->
-  <header class="bg-white shrink-0 py-3 px-4 sm:px-6 lg:px-8 shadow-xs border-b border-gray-100 w-full transition-all duration-300">
-    <div class="flex items-center justify-end gap-2.5 max-w-7xl mx-auto flex-wrap">
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-0 w-full">
+    <app-page-title titulo="Dashboard" etiqueta="Superadministrador" animal="perro" />
+    <div class="flex items-center justify-end gap-2.5 max-w-screen-2xl mx-auto flex-wrap">
       <a
         routerLink="/inicio-admin/administradores"
-        class="inline-flex items-center gap-2 bg-[#4141A5] hover:bg-[#34348e] text-white font-bold px-4 py-2 rounded-xl shadow-2xs transition-all text-xs uppercase tracking-wider active:scale-95 cursor-pointer"
+        class="inline-flex items-center gap-2 bg-[#4141A5] hover:bg-[#353583] text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
         <span>Administradores</span>
@@ -15,9 +16,9 @@
 
       <a
         routerLink="/inicio-admin/sedes"
-        class="inline-flex items-center gap-2 bg-[#170B3D] hover:bg-[#25155c] text-white font-bold px-4 py-2 rounded-xl shadow-2xs transition-all text-xs uppercase tracking-wider active:scale-95 cursor-pointer"
+        class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
           <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
         <span>Gestión de Sedes</span>
@@ -26,17 +27,20 @@
   </header>
 
   <!-- CONTENIDO PRINCIPAL CON SCROLL -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 transition-all duration-300 space-y-5">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-3 pb-5 space-y-5">
 
     @if (errorMensaje) {
-      <div class="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5 text-xs sm:text-sm font-bold">
-          <span>⚠️ {{ errorMensaje }}</span>
+      <div class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] px-4 py-3 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-2.5 text-sm font-semibold text-[#170B3D]">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>{{ errorMensaje }}</span>
         </div>
         <button
           type="button"
           (click)="cargarDatosDashboard()"
-          class="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition cursor-pointer"
+          class="px-3 py-1.5 bg-[#B42318] text-white rounded-lg text-xs font-semibold hover:opacity-90 transition cursor-pointer shrink-0"
         >
           Reintentar
         </button>
@@ -44,84 +48,84 @@
     }
 
     @if (cargando) {
-      <div class="bg-white rounded-3xl p-12 border border-gray-100 shadow-xs text-center">
-        <div class="inline-block animate-spin w-10 h-10 border-4 border-[#4141A5] border-t-transparent rounded-full mb-3"></div>
-        <p class="text-sm font-bold text-[#170B3D]">Consultando indicadores institucionales en tiempo real...</p>
+      <div class="bg-white rounded-xl p-10 border border-slate-200 shadow-xs text-center">
+        <app-animal-icon tipo="huellas" [tamano]="40" />
+        <p class="text-sm font-semibold text-[#170B3D]">Consultando indicadores institucionales en tiempo real...</p>
       </div>
     } @else {
 
       <!-- FILA 1: TARJETAS KPI DE PETICIONES Y ATENCIÓN -->
       <section>
         <div class="flex items-center justify-between mb-2.5">
-          <h2 class="text-xs font-black uppercase tracking-wider text-gray-500">
+          <h2 class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             Indicadores Operativos de Peticiones y Casos
           </h2>
-          <a routerLink="/inicio-admin/reportes" class="text-xs font-bold text-[#4141A5] hover:underline">
+          <a routerLink="/inicio-admin/reportes" class="text-xs font-semibold text-[#4141A5] hover:text-[#353583] hover:underline">
             Ver reportes detallados →
           </a>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           <!-- Total Peticiones -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">Total Peticiones</p>
-            <p class="text-xl sm:text-2xl font-black text-[#170B3D] mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Total Peticiones</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.total_peticiones ?? 0 }}
             </p>
           </div>
 
           <!-- Casos Atendidos -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">Casos Atendidos</p>
-            <p class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 border-l-4 border-l-[#067647] shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Casos Atendidos</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.casos_atendidos ?? 0 }}
             </p>
           </div>
 
           <!-- Pendientes -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">Pendientes</p>
-            <p class="text-xl sm:text-2xl font-black text-amber-600 mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 border-l-4 border-l-[#9A5B13] shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Pendientes</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.pendientes ?? 0 }}
             </p>
           </div>
 
           <!-- En Proceso -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">En Proceso</p>
-            <p class="text-xl sm:text-2xl font-black text-[#4141A5] mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 border-l-4 border-l-[#4141A5] shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">En Proceso</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.en_proceso ?? 0 }}
             </p>
           </div>
 
           <!-- Finalizadas -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">Finalizadas</p>
-            <p class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 border-l-4 border-l-[#067647] shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Finalizadas</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.finalizadas ?? 0 }}
             </p>
           </div>
 
           <!-- Urgentes -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">Urgentes</p>
-            <p class="text-xl sm:text-2xl font-black text-rose-600 mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 border-l-4 border-l-[#B42318] shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Urgentes</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.urgentes ?? 0 }}
             </p>
           </div>
 
           <!-- Sin Asignar -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">Sin Asignar</p>
-            <p class="text-xl sm:text-2xl font-black text-slate-600 mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Sin Asignar</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.sin_asignar ?? 0 }}
             </p>
           </div>
 
           <!-- % Atención -->
-          <div class="bg-white rounded-2xl p-3.5 border border-gray-100 shadow-xs">
-            <p class="text-[11px] font-bold text-gray-400 uppercase">% Atención</p>
-            <p class="text-xl sm:text-2xl font-black text-[#4141A5] mt-1">
+          <div class="bg-white rounded-xl p-3.5 border border-slate-200 border-l-4 border-l-[#4141A5] shadow-xs">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">% Atención</p>
+            <p class="text-2xl font-bold text-[#170B3D] mt-1">
               {{ estadisticas?.porcentaje_atencion ?? 0 }}%
             </p>
           </div>
@@ -132,112 +136,126 @@
       <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         <!-- Resumen de Sedes -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-[#4141A5]/10 text-[#4141A5] flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div>
-                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase">Sedes Institucionales</h3>
-                <p class="text-xs text-gray-400">Cobertura física registrada</p>
+                <h3 class="text-sm font-bold text-[#170B3D]">Sedes Institucionales</h3>
+                <p class="text-xs text-slate-500">Cobertura física registrada</p>
               </div>
             </div>
-            <span class="text-2xl font-black text-[#170B3D]">{{ totalSedes }}</span>
+            <span class="text-2xl font-bold text-[#170B3D]">{{ totalSedes }}</span>
           </div>
 
           <div class="grid grid-cols-2 gap-2.5 my-2">
-            <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-2.5 text-center">
-              <p class="text-[11px] font-bold text-emerald-700 uppercase">Activas</p>
-              <p class="text-lg font-black text-emerald-600">{{ sedesActivas }}</p>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#067647]"></span>Activas
+              </p>
+              <p class="text-lg font-bold text-[#170B3D]">{{ sedesActivas }}</p>
             </div>
-            <div class="bg-rose-50/70 border border-rose-100 rounded-xl p-2.5 text-center">
-              <p class="text-[11px] font-bold text-rose-700 uppercase">Inactivas</p>
-              <p class="text-lg font-black text-rose-600">{{ sedesInactivas }}</p>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>Inactivas
+              </p>
+              <p class="text-lg font-bold text-[#170B3D]">{{ sedesInactivas }}</p>
             </div>
           </div>
 
           <a
             routerLink="/inicio-admin/sedes"
-            class="mt-3 w-full text-center py-2 rounded-xl bg-[#4141A5]/10 hover:bg-[#4141A5] text-[#4141A5] hover:text-white text-xs font-extrabold uppercase tracking-wider transition"
+            class="mt-3 w-full text-center py-2 rounded-lg bg-[#4141A5]/5 hover:bg-[#4141A5] border border-[#4141A5]/20 text-[#4141A5] hover:text-white text-xs font-semibold transition"
           >
             Administrar Sedes
           </a>
         </div>
 
         <!-- Resumen de Administradores -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-[#4141A5]/10 text-[#4141A5] flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
-                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase">Administradores (Rol 1)</h3>
-                <p class="text-xs text-gray-400">Responsables operativos por sede</p>
+                <h3 class="text-sm font-bold text-[#170B3D]">Administradores (Rol 1)</h3>
+                <p class="text-xs text-slate-500">Responsables operativos por sede</p>
               </div>
             </div>
-            <span class="text-2xl font-black text-[#170B3D]">{{ totalAdministradores }}</span>
+            <span class="text-2xl font-bold text-[#170B3D]">{{ totalAdministradores }}</span>
           </div>
 
           <div class="grid grid-cols-2 gap-2.5 my-2">
-            <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-2.5 text-center">
-              <p class="text-[11px] font-bold text-emerald-700 uppercase">Habilitados</p>
-              <p class="text-lg font-black text-emerald-600">{{ administradoresActivos }}</p>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-[#067647]"></span>Habilitados
+              </p>
+              <p class="text-lg font-bold text-[#170B3D]">{{ administradoresActivos }}</p>
             </div>
-            <div class="bg-slate-100 border border-slate-200 rounded-xl p-2.5 text-center">
-              <p class="text-[11px] font-bold text-slate-600 uppercase">Inactivos</p>
-              <p class="text-lg font-black text-slate-700">{{ administradoresInactivos }}</p>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span>Inactivos
+              </p>
+              <p class="text-lg font-bold text-[#170B3D]">{{ administradoresInactivos }}</p>
             </div>
           </div>
 
           <a
             routerLink="/inicio-admin/administradores"
-            class="mt-3 w-full text-center py-2 rounded-xl bg-[#4141A5]/10 hover:bg-[#4141A5] text-[#4141A5] hover:text-white text-xs font-extrabold uppercase tracking-wider transition"
+            class="mt-3 w-full text-center py-2 rounded-lg bg-[#4141A5]/5 hover:bg-[#4141A5] border border-[#4141A5]/20 text-[#4141A5] hover:text-white text-xs font-semibold transition"
           >
             Gestionar Administradores
           </a>
         </div>
 
         <!-- Resumen Global de Usuarios -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#4141A5] flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
               <div>
-                <h3 class="text-sm font-extrabold text-[#170B3D] uppercase">Padrón de Usuarios</h3>
-                <p class="text-xs text-gray-400">Cuentas totales en el sistema</p>
+                <h3 class="text-sm font-bold text-[#170B3D]">Padrón de Usuarios</h3>
+                <p class="text-xs text-slate-500">Cuentas totales en el sistema</p>
               </div>
             </div>
-            <span class="text-2xl font-black text-[#170B3D]">{{ estadisticas?.usuarios?.total_usuarios ?? 0 }}</span>
+            <span class="text-2xl font-bold text-[#170B3D]">{{ estadisticas?.usuarios?.total_usuarios ?? 0 }}</span>
           </div>
 
           <div class="grid grid-cols-3 gap-2 my-2 text-center">
-            <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
-              <p class="text-[10px] font-bold text-gray-400 uppercase">Activos</p>
-              <p class="text-base font-black text-emerald-600">{{ estadisticas?.usuarios?.activos ?? 0 }}</p>
+            <div class="bg-slate-50 rounded-lg p-2 border border-slate-200">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#067647]"></span>Activos
+              </p>
+              <p class="text-base font-bold text-[#170B3D]">{{ estadisticas?.usuarios?.activos ?? 0 }}</p>
             </div>
-            <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
-              <p class="text-[10px] font-bold text-gray-400 uppercase">Inactivos</p>
-              <p class="text-base font-black text-rose-600">{{ estadisticas?.usuarios?.inactivos ?? 0 }}</p>
+            <div class="bg-slate-50 rounded-lg p-2 border border-slate-200">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#B42318]"></span>Inactivos
+              </p>
+              <p class="text-base font-bold text-[#170B3D]">{{ estadisticas?.usuarios?.inactivos ?? 0 }}</p>
             </div>
-            <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
-              <p class="text-[10px] font-bold text-gray-400 uppercase">Visitas</p>
-              <p class="text-base font-black text-[#4141A5]">{{ estadisticas?.total_seguimientos_visita ?? 0 }}</p>
+            <div class="bg-slate-50 rounded-lg p-2 border border-slate-200">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide flex items-center justify-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5]"></span>Visitas
+              </p>
+              <p class="text-base font-bold text-[#170B3D]">{{ estadisticas?.total_seguimientos_visita ?? 0 }}</p>
             </div>
           </div>
 
           <a
             routerLink="/inicio-admin/reportes"
-            class="mt-3 w-full text-center py-2 rounded-xl bg-slate-100 hover:bg-[#4141A5] text-[#170B3D] hover:text-white text-xs font-extrabold uppercase tracking-wider transition"
+            class="mt-3 w-full text-center py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
           >
             Consultar Reportes
           </a>
@@ -248,33 +266,33 @@
       <!-- FILA 3: VISUALIZACIONES CHART.JS -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <!-- Gráfica 1: Estados -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col">
-          <h3 class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col">
+          <h3 class="text-sm font-bold text-[#170B3D] mb-1">
             Distribución por Estado de Petición
           </h3>
-          <p class="text-[11px] text-gray-400 mb-3">Proporción actual de casos en el sistema</p>
+          <p class="text-xs text-slate-500 mb-3">Proporción actual de casos en el sistema</p>
           <div class="relative h-56 w-full flex-1">
             <canvas #chartEstadosCanvas></canvas>
           </div>
         </div>
 
         <!-- Gráfica 2: Usuarios por Rol -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col">
-          <h3 class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col">
+          <h3 class="text-sm font-bold text-[#170B3D] mb-1">
             Usuarios por Rol Institucional
           </h3>
-          <p class="text-[11px] text-gray-400 mb-3">Distribución RBAC en la plataforma</p>
+          <p class="text-xs text-slate-500 mb-3">Distribución RBAC en la plataforma</p>
           <div class="relative h-56 w-full flex-1">
             <canvas #chartRolesCanvas></canvas>
           </div>
         </div>
 
         <!-- Gráfica 3: Casos por Tipo / Prioridad -->
-        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col">
-          <h3 class="text-xs font-extrabold text-[#170B3D] uppercase tracking-wider mb-1">
+        <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col">
+          <h3 class="text-sm font-bold text-[#170B3D] mb-1">
             Casos por Tipología / Prioridad
           </h3>
-          <p class="text-[11px] text-gray-400 mb-3">Volumen según clasificación de ingreso</p>
+          <p class="text-xs text-slate-500 mb-3">Volumen según clasificación de ingreso</p>
           <div class="relative h-56 w-full flex-1">
             <canvas #chartPrioridadCanvas></canvas>
           </div>
@@ -282,62 +300,65 @@
       </section>
 
       <!-- FILA 4: TABLA DE RENDIMIENTO POR VETERINARIO -->
-      <section class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+      <section class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 class="text-sm font-extrabold text-[#170B3D] uppercase tracking-wider">
+            <h3 class="text-sm font-bold text-[#170B3D]">
               Rendimiento Operativo por Veterinario
             </h3>
-            <p class="text-xs text-gray-400">
+            <p class="text-xs text-slate-500">
               Casos asignados, atendidos, pendientes y tasa de resolución por profesional
             </p>
           </div>
-          <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#4141A5]/10 text-[#4141A5]">
+          <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
             {{ rendimientoVeterinarios.length }} profesionales evaluados
           </span>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse min-w-[680px]">
-            <thead class="bg-gray-50/90 border-b border-gray-100">
+            <thead class="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Veterinario</th>
-                <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500">Correo Electrónico</th>
-                <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Asignadas</th>
-                <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Atendidas</th>
-                <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">Pendientes</th>
-                <th class="px-6 py-3 text-xs font-bold uppercase tracking-wider text-gray-500 text-center">% Cumplimiento</th>
+                <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Veterinario</th>
+                <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Correo Electrónico</th>
+                <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">Asignadas</th>
+                <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">Atendidas</th>
+                <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">Pendientes</th>
+                <th class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">% Cumplimiento</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 text-sm">
+            <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
               @if (rendimientoVeterinarios.length === 0) {
                 <tr>
-                  <td colspan="6" class="px-6 py-8 text-center text-gray-400 text-xs font-semibold">
-                    No hay registros de rendimiento veterinario disponibles en este momento.
+                  <td colspan="6" class="px-4 py-8 text-center text-slate-500 text-xs font-medium">
+                    <div class="flex flex-col items-center gap-2 py-6">
+                      <app-animal-icon tipo="perro" [tamano]="56" />
+                      No hay registros de rendimiento veterinario disponibles en este momento.
+                    </div>
                   </td>
                 </tr>
               }
               @for (vet of rendimientoVeterinarios; track vet.id_veterinario) {
-                <tr class="hover:bg-[#4141A5]/5 transition-colors">
-                  <td class="px-6 py-3.5 font-bold text-[#170B3D]">
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-4 py-3 font-semibold text-[#170B3D]">
                     {{ vet.nombre_completo || (vet.nombre + ' ' + vet.apellido) }}
                   </td>
-                  <td class="px-6 py-3.5 text-xs text-gray-500 font-medium">
+                  <td class="px-4 py-3 text-xs text-slate-500 font-medium">
                     {{ vet.email }}
                   </td>
-                  <td class="px-6 py-3.5 text-center font-bold text-slate-700">
+                  <td class="px-4 py-3 text-center font-semibold text-slate-700">
                     {{ vet.total_asignadas }}
                   </td>
-                  <td class="px-6 py-3.5 text-center font-bold text-emerald-600">
+                  <td class="px-4 py-3 text-center font-semibold text-[#067647]">
                     {{ vet.casos_atendidos }}
                   </td>
-                  <td class="px-6 py-3.5 text-center font-bold text-amber-600">
+                  <td class="px-4 py-3 text-center font-semibold text-[#9A5B13]">
                     {{ vet.pendientes_atencion }}
                   </td>
-                  <td class="px-6 py-3.5 text-center">
+                  <td class="px-4 py-3 text-center">
                     <span
-                      class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold"
-                      [ngClass]="vet.porcentaje_atencion >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : (vet.porcentaje_atencion >= 40 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-700')"
+                      class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border"
+                      [ngClass]="vet.porcentaje_atencion >= 70 ? 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]' : (vet.porcentaje_atencion >= 40 ? 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]' : 'bg-slate-50 text-slate-600 border-slate-200')"
                     >
                       {{ vet.porcentaje_atencion }}%
                     </span>

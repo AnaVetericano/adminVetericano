@@ -4,11 +4,17 @@
 
 @theme {
   --color-primary: #170B3D;
+  --color-primary-hover: #353583;
   --color-secundary: #4141A5;
+  --color-accent: #F1C63C;
   --color-background: #F4F5F7;
 }
 
 :root {
+  --surface-border: #E2E8F0;
+  --ink: #170B3D;
+  --ink-soft: #475569;
+
   /* ========================================================================= */
   /* TOKENS SEMÁNTICOS DE ESTADO (TEMA CLARO - GESTIÓN E INVENTARIO)           */
   /* ========================================================================= */
@@ -16,7 +22,7 @@
   --status-critical-bg: #FEECEB;
   --status-critical-border: #F5B7B1;
   --status-critical-text: #B42318;
-  --status-critical-accent: #D92D20;
+  --status-critical-accent: #B42318;
 
   /* Preventivo / stock bajo / por atender */
   --status-warning-bg: #FFF4E5;
@@ -28,7 +34,7 @@
   --status-success-bg: #ECFDF3;
   --status-success-border: #ABEFC6;
   --status-success-text: #067647;
-  --status-success-accent: #12B76A;
+  --status-success-accent: #067647;
 
   /* Neutro / totales / métricas generales */
   --status-neutral-bg: #F2F4F7;
@@ -37,26 +43,260 @@
   --status-neutral-accent: #667085;
 
   /* Informativo / en tránsito */
-  --status-info-bg: #EFF4FA;
-  --status-info-border: #C7D7EB;
-  --status-info-text: #175CD3;
-  --status-info-accent: #2E90FA;
+  --status-info-bg: rgba(65, 65, 165, 0.05);
+  --status-info-border: rgba(65, 65, 165, 0.20);
+  --status-info-text: #4141A5;
+  --status-info-accent: #4141A5;
+}
+
+html, body {
+  background-color: #F4F5F7;
+  color: #170B3D;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* El host de cada página enrutada dentro del layout ocupa toda la altura disponible */
+.app-outlet > :not(router-outlet) {
+  display: block;
+  height: 100%;
 }
 
 /* ========================================================================= */
 /* ELEVACIÓN Y LEVITACIÓN PARA BOTONES (REFERENCIA BUSCADOR HISTORIAS)       */
 /* ========================================================================= */
-.btn-levitate {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/*
+ * Sistema global de relieve (referencia: kit neumórfico, al 50% de su fuerza).
+ * Todo elemento clicable con superficie propia (botones, selects, tarjetas
+ * clicables) se ve separado de la pantalla con cuatro capas:
+ *   1. sombra abajo-derecha   2. luz arriba-izquierda
+ *   3. brillo fino arriba     4. borde inferior más oscuro (da grosor)
+ * Al pasar el cursor sube 1 px; al presionar baja a casi plano (nunca se hunde).
+ * Variante clara (botones blancos/grises) y variante de color (azul, tinta,
+ * rojo, verde), detectada por la clase de fondo del elemento.
+ * Excluido: barra lateral, fondos de modales, filas/celdas de tabla y lo marcado
+ * con `.no-levitate`. Las intensidades se ajustan solo en estas variables.
+ */
+:root {
+  --lev-lift: -1px;
+  --raise-light:
+    4px 4px 10px rgba(23, 11, 61, 0.10),
+    -4px -4px 10px rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(23, 11, 61, 0.06);
+  --raise-light-hover:
+    6px 6px 14px rgba(23, 11, 61, 0.13),
+    -5px -5px 12px rgba(255, 255, 255, 1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(23, 11, 61, 0.06);
+  --raise-dark:
+    4px 4px 10px rgba(23, 11, 61, 0.20),
+    -3px -3px 8px rgba(255, 255, 255, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(23, 11, 61, 0.28);
+  --raise-dark-hover:
+    6px 6px 14px rgba(23, 11, 61, 0.24),
+    -4px -4px 10px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -2px 0 rgba(23, 11, 61, 0.28);
+  --raise-press:
+    2px 2px 5px rgba(23, 11, 61, 0.10),
+    -2px -2px 5px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* Hundido de las tarjetitas: 30% de la referencia */
+  --sunk:
+    inset 2px 2px 5px rgba(23, 11, 61, 0.07),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
+
+  /* Misma intensidad que lo anterior, aplicada a más piezas (ver más abajo) */
+  /* Paneles blancos: la levitación en reposo de los botones, sin el bisel */
+  --panel-raise:
+    4px 4px 10px rgba(23, 11, 61, 0.10),
+    -4px -4px 10px rgba(255, 255, 255, 0.95);
+  --panel-border: color-mix(in srgb, var(--surface-border) 70%, #FFFFFF);
+  /* Campos de texto y búsqueda: el mismo hundido de las tarjetitas */
+  --field-sunk: var(--sunk);
+  /* Cuadritos de ícono: la levitación de un botón presionado (tamaño chico) */
+  --tile-raise:
+    2px 2px 5px rgba(23, 11, 61, 0.10),
+    -2px -2px 5px rgba(255, 255, 255, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* Canales finos (interruptor, barras de progreso): hundido a su escala */
+  --track-sunk:
+    inset 1px 1px 3px rgba(23, 11, 61, 0.10),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.6);
+  --knob-raise: 1px 1px 3px rgba(23, 11, 61, 0.18);
+
+  --lev-rest: var(--raise-light);
+  --lev-hover: var(--raise-light-hover);
+  --lev-press: var(--raise-press);
+  --lev-focus-ring: 0 0 0 3px rgba(65, 65, 165, 0.25);
 }
-.btn-levitate:hover:not(:disabled) {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+
+/* Cada clicable parte del relieve claro (especificidad 0, no se hereda del padre)... */
+:where(button, a, [role="button"], label, summary, select, .cursor-pointer, .btn-levitate, .swal2-styled) {
+  --lev-rest: var(--raise-light);
+  --lev-hover: var(--raise-light-hover);
 }
-.btn-levitate:active:not(:disabled) {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+/* ...y la variante de color la activa solo su propia clase de fondo */
+:is(
+  [class^="bg-[#4141A5] " i],
+  [class*=" bg-[#4141A5] " i],
+  [class$=" bg-[#4141A5]" i],
+  [class="bg-[#4141A5]" i],
+  [class^="bg-[#353583] " i],
+  [class*=" bg-[#353583] " i],
+  [class$=" bg-[#353583]" i],
+  [class="bg-[#353583]" i],
+  [class^="bg-[#170B3D] " i],
+  [class*=" bg-[#170B3D] " i],
+  [class$=" bg-[#170B3D]" i],
+  [class="bg-[#170B3D]" i],
+  [class^="bg-[#B42318] " i],
+  [class*=" bg-[#B42318] " i],
+  [class$=" bg-[#B42318]" i],
+  [class="bg-[#B42318]" i],
+  [class^="bg-[#067647] " i],
+  [class*=" bg-[#067647] " i],
+  [class$=" bg-[#067647]" i],
+  [class="bg-[#067647]" i],
+  [class^="bg-primary " i],
+  [class*=" bg-primary " i],
+  [class$=" bg-primary" i],
+  [class="bg-primary" i],
+  [class^="bg-secundary " i],
+  [class*=" bg-secundary " i],
+  [class$=" bg-secundary" i],
+  [class="bg-secundary" i],
+  [class^="bg-slate-700 " i],
+  [class*=" bg-slate-700 " i],
+  [class$=" bg-slate-700" i],
+  [class="bg-slate-700" i],
+  [class^="bg-slate-800 " i],
+  [class*=" bg-slate-800 " i],
+  [class$=" bg-slate-800" i],
+  [class="bg-slate-800" i],
+  [class^="bg-slate-900 " i],
+  [class*=" bg-slate-900 " i],
+  [class$=" bg-slate-900" i],
+  [class="bg-slate-900" i]
+),
+.swal2-styled.swal2-confirm {
+  --lev-rest: var(--raise-dark);
+  --lev-hover: var(--raise-dark-hover);
+}
+
+:is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option),
+select:not(:disabled, aside *, .no-levitate),
+.btn-levitate:not(:disabled),
+.swal2-styled {
+  box-shadow: var(--lev-rest) !important;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease,
+    opacity .15s ease, box-shadow .2s ease, transform .2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+:is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option):hover,
+select:not(:disabled, aside *, .no-levitate):hover,
+.btn-levitate:not(:disabled):hover,
+.swal2-styled:hover {
+  box-shadow: var(--lev-hover) !important;
+  transform: translateY(var(--lev-lift));
+}
+
+:is(button, a, [role="button"], label, summary, .cursor-pointer):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], :disabled, [aria-disabled="true"], aside *, .no-levitate, .no-levitate *, [class*="inset-0"], tr, td, th, option):active,
+.btn-levitate:not(:disabled):active,
+.swal2-styled:active {
+  box-shadow: var(--lev-press) !important;
   transform: translateY(0);
+}
+
+/* Tarjetitas informativas (no clicables) con fondo gris claro: levemente hundidas */
+div:is([class^="bg-slate-50 "], [class*=" bg-slate-50 "], [class$=" bg-slate-50"], [class^="bg-slate-50/"], [class*=" bg-slate-50/"]):is([class*="rounded-lg"], [class*="rounded-xl"]):not(.cursor-pointer, [class*="inset-0"], [class*="rounded-t-"], [class*="rounded-b-"], [class*="rounded-l-"], [class*="rounded-r-"], .fixed, .sticky, .absolute, aside *, .no-levitate, .no-sunk) {
+  box-shadow: var(--sunk) !important;
+}
+
+/* El foco por teclado conserva un anillo visible además de la elevación */
+:is(button, a, [role="button"], select, summary, .cursor-pointer, .swal2-styled):focus-visible:not(aside *) {
+  box-shadow: var(--lev-hover), var(--lev-focus-ring) !important;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(button, a, [role="button"], label, summary, select, .cursor-pointer, .btn-levitate, .swal2-styled):hover {
+    transform: none !important;
+  }
+}
+
+/* ========================================================================= */
+/* PANELES, CAMPOS Y CONTROLES (misma referencia, misma intensidad)          */
+/* ========================================================================= */
+/*
+ * Tarjetas blancas grandes: levitan suave sobre el gris de la página. Solo las
+ * de primer nivel: las que están dentro de otra tarjeta blanca, de un modal o
+ * de un menú flotante quedan planas. No se mueven al pasar el cursor (no se
+ * pueden pulsar). El borde se aclara un poco; los acentos `border-l-*` se respetan.
+ */
+:is(div, section, article, form):is([class^="bg-white "], [class*=" bg-white "], [class$=" bg-white"]):is([class*="rounded-lg"], [class*="rounded-xl"], [class*="rounded-2xl"]):is([class^="border "], [class*=" border "], [class$=" border"]):not(.cursor-pointer, .fixed, .absolute, .sticky, [class*="inset-0"], [class*="shadow-lg"], [class*="shadow-xl"], [class*="shadow-2xl"], [class*="focus-within:"], [class*="rounded-t-"], [class*="rounded-b-"], .no-levitate, aside *, .fixed *, .no-levitate *, :is([class*="bg-white"][class*="rounded-"], [class*="kpi-card-"], [class*="shadow-lg"]) *),
+[class*="kpi-card-"]:not(.cursor-pointer, aside *, .fixed *, .no-levitate, .no-levitate *, :is([class*="bg-white"][class*="rounded-"], [class*="shadow-lg"]) *) {
+  box-shadow: var(--panel-raise) !important;
+  border-top-color: var(--panel-border) !important;
+  border-right-color: var(--panel-border) !important;
+  border-bottom-color: var(--panel-border) !important;
+}
+:is(div, section, article, form):is([class^="bg-white "], [class*=" bg-white "], [class$=" bg-white"]):is([class*="rounded-lg"], [class*="rounded-xl"], [class*="rounded-2xl"]):is([class^="border "], [class*=" border "], [class$=" border"]):not([class*="border-l-"], [class*="kpi-card-"], .cursor-pointer, .fixed, .absolute, .sticky, [class*="inset-0"], [class*="shadow-lg"], [class*="shadow-xl"], [class*="shadow-2xl"], [class*="focus-within:"], [class*="rounded-t-"], [class*="rounded-b-"], .no-levitate, aside *, .fixed *, .no-levitate *, :is([class*="bg-white"][class*="rounded-"], [class*="kpi-card-"], [class*="shadow-lg"]) *) {
+  border-left-color: var(--panel-border) !important;
+}
+
+/* Campos de texto, áreas de texto y cajas de búsqueda: levemente hundidos.
+   El anillo índigo al enfocar se conserva encima del hundido. */
+:is(input:not([type="checkbox"], [type="radio"], [type="file"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="color"], [type="hidden"], [type="image"]), textarea):not(.bg-transparent, .sr-only, aside *, .no-levitate, .no-levitate *),
+div[class*="focus-within:ring"]:is([class^="border "], [class*=" border "], [class$=" border"]):not(aside *, .no-levitate, .no-levitate *) {
+  /* el anillo de Tailwind (focus:ring-*) se lee en el propio campo */
+  box-shadow: var(--field-sunk), var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000) !important;
+}
+
+/* Cuadritos de ícono (no clicables): levitan como un botón chico, igual que en
+   la referencia. Ganan sobre el hundido de las tarjetitas `bg-slate-50`. */
+:is(div, span):is([class*="w-8 h-8"], [class*="w-9 h-9"], [class*="w-10 h-10"], [class*="w-11 h-11"], [class*="w-12 h-12"])[class*="justify-center"]:is([class*="rounded-md"], [class*="rounded-lg"], [class*="rounded-xl"]):is([class^="bg-"], [class*=" bg-"]):not([class*="bg-transparent"], .cursor-pointer, aside *, .no-levitate, .no-levitate *) {
+  box-shadow: var(--tile-raise) !important;
+}
+
+/* Selector de opciones (pestañas en cápsula): canal hundido; la opción activa
+   ya levita por el sistema de botones y las inactivas quedan planas. */
+.segmentado {
+  box-shadow: var(--sunk) !important;
+}
+
+/* Interruptor: canal hundido y perilla con relieve */
+label > input.peer.sr-only + div[class*="rounded-full"] {
+  box-shadow: var(--track-sunk) !important;
+}
+label > input.peer.sr-only + div[class*="rounded-full"]::after {
+  box-shadow: var(--knob-raise);
+}
+
+/* Barras de progreso: canal hundido (el relleno queda plano) */
+div[class*="rounded-full"][class*="overflow-hidden"]:has(> div[style*="width"]) {
+  box-shadow: var(--track-sunk) !important;
+}
+
+/* ========================================================================= */
+/* ENCABEZADOS DE TABLA: se distinguen del fondo de la página                */
+/* ========================================================================= */
+/* Tono opaco del índigo de marca (#4141A5 al ~10% sobre blanco): funciona
+   también en encabezados fijos (sticky) sin transparentar las filas. */
+:root {
+  --table-head-bg: #ECECF6;
+  --table-head-border: #CFCFE8;
+}
+thead tr {
+  background-color: var(--table-head-bg) !important;
+  border-bottom: 1px solid var(--table-head-border) !important;
+}
+thead th {
+  background-color: var(--table-head-bg) !important;
+  color: rgba(23, 11, 61, 0.80) !important;
+  font-weight: 700 !important;
 }
 
 /* ========================================================================= */
@@ -89,32 +329,37 @@
 }
 
 /* ========================================================================= */
-/* TARJETAS RESUMEN / KPI SEMÁNTICAS (FONDO SUAVE, BORDE Y TEXTO OSCURO)     */
+/* TARJETAS RESUMEN / KPI SEMÁNTICAS (FONDO BLANCO, BORDE IZQUIERDO)         */
 /* ========================================================================= */
 .kpi-card-critical {
-  background-color: var(--status-critical-bg) !important;
-  border-color: var(--status-critical-border) !important;
-  color: var(--status-critical-text) !important;
+  background-color: #fff !important;
+  border-color: var(--surface-border) !important;
+  border-left: 4px solid var(--status-critical-accent) !important;
+  color: var(--ink) !important;
 }
 .kpi-card-warning {
-  background-color: var(--status-warning-bg) !important;
-  border-color: var(--status-warning-border) !important;
-  color: var(--status-warning-text) !important;
+  background-color: #fff !important;
+  border-color: var(--surface-border) !important;
+  border-left: 4px solid var(--status-warning-accent) !important;
+  color: var(--ink) !important;
 }
 .kpi-card-success {
-  background-color: var(--status-success-bg) !important;
-  border-color: var(--status-success-border) !important;
-  color: var(--status-success-text) !important;
+  background-color: #fff !important;
+  border-color: var(--surface-border) !important;
+  border-left: 4px solid var(--status-success-accent) !important;
+  color: var(--ink) !important;
 }
 .kpi-card-neutral {
-  background-color: var(--status-neutral-bg) !important;
-  border-color: var(--status-neutral-border) !important;
-  color: var(--status-neutral-text) !important;
+  background-color: #fff !important;
+  border-color: var(--surface-border) !important;
+  border-left: 4px solid var(--status-neutral-accent) !important;
+  color: var(--ink) !important;
 }
 .kpi-card-info {
-  background-color: var(--status-info-bg) !important;
-  border-color: var(--status-info-border) !important;
-  color: var(--status-info-text) !important;
+  background-color: #fff !important;
+  border-color: var(--surface-border) !important;
+  border-left: 4px solid var(--status-info-accent) !important;
+  color: var(--ink) !important;
 }
 
 /* ========================================================================= */
@@ -144,4 +389,422 @@
   background-color: var(--status-info-bg);
   border: 1px solid var(--status-info-border);
   color: var(--status-info-text);
+}
+
+/* ========================================================================= */
+/* ALERTAS (SweetAlert2): diálogo sobrio del panel                           */
+/* ========================================================================= */
+/*
+ * Una sola anatomía para todas las alertas, solo con CSS:
+ *   [cuadrito de ícono] Título (azul oscuro) + descripción (gris)
+ *                       datos `.qa-datos` · nota `.qa-nota` · campo
+ *   ─────────── franja gris clara:  [Cancelar] [Acción] ───────────
+ * - La severidad la da el cuadrito: tono según el tipo de ícono.
+ * - Confirmación destructiva: `customClass: { popup: 'qa-destructivo' }`
+ *   → cuadrito con papelera y botón rojo. Solo eliminar/anular/desactivar/rechazar.
+ * - Orden fijo de botones: Cancelar → Acción (se ignora `reverseButtons`).
+ * - Ancho 440 px; 560 px si el contenido trae una tabla o `.qa-ancho`.
+ * - Teléfono: botones apilados a lo ancho, acción principal arriba.
+ */
+.swal2-popup {
+  --qa-accent: #4141A5;
+  --qa-tint: rgba(65, 65, 165, 0.10);
+  --qa-glyph: none;
+  --qa-pad-y: 20px;
+  --qa-pad-r: 24px;
+  --qa-pad-l: 20px;
+  position: relative !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px -12px rgba(23, 11, 61, 0.28) !important;
+  font-family: 'Nunito', sans-serif !important;
+  text-align: left !important;
+  width: min(440px, calc(100vw - 32px)) !important;
+  padding: var(--qa-pad-y) var(--qa-pad-r) var(--qa-pad-y) var(--qa-pad-l) !important;
+  overflow: hidden !important;
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+  column-gap: 14px !important;
+  row-gap: 6px !important;
+  align-items: start !important;
+}
+.swal2-popup:is(.qa-ancho, :has(.swal2-html-container table)) {
+  width: min(560px, calc(100vw - 32px)) !important;
+}
+
+/* Tono por severidad (la destructiva va al final para ganar a la advertencia) */
+.swal2-popup.swal2-icon-success { --qa-accent: #067647; --qa-tint: #ECFDF3; }
+.swal2-popup.swal2-icon-error   { --qa-accent: #B42318; --qa-tint: #FEECEB; }
+.swal2-popup.swal2-icon-warning { --qa-accent: #9A5B13; --qa-tint: #FFF4E5; }
+.swal2-popup.swal2-icon-info,
+.swal2-popup.swal2-icon-question { --qa-accent: #4141A5; --qa-tint: rgba(65, 65, 165, 0.10); }
+.swal2-popup.qa-destructivo     { --qa-accent: #B42318; --qa-tint: #FEECEB; }
+
+.swal2-container.swal2-backdrop-show {
+  background: rgba(23, 11, 61, 0.32) !important;
+}
+
+/* Sin ícono: todo ocupa el ancho completo */
+.swal2-popup:not([class*="swal2-icon-"]) > * {
+  grid-column: 1 / -1 !important;
+}
+
+/* Cuadrito de ícono: mismo patrón que los cuadritos del panel.
+   No se fija `display`: SweetAlert lo oculta en línea cuando no hay ícono. */
+.swal2-icon {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
+  position: relative !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: var(--qa-tint) !important;
+  box-shadow: var(--tile-raise) !important;
+  animation: none !important;
+}
+.swal2-icon > *,
+.swal2-icon::before {
+  display: none !important;
+}
+.swal2-icon::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 10px !important;
+  background: var(--qa-accent) !important;
+  -webkit-mask: var(--qa-glyph) center / contain no-repeat !important;
+  mask: var(--qa-glyph) center / contain no-repeat !important;
+}
+.swal2-icon.swal2-success  { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.swal2-icon.swal2-error    { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z'/%3E%3Cpath d='m15 9-6 6M9 9l6 6'/%3E%3C/svg%3E"); }
+.swal2-icon.swal2-warning  { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cpath d='M12 9v4M12 17h.01'/%3E%3C/svg%3E"); }
+.swal2-icon.swal2-info     { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Cpath d='M12 11v6M12 7.5h.01'/%3E%3C/svg%3E"); }
+.swal2-icon.swal2-question { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Cpath d='M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01'/%3E%3C/svg%3E"); }
+.swal2-popup.qa-destructivo .swal2-icon { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6'/%3E%3C/svg%3E"); }
+
+/* Texto: título en azul oscuro, descripción en gris */
+.swal2-title {
+  grid-column: 2 !important;
+  margin: 0 !important;
+  padding: 9px 0 0 !important;
+  text-align: left !important;
+  font-size: 16.5px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+  color: #170B3D !important;
+  text-wrap: balance;
+}
+.swal2-html-container {
+  grid-column: 2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  font-weight: 400 !important;
+  color: #475569 !important;
+  overflow-wrap: break-word !important;
+}
+.swal2-html-container :is(b, strong) {
+  color: #170B3D;
+  font-weight: 700;
+}
+
+/* Datos estructurados: <dl class="qa-datos"><dt>Etiqueta</dt><dd>Valor</dd>…</dl> */
+.qa-datos {
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+}
+.qa-datos > dt,
+.qa-datos > dd {
+  margin: 0;
+  padding: 7px 0;
+  border-top: 1px solid var(--panel-border);
+}
+.qa-datos > dt {
+  color: #64748B;
+  font-weight: 400;
+  padding-right: 16px;
+}
+.qa-datos > dd {
+  color: #170B3D;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.qa-datos > :nth-last-child(-n + 2) {
+  border-bottom: 1px solid var(--panel-border);
+}
+/* Valor que debe resaltar con el tono de la alerta (ej. stock bajo) */
+.qa-tono {
+  color: var(--qa-accent) !important;
+}
+/* Nota secundaria: texto pequeño, sin caja de color */
+.qa-nota {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #64748B;
+}
+.qa-nota code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 12px;
+  color: #475569;
+}
+/* Tablas dentro de una alerta: planas, con separadores finos */
+.swal2-html-container table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.swal2-html-container :is(th, td) {
+  padding: 6px 8px;
+  border-top: 1px solid var(--panel-border);
+  text-align: left;
+  vertical-align: top;
+}
+.swal2-html-container th {
+  color: #64748B;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Campos: en la columna del texto, hundidos como en el panel */
+.swal2-input-label,
+.swal2-input,
+.swal2-file,
+.swal2-range,
+.swal2-select,
+.swal2-radio,
+.swal2-checkbox,
+.swal2-textarea,
+.swal2-validation-message,
+.swal2-image {
+  grid-column: 2 !important;
+}
+.swal2-input-label {
+  justify-content: flex-start !important;
+  margin: 8px 0 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+}
+.swal2-input,
+.swal2-file,
+.swal2-select,
+.swal2-textarea {
+  margin: 8px 0 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px !important;
+  box-shadow: var(--field-sunk) !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  color: #170B3D !important;
+  padding: 8px 12px !important;
+  height: auto !important;
+}
+.swal2-input:focus,
+.swal2-file:focus,
+.swal2-select:focus,
+.swal2-textarea:focus {
+  border-color: #4141A5 !important;
+  box-shadow: var(--field-sunk), 0 0 0 3px rgba(65, 65, 165, 0.18) !important;
+  outline: none !important;
+}
+.swal2-validation-message {
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: #B42318 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  justify-content: flex-start !important;
+}
+.swal2-validation-message::before {
+  display: none !important;
+}
+
+/* Franja de acciones: gris clara, de borde a borde, botones a la derecha.
+   Si la alerta no tiene botones, SweetAlert la oculta y no deja hueco. */
+.swal2-actions {
+  grid-column: 1 / -1 !important;
+  width: auto !important;
+  margin: 14px calc(-1 * var(--qa-pad-r)) calc(-1 * var(--qa-pad-y)) calc(-1 * var(--qa-pad-l)) !important;
+  padding: 12px 20px !important;
+  background: #F8FAFC !important;
+  border-top: 1px solid #E2E8F0 !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+.swal2-actions > .swal2-cancel { order: 1; }
+.swal2-actions > .swal2-deny { order: 2; }
+.swal2-actions > :is(.swal2-confirm, .swal2-loader) { order: 3; }
+
+.swal2-styled {
+  margin: 0 !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+}
+.swal2-styled.swal2-confirm {
+  background: #4141A5 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #4141A5 !important;
+}
+.swal2-styled.swal2-confirm:hover {
+  background: #353583 !important;
+  border-color: #353583 !important;
+}
+.swal2-styled.swal2-cancel,
+.swal2-styled.swal2-deny {
+  background: #FFFFFF !important;
+  color: #170B3D !important;
+  border: 1px solid #CBD5E1 !important;
+}
+.swal2-styled.swal2-cancel:hover,
+.swal2-styled.swal2-deny:hover {
+  background: #F8FAFC !important;
+}
+/* Rojo solo para acciones destructivas */
+.swal2-popup.qa-destructivo .swal2-styled.swal2-confirm {
+  background: #B42318 !important;
+  border-color: #B42318 !important;
+}
+.swal2-popup.qa-destructivo .swal2-styled.swal2-confirm:hover {
+  background: #B42318 !important;
+  border-color: #B42318 !important;
+  opacity: 0.92;
+}
+
+.swal2-loader {
+  border-color: #4141A5 transparent #4141A5 transparent !important;
+}
+.swal2-timer-progress-bar-container {
+  grid-column: 1 / -1 !important;
+}
+.swal2-timer-progress-bar {
+  background: rgba(65, 65, 165, 0.35) !important;
+  height: 2px !important;
+}
+
+.swal2-footer {
+  grid-column: 1 / -1 !important;
+  margin: 14px 0 0 !important;
+  padding: 12px 0 0 !important;
+  border-top: 1px solid #E2E8F0 !important;
+  color: #475569 !important;
+  font-size: 13px !important;
+  justify-content: flex-start !important;
+}
+
+.swal2-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 22px !important;
+  color: #94A3B8 !important;
+  border-radius: 6px !important;
+}
+.swal2-close:hover {
+  color: #170B3D !important;
+  background: #F1F5F9 !important;
+}
+.swal2-close:focus {
+  box-shadow: 0 0 0 3px rgba(65, 65, 165, 0.18) !important;
+}
+
+/* Teléfono: botones a lo ancho, la acción principal arriba */
+@media (max-width: 480px) {
+  .swal2-popup {
+    --qa-pad-y: 18px;
+    --qa-pad-r: 18px;
+    --qa-pad-l: 16px;
+    column-gap: 12px !important;
+  }
+  .swal2-popup:not(.swal2-toast) .swal2-actions {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+  }
+  .swal2-popup:not(.swal2-toast) .swal2-actions > .swal2-styled {
+    width: 100% !important;
+    min-height: 40px;
+  }
+}
+
+/* Toast (solo Sedes lo usa): versión compacta, sin franja */
+.swal2-popup.swal2-toast {
+  --qa-pad-y: 12px;
+  --qa-pad-r: 14px;
+  --qa-pad-l: 12px;
+  width: min(380px, calc(100vw - 32px)) !important;
+  grid-template-columns: 32px minmax(0, 1fr) !important;
+  column-gap: 10px !important;
+  row-gap: 2px !important;
+  box-shadow: 0 8px 24px -10px rgba(23, 11, 61, 0.25) !important;
+}
+.swal2-popup.swal2-toast .swal2-icon {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 6px !important;
+}
+.swal2-popup.swal2-toast .swal2-icon::after {
+  inset: 8px !important;
+}
+.swal2-popup.swal2-toast .swal2-title {
+  font-size: 14px !important;
+  padding: 6px 0 0 !important;
+}
+.swal2-popup.swal2-toast .swal2-html-container {
+  font-size: 13px !important;
+}
+.swal2-popup.swal2-toast .swal2-actions {
+  margin: 8px 0 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+@keyframes qa-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes qa-out { from { opacity: 1; } to { opacity: 0; } }
+.swal2-popup.swal2-show { animation: qa-in .16s ease-out !important; }
+.swal2-popup.swal2-hide { animation: qa-out .12s ease-in forwards !important; }
+.swal2-icon.swal2-icon-show, .swal2-icon .swal2-icon-content { animation: none !important; }
+
+/* ========================================================================= */
+/* FONDO TÉCNICO SUTIL: retícula de puntos tipo papel de registro clínico    */
+/* ========================================================================= */
+/*
+ * Solo en las superficies con el gris de la página (#F4F5F7): raíz de cada
+ * página, área principal del layout y panel del login/registro. Nunca dentro
+ * de tarjetas, tablas, formularios ni modales (`.fixed`). CSS puro, sin imágenes.
+ * Para ajustarlo: --bg-dot-color (intensidad) y --bg-dot-gap (separación).
+ */
+:root {
+  --bg-dot-color: rgba(100, 116, 139, 0.16);
+  --bg-dot-gap: 20px;
+}
+[class*="bg-[#F4F5F7]" i]:not(.fixed, .fixed *) {
+  background-image: radial-gradient(circle at 1px 1px, var(--bg-dot-color) 1px, transparent 0);
+  background-size: var(--bg-dot-gap) var(--bg-dot-gap);
 }

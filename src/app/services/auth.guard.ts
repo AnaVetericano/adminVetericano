@@ -62,15 +62,10 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
   // Notificación de acceso no autorizado
   Swal.fire({
-    title: 'Acceso Restringido',
-    text: 'Tu rol actual no tiene autorización para acceder a este módulo.',
+    title: 'Acceso restringido',
+    text: 'Su rol no tiene autorización para acceder a este módulo.',
     icon: 'warning',
-    confirmButtonText: 'Entendido',
-    confirmButtonColor: '#4141A5',
-    customClass: {
-      popup: 'rounded-2xl',
-      confirmButton: 'rounded-xl px-5 py-2.5 font-bold'
-    }
+    confirmButtonText: 'Aceptar'
   });
 
   // Redirección inteligente al módulo principal según su rol

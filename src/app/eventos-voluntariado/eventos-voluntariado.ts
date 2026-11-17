@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService, EventoVoluntariado, PostulacionVoluntariado } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface VoluntarioPostulado {
   id?: number;
@@ -17,7 +19,7 @@ export interface VoluntarioPostulado {
 @Component({
   selector: 'app-eventos-voluntariado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './eventos-voluntariado.html',
   styleUrl: './eventos-voluntariado.css'
 })
@@ -76,10 +78,9 @@ export class EventosVoluntariado implements OnInit {
         this.cargando = false;
         this.cdr.detectChanges(); // Asegurar también en caso de error
         Swal.fire({
-          title: 'Error',
-          text: 'No se pudieron cargar las jornadas de voluntariado.',
-          icon: 'error',
-          confirmButtonColor: '#1B1947'
+          title: 'No fue posible cargar las jornadas',
+          text: 'Verifique la conexión e intente nuevamente.',
+          icon: 'error'
         });
       }
     });
@@ -137,10 +138,9 @@ export class EventosVoluntariado implements OnInit {
 
       if (!archivo.type.startsWith('image/')) {
         Swal.fire({
-          title: 'Formato inválido',
-          text: 'Por favor selecciona un archivo de imagen válido.',
-          icon: 'warning',
-          confirmButtonColor: '#1B1947'
+          title: 'Formato no válido',
+          text: 'Seleccione un archivo de imagen válido.',
+          icon: 'warning'
         });
         input.value = '';
         return;
@@ -148,10 +148,9 @@ export class EventosVoluntariado implements OnInit {
 
       if (archivo.size > 5 * 1024 * 1024) {
         Swal.fire({
-          title: 'Imagen muy pesada',
-          text: 'El tamaño máximo permitido es de 5MB.',
-          icon: 'warning',
-          confirmButtonColor: '#1B1947'
+          title: 'Archivo demasiado grande',
+          text: 'El tamaño máximo permitido es de 5 MB.',
+          icon: 'warning'
         });
         input.value = '';
         return;
@@ -176,10 +175,9 @@ export class EventosVoluntariado implements OnInit {
   guardarEvento(): void {
     if (!this.eventoForm.titulo.trim()) {
       Swal.fire({
-        title: 'Campos obligatorios',
-        text: 'Por favor completa todos los campos obligatorios.',
-        icon: 'warning',
-        confirmButtonColor: '#1B1947'
+        title: 'Campos obligatorios incompletos',
+        text: 'Complete todos los campos obligatorios.',
+        icon: 'warning'
       });
       return;
     }
@@ -188,8 +186,7 @@ export class EventosVoluntariado implements OnInit {
       Swal.fire({
         title: 'Campo obligatorio',
         text: 'La fecha de la jornada es obligatoria.',
-        icon: 'warning',
-        confirmButtonColor: '#1B1947'
+        icon: 'warning'
       });
       return;
     }
@@ -198,8 +195,7 @@ export class EventosVoluntariado implements OnInit {
       Swal.fire({
         title: 'Campo obligatorio',
         text: 'La descripción de la jornada es obligatoria.',
-        icon: 'warning',
-        confirmButtonColor: '#1B1947'
+        icon: 'warning'
       });
       return;
     }
@@ -207,9 +203,8 @@ export class EventosVoluntariado implements OnInit {
     if (this.editandoId === null && !this.archivoImagenSeleccionado) {
       Swal.fire({
         title: 'Imagen requerida',
-        text: 'Debes seleccionar una imagen para la jornada.',
-        icon: 'warning',
-        confirmButtonColor: '#1B1947'
+        text: 'Seleccione una imagen para la jornada.',
+        icon: 'warning'
       });
       return;
     }
@@ -231,13 +226,13 @@ export class EventosVoluntariado implements OnInit {
           this.guardando = false;
           this.cerrarModal();
           this.obtenerEventos();
-          Swal.fire({ title: '¡Actualizada!', icon: 'success', timer: 2000, showConfirmButton: false });
+          Swal.fire({ title: 'Registro actualizado', icon: 'success', timer: 2000, showConfirmButton: false });
         },
         error: (err: any) => {
           console.error('Error al actualizar evento:', err);
           this.guardando = false;
           this.cdr.detectChanges();
-          Swal.fire({ title: 'Error', text: 'Ocurrió un error al actualizar.', icon: 'error', confirmButtonColor: '#1B1947' });
+          Swal.fire({ title: 'No fue posible actualizar el registro', text: 'Verifique los datos e intente nuevamente.', icon: 'error' });
         }
       });
       return;
@@ -248,13 +243,13 @@ export class EventosVoluntariado implements OnInit {
         this.guardando = false;
         this.cerrarModal();
         this.obtenerEventos();
-        Swal.fire({ title: '¡Creada con éxito!', icon: 'success', timer: 2500, showConfirmButton: false });
+        Swal.fire({ title: 'Registro guardado', icon: 'success', timer: 2500, showConfirmButton: false });
       },
       error: (err: any) => {
         console.error('Error al crear evento:', err);
         this.guardando = false;
         this.cdr.detectChanges();
-        Swal.fire({ title: 'Error', text: 'No se pudo crear la jornada.', icon: 'error', confirmButtonColor: '#1B1947' });
+        Swal.fire({ title: 'No fue posible guardar el registro', text: 'Verifique la conexión e intente nuevamente.', icon: 'error' });
       }
     });
   }
@@ -264,25 +259,24 @@ export class EventosVoluntariado implements OnInit {
     if (!evento.id) return;
 
     Swal.fire({
-      title: '¿Eliminar jornada?',
-      text: `Se eliminará la jornada "${this.limpiarTexto(evento.titulo)}".`,
+      title: 'Confirmar eliminación',
+      text: `Se eliminará la jornada "${this.limpiarTexto(evento.titulo)}". Esta acción no se puede deshacer.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#1B1947',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'qa-destructivo' }
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.eliminarEventoVoluntariado(evento.id!).subscribe({
           next: () => {
             this.obtenerEventos();
-            Swal.fire({ title: 'Eliminada', icon: 'success', timer: 2000, showConfirmButton: false });
+            Swal.fire({ title: 'Registro eliminado', icon: 'success', timer: 2000, showConfirmButton: false });
           },
           error: (err: any) => {
             console.error('Error al eliminar evento:', err);
             this.cdr.detectChanges();
-            Swal.fire({ title: 'Error', text: 'No se pudo eliminar la jornada.', icon: 'error', confirmButtonColor: '#1B1947' });
+            Swal.fire({ title: 'No fue posible eliminar el registro', text: 'Verifique la conexión e intente nuevamente.', icon: 'error' });
           }
         });
       }
@@ -333,10 +327,9 @@ export class EventosVoluntariado implements OnInit {
         this.cdr.detectChanges();
 
         Swal.fire({
-          title: 'Error',
-          text: 'No se pudo obtener la lista de voluntarios postulados.',
-          icon: 'error',
-          confirmButtonColor: '#1B1947'
+          title: 'No fue posible cargar los postulados',
+          text: 'Verifique la conexión e intente nuevamente.',
+          icon: 'error'
         });
       }
     });

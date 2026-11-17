@@ -6,6 +6,8 @@ import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 export interface OpcionViaAdministracion {
   valor: string;
@@ -19,7 +21,7 @@ export interface OpcionViaAdministracion {
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './crear-medicamentos.html',
   styleUrl: './crear-medicamentos.css',
 })
@@ -335,10 +337,10 @@ export class Medicamentos implements OnInit {
         console.error('Error al listar medicamentos:', err);
         this.cargando = false;
         Swal.fire({
-          title: 'Error',
-          text: 'No se pudieron cargar los medicamentos.',
+          title: 'No fue posible cargar los medicamentos',
+          text: 'Verifique la conexión e intente nuevamente.',
           icon: 'error',
-          confirmButtonColor: '#d33'
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -413,9 +415,9 @@ export class Medicamentos implements OnInit {
     if (!this.medicamento.nombre.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes ingresar el nombre del medicamento.',
+        text: 'Ingrese el nombre del medicamento.',
         icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -423,9 +425,9 @@ export class Medicamentos implements OnInit {
     if (!this.medicamento.tipo.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes ingresar el tipo de medicamento.',
+        text: 'Ingrese el tipo de medicamento.',
         icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -433,9 +435,9 @@ export class Medicamentos implements OnInit {
     if (!this.medicamento.via_administracion?.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes seleccionar la vía de administración.',
+        text: 'Seleccione la vía de administración.',
         icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -444,9 +446,9 @@ export class Medicamentos implements OnInit {
       const info = this.infoUnidadActual;
       Swal.fire({
         title: 'Campo obligatorio',
-        text: `Debes ingresar una cantidad válida en ${info.nombreUnidad}.`,
+        text: `Ingrese una cantidad válida en ${info.nombreUnidad}.`,
         icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -468,10 +470,10 @@ export class Medicamentos implements OnInit {
         next: () => {
           Swal.fire({
             icon: 'success',
-            title: '¡Actualizado!',
-            text: 'Medicamento actualizado con éxito.',
-            confirmButtonColor: '#4141A5',
-            timer: 2000
+            title: 'Medicamento actualizado',
+            text: 'Los datos del medicamento se guardaron correctamente.',
+            timer: 2000,
+            confirmButtonText: 'Aceptar'
           });
           this.cerrarModal();
           this.obtenerMedicamentos();
@@ -488,18 +490,18 @@ export class Medicamentos implements OnInit {
               msj = `${primerCampo}: ${Array.isArray(valor) ? valor.join(' ') : valor}`;
             }
           }
-          Swal.fire({ icon: 'error', title: 'Error', text: msj, confirmButtonColor: '#d33' });
+          Swal.fire({ icon: 'error', title: 'No fue posible actualizar el medicamento', text: msj, confirmButtonText: 'Aceptar' });
         }
       });
     } else {
       this.authService.crearMedicamento(payload).subscribe({
         next: () => {
           Swal.fire({
-            title: '¡Éxito!',
-            text: 'Medicamento creado correctamente.',
+            title: 'Medicamento registrado',
+            text: 'El medicamento se creó correctamente.',
             icon: 'success',
-            confirmButtonColor: '#4141A5',
-            timer: 2000
+            timer: 2000,
+            confirmButtonText: 'Aceptar'
           });
           this.cerrarModal();
           this.obtenerMedicamentos();
@@ -524,7 +526,7 @@ export class Medicamentos implements OnInit {
               msj = `${primerCampo}: ${Array.isArray(valor) ? valor.join(' ') : valor}`;
             }
           }
-          Swal.fire({ title: 'Error', text: msj, icon: 'error', confirmButtonColor: '#d33' });
+          Swal.fire({ title: 'No fue posible registrar el medicamento', text: msj, icon: 'error', confirmButtonText: 'Aceptar' });
         }
       });
     }
@@ -537,13 +539,12 @@ export class Medicamentos implements OnInit {
     const accion = nuevoEstado ? 'activar' : 'inactivar';
 
     Swal.fire({
-      title: `¿Deseas ${accion} este medicamento?`,
+      title: 'Confirmar cambio de estado',
       text: `El medicamento "${m.nombre}" será ${nuevoEstado ? 'activado' : 'inactivado'}.`,
       icon: 'warning',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' },
       showCancelButton: true,
-      confirmButtonColor: '#4141A5',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: `Sí, ${accion}`,
+      confirmButtonText: nuevoEstado ? 'Activar' : 'Inactivar',
       cancelButtonText: 'Cancelar'
     }).then((resultado) => {
       if (!resultado.isConfirmed) return;
@@ -556,7 +557,7 @@ export class Medicamentos implements OnInit {
           this.cdr.detectChanges();
 
           Swal.fire({
-            title: `Medicamento ${nuevoEstado ? 'activado' : 'inactivado'} correctamente`,
+            title: `Medicamento ${nuevoEstado ? 'activado' : 'inactivado'}`,
             icon: 'success',
             timer: 1800,
             showConfirmButton: false
@@ -565,7 +566,7 @@ export class Medicamentos implements OnInit {
         error: (err: any) => {
           console.error(`Error al ${accion}:`, err);
           const msj = err?.error?.detail || `No se pudo ${accion} el medicamento.`;
-          Swal.fire({ title: 'Error', text: msj, icon: 'error', confirmButtonColor: '#4141A5' });
+          Swal.fire({ title: 'No fue posible completar la acción', text: msj, icon: 'error', confirmButtonText: 'Aceptar' });
         }
       });
     });
@@ -597,9 +598,9 @@ export class Medicamentos implements OnInit {
     if (!nombreArchivo.endsWith('.xlsx') && !nombreArchivo.endsWith('.xls')) {
       Swal.fire({
         title: 'Formato no compatible',
-        text: 'Por favor selecciona un archivo de Excel válido (.xlsx o .xls).',
+        text: 'Seleccione un archivo de Excel válido (.xlsx o .xls).',
         icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       input.value = '';
       return;
@@ -623,7 +624,7 @@ export class Medicamentos implements OnInit {
             title: 'Archivo vacío',
             text: 'La primera hoja del archivo no contiene filas con datos.',
             icon: 'info',
-            confirmButtonColor: '#4141A5'
+            confirmButtonText: 'Aceptar'
           });
           return;
         }
@@ -635,7 +636,7 @@ export class Medicamentos implements OnInit {
           title: 'Error de lectura',
           text: 'No se pudo leer el archivo Excel: ' + (err?.message || 'Error desconocido'),
           icon: 'error',
-          confirmButtonColor: '#d33'
+          confirmButtonText: 'Aceptar'
         });
       } finally {
         input.value = '';
@@ -645,9 +646,9 @@ export class Medicamentos implements OnInit {
     reader.onerror = () => {
       Swal.fire({
         title: 'Error de archivo',
-        text: 'Ocurrió un error al cargar el archivo seleccionado.',
+        text: 'No se pudo cargar el archivo seleccionado. Intente seleccionarlo nuevamente.',
         icon: 'error',
-        confirmButtonColor: '#d33'
+        confirmButtonText: 'Aceptar'
       });
       input.value = '';
     };
@@ -844,26 +845,26 @@ export class Medicamentos implements OnInit {
         title: 'Sin registros válidos',
         text: 'No se encontraron registros de medicamentos con nombre válido para importar.',
         icon: 'warning',
-        confirmButtonColor: '#4141A5'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
 
     // Modal de confirmación previo
     const confirmacion = await Swal.fire({
-      title: '¿Iniciar importación masiva?',
+      title: 'Confirmar importación masiva',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <p>Archivo: <b class="text-[#4141A5]">${nombreArchivo}</b></p>
-          <p>Total de medicamentos identificados: <b>${registrosAProcesar.length}</b></p>
-          <p class="text-xs text-gray-500 mt-2">Los medicamentos que no coincidan exactamente con el catálogo se clasificarán automáticamente como <b>"Otros"</b>.</p>
-        </div>
+        <dl class="qa-datos">
+          <dt>Archivo</dt>
+          <dd>${nombreArchivo}</dd>
+          <dt>Medicamentos identificados</dt>
+          <dd>${registrosAProcesar.length}</dd>
+        </dl>
+        <p class="qa-nota">Los medicamentos que no coincidan exactamente con el catálogo se clasificarán automáticamente como <b>"Otros"</b>.</p>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#4141A5',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Sí, importar ahora',
+      confirmButtonText: 'Importar',
       cancelButtonText: 'Cancelar'
     });
 
@@ -875,7 +876,7 @@ export class Medicamentos implements OnInit {
     // Diálogo de progreso interactivo
     Swal.fire({
       title: 'Importando medicamentos...',
-      html: `Procesando <b>0</b> de <b>${registrosAProcesar.length}</b> medicamentos...`,
+      html: `<p>Procesando <b>0</b> de <b>${registrosAProcesar.length}</b> ${registrosAProcesar.length === 1 ? 'medicamento' : 'medicamentos'}...</p>`,
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
@@ -915,7 +916,7 @@ export class Medicamentos implements OnInit {
           html: `
             <div class="space-y-2">
               <p>Guardando medicamentos: <b>${procesadosHastaAhora}</b> de <b>${registrosAProcesar.length}</b> (${porcentaje}%)</p>
-              <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+              <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div class="bg-[#4141A5] h-2.5 rounded-full transition-all duration-200" style="width: ${porcentaje}%"></div>
               </div>
             </div>
@@ -930,35 +931,20 @@ export class Medicamentos implements OnInit {
       // Alerta final de resumen SweetAlert2
       Swal.fire({
         icon: fallidos === 0 ? 'success' : 'warning',
-        title: fallidos === 0 ? '¡Importación Completada!' : 'Importación Finalizada con Novedades',
+        title: fallidos === 0 ? 'Importación completada' : 'Importación finalizada con novedades',
         html: `
-          <div class="text-left text-sm space-y-2.5 py-1">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-              <div class="flex justify-between items-center text-slate-700">
-                <span>Total de filas leídas:</span>
-                <b>${registrosAProcesar.length}</b>
-              </div>
-              <div class="flex justify-between items-center text-[#4141A5] font-semibold">
-                <span>Guardados con éxito:</span>
-                <b>${exitosos}</b>
-              </div>
-              <div class="flex justify-between items-center text-amber-700 font-semibold">
-                <span>Asignados con campos en "Otros":</span>
-                <b>${conOtros}</b>
-              </div>
-              ${fallidos > 0 ? `
-              <div class="flex justify-between items-center text-rose-600 font-semibold">
-                <span>No se pudieron registrar:</span>
-                <b>${fallidos}</b>
-              </div>` : ''}
-            </div>
-            <p class="text-xs text-gray-500">
-              ${conOtros > 0 ? 'Los medicamentos con discrepancias de catálogo fueron asignados a "Otros" para mantener la consistencia de inventario.' : 'Todos los medicamentos coincidieron exactamente con el catálogo.'}
-            </p>
-          </div>
+          <dl class="qa-datos">
+            <dt>Total de filas leídas</dt>
+            <dd>${registrosAProcesar.length}</dd>
+            <dt>Guardados con éxito</dt>
+            <dd>${exitosos}</dd>
+            <dt>Asignados con campos en "Otros"</dt>
+            <dd>${conOtros}</dd>
+            ${fallidos > 0 ? `<dt>No se pudieron registrar</dt><dd class="qa-tono">${fallidos}</dd>` : ''}
+          </dl>
+          <p class="qa-nota">${conOtros > 0 ? 'Los medicamentos con discrepancias de catálogo fueron asignados a "Otros" para mantener la consistencia de inventario.' : 'Todos los medicamentos coincidieron exactamente con el catálogo.'}</p>
         `,
-        confirmButtonColor: '#4141A5',
-        confirmButtonText: 'Entendido'
+        confirmButtonText: 'Aceptar'
       });
     } catch (error) {
       console.error('Error general durante la importación:', error);
@@ -968,9 +954,9 @@ export class Medicamentos implements OnInit {
 
       Swal.fire({
         title: 'Error en la importación',
-        text: 'Ocurrió un error inesperado al procesar la importación masiva.',
+        text: 'No se pudo procesar la importación masiva. Verifique el archivo e intente nuevamente.',
         icon: 'error',
-        confirmButtonColor: '#d33'
+        confirmButtonText: 'Aceptar'
       });
     }
   }

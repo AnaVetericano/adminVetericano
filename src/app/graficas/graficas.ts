@@ -1,15 +1,25 @@
-import { Component, ElementRef, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, OnDestroy, ChangeDetectorRef, inject, computed } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { Chart } from 'chart.js/auto';
 import { CommonModule, NgIf } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import {
+  ErrorDuplicadosApi,
+  ResumenConteosAlertas,
+  crearResumenAlertasVacio
+} from '../models/duplicados.model';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-graficas',
-  imports: [NgIf, CommonModule],
+  imports: [NgIf, CommonModule, RouterLink, AnimalIconComponent, PageTitleComponent],
   templateUrl: './graficas.html',
   styleUrl: './graficas.css',
 })
-export class Graficas implements OnInit {
+export class Graficas implements OnInit, OnDestroy {
   @ViewChild('GraficUsers') GraficUsers!: ElementRef<HTMLCanvasElement>;
   @ViewChild('GraficUsersRol') GraficUsersRol!: ElementRef<HTMLCanvasElement>;
 
@@ -24,6 +34,25 @@ export class Graficas implements OnInit {
   rolJud = 0;
   rolAdm = 0;
 
+  readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  cargandoDuplicados = false;
+  errorDuplicados = '';
+  private duplicadosSub?: Subscription;
+
+  readonly resumenDuplicados = computed<ResumenConteosAlertas>(() =>
+    this.puedeGestionarDuplicados
+      ? this.alertasDuplicadosService.resumen()
+      : crearResumenAlertasVacio()
+  );
+
+  get puedeGestionarDuplicados(): boolean {
+    return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get totalPendientesDuplicados(): number {
+    return this.puedeGestionarDuplicados ? this.alertasDuplicadosService.totalPendientes() : 0;
+  }
+
   get totalUsuarios(): number {
     return this.activosPie + this.inactivosPie;
   }
@@ -36,6 +65,45 @@ export class Graficas implements OnInit {
 
   ngOnInit() {
     this.ListAllUsersActives();
+    this.cargarResumenDuplicados(false);
+  }
+
+  ngOnDestroy(): void {
+    this.duplicadosSub?.unsubscribe();
+    this.chartUsersActive?.destroy();
+    this.chartUsersRol?.destroy();
+  }
+
+  /**
+   * Reutiliza `AlertasDuplicadosService` para obtener el contador reactivo de
+   * posibles duplicados únicamente cuando el rol activo está autorizado.
+   */
+  cargarResumenDuplicados(forzarRecarga: boolean = false): void {
+    if (!this.puedeGestionarDuplicados) {
+      this.cargandoDuplicados = false;
+      this.errorDuplicados = '';
+      return;
+    }
+
+    this.cargandoDuplicados = true;
+    this.errorDuplicados = '';
+    this.duplicadosSub?.unsubscribe();
+
+    this.duplicadosSub = this.alertasDuplicadosService
+      .cargarIndiceAlertas({ page_size: 100 }, forzarRecarga)
+      .subscribe({
+        next: () => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados = '';
+          this.cdr.detectChanges();
+        },
+        error: (err: ErrorDuplicadosApi) => {
+          this.cargandoDuplicados = false;
+          this.errorDuplicados =
+            err?.mensaje || 'No se pudo consultar el resumen de duplicados.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   ListAllUsersActives() {
@@ -96,7 +164,7 @@ export class Graficas implements OnInit {
           data: [this.activosPie, this.inactivosPie],
           backgroundColor: [
             '#4141A5', // Indigo corporativo VETERICANO
-            '#64748B'  // Slate corporativo
+            '#CBD5E1'  // Slate referencia
           ],
           borderWidth: 2,
           borderColor: '#ffffff',
@@ -106,13 +174,14 @@ export class Graficas implements OnInit {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '68%',
+        cutout: '70%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569',
               padding: 16
             }
@@ -141,10 +210,10 @@ export class Graficas implements OnInit {
         datasets: [{
           data: [this.rolAdm, this.rolJud, this.rolVet, this.rolPet],
           backgroundColor: [
-            '#170B3D', // Deep Navy institucional
-            '#4141A5', // Indigo corporativo
-            '#6366F1', // Indigo claro
-            '#64748B'  // Slate institucional
+            '#170B3D',
+            '#4141A5',
+            'rgba(65, 65, 165, 0.55)',
+            'rgba(65, 65, 165, 0.28)'
           ],
           borderWidth: 2,
           borderColor: '#ffffff',
@@ -154,13 +223,14 @@ export class Graficas implements OnInit {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '68%',
+        cutout: '70%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              boxWidth: 12,
-              font: { family: 'Nunito', size: 12, weight: 'bold' },
+              boxWidth: 10,
+              usePointStyle: true,
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569',
               padding: 16
             }
