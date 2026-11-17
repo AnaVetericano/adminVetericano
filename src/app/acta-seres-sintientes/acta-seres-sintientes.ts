@@ -249,30 +249,35 @@ export class ActaSeresSintientes implements OnInit {
       moco: null as boolean | null,
       dificultadRespirar: null as boolean | null,
       tos: null as boolean | null,
-      laganeo: null as boolean | null
+      laganeo: null as boolean | null,
+      comentario: ''
     },
     digestivo: {
       vomito: null as boolean | null,
       diarrea: null as boolean | null,
       desnutrido: null as boolean | null,
-      deshidratado: null as boolean | null
+      deshidratado: null as boolean | null,
+      comentario: ''
     },
     musculoEsqueletico: {
       caidaPatas: null as boolean | null,
       cojera: null as boolean | null,
       heridaAbierta: null as boolean | null,
       gusanosMiasis: null as boolean | null,
-      postrado: null as boolean | null
+      postrado: null as boolean | null,
+      comentario: ''
     },
     dermatologico: {
       peladuras: null as boolean | null,
       heridasSangre: null as boolean | null,
-      pulgasGarrapatas: null as boolean | null
+      pulgasGarrapatas: null as boolean | null,
+      comentario: ''
     },
     genitourinario: {
       masaSecrecion: null as boolean | null,
       gestante: null as boolean | null,
-      enCelo: null as boolean | null
+      enCelo: null as boolean | null,
+      comentario: ''
     }
   };
 
@@ -1026,18 +1031,25 @@ export class ActaSeresSintientes implements OnInit {
         return m[1].toUpperCase().includes('S');
       };
 
+      const parseComentarioSistema = (regex: RegExp): string => {
+        const m = quejaRaw.match(regex);
+        return m?.[1]?.trim() || '';
+      };
+
       const resp = {
         moco: parseTriajeItem(/Presenta moco:\s*(S[ÍI]|NO)/i),
         dificultadRespirar: parseTriajeItem(/(?:Se le )?dificulta respirar:\s*(S[ÍI]|NO)/i),
         tos: parseTriajeItem(/Tos:\s*(S[ÍI]|NO)/i),
-        laganeo: parseTriajeItem(/Lagaña o lagrimeo:\s*(S[ÍI]|NO)/i)
+        laganeo: parseTriajeItem(/Lagaña o lagrimeo:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario respiratorio:\s*([^\n\r]+)/i)
       };
 
       const dig = {
         vomito: parseTriajeItem(/Presenta vómito:\s*(S[ÍI]|NO)/i),
         diarrea: parseTriajeItem(/Presenta diarrea:\s*(S[ÍI]|NO)/i),
         desnutrido: parseTriajeItem(/(?:Muy )?flaco o desnutrido:\s*(S[ÍI]|NO)/i),
-        deshidratado: parseTriajeItem(/Deshidratado:\s*(S[ÍI]|NO)/i)
+        deshidratado: parseTriajeItem(/Deshidratado:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario digestivo:\s*([^\n\r]+)/i)
       };
 
       const musc = {
@@ -1045,19 +1057,22 @@ export class ActaSeresSintientes implements OnInit {
         cojera: parseTriajeItem(/(?:Cojo|Cojera evidente):\s*(S[ÍI]|NO)/i),
         heridaAbierta: parseTriajeItem(/(?:Presenta )?herida abierta(?: profunda)?:\s*(S[ÍI]|NO)/i),
         gusanosMiasis: parseTriajeItem(/(?:Observa moscos o gusanos|Gusanos \/ Miasis activa):\s*(S[ÍI]|NO)/i),
-        postrado: parseTriajeItem(/(?:Animal )?postrado(?: \/ no se levanta)?:\s*(S[ÍI]|NO)/i)
+        postrado: parseTriajeItem(/(?:Animal )?postrado(?: \/ no se levanta)?:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario m[úu]sculo-?esquel[ée]tico:\s*([^\n\r]+)/i)
       };
 
       const derm = {
         peladuras: parseTriajeItem(/(?:Presenta )?peladuras(?: \/ Alopecia)?:\s*(S[ÍI]|NO)/i),
         heridasSangre: parseTriajeItem(/Heridas con sangre:\s*(S[ÍI]|NO)/i),
-        pulgasGarrapatas: parseTriajeItem(/(?:Infestación de )?pulgas o garrapatas:\s*(S[ÍI]|NO)/i)
+        pulgasGarrapatas: parseTriajeItem(/(?:(?:Infestación de )?pulgas o garrapatas|Hectoparásitos):\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario dermatol[óo]gico:\s*([^\n\r]+)/i)
       };
 
       const genit = {
         masaSecrecion: parseTriajeItem(/(?:Presenta )?masa(?:,| o)? (?:tumor o )?secreción(?: genital)?:\s*(S[ÍI]|NO)/i),
         gestante: parseTriajeItem(/(?:Se encuentra |Posible hembra )?gestante:\s*(S[ÍI]|NO)/i),
-        enCelo: parseTriajeItem(/(?:Se encuentra |Hembra )?en celo:\s*(S[ÍI]|NO)/i)
+        enCelo: parseTriajeItem(/(?:Se encuentra |Hembra )?en celo:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario g[ée]nito-?urinario:\s*([^\n\r]+)/i)
       };
 
       const todos = [
@@ -1658,11 +1673,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: false,
       totalAlertas: 0,
-      respiratorio: { moco: null, dificultadRespirar: null, tos: null, laganeo: null },
-      digestivo: { vomito: null, diarrea: null, desnutrido: null, deshidratado: null },
-      musculoEsqueletico: { caidaPatas: null, cojera: null, heridaAbierta: null, gusanosMiasis: null, postrado: null },
-      dermatologico: { peladuras: null, heridasSangre: null, pulgasGarrapatas: null },
-      genitourinario: { masaSecrecion: null, gestante: null, enCelo: null }
+      respiratorio: { moco: null, dificultadRespirar: null, tos: null, laganeo: null, comentario: '' },
+      digestivo: { vomito: null, diarrea: null, desnutrido: null, deshidratado: null, comentario: '' },
+      musculoEsqueletico: { caidaPatas: null, cojera: null, heridaAbierta: null, gusanosMiasis: null, postrado: null, comentario: '' },
+      dermatologico: { peladuras: null, heridasSangre: null, pulgasGarrapatas: null, comentario: '' },
+      genitourinario: { masaSecrecion: null, gestante: null, enCelo: null, comentario: '' }
     };
     this.tratamientosCampo = { tratamientoTexto: '', medicamentosMaletin: [] };
     this.resolucionCierre = {
@@ -2134,11 +2149,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: true,
       totalAlertas: 0,
-      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
     };
     this.diagnosticoFinal = 'Consulta médica general / Sin patología infectocontagiosa evidente';
     this.materialesUtilizados = 'Curación tópica, valoración física y desinfección preventiva.';
@@ -4432,11 +4447,11 @@ export class ActaSeresSintientes implements OnInit {
       this.triajeSistemasCampo = {
         tieneEvaluacion: true,
         totalAlertas: 0,
-        respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-        digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-        musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-        dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-        genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+        respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+        digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+        musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+        dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+        genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
       };
     }
     if (!(this.triajeSistemasCampo as any)[sistema]) {
@@ -4452,11 +4467,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: true,
       totalAlertas: 0,
-      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
     };
     this.recalcularAlertasSistemas();
     this.cdr.detectChanges();
@@ -4473,11 +4488,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: true,
       totalAlertas: 0,
-      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
     };
     this.recalcularAlertasSistemas();
     this.cdr.detectChanges();

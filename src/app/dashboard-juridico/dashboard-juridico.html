@@ -29,13 +29,44 @@
       <button (click)="cargarDatos(true)" class="underline cursor-pointer text-[#B42318] hover:opacity-80">Reintentar</button>
     </div>
 
-    <!-- Grid de 3 Columnas -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    <!-- Selector rápido de vistas de Dashboard por Rol (Supervisión Integral) -->
+    <div *ngIf="authService.isAdmin()" class="flex items-center gap-2.5 min-w-0">
+      <span class="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">Vista por rol</span>
+      <div class="segmentado inline-flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 overflow-x-auto max-w-full">
+        <a
+          routerLink="/inicio-admin/dashboard-juridico"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 bg-white text-[#4141A5] shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+          </svg>
+          <span>Dashboard Jurídico</span>
+        </a>
+        <a
+          routerLink="/inicio-admin/dashboard-veterinario"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 text-slate-600 hover:text-slate-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span>Dashboard Veterinario</span>
+        </a>
+        <a
+          routerLink="/inicio-admin/graficas"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 text-slate-600 hover:text-slate-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span>Dashboard Administrador</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Grid de 3 Columnas perfectamente alineadas al fondo -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
       <!-- ===================================================================== -->
       <!-- COLUMNA IZQUIERDA (Operativo & Urgencias) [~25% ancho -> lg:col-span-3]-->
       <!-- ===================================================================== -->
-      <div class="lg:col-span-3 min-w-0 space-y-4">
+      <div class="lg:col-span-3 min-w-0 flex flex-col gap-4 h-full">
 
         <!-- 1. Flujo de Peticiones -->
         <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
@@ -144,44 +175,50 @@
         </div>
 
         <!-- 3. Seres en CBA -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D]">Seres en CBA</h3>
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 min-h-[285px] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D]">Seres en CBA</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+                {{ metricas.cba.totalIngresadosCBA }} activos
+              </span>
             </div>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
-              {{ metricas.cba.totalIngresadosCBA }} activos
-            </span>
+
+            <div class="mt-3 space-y-2.5">
+              <!-- Observación -->
+              <div class="flex items-center justify-between p-2.5 bg-[#4141A5]/5 hover:bg-[#4141A5]/10 rounded-lg border border-[#4141A5]/20 transition-colors">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+                  <span class="text-xs font-semibold text-slate-700">En Observación</span>
+                </div>
+                <span class="text-sm font-bold text-[#4141A5]">{{ metricas.cba.enObservacion }}</span>
+              </div>
+
+              <!-- Tratamiento -->
+              <div class="flex items-center justify-between p-2.5 bg-[#FEECEB] hover:bg-[#FEECEB]/80 rounded-lg border border-[#F5B7B1] transition-colors">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>
+                  <span class="text-xs font-semibold text-slate-700">En Tratamiento</span>
+                </div>
+                <span class="text-sm font-bold text-[#B42318]">{{ metricas.cba.enTratamiento }}</span>
+              </div>
+
+              <!-- Adopción -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#170B3D]"></span>
+                  <span class="text-xs font-semibold text-slate-700">Aptos Adopción</span>
+                </div>
+                <span class="text-sm font-bold text-[#170B3D]">{{ metricas.cba.aptosAdopcion }}</span>
+              </div>
+            </div>
           </div>
 
-          <div class="mt-3 space-y-2.5">
-            <!-- Observación -->
-            <div class="flex items-center justify-between p-2.5 bg-[#4141A5]/5 hover:bg-[#4141A5]/10 rounded-lg border border-[#4141A5]/20 transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
-                <span class="text-xs font-semibold text-slate-700">En Observación</span>
-              </div>
-              <span class="text-sm font-bold text-[#4141A5]">{{ metricas.cba.enObservacion }}</span>
-            </div>
-
-            <!-- Tratamiento -->
-            <div class="flex items-center justify-between p-2.5 bg-[#FEECEB] hover:bg-[#FEECEB]/80 rounded-lg border border-[#F5B7B1] transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>
-                <span class="text-xs font-semibold text-slate-700">En Tratamiento</span>
-              </div>
-              <span class="text-sm font-bold text-[#B42318]">{{ metricas.cba.enTratamiento }}</span>
-            </div>
-
-            <!-- Adopción -->
-            <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-[#170B3D]"></span>
-                <span class="text-xs font-semibold text-slate-700">Aptos Adopción</span>
-              </div>
-              <span class="text-sm font-bold text-[#170B3D]">{{ metricas.cba.aptosAdopcion }}</span>
-            </div>
+          <div class="pt-3 border-t border-slate-100 text-center">
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Centro de Bienestar Animal Popayán</span>
           </div>
         </div>
 
@@ -190,7 +227,7 @@
       <!-- ===================================================================== -->
       <!-- COLUMNA CENTRAL (Núcleo Analítico y Gráficas) [~50% ancho -> lg:col-span-6]-->
       <!-- ===================================================================== -->
-      <div class="lg:col-span-6 min-w-0 space-y-4">
+      <div class="lg:col-span-6 min-w-0 flex flex-col gap-4 h-full">
 
         <!-- 1. Cinta de 4 KPIs Compactos: [Total] [Asignados] [CBA] [% Efectividad] -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -332,7 +369,7 @@
       <!-- ===================================================================== -->
       <!-- COLUMNA DERECHA (Historial y Equipo) [~25% ancho -> lg:col-span-3]   -->
       <!-- ===================================================================== -->
-      <div class="lg:col-span-3 min-w-0 space-y-4">
+      <div class="lg:col-span-3 min-w-0 flex flex-col gap-4 h-full">
 
         <!-- 1. Últimos Ingresos al CBA (Lista scrolleable limpia) -->
         <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
@@ -350,8 +387,8 @@
             </span>
           </div>
 
-          <!-- Lista scrolleable limpia -->
-          <div class="space-y-2.5 max-h-[300px] sm:max-h-[320px] overflow-y-auto pr-1">
+          <!-- Lista scrolleable limpia con altura mínima para nivelar -->
+          <div class="space-y-2.5 min-h-[190px] max-h-[210px] overflow-y-auto pr-1">
             <div *ngFor="let item of metricas.cba.ultimosIngresos" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 hover:shadow-xs transition-all min-w-0">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="px-2 py-0.5 rounded-full font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20 shrink-0">
@@ -379,8 +416,8 @@
         </div>
 
         <!-- 2. Rendimiento Veterinario (Estilo barras horizontales) -->
-        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3 shrink-0">
             <div class="min-w-0">
               <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">
                 2. Rendimiento Veterinario
@@ -394,8 +431,8 @@
             </span>
           </div>
 
-          <!-- Lista de barras horizontales -->
-          <div class="space-y-3 max-h-[300px] sm:max-h-[340px] overflow-y-auto pr-1">
+          <!-- Lista de barras horizontales expandible a la misma altura de las columnas centrales -->
+          <div class="space-y-3 min-h-[410px] max-h-[480px] overflow-y-auto pr-1">
             <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-lg border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all min-w-0">
               <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
               <div class="flex items-center justify-between gap-2 min-w-0">
