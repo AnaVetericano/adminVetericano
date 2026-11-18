@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, forkJoin, of, BehaviorSubject } from 'rxjs';
+import { Observable, forkJoin, of, throwError, BehaviorSubject } from 'rxjs';
 import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth';
@@ -746,29 +746,25 @@ export class VeterinaryInventoryService {
       };
 
       return this.retiroDirectoKit(payloadRetiro).pipe(
-        tap(() => {
-          // Si el backend procesó el retiro exitosamente, solo registramos en historial local
+        tap((resp: any) => {
+          const cantRetirada = Number(resp?.cantidad_total_retirada ?? cantNum);
+          const nombreMed = resp?.nombre_medicamento || `Medicamento #${idMed}`;
+          // Si el backend procesó el retiro exitosamente, registramos en historial local
           this.registrarEnHistorialAsignaciones({
             id: Date.now(),
             fecha: new Date().toISOString(),
             idVet,
             veterinarioNombre: `Veterinario #${idVet}`,
             idInventario: idMed,
-            nombreMedicamento: `Medicamento #${idMed}`,
-            cantidad: -cantNum,
+            nombreMedicamento: nombreMed,
+            cantidad: -cantRetirada,
             motivo: motivo || 'Devolución de stock a bodega CBA'
           });
         }),
-        catchError(() => {
-          // Si el backend está desconectado/offline, descontamos exactamente 1 vez en local
-          return this.asignarLoteAVeterinario(idVet, {
-            id_inventario: idMed,
-            id_medicamento: idMed,
-            nombre: `Medicamento #${idMed}`,
-            cantidad: cantNum,
-            tipoOperacion: 'RETIRO',
-            motivo
-          });
+        catchError((err) => {
+          // Para RETIRO nunca se simula éxito offline en localStorage (ni en status >= 400 ni en status 0 / red):
+          // el backend pudo haber confirmado el retiro antes de cortarse la respuesta.
+          return throwError(() => err);
         })
       );
     } else {

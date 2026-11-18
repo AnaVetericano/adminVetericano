@@ -112,6 +112,15 @@ export class InventarioJuridicoComponent implements OnInit {
     return isNaN(n) ? null : n;
   }
 
+  private escaparHtml(texto: unknown): string {
+    return String(texto ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   private armar(invs: any[], compras: any[], dets: any[], meds: any[], cata: any[], provs: any[]): void {
     const comprasActivas = (compras || []).filter((c: any) => c.estado !== 'ANULADA');
     this.totalCompras = comprasActivas.length;
@@ -460,8 +469,12 @@ export class InventarioJuridicoComponent implements OnInit {
     const idMed = Number(this.loteSeleccionado.idMed) || Number(this.loteSeleccionado.refInv?.id_medicamento) || 0;
 
     // Si la operación es de RETIRO (devolución de kit a bodega general):
+    // El backend (POST /api/inventario/kit/retiro-directo/) ya descuenta el kit, da de baja los lotes
+    // vencidos (BAJA_VENCIMIENTO sin reintegrarlos a bodega), reintegra únicamente los lotes vigentes
+    // a inventarios y registra el Kardex RETIRO_GESTOR. No se debe ejecutar ningún PATCH adicional.
     if (this.tipoOperacionAsignar === 'RETIRO') {
       this.guardandoAsignacion = true;
+      const nombreProdFallback = this.loteSeleccionado?.nombre || 'Medicamento';
       this.vetInvSvc.ajustarStockKit(
         idVetDestino,
         idMed,
@@ -469,51 +482,57 @@ export class InventarioJuridicoComponent implements OnInit {
         'RETIRO',
         this.motivoAsignacion || 'Devolución de stock a bodega CBA'
       ).subscribe({
-        next: () => {
-          const nuevoStockBodega = stockActual + cant;
-          const idInventarioReal = this.loteSeleccionado.refInv?.id_inventario ??
-            (this.loteSeleccionado.idInvs && this.loteSeleccionado.idInvs.length > 0 ? this.loteSeleccionado.idInvs[0] : null);
+        next: (resp: any) => {
+          const totalRetirada = Number(resp?.cantidad_total_retirada ?? cant);
+          const unidadesReintegradas = Number(resp?.unidades_reintegradas ?? 0);
+          const unidadesBajaVencimiento = Number(resp?.unidades_baja_vencimiento ?? 0);
+          const nombreProdSeguro = this.escaparHtml(resp?.nombre_medicamento || nombreProdFallback);
+          const nombreVetSeguro = this.escaparHtml(nombreVet);
 
-          const reintegrar$ = idInventarioReal
-            ? this.svc.actualizarInventario(idInventarioReal, { cantidad_actual: nuevoStockBodega, estado: 'Disponible' })
-            : of(null);
+          this.guardandoAsignacion = false;
+          this.cerrarModalAsignar();
+          this.cargarInventarioGeneral();
+          if (this.idVeterinarioSeleccionado === idVetDestino) {
+            this.cargarInventarioDeVeterinario(idVetDestino);
+          }
 
-          reintegrar$.subscribe({
-            next: () => {
-              this.guardandoAsignacion = false;
-              const nombreProd = this.loteSeleccionado?.nombre;
-              this.cerrarModalAsignar();
-              Swal.fire({
-                icon: 'success',
-                title: 'Stock devuelto a bodega',
-                html: `
-                  <dl class="qa-datos">
-                    <dt>Producto</dt><dd>${nombreProd}</dd>
-                    <dt>Veterinario origen</dt><dd>${nombreVet}</dd>
-                    <dt>Cantidad retirada</dt><dd>-${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
-                    <dt>Nuevo stock en Bodega CBA</dt><dd>${nuevoStockBodega} ${nuevoStockBodega === 1 ? 'unidad' : 'unidades'}</dd>
-                  </dl>
-                `,
-                confirmButtonText: 'Aceptar'
-              });
-              this.cargarInventarioGeneral();
-              if (this.idVeterinarioSeleccionado === idVetDestino) {
-                this.cargarInventarioDeVeterinario(idVetDestino);
-              }
-            },
-            error: () => {
-              this.guardandoAsignacion = false;
-              this.cerrarModalAsignar();
-              this.cargarInventarioGeneral();
-              if (this.idVeterinarioSeleccionado === idVetDestino) {
-                this.cargarInventarioDeVeterinario(idVetDestino);
-              }
-            }
+          const detalleBaja = unidadesBajaVencimiento > 0
+            ? `<dt>Baja por vencimiento</dt><dd>${unidadesBajaVencimiento} ${unidadesBajaVencimiento === 1 ? 'unidad' : 'unidades'} (no reingresan a bodega)</dd>`
+            : '';
+
+          Swal.fire({
+            icon: 'success',
+            title: unidadesReintegradas > 0 ? 'Stock devuelto a bodega' : 'Unidades vencidas dadas de baja',
+            html: `
+              <dl class="qa-datos">
+                <dt>Producto</dt><dd>${nombreProdSeguro}</dd>
+                <dt>Veterinario origen</dt><dd>${nombreVetSeguro}</dd>
+                <dt>Cantidad retirada del kit</dt><dd>-${totalRetirada} ${totalRetirada === 1 ? 'unidad' : 'unidades'}</dd>
+                <dt>Reintegradas a bodega</dt><dd>+${unidadesReintegradas} ${unidadesReintegradas === 1 ? 'unidad' : 'unidades'}</dd>
+                ${detalleBaja}
+              </dl>
+            `,
+            confirmButtonText: 'Aceptar'
           });
         },
         error: (err) => {
           this.guardandoAsignacion = false;
-          this.errorAsignacion = err?.error?.detail || err?.error?.error || 'No se pudo retirar el stock del veterinario.';
+          const resultadoIncierto = !err?.status || err.status === 0 || err.status >= 500;
+          if (resultadoIncierto) {
+            this.cerrarModalAsignar();
+            this.cargarInventarioGeneral();
+            if (this.idVeterinarioSeleccionado === idVetDestino) {
+              this.cargarInventarioDeVeterinario(idVetDestino);
+            }
+            Swal.fire({
+              icon: 'warning',
+              title: 'No se pudo confirmar el retiro',
+              text: 'No se recibió confirmación definitiva del servidor. El retiro pudo haberse aplicado. Revisa el inventario actualizado antes de intentar nuevamente la operación.',
+              confirmButtonText: 'Entendido'
+            });
+            return;
+          }
+          this.errorAsignacion = err?.error?.detalle || err?.error?.detail || err?.error?.error || 'No se pudo retirar el stock del veterinario.';
           this.cdr.detectChanges();
         }
       });
