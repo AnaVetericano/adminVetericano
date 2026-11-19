@@ -2,8 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { forkJoin, of, Observable } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import {
@@ -18,6 +18,16 @@ import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-cli
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { environment } from '../../environments/environment';
+import {
+  ResultadoConsumoKit,
+  OrigenClinicoConsumo,
+  CODIGO_ORIGEN_CLINICO_REQUERIDO,
+  construirAvisoGuardadoClinico,
+  extraerConflictosStockFarmacia,
+  resultadoPendientePrevioKit,
+  resultadoRechazoLocalKit
+} from '../services/consumo-kit-resultado';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
 import { PageTitleComponent } from '../page-title/page-title';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
@@ -895,13 +905,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
+    const backendBase = (environment.backendUrl || '').replace(/\/+$/, '');
     if (u.startsWith('/media/')) {
-      return `https://backendvetericano-production.up.railway.app${u}`;
+      return `${backendBase}${u}`;
     }
     if (u.startsWith('media/')) {
-      return `https://backendvetericano-production.up.railway.app/${u}`;
+      return `${backendBase}/${u}`;
     }
-    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+    return `${backendBase}/media/${u}`;
   }
 
   extraerFotoDeObjeto(item: any): string {
@@ -2455,6 +2466,17 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   registrarAdministracion(med: any, indice: number): void {
+    if (med.descuentoKitPendiente && !med.administrado) {
+      // PENDIENTE previo: no se reenvía (evita un segundo consumo con otro client_uuid)
+      Swal.fire({
+        icon: 'info',
+        title: 'Descuento pendiente de sincronizar',
+        text: 'La administración de este medicamento ya quedó registrada solo localmente y su descuento del maletín no está confirmado por el servidor. No se enviará un nuevo descuento.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
     if (med.administrado) {
       Swal.fire({
         icon: 'info',
@@ -2513,27 +2535,51 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       this.cdr.detectChanges();
 
       const idMedEfectivo = Number(med.id || med.id_medicamento);
-      this.vetInvSvc.registrarConsumo(idMedEfectivo, cantidad, 'Administración en historia clínica #' + (this.idHistoria || ''), med.nombre).subscribe({
-        next: () => {
-          this.comprasService.descontarStockMedicamento(idMedEfectivo, cantidad, med.nombre).pipe(
-            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
-          ).subscribe({
-            next: () => {
-              med.administrando = false;
-              med.administrado = true;
-              med.cantidadEfectivaAdministrada = cantidad;
-              med.stockDisponible = Math.max(0, stockActual - cantidad);
-              this.recargarStockMedicamentos();
-              this.formHistoria.markAsDirty();
-              this.cdr.detectChanges();
+      this.consumirKitConOrigenConsulta(idMedEfectivo, cantidad, 'Administración en historia clínica #' + (this.idHistoria || ''), med.nombre).subscribe({
+        next: (resultado: ResultadoConsumoKit) => {
+          med.administrando = false;
+          // Último rechazo del servidor: al guardar se advierte sin reenviarlo (el usuario puede reintentarlo aquí)
+          med.resultadoKitRechazado = resultado.estado === 'RECHAZADO' ? resultado : undefined;
 
-              Swal.fire({
-                icon: 'success',
-                title: 'Descuento registrado',
-                html: `<p>Se descontó el medicamento del maletín de campo.</p><dl class="qa-datos"><dt>Medicamento</dt><dd>${nombreMed}</dd><dt>Descontado</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd><dt>Saldo restante</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
-                confirmButtonText: 'Aceptar'
-              });
-            }
+          if (resultado.estado === 'RECHAZADO') {
+            // El backend (o la validación local) rechazó el consumo: no se marca como administrado ni se descuenta
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'error',
+              title: 'No se descontó del maletín',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          if (resultado.estado === 'PENDIENTE') {
+            // No confirmado: no se marca como administrado/descontado; solo se bloquea el reenvío
+            med.descuentoKitPendiente = true;
+            med.cantidadPendienteKit = cantidad;
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Administración pendiente de sincronizar',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          // CONFIRMADO: único caso en que se marca como administrado y descontado
+          med.administrado = true;
+          med.cantidadEfectivaAdministrada = cantidad;
+          med.stockDisponible = Math.max(0, stockActual - cantidad);
+          this.recargarStockMedicamentos();
+          this.formHistoria.markAsDirty();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Descuento registrado',
+            html: `<p>Se descontó el medicamento del maletín de campo.</p><dl class="qa-datos"><dt>Medicamento</dt><dd>${nombreMed}</dd><dt>Descontado</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd><dt>Saldo restante</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
+            confirmButtonText: 'Aceptar'
           });
         },
         error: () => {
@@ -2612,7 +2658,57 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   get hayMedicamentosConStockInsuficiente(): boolean {
     return this.medicamentosSeleccionados.some((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+    );
+  }
+
+  /**
+   * Resuelve el origen clínico del consumo del kit: la consulta que se está editando, SOLO si el backend
+   * confirma que existe y pertenece a esta historia. En una consulta nueva (aún sin guardar) no existe vínculo:
+   * el id de historiaOriginal sería el de una consulta anterior y no se usa.
+   */
+  private resolverOrigenConsultaKit$(): Observable<{ origen: OrigenClinicoConsumo | null; motivo: string }> {
+    if (this.esNuevaConsulta || this.tieneDatosDesdeActa) {
+      return of({
+        origen: null,
+        motivo: 'La consulta todavía no está registrada en el servidor, así que el descuento del kit no tiene una consulta a la cual vincularse. ' +
+          'No se descontó del inventario: guarda la consulta y registra la administración desde la consulta guardada.'
+      });
+    }
+    const idConsulta = Number(this.historiaOriginal?.id_consulta);
+    const idHistoria = Number(this.historiaOriginal?.id_historia || this.idHistoria);
+    return this.historiaService.verificarConsultaDeHistoria(idConsulta, idHistoria).pipe(
+      map((confirmada) => confirmada
+        ? { origen: { id_consulta: confirmada }, motivo: '' }
+        : {
+            origen: null,
+            motivo: 'No se pudo confirmar con el servidor la consulta de esta historia clínica, así que el descuento del kit no tiene un vínculo válido. ' +
+              'No se envió el consumo y no se descontó del inventario.'
+          })
+    );
+  }
+
+  /** Consume del kit con el origen ya resuelto; sin origen devuelve un RECHAZADO local (sin HTTP). */
+  private consumirKitConOrigen(
+    origen: { origen: OrigenClinicoConsumo | null; motivo: string },
+    idMed: number,
+    cantidad: number,
+    observaciones: string,
+    nombre?: string
+  ): Observable<ResultadoConsumoKit> {
+    if (!origen.origen) {
+      return of(resultadoRechazoLocalKit(
+        { clientUuid: null, idMedicamento: Number(idMed) || 0, unidades: Number(cantidad), nombreMedicamento: nombre },
+        origen.motivo,
+        CODIGO_ORIGEN_CLINICO_REQUERIDO
+      ));
+    }
+    return this.vetInvSvc.registrarConsumo(idMed, cantidad, observaciones, nombre, origen.origen);
+  }
+
+  private consumirKitConOrigenConsulta(idMed: number, cantidad: number, observaciones: string, nombre?: string): Observable<ResultadoConsumoKit> {
+    return this.resolverOrigenConsultaKit$().pipe(
+      switchMap((origen) => this.consumirKitConOrigen(origen, idMed, cantidad, observaciones, nombre))
     );
   }
 
@@ -2696,6 +2792,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       });
     };
 
+    const consumosSolicitados: Array<{ m: any; idMed: number; cantUsar: number }> = [];
+
     if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
       this.medicamentosSeleccionados.forEach((m: any) => {
         if (!m.client_uuid) {
@@ -2721,28 +2819,68 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         const cantUsar = Number(m.cantidadAAdministrar) || 1;
 
-        if (!m.administrado && (idMed > 0 || m.nombre)) {
-          this.vetInvSvc.registrarConsumo(
-            idMed,
-            cantUsar,
-            'Administración al guardar historia clínica #' + (this.idHistoria || ''),
-            m.nombre
-          ).subscribe();
-
-          if (idMed && idMed > 0) {
-            this.comprasService.descontarStockMedicamento(idMed, cantUsar, m.nombre).subscribe();
-          }
-
-          m.administrado = true;
-          m.cantidadEfectivaAdministrada = cantUsar;
-          m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
-          farmacosDescontadosAuto += cantUsar;
-          detallesDescuentoAuto.push(`<b>${m.nombre}</b> (${cantUsar} uds)`);
+        // Un PENDIENTE previo o un RECHAZADO ya informado no se reenvía con un client_uuid nuevo
+        if (!m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (idMed > 0 || m.nombre)) {
+          consumosSolicitados.push({ m, idMed, cantUsar });
         }
       });
-      this.recargarStockMedicamentos();
     }
 
+    // Se espera el resultado explícito de cada consumo antes de construir el DTO:
+    // solo CONFIRMADO cuenta como descuento; RECHAZADO no marca el medicamento como administrado.
+    // El vínculo con la consulta se confirma una sola vez contra el backend; sin él no se envía ningún consumo.
+    const consumos$ = consumosSolicitados.length > 0
+      ? this.resolverOrigenConsultaKit$().pipe(
+          switchMap((origen) => forkJoin(consumosSolicitados.map(c => this.consumirKitConOrigen(
+            origen,
+            c.idMed,
+            c.cantUsar,
+            'Administración al guardar historia clínica #' + (this.idHistoria || ''),
+            c.m.nombre
+          ))))
+        )
+      : of([] as ResultadoConsumoKit[]);
+
+    consumos$.subscribe((resultados: ResultadoConsumoKit[]) => {
+      const consumosNoConfirmados: ResultadoConsumoKit[] = [];
+      resultados.forEach((resultado, i) => {
+        const { m, cantUsar } = consumosSolicitados[i];
+        if (resultado.estado !== 'CONFIRMADO') {
+          // RECHAZADO o PENDIENTE: no se marca como administrado/descontado (PENDIENTE solo bloquea el reenvío)
+          if (resultado.estado === 'PENDIENTE') {
+            m.descuentoKitPendiente = true;
+            m.cantidadPendienteKit = cantUsar;
+          } else {
+            m.resultadoKitRechazado = resultado;
+          }
+          consumosNoConfirmados.push(resultado);
+          return;
+        }
+        m.administrado = true;
+        m.cantidadEfectivaAdministrada = cantUsar;
+        m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
+        farmacosDescontadosAuto += cantUsar;
+        detallesDescuentoAuto.push(`<b>${m.nombre}</b> (${cantUsar} uds)`);
+      });
+      // Administraciones previas (tarjeta) que siguen PENDIENTE o RECHAZADAS: se advierten, no se reenvían
+      (this.medicamentosSeleccionados || [])
+        .filter((m: any) => (m.descuentoKitPendiente || m.resultadoKitRechazado) && !m.administrado && !consumosSolicitados.some(c => c.m === m))
+        .forEach((m: any) => consumosNoConfirmados.push(m.descuentoKitPendiente ? resultadoPendientePrevioKit(m) : m.resultadoKitRechazado));
+      if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
+        this.recargarStockMedicamentos();
+      }
+      this.enviarEdicionHistoria(anam, formVal, farmacosDescontadosAuto, detallesDescuentoAuto, consumosNoConfirmados);
+    });
+  }
+
+  /** Segunda fase de guardarEdicion(): construye el DTO y persiste la historia clínica. */
+  private enviarEdicionHistoria(
+    anam: string,
+    formVal: any,
+    farmacosDescontadosAuto: number,
+    detallesDescuentoAuto: string[],
+    consumosNoConfirmados: ResultadoConsumoKit[]
+  ): void {
     // Procesar lista de problemas formateada
     const problemasDesdeArray = this.problemasClinicos.filter(p => p && p.trim().length > 0);
     const listaProblemasFinal = problemasDesdeArray.length > 0
@@ -2969,12 +3107,27 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           `;
         }
 
-        Swal.fire({
-          title: tituloAlerta,
-          html: htmlAlerta,
-          icon: 'success',
-          confirmButtonText: 'Aceptar'
-        }).then(() => {
+        // El 200/201 del guardado clínico no implica que el descuento del kit se haya aceptado
+        const avisoInventario = construirAvisoGuardadoClinico(
+          'historia',
+          consumosNoConfirmados,
+          extraerConflictosStockFarmacia(resp)
+        );
+
+        Swal.fire(avisoInventario
+          ? {
+              title: `${tituloAlerta} con advertencias`,
+              text: avisoInventario,
+              icon: 'warning',
+              confirmButtonText: 'Aceptar'
+            }
+          : {
+              title: tituloAlerta,
+              html: htmlAlerta,
+              icon: 'success',
+              confirmButtonText: 'Aceptar'
+            }
+        ).then(() => {
           if (eraNuevaConsulta) {
             this.volverAlDetalle();
           }

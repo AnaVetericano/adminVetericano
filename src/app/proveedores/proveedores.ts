@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-proveedores',
@@ -23,7 +24,7 @@ export class Proveedores implements OnInit {
   editar = false;
   mostrarFiltros = false;
 
-  private apiUrl = 'https://backendvetericano-production.up.railway.app/api/inventario/proveedores/';
+  private apiUrl = `${environment.apiUrlInventario}proveedores/`;
 
   proveedor = {
     id_proveedor: 0,
@@ -68,9 +69,9 @@ export class Proveedores implements OnInit {
       this.proveedoresFiltrados = [...this.proveedores];
     } else {
       this.proveedoresFiltrados = this.proveedores.filter(p =>
-        (p.nombre && p.nombre.toLowerCase().includes(busqueda)) ||
-        (p.email && p.email.toLowerCase().includes(busqueda)) ||
-        (p.telefono && p.telefono.includes(busqueda))
+        (p.nombre && String(p.nombre).toLowerCase().includes(busqueda)) ||
+        (p.email && String(p.email).toLowerCase().includes(busqueda)) ||
+        (p.telefono && String(p.telefono).toLowerCase().includes(busqueda))
       );
     }
   }

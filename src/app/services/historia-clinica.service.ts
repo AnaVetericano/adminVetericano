@@ -1674,6 +1674,24 @@ export class HistoriaClinicaService {
   }
 
   /**
+   * Confirma contra el backend (GET /api/clinica/consultas/{id}/) que la consulta existe y pertenece a la
+   * historia indicada. Devuelve el id confirmado o null (no existe, es de otra historia o no se pudo verificar).
+   * Se usa para vincular el consumo del kit a su consulta de origen sin enviar identificadores supuestos.
+   */
+  verificarConsultaDeHistoria(idConsulta: number, idHistoria: number): Observable<number | null> {
+    const idC = Number(idConsulta);
+    const idH = Number(idHistoria);
+    if (!Number.isInteger(idC) || idC <= 0 || !Number.isInteger(idH) || idH <= 0) {
+      return of(null);
+    }
+    const urlConsultas = environment.apiUrlConsultas || `${this.baseUrlClinica}consultas/`;
+    return this.http.get<any>(`${urlConsultas}${idC}/`, { headers: this.authHeaders }).pipe(
+      map((resp) => (Number(resp?.id_consulta) === idC && Number(resp?.id_historia) === idH ? idC : null)),
+      catchError(() => of(null))
+    );
+  }
+
+  /**
    * Criterio 1: Actualiza o consolida la historia clínica del animal en el backend (/api/clinica/expediente-completo/)
    * garantizando persistencia real en base de datos, trazabilidad y auditoría de cambios.
    */

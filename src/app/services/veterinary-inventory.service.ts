@@ -1,9 +1,22 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, forkJoin, of, BehaviorSubject } from 'rxjs';
+import { Observable, forkJoin, of, throwError, BehaviorSubject } from 'rxjs';
 import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth';
+import {
+  ResultadoConsumoKit,
+  ContextoConsumoKit,
+  OrigenClinicoConsumo,
+  CODIGO_ORIGEN_CLINICO_REQUERIDO,
+  MENSAJE_ORIGEN_CLINICO_REQUERIDO,
+  clasificarRespuestaConsumoKit,
+  clasificarErrorConsumoKit,
+  normalizarOrigenClinicoConsumo,
+  resultadoRechazoLocalKit
+} from './consumo-kit-resultado';
+
+export type { ResultadoConsumoKit, EstadoConsumoKit, OrigenClinicoConsumo } from './consumo-kit-resultado';
 
 export interface KitItemLote {
   id_kit_lote: number;
@@ -746,29 +759,25 @@ export class VeterinaryInventoryService {
       };
 
       return this.retiroDirectoKit(payloadRetiro).pipe(
-        tap(() => {
-          // Si el backend procesó el retiro exitosamente, solo registramos en historial local
+        tap((resp: any) => {
+          const cantRetirada = Number(resp?.cantidad_total_retirada ?? cantNum);
+          const nombreMed = resp?.nombre_medicamento || `Medicamento #${idMed}`;
+          // Si el backend procesó el retiro exitosamente, registramos en historial local
           this.registrarEnHistorialAsignaciones({
             id: Date.now(),
             fecha: new Date().toISOString(),
             idVet,
             veterinarioNombre: `Veterinario #${idVet}`,
             idInventario: idMed,
-            nombreMedicamento: `Medicamento #${idMed}`,
-            cantidad: -cantNum,
+            nombreMedicamento: nombreMed,
+            cantidad: -cantRetirada,
             motivo: motivo || 'Devolución de stock a bodega CBA'
           });
         }),
-        catchError(() => {
-          // Si el backend está desconectado/offline, descontamos exactamente 1 vez en local
-          return this.asignarLoteAVeterinario(idVet, {
-            id_inventario: idMed,
-            id_medicamento: idMed,
-            nombre: `Medicamento #${idMed}`,
-            cantidad: cantNum,
-            tipoOperacion: 'RETIRO',
-            motivo
-          });
+        catchError((err) => {
+          // Para RETIRO nunca se simula éxito offline en localStorage (ni en status >= 400 ni en status 0 / red):
+          // el backend pudo haber confirmado el retiro antes de cortarse la respuesta.
+          return throwError(() => err);
         })
       );
     } else {
@@ -1033,12 +1042,28 @@ export class VeterinaryInventoryService {
   }
 
   /**
-   * Registra un consumo en el kit de campo del veterinario:
-   * 1. Actualiza el estado reactivo en memoria.
-   * 2. Guarda localmente para persistencia inmediata.
-   * 3. Sincroniza con el backend mediante POST /api/inventario/kit/sincronizar-offline/
+   * Registra un consumo en el kit de campo del veterinario y devuelve un resultado EXPLÍCITO:
+   * - CONFIRMADO: HTTP 200 y el client_uuid enviado figura en `aplicados` → solo entonces se
+   *   aplica (una sola vez) el descuento en memoria y en localStorage.
+   * - RECHAZADO: 4xx (403/409/400/...) o medicamento fuera del kit / sin saldo (sin HTTP) →
+   *   el stock local NO se descuenta. Sin reintentos.
+   * - PENDIENTE: sin conexión (status 0) o resultado incierto (5xx, 200 sin confirmación) →
+   *   se conserva el registro local (asignaciones + guardarConsumoLocal) como antes, sin
+   *   presentarlo como confirmado.
+   * El Observable nunca emite error: todo fallo se mapea a RECHAZADO o PENDIENTE.
+   * Contrato HTTP: POST /api/inventario/kit/sincronizar-offline/ con
+   * { consumos: [{ client_uuid, id_medicamento, unidades, fecha_consumo, <origen clínico> }] }.
+   * El backend exige el origen clínico (id_consulta / id_tratamiento o id_seguimiento_visita /
+   * id_visita_animal). Sin un origen válido NO se envía el consumo: RECHAZADO local
+   * ORIGEN_CLINICO_REQUERIDO, sin HTTP ni descuento local.
    */
-  public registrarConsumo(idMedicamento: number, cantidad: number, observaciones?: string, nombreMedicamento?: string): Observable<boolean> {
+  public registrarConsumo(
+    idMedicamento: number,
+    cantidad: number,
+    observaciones?: string,
+    nombreMedicamento?: string,
+    origen?: OrigenClinicoConsumo | null
+  ): Observable<ResultadoConsumoKit> {
     const idVet = this.getVeterinarioLogueadoId();
     let items = this.inventarioActual$.getValue();
     if (!items || items.length === 0) {
@@ -1050,42 +1075,82 @@ export class VeterinaryInventoryService {
 
     const validacion = this.validarConsumo(idMedicamento, cantidad, nombreMedicamento);
 
-    if (!validacion.valido && validacion.saldoDisponible <= 0) {
-      return of(false);
-    }
-
-    // Actualizar reactivo y persistencia local de maletín
-    let encontrado = false;
+    // Resolver el medicamento dentro del kit (misma regla de coincidencia por id o nombre)
     let idEfectivo = Number(idMedicamento) || 0;
     const nomNorm = (nombreMedicamento || '').trim().toLowerCase();
-
-    const itemsActualizados = items.map(item => {
+    const coincide = (item: VeterinaryKitItem): boolean => {
       const matchId = idEfectivo > 0 && (Number(item.id_medicamento) === idEfectivo || Number(item.id) === idEfectivo);
-      const matchNom = nomNorm.length > 0 && item.nombre && item.nombre.trim().toLowerCase() === nomNorm;
+      const matchNom = nomNorm.length > 0 && !!item.nombre && item.nombre.trim().toLowerCase() === nomNorm;
+      return matchId || matchNom;
+    };
+    const itemKit = (items || []).find(coincide);
+    if (itemKit) {
+      idEfectivo = Number(itemKit.id_medicamento || itemKit.id) || idEfectivo;
+    }
 
-      if (matchId || matchNom) {
-        encontrado = true;
-        idEfectivo = Number(item.id_medicamento || item.id) || idEfectivo;
-        const nuevoConsumo = (Number(item.cantidadConsumida) || 0) + cantidad;
-        const nuevoSaldo = Math.max(0, (Number(item.cantidadEntregada) || item.saldoDisponible) - nuevoConsumo);
-        return {
-          ...item,
-          cantidadConsumida: nuevoConsumo,
-          saldoDisponible: nuevoSaldo,
-          umbralBajo: nuevoSaldo <= this.UMBRAL_STOCK_BAJO
-        };
+    const ctxLocal: ContextoConsumoKit = {
+      clientUuid: null,
+      idMedicamento: idEfectivo,
+      unidades: Number(cantidad),
+      nombreMedicamento: nombreMedicamento || itemKit?.nombre
+    };
+
+    // Sin origen clínico confirmado no se intenta un consumo que el backend rechazaría (400 CONSUMO_INVALIDO)
+    const origenClinico = normalizarOrigenClinicoConsumo(origen);
+    if (!origenClinico) {
+      return of(resultadoRechazoLocalKit(ctxLocal, MENSAJE_ORIGEN_CLINICO_REQUERIDO, CODIGO_ORIGEN_CLINICO_REQUERIDO));
+    }
+
+    if (!itemKit || idEfectivo <= 0) {
+      const nombre = nombreMedicamento || (idEfectivo > 0 ? `#${idEfectivo}` : '');
+      return of(resultadoRechazoLocalKit(
+        ctxLocal,
+        `El medicamento ${nombre ? `"${nombre}" ` : ''}no está asignado a tu kit de campo. No se descontó del inventario.`
+      ));
+    }
+
+    // Kit sin saldo local: RECHAZADO sin HTTP ni escritura local (misma condición que antes, que devolvía of(false)).
+    // Si queda saldo local pero no alcanza, se conserva el comportamiento previo: decide el backend (fuente de verdad).
+    if (!validacion.valido && validacion.saldoDisponible <= 0) {
+      return of(resultadoRechazoLocalKit(
+        ctxLocal,
+        validacion.mensajeError || 'No hay unidades disponibles en tu kit de campo para este medicamento. No se descontó del inventario.',
+        'SIN_SALDO_EN_KIT'
+      ));
+    }
+
+    // Aplica el descuento local UNA sola vez y solo después de conocer el resultado del backend.
+    // Se relee el estado actual para no pisar descuentos concurrentes (p. ej. varios consumos en un guardado).
+    const aplicarDescuentoLocal = (): void => {
+      let actuales = this.inventarioActual$.getValue();
+      if (!actuales || actuales.length === 0) {
+        actuales = this.obtenerAsignacionesLocales(idVet);
       }
-      return item;
-    });
+      let encontrado = false;
+      const itemsActualizados = actuales.map(item => {
+        if (coincide(item)) {
+          encontrado = true;
+          const nuevoConsumo = (Number(item.cantidadConsumida) || 0) + cantidad;
+          const nuevoSaldo = Math.max(0, (Number(item.cantidadEntregada) || item.saldoDisponible) - nuevoConsumo);
+          return {
+            ...item,
+            cantidadConsumida: nuevoConsumo,
+            saldoDisponible: nuevoSaldo,
+            umbralBajo: nuevoSaldo <= this.UMBRAL_STOCK_BAJO
+          };
+        }
+        return item;
+      });
 
-    if (encontrado) {
-      this.inventarioActual$.next(itemsActualizados);
-      this.guardarAsignacionesLocales(idVet, itemsActualizados);
-    }
+      if (encontrado) {
+        this.inventarioActual$.next(itemsActualizados);
+        this.guardarAsignacionesLocales(idVet, itemsActualizados);
+      }
 
-    if (idEfectivo > 0) {
-      this.guardarConsumoLocal(idVet, idEfectivo, cantidad);
-    }
+      if (idEfectivo > 0) {
+        this.guardarConsumoLocal(idVet, idEfectivo, cantidad);
+      }
+    };
 
     // Sincronizar con el backend con UUID v4 garantizado
     const clientUuid = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
@@ -1101,14 +1166,25 @@ export class VeterinaryInventoryService {
           client_uuid: clientUuid,
           id_medicamento: Number(idEfectivo),
           unidades: Number(cantidad),
-          fecha_consumo: new Date().toISOString()
+          fecha_consumo: new Date().toISOString(),
+          ...origenClinico
         }
       ]
     };
 
+    const ctxSinc: ContextoConsumoKit = { ...ctxLocal, clientUuid };
+
     return this.sincronizarConsumosOffline(payloadSinc.consumos).pipe(
-      map(() => true),
-      catchError(() => of(true)) // Si falla conexión o sincronización, se mantiene guardado localmente
+      map((resp) => clasificarRespuestaConsumoKit(resp, ctxSinc)),
+      // Mapeo explícito del error: 4xx → RECHAZADO, status 0 / 5xx / desconocido → PENDIENTE (nunca éxito)
+      catchError((err) => of(clasificarErrorConsumoKit(err, ctxSinc))),
+      tap((resultado) => {
+        if (resultado.estado !== 'RECHAZADO') {
+          // CONFIRMADO: refleja el descuento ya aplicado por el backend.
+          // PENDIENTE: conserva el registro local existente (no confirmado).
+          aplicarDescuentoLocal();
+        }
+      })
     );
   }
 

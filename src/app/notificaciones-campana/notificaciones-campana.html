@@ -1,0 +1,75 @@
+<div class="relative">
+  <button
+    type="button"
+    data-testid="btn-notificaciones-campana"
+    (click)="togglePanel()"
+    [class]="'relative p-2 sm:px-3 sm:py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg border transition-colors flex items-center gap-2 cursor-pointer ' + (noLeidas() > 0 ? 'border-[#4141A5]/20' : 'border-slate-200')"
+    [attr.aria-expanded]="abierto()"
+    [attr.title]="'Notificaciones (' + estadoVisual().texto + ')'"
+  >
+    <div class="relative flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+      @if (noLeidas() > 0) {
+        <span data-testid="notificaciones-contador" class="absolute -top-1.5 -right-2 flex h-4 px-1 rounded-md bg-[#4141A5] text-white text-[10px] font-bold items-center justify-center">
+          {{ contadorTexto() }}
+        </span>
+      }
+    </div>
+    <span class="text-xs font-semibold text-[#170B3D] hidden md:inline">Notificaciones</span>
+    <span data-testid="notificaciones-estado-punto" [class]="'w-2 h-2 rounded-full shrink-0 ' + estadoVisual().clasePunto"></span>
+  </button>
+
+  @if (abierto()) {
+    <div (click)="cerrarPanel()" class="fixed inset-0 z-40"></div>
+    <div data-testid="panel-notificaciones" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-fade-in">
+      <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-[#170B3D] uppercase tracking-wider">Notificaciones</span>
+          <span data-testid="notificaciones-estado-pill" [class]="'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ' + estadoVisual().clasePill">
+            <span [class]="'w-1.5 h-1.5 rounded-full ' + estadoVisual().clasePunto"></span>
+            {{ estadoVisual().texto }}
+          </span>
+        </div>
+        <div class="flex items-center gap-1">
+          @if (noLeidas() > 0) {
+            <button type="button" data-testid="btn-marcar-todas-leidas" (click)="marcarTodas()" class="px-2 py-1 text-[11px] font-bold text-[#4141A5] hover:bg-slate-100 rounded-lg cursor-pointer">
+              Marcar todas
+            </button>
+          }
+          <button type="button" (click)="cerrarPanel()" aria-label="Cerrar" class="w-6 h-6 rounded-lg hover:bg-slate-100 text-slate-400 text-xs font-bold flex items-center justify-center cursor-pointer">✕</button>
+        </div>
+      </div>
+
+      <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
+        @if (notificaciones().length === 0) {
+          <div class="p-6 text-center text-xs text-slate-400">
+            <p class="font-semibold text-slate-600">Sin notificaciones pendientes</p>
+          </div>
+        } @else {
+          @for (item of notificaciones(); track item.clave) {
+            <div data-testid="notificacion-item" (click)="marcarLeida(item)" [class]="'p-3 rounded-lg hover:bg-slate-50 border cursor-pointer ' + (item.leida ? 'border-slate-200 bg-white' : 'border-[#4141A5]/20 bg-[#4141A5]/5')">
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-[#170B3D] border border-slate-200">{{ etiquetaModulo(item.modulo) }}</span>
+                <span class="text-[10px] text-slate-400">{{ tiempoRelativo(item.fecha_creacion) }}</span>
+              </div>
+              <h5 class="text-xs font-bold text-[#170B3D] mt-1">{{ item.titulo }}</h5>
+              @if (item.mensaje) {
+                <p class="text-[11px] text-slate-600 mt-0.5">{{ item.mensaje }}</p>
+              }
+              <div class="mt-2 flex items-center justify-between">
+                <span [class]="'text-[10px] font-semibold ' + (item.leida ? 'text-slate-400' : 'text-[#4141A5]')">{{ item.leida ? 'Leída' : 'Nueva' }}</span>
+                @if (!item.leida) {
+                  <button type="button" data-testid="btn-marcar-una-leida" (click)="$event.stopPropagation(); marcarLeida(item)" class="px-2 py-0.5 text-[11px] font-bold text-[#4141A5] hover:bg-slate-100 rounded-md cursor-pointer">
+                    Marcar leída
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

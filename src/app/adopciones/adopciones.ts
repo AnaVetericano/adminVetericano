@@ -1,9 +1,12 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -31,8 +34,14 @@ export class Adopciones implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private historiaService = inject(HistoriaClinicaService);
 
-  // Tu URL exacta de Railway
-  private apiUrl = 'https://backendvetericano-production.up.railway.app/api/adopciones/';
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['adopcion.catalogo_actualizado', 'clinica.atencion_registrada'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.loadPets());
+  }
+
+  private apiUrl = `${(environment.apiBaseUrl || `${environment.backendUrl}/api`).replace(/\/+$/, '')}/adopciones/`;
   private readonly defaultImagen = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';
 
   pets: Pet[] = [];
@@ -113,7 +122,7 @@ export class Adopciones implements OnInit {
           procesados.push({
             id: p.id,
             numero_historia: localInfo?.numero_historia || (p.id ? `HC-${p.id}` : ''),
-            nombre: localInfo?.nombre || p.nombre || 'Mascota CBA',
+            nombre: localInfo?.nombre || p.nombre || 'Animal de compañía CBA',
             raza: localInfo?.raza || p.raza || 'Mestizo',
             imagen: this.normalizarImagen(localInfo?.imagen || p.imagen),
             descripcion:
@@ -134,7 +143,7 @@ export class Adopciones implements OnInit {
             procesados.unshift({
               id: idNum,
               numero_historia: item.numero_historia || '',
-              nombre: item.nombre || 'Mascota CBA',
+              nombre: item.nombre || 'Animal de compañía CBA',
               raza: item.raza || 'Mestizo',
               imagen: this.normalizarImagen(item.imagen),
               descripcion: item.descripcion || 'Paciente recuperado en el CBA, fuera de peligro y apto para adopción.',
@@ -152,7 +161,7 @@ export class Adopciones implements OnInit {
         Swal.fire({
           icon: 'error',
           title: 'Error de conexión',
-          text: 'No fue posible cargar las mascotas. Verifique la conexión e intente nuevamente.'
+          text: 'No fue posible cargar los animales de compañía. Verifique la conexión e intente nuevamente.'
         });
       }
     });
@@ -219,19 +228,23 @@ export class Adopciones implements OnInit {
           });
           const index = this.pets.findIndex(p => p.id === this.currentId);
           if (index !== -1) {
-            this.pets[index] = {
-              ...this.pets[index],
-              ...updatedPet,
-              estado: this.currentPet.estado,
-              imagen: this.normalizarImagen(this.currentPet.imagen)
-            };
+            if (this.currentPet.estado === 'No Disponible') {
+              this.pets = this.pets.filter(p => p.id !== this.currentId);
+            } else {
+              this.pets[index] = {
+                ...this.pets[index],
+                ...updatedPet,
+                estado: this.currentPet.estado,
+                imagen: this.normalizarImagen(this.currentPet.imagen)
+              };
+            }
           }
           this.closeModal();
           this.cdr.detectChanges(); // Refrescamos la vista
           Swal.fire({
             icon: 'success',
             title: 'Registro actualizado',
-            text: 'La información de la mascota se actualizó correctamente.',
+            text: 'La información del animal de compañía se actualizó correctamente.',
             timer: 2000,
             showConfirmButton: false
           });
@@ -267,7 +280,7 @@ export class Adopciones implements OnInit {
           Swal.fire({
             icon: 'success',
             title: 'Registro guardado',
-            text: 'La mascota se agregó correctamente.',
+            text: 'El animal de compañía se agregó correctamente.',
             timer: 2000,
             showConfirmButton: false
           });
@@ -312,16 +325,18 @@ export class Adopciones implements OnInit {
             Swal.fire({
               icon: 'success',
               title: 'Retirado de adopciones',
-              text: 'La mascota fue retirada del listado de adopciones (su historia clínica se conserva intacta).',
+              text: 'El animal de compañía fue retirado del listado de adopciones (su historia clínica se conserva intacta).',
               timer: 2000,
               showConfirmButton: false
             });
           },
           error: (err) => {
             console.error("Error al retirar de adopciones:", err);
-            this.historiaService.guardarEstadoAdopcionLocal(petToDelete.id, false);
-            this.pets = this.pets.filter(p => p.id !== petToDelete.id);
-            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'error',
+              title: 'No fue posible retirar el registro',
+              text: err?.error?.detail || 'Ocurrió un error al comunicarse con el servidor. Intente nuevamente.'
+            });
           }
         });
       }

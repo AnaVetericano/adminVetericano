@@ -1,12 +1,15 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
+import { AuthService } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -52,6 +55,7 @@ export interface HistoriaClinicaItem {
   styleUrl: './historia-clinica-list.css'
 })
 export class HistoriaClinicaListComponent implements OnInit {
+  private readonly authService = inject(AuthService);
   // Lista de historias obtenidas desde el backend
   historias: HistoriaClinicaItem[] = [];
   historiasFiltradas: HistoriaClinicaItem[] = [];
@@ -183,7 +187,12 @@ export class HistoriaClinicaListComponent implements OnInit {
     private historiaService: HistoriaClinicaService,
     private router: Router,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['clinica.atencion_registrada', 'adopcion.catalogo_actualizado'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarHistorias());
+  }
 
   ngOnInit(): void {
     this.nuevoRegistroHistorial.veterinario = this.obtenerVeterinarioSesion();
@@ -1857,33 +1866,36 @@ export class HistoriaClinicaListComponent implements OnInit {
           { headers: this.authHeaders }
         ).pipe(catchError(() => of(null))).subscribe();
 
-        const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL || 'https://backendvetericano-production.up.railway.app').replace(/\/+$/, '');
-        const urlAdopcion = `${baseUrl}/api/adopciones/${idAnim}/`;
-        this.http.put(
-          urlAdopcion,
-          {
-            nombre: historia.animal_nombre || 'Paciente',
-            raza: historia.animal_raza || 'Mestizo',
-            imagen: fotoAnimal || '',
-            descripcion: descripcionFinal,
-            estado: 'Disponible'
-          },
-          { headers: this.authHeaders }
-        ).pipe(catchError(() => of(null))).subscribe();
+        const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL).replace(/\/+$/, '');
+        if (this.authService.isAdmin()) {
+          const urlAdopcion = `${baseUrl}/api/adopciones/${idAnim}/`;
+          this.http.put(
+            urlAdopcion,
+            {
+              nombre: historia.animal_nombre || 'Paciente',
+              raza: historia.animal_raza || 'Mestizo',
+              imagen: fotoAnimal || '',
+              descripcion: descripcionFinal,
+              estado: 'Disponible'
+            },
+            { headers: this.authHeaders }
+          ).pipe(catchError(() => of(null))).subscribe();
+        }
       }
 
       this.aplicarFiltros();
       this.cdr.detectChanges();
 
+      const puedeIrAAdopciones = this.authService.isAdmin();
       Swal.fire({
         icon: 'success',
         title: 'Alta médica y envío a Adopción',
         text: `${historia.animal_nombre} ya está disponible en Adopciones y su historia clínica (${historia.numero_historia}) quedó guardada en el apartado normal.`,
-        showCancelButton: true,
-        confirmButtonText: 'Ir a Adopciones',
+        showCancelButton: puedeIrAAdopciones,
+        confirmButtonText: puedeIrAAdopciones ? 'Ir a Adopciones' : 'Ver en Historias Normales',
         cancelButtonText: 'Ver en Historias Normales'
       }).then((resNav) => {
-        if (resNav.isConfirmed) {
+        if (puedeIrAAdopciones && resNav.isConfirmed) {
           this.router.navigate(['/inicio-admin/adopciones']);
         } else {
           this.cambiarVistaHospitalizados(false);
@@ -1933,7 +1945,7 @@ export class HistoriaClinicaListComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Nombre requerido',
-        text: 'Ingrese el nombre de la mascota o paciente.',
+        text: 'Ingrese el nombre del animal de compañía o paciente.',
         confirmButtonText: 'Aceptar'
       });
       return;

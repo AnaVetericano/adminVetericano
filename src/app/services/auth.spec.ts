@@ -1,13 +1,30 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { Auth } from './auth';
+import { AuthService } from './auth';
 
-describe('Auth', () => {
-  let service: Auth;
+describe('AuthService', () => {
+  let service: AuthService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(Auth);
+    localStorage.clear();
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    httpMock = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(AuthService);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+    localStorage.clear();
   });
 
   it('should be created', () => {

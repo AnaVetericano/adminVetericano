@@ -6,7 +6,7 @@
     <!-- ENCABEZADO -->
     <div class="py-0 mb-0">
 
-      <app-page-title titulo="Adopciones" subtitulo="Gestiona las mascotas disponibles para adopción" />
+      <app-page-title titulo="Adopciones" subtitulo="Gestiona los animales de compañía disponibles para adopción" />
 
     </div>
 
@@ -47,7 +47,7 @@
         class="bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer shrink-0 ml-auto"
       >
         <span class="text-base">+</span>
-        Agregar mascota
+        Agregar animal de compañía
       </button>
 
     </div>
@@ -189,11 +189,11 @@
       </div>
 
       <h3 class="text-lg font-bold text-[#170B3D]">
-        No se encontraron mascotas
+        No se encontraron animales de compañía
       </h3>
 
       <p class="text-sm text-slate-500 mt-1">
-        Intenta realizar otra búsqueda o agrega una nueva mascota.
+        Intenta realizar otra búsqueda o agrega un nuevo animal de compañía.
       </p>
 
     </div>
@@ -219,11 +219,11 @@
         <div>
 
           <h2 class="text-lg font-bold text-[#170B3D]">
-            {{ isEditMode ? 'Editar mascota' : 'Agregar mascota' }}
+            {{ isEditMode ? 'Editar animal de compañía' : 'Agregar animal de compañía' }}
           </h2>
 
           <p class="text-slate-500 text-xs mt-0.5">
-            Completa la información de la mascota
+            Completa la información del animal de compañía
           </p>
 
         </div>
@@ -317,7 +317,7 @@
           <textarea
             [(ngModel)]="currentPet.descripcion"
             rows="4"
-            placeholder="Describe a la mascota..."
+            placeholder="Describe al animal de compañía..."
             class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 resize-none"
           ></textarea>
 
@@ -367,7 +367,7 @@
             (click)="savePet()"
             class="flex-1 bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer"
           >
-            {{ isEditMode ? 'Actualizar' : 'Guardar mascota' }}
+            {{ isEditMode ? 'Actualizar' : 'Guardar animal de compañía' }}
           </button>
 
         </div>

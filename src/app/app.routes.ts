@@ -61,7 +61,11 @@ export const routes: Routes = [
           if (auth.isVeterinario()) {
             return '/inicio-admin/dashboard-veterinario';
           }
-          return '/inicio-admin/graficas';
+          if (auth.isAdmin()) {
+            return '/inicio-admin/graficas';
+          }
+          auth.logout();
+          return '/iniciodesesionadministrador';
         }
       },
 
@@ -104,5 +108,7 @@ export const routes: Routes = [
       { path: 'peticion', component: Peticion, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico'] } },
       { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico', 'Super Administrador'] } }
     ]
-  }
+  },
+
+  { path: '**', redirectTo: '' }
 ];

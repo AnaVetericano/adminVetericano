@@ -4,8 +4,9 @@ import { AuthService, UserRole } from './auth';
 import Swal from 'sweetalert2';
 
 // Guard de sesión persistente vía localStorage.
-// La sesión SOLO se cierra con "Cerrar sesión" del sidebar (onLogout),
-// que borra token/refresh_token. Cerrar la ventana NO cierra sesión.
+// La sesión se cierra con "Cerrar sesión" del sidebar (onLogout) o cuando
+// el interceptor no puede renovar el token (refresh vencido o rechazado).
+// Cerrar la ventana NO cierra sesión.
 export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
   const token = localStorage.getItem('token');
@@ -25,14 +26,20 @@ export const loginGuard: CanActivateFn = () => {
   if (token) {
     if (authService.isSuperAdmin()) {
       router.navigate(['/inicio-admin/super-dashboard']);
+      return false;
     } else if (authService.isJuridico()) {
       router.navigate(['/inicio-admin/dashboard-juridico']);
+      return false;
     } else if (authService.isVeterinario()) {
       router.navigate(['/inicio-admin/dashboard-veterinario']);
+      return false;
+    } else if (authService.isAdmin()) {
+      router.navigate(['/inicio-admin/graficas']);
+      return false;
     } else {
-      router.navigate(['/inicio-admin']);
+      authService.logout();
+      return true;
     }
-    return false;
   }
   return true;
 };
@@ -60,6 +67,13 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return true;
   }
 
+  // Sin rol identificable no se supone ninguno: cerrar sesión y pedir iniciar de nuevo
+  if (!authService.userRole()) {
+    authService.logout();
+    router.navigate(['/iniciodesesionadministrador']);
+    return false;
+  }
+
   // Notificación de acceso no autorizado
   Swal.fire({
     title: 'Acceso restringido',
@@ -75,8 +89,11 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     router.navigate(['/inicio-admin/dashboard-juridico']);
   } else if (authService.isVeterinario()) {
     router.navigate(['/inicio-admin/dashboard-veterinario']);
+  } else if (authService.isAdmin()) {
+    router.navigate(['/inicio-admin/graficas']);
   } else {
-    router.navigate(['/inicio-admin']);
+    authService.logout();
+    router.navigate(['/iniciodesesionadministrador']);
   }
 
   return false;

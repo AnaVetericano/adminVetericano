@@ -1,8 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   VeterinaryInventoryService,
   VeterinaryKitItem,
@@ -25,6 +27,13 @@ export class VeterinaryInventoryComponent implements OnInit {
   private inventoryService = inject(VeterinaryInventoryService);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['kit.*', 'inventario.movimiento_bodega', 'catalogo.medicamentos_actualizado'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type.startsWith('catalogo.') ? this.cargarCatalogoGeneral() : this.cargarDatos()));
+  }
 
   // Estados de carga y datos
   cargando = true;
@@ -118,12 +127,16 @@ export class VeterinaryInventoryComponent implements OnInit {
             } catch {}
           }
           this.cargarDatos();
-    this.cargarCatalogoGeneral();
+          this.cargarCatalogoGeneral();
         },
-        error: () => this.cargarDatos()
+        error: () => {
+          this.cargarDatos();
+          this.cargarCatalogoGeneral();
+        }
       });
     } else {
       this.cargarDatos();
+      this.cargarCatalogoGeneral();
     }
   }
 
@@ -351,9 +364,9 @@ export class VeterinaryInventoryComponent implements OnInit {
 
       this.guardandoConsumo = true;
       this.inventoryService.registrarConsumo(item.id_medicamento, cant, this.observacionesConsumo).subscribe({
-        next: (exito) => {
+        next: (resultado) => {
           this.guardandoConsumo = false;
-          if (exito) {
+          if (resultado.estado === 'CONFIRMADO') {
             this.cargarDatos();
             this.cerrarModalConsumo();
 
@@ -363,11 +376,22 @@ export class VeterinaryInventoryComponent implements OnInit {
               text: `Se ${cant === 1 ? 'descontó' : 'descontaron'} ${cant} ${cant === 1 ? 'unidad' : 'unidades'} de ${item.nombre} del inventario de campo.`,
               confirmButtonText: 'Aceptar'
             });
+          } else if (resultado.estado === 'PENDIENTE') {
+            // Registro local conservado, pero sin confirmación del servidor: nunca se muestra como éxito
+            this.cargarDatos();
+            this.cerrarModalConsumo();
+
+            Swal.fire({
+              icon: 'warning',
+              title: 'Consumo pendiente de sincronizar',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
           } else {
             Swal.fire({
               icon: 'error',
               title: 'No fue posible registrar el consumo',
-              text: 'Verifique los datos e intente nuevamente.',
+              text: resultado.mensaje || 'Verifique los datos e intente nuevamente.',
               confirmButtonText: 'Aceptar'
             });
           }

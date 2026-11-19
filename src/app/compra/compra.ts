@@ -1,9 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import {
   ComprasService,
   Compra as CompraModel,
@@ -50,7 +52,12 @@ export class Compra implements OnInit {
   constructor(
     private comprasService: ComprasService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['inventario.movimiento_bodega', 'catalogo.medicamentos_actualizado'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.obtenerDatos());
+  }
 
   ngOnInit(): void {
     this.obtenerDatos();
@@ -403,6 +410,10 @@ export class Compra implements OnInit {
   }
 
   guardarCompra(): void {
+    if (this.guardando) {
+      return;
+    }
+
     if (!this.idProveedorSeleccionado) {
       Swal.fire({
         title: 'Campos obligatorios incompletos',
@@ -533,6 +544,16 @@ export class Compra implements OnInit {
         error: (err) => {
           this.guardando = false;
           console.error('Error al registrar la compra:', err);
+          if (err?.status === 0 || (typeof err?.status === 'number' && err.status >= 500)) {
+            this.obtenerDatos();
+            Swal.fire({
+              title: 'Confirmación pendiente por error de red',
+              text: 'La respuesta del servidor fue incierta. Se actualizó la lista de compras; verifique si la factura ya quedó registrada antes de volver a enviarla.',
+              icon: 'warning',
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
           const msj = this.extraerMensajeError(err, 'No fue posible guardar la compra en el servidor.');
           Swal.fire({
             title: 'No fue posible guardar el registro',
@@ -545,8 +566,11 @@ export class Compra implements OnInit {
   }
 
   private extraerMensajeError(err: any, mensajePorDefecto: string): string {
-    if (!err?.error) return mensajePorDefecto;
+    if (!err?.error) {
+      return err?.message || mensajePorDefecto;
+    }
     if (typeof err.error === 'string') return err.error;
+    if (err.error.detalle) return err.error.detalle;
     if (err.error.detail) return err.error.detail;
     if (typeof err.error === 'object') {
       const primerCampo = Object.keys(err.error)[0];

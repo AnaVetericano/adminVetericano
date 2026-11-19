@@ -104,9 +104,8 @@
       <!-- 1. DASHBOARD (Administrador) -->
       @if (authService.isAdmin()) {
         <a
-          routerLink="/inicio-admin"
+          routerLink="/inicio-admin/graficas"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
-          [routerLinkActiveOptions]="{ exact: true }"
           (click)="menuAbierto = false"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors duration-150 cursor-pointer whitespace-nowrap group/item relative"
         >
@@ -496,6 +495,11 @@
           </a>
         }
 
+        <!-- CAMPANA CENTRAL DE NOTIFICACIONES EN TIEMPO REAL -->
+        @if (notificacionesRealtime.habilitado) {
+          <app-notificaciones-campana />
+        }
+
         <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
         @if (authService.isVeterinario() || authService.isAdmin()) {
           <div class="relative">
@@ -592,8 +596,8 @@
           </div>
         }
 
-        <!-- Separador entre Alertas y el perfil (solo cuando existe el botón de Alertas) -->
-        @if (authService.isVeterinario() || authService.isAdmin()) {
+        <!-- Separador entre Alertas y el perfil -->
+        @if (notificacionesRealtime.habilitado || authService.isVeterinario() || authService.isAdmin()) {
           <span class="hidden sm:block w-px h-6 bg-slate-200" aria-hidden="true"></span>
         }
 

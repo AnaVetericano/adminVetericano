@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Chart } from 'chart.js/auto';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   VeterinaryInventoryService,
   KitAlertasResponse,
@@ -59,7 +61,7 @@ export interface MedicamentoMaletinUI {
   templateUrl: './dashboard-veterinario.html',
   styleUrl: './dashboard-veterinario.css'
 })
-export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
+export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('chartPeticiones') chartPeticionesRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chartTipos') chartTiposRef!: ElementRef<HTMLCanvasElement>;
 
@@ -73,6 +75,17 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['peticion.*', 'kit.*', 'catalogo.medicamentos_actualizado'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => {
+        if (ev.event_type.startsWith('peticion.')) this.cargarPeticiones();
+        else if (ev.event_type.startsWith('kit.')) { this.cargarDatosMaletin(); this.cargarSolicitudes(); }
+        else this.cargarCatalogoGeneral();
+      });
+  }
 
   // Pestaña activa principal: 'peticiones' | 'maletin' | 'solicitudes'
   pestanaActiva: 'peticiones' | 'maletin' | 'solicitudes' = 'peticiones';
@@ -249,6 +262,12 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.construirGraficas();
+    }, 200);
   }
 
   establecerDatosVeterinario(): void {
@@ -830,11 +849,11 @@ export class DashboardVeterinarioComponent implements OnInit, OnDestroy {
     let lista = [...this.solicitudesKit];
 
     if (this.filtroEstadoSolicitud === 'PENDIENTES') {
-      lista = lista.filter(s => (s.estado || '').toUpperCase() === 'PENDIENTE');
+      lista = lista.filter(s => (s.estado || '').toUpperCase().includes('PEND'));
     } else if (this.filtroEstadoSolicitud === 'APROBADAS') {
-      lista = lista.filter(s => (s.estado || '').toUpperCase() === 'APROBADA');
+      lista = lista.filter(s => (s.estado || '').toUpperCase().includes('APROB'));
     } else if (this.filtroEstadoSolicitud === 'ENTREGADAS') {
-      lista = lista.filter(s => (s.estado || '').toUpperCase() === 'ENTREGADA');
+      lista = lista.filter(s => (s.estado || '').toUpperCase().includes('ENTREG'));
     }
 
     lista.sort((a, b) => (b.id_solicitud || 0) - (a.id_solicitud || 0));

@@ -1,19 +1,21 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
-import { Graficas } from '../graficas/graficas';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent, PageTitleComponent],
+  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
@@ -68,7 +70,12 @@ export class UsuariosRoles implements OnInit{
 
   constructor(private http: HttpClient,private authService: AuthService,
     private cdr: ChangeDetectorRef, private router:Router
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('admin.usuario_gestionado')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.listarUsuarios());
+  }
 
   ngOnInit(): void {
     this.listarUsuarios();
@@ -189,10 +196,10 @@ listarUsuarios(): void {
     };
 
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
-  next: (response) => {
+  next: () => {
     Swal.fire({
       title: 'Registro guardado',
-      text: 'Usuario creado correctamente' + response,
+      text: 'Usuario creado correctamente.',
       icon: 'success',
       confirmButtonText: 'Aceptar'
     }).then(() => {
@@ -347,10 +354,9 @@ actualizarUsuario(): void {
     if (result.isConfirmed) {
 
       // Eliminar información de sesión
-      localStorage.removeItem('token');
-      localStorage.removeItem('usuario');
+      this.authService.logout();
 
-      // Ir al componente inicio-administrador
+      // Ir al inicio
       this.router.navigate(['/']);
 
     }
