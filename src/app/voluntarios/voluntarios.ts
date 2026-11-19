@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import Swal from 'sweetalert2';
 
 import {
   AuthService,
@@ -187,29 +188,10 @@ export class Voluntarios implements OnInit {
     this.voluntarios =
       this.voluntariosOriginales.filter(
         v =>
-
-          v.nombre_completo
-            .toLowerCase()
-            .includes(termino)
-
-          ||
-
-          v.correo
-            .toLowerCase()
-            .includes(termino)
-
-          ||
-
-          v.identificacion
-            .toLowerCase()
-            .includes(termino)
-
-          ||
-
-          v.telefono
-            .toLowerCase()
-            .includes(termino)
-
+          String(v.nombre_completo || '').toLowerCase().includes(termino) ||
+          String(v.correo || '').toLowerCase().includes(termino) ||
+          String(v.identificacion || '').toLowerCase().includes(termino) ||
+          String(v.telefono || '').toLowerCase().includes(termino)
       );
 
   }
@@ -521,33 +503,41 @@ export class Voluntarios implements OnInit {
   eliminarVoluntario(
     id: number
   ): void {
+    Swal.fire({
+      title: 'Confirmar eliminación',
+      text: 'Se eliminará esta postulación de voluntariado. Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: 'qa-destructivo' }
+    }).then((result) => {
+      if (!result.isConfirmed) return;
 
-    this.authService
-      .eliminarPostulacionVoluntariado(id)
-      .subscribe({
-
-        next: () => {
-
-          console.log(
-            'Voluntario eliminado correctamente'
-          );
-
-
-          this.obtenerVoluntarios();
-
-        },
-
-        error: (err: any) => {
-
-          console.error(
-            'Error al eliminar voluntario:',
-            err
-          );
-
-        }
-
-      });
-
+      this.authService
+        .eliminarPostulacionVoluntariado(id)
+        .subscribe({
+          next: () => {
+            this.obtenerVoluntarios();
+            Swal.fire({
+              title: 'Registro eliminado',
+              text: 'La postulación de voluntariado fue eliminada correctamente.',
+              icon: 'success',
+              timer: 1800,
+              showConfirmButton: false
+            });
+          },
+          error: (err: any) => {
+            console.error('Error al eliminar voluntario:', err);
+            Swal.fire({
+              title: 'No fue posible eliminar el registro',
+              text: err?.error?.detail || 'Ocurrió un error al eliminar la postulación. Intente nuevamente.',
+              icon: 'error',
+              confirmButtonText: 'Aceptar'
+            });
+          }
+        });
+    });
   }
 
 

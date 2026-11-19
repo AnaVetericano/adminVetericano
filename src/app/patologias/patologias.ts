@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 import { AuthService, Patologia } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
@@ -12,7 +13,7 @@ import { PageTitleComponent } from '../page-title/page-title';
 @Component({
   selector: 'app-patologias',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './patologias.html',
   styleUrl: './patologias.css',
 })
@@ -49,11 +50,12 @@ export class Patologias implements OnInit {
   obtenerPatologias(): void {
     this.cargando = true;
     this.authService.listarPatologias().subscribe({
-      next: (data: Patologia[]) => {
-        this.patologias = data;
-        this.patologiasOriginales = data; 
+      next: (data: any) => {
+        const lista: Patologia[] = Array.isArray(data) ? data : (data?.results || []);
+        this.patologias = lista;
+        this.patologiasOriginales = lista;
         this.cargando = false;
-        this.cdr.detectChanges(); // 3. Forzar actualización de la vista al primer clic
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('Error al listar:', err);
@@ -64,14 +66,14 @@ export class Patologias implements OnInit {
   }
 
   filtrarPatologias(): void {
-    const termino = this.filtroBusqueda.toLowerCase().trim();
+    const termino = (this.filtroBusqueda || '').toLowerCase().trim();
     if (!termino) {
       this.patologias = [...this.patologiasOriginales];
       return;
     }
-    this.patologias = this.patologiasOriginales.filter(p => 
-      p.nombre.toLowerCase().includes(termino) || 
-      p.descripcion.toLowerCase().includes(termino)
+    this.patologias = this.patologiasOriginales.filter(p =>
+      (p.nombre || '').toLowerCase().includes(termino) ||
+      (p.descripcion || '').toLowerCase().includes(termino)
     );
   }
 
@@ -110,28 +112,48 @@ export class Patologias implements OnInit {
   }
 
   guardarPatologia(): void {
+    if (!this.patologia.nombre || !this.patologia.nombre.trim()) {
+      Swal.fire({
+        title: 'Campo obligatorio',
+        text: 'Ingrese el nombre de la patología para continuar.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
     if (this.editandoId !== null) {
       this.authService.actualizarPatologia(this.editandoId, this.patologia).subscribe({
-        next: (res: any) => {
-          console.log('Actualizado con éxito:', res);
+        next: () => {
           this.cerrarModal();
           this.obtenerPatologias();
         },
         error: (err: any) => {
           console.error('Error al actualizar:', err);
+          Swal.fire({
+            title: 'No fue posible actualizar la patología',
+            text: err?.error?.detail || 'Ocurrió un error al guardar los cambios. Intente nuevamente.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+          });
           this.cdr.detectChanges();
         }
       });
     } else {
       this.authService.crearPatologia(this.patologia).subscribe({
-        next: (res: any) => {
-          console.log('Creado con éxito:', res);
+        next: () => {
           this.cerrarModal();
-          this.obtenerPatologias(); 
+          this.obtenerPatologias();
           this.patologia = { nombre: '', descripcion: '', activo: true };
         },
         error: (err: any) => {
           console.error('Error al guardar:', err);
+          Swal.fire({
+            title: 'No fue posible crear la patología',
+            text: err?.error?.detail || 'Ocurrió un error al guardar la patología. Intente nuevamente.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+          });
           this.cdr.detectChanges();
         }
       });

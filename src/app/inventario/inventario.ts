@@ -377,6 +377,7 @@ export class Inventario implements OnInit {
     }
 
     this.loteSeleccionado = fila;
+    this.tipoOperacionAsignar = 'ASIGNAR';
     this.cantidadAAsignar = Math.min(Number(fila.stock) || 1, 5);
     this.motivoAsignacion = `Dotación de campo: ${fila.nombre}`;
     this.errorAsignacion = '';
@@ -537,6 +538,7 @@ export class Inventario implements OnInit {
           veterinarioNombre: nombreVet
         }).subscribe();
 
+        const nombreProducto = this.loteSeleccionado?.nombre || 'Producto';
         this.guardandoAsignacion = false;
         this.cerrarModalAsignar();
 
@@ -546,7 +548,7 @@ export class Inventario implements OnInit {
           html: `
             <dl class="qa-datos">
               <dt>Producto</dt>
-              <dd>${this.loteSeleccionado?.nombre}</dd>
+              <dd>${nombreProducto}</dd>
               <dt>Veterinario destino</dt>
               <dd>${nombreVet}</dd>
               <dt>Cantidad transferida</dt>

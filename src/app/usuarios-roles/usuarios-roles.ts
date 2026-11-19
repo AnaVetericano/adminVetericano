@@ -9,14 +9,13 @@ import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
-import { Graficas } from '../graficas/graficas';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent, PageTitleComponent],
+  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
@@ -197,10 +196,10 @@ listarUsuarios(): void {
     };
 
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
-  next: (response) => {
+  next: () => {
     Swal.fire({
       title: 'Registro guardado',
-      text: 'Usuario creado correctamente' + response,
+      text: 'Usuario creado correctamente.',
       icon: 'success',
       confirmButtonText: 'Aceptar'
     }).then(() => {
@@ -355,10 +354,9 @@ actualizarUsuario(): void {
     if (result.isConfirmed) {
 
       // Eliminar información de sesión
-      localStorage.removeItem('token');
-      localStorage.removeItem('usuario');
+      this.authService.logout();
 
-      // Ir al componente inicio-administrador
+      // Ir al inicio
       this.router.navigate(['/']);
 
     }

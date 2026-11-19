@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-landepage',
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './landepage.html',
   styleUrl: './landepage.css',
 })

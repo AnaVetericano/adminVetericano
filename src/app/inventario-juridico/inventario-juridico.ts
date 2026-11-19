@@ -418,6 +418,7 @@ export class InventarioJuridicoComponent implements OnInit {
     }
 
     this.loteSeleccionado = fila;
+    this.tipoOperacionAsignar = 'ASIGNAR';
     this.cantidadAAsignar = Math.min(Number(fila.stock) || 1, 5);
     this.motivoAsignacion = `Dotación de campo: ${fila.nombre}`;
     this.errorAsignacion = '';

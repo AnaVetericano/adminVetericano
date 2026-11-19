@@ -971,8 +971,14 @@ export class Peticion implements OnInit, OnDestroy {
     if (navigator.share) {
       navigator.share({ title: 'Ubicación del reporte', text: `Ubicación del reporte: ${url}`, url });
     } else {
-      navigator.clipboard.writeText(url);
-      alert('Enlace copiado al portapapeles.');
+      navigator.clipboard?.writeText(url);
+      Swal.fire({
+        icon: 'success',
+        title: 'Enlace copiado',
+        text: 'El enlace de ubicación se copió al portapapeles.',
+        timer: 1800,
+        showConfirmButton: false
+      });
     }
   }
 

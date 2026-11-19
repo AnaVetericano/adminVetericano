@@ -104,9 +104,8 @@
       <!-- 1. DASHBOARD (Administrador) -->
       @if (authService.isAdmin()) {
         <a
-          routerLink="/inicio-admin"
+          routerLink="/inicio-admin/graficas"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
-          [routerLinkActiveOptions]="{ exact: true }"
           (click)="menuAbierto = false"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors duration-150 cursor-pointer whitespace-nowrap group/item relative"
         >

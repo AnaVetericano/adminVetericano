@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; // 1. Importa ChangeDetectorRef
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService, EventoVoluntariado, PostulacionVoluntariado } from '../services/auth';
@@ -22,7 +21,7 @@ export interface VoluntarioPostulado {
 @Component({
   selector: 'app-eventos-voluntariado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './eventos-voluntariado.html',
   styleUrl: './eventos-voluntariado.css'
 })
@@ -307,14 +306,12 @@ export class EventosVoluntariado implements OnInit {
     this.authService.listarPostulacionesVoluntariado(evento.id).subscribe({
       next: (data: PostulacionVoluntariado[]) => {
         // Filtrado por el ID del evento de forma segura
-        const postulacionesEvento = data.filter(p => {
+        const listaFinal = (Array.isArray(data) ? data : []).filter(p => {
           if (typeof p.evento === 'object' && p.evento !== null) {
-            return (p.evento as any).id === evento.id;
+            return Number((p.evento as any).id) === Number(evento.id);
           }
-          return p.evento === evento.id;
+          return Number(p.evento) === Number(evento.id);
         });
-
-        const listaFinal = postulacionesEvento.length > 0 ? postulacionesEvento : data;
 
         // Mapeo a las variables que usa el modal HTML
         this.postulados = listaFinal.map((p: PostulacionVoluntariado) => ({

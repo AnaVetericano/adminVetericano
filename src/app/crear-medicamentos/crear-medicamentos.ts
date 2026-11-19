@@ -561,7 +561,14 @@ export class Medicamentos implements OnInit {
         next: () => {
           m.activo = nuevoEstado;
           m.estado = nuevoEstado;
-          this.medicamentosOriginales = [...this.medicamentos];
+          const orig = this.medicamentosOriginales.find(
+            (item: any) => (item.id || item.id_medicamento) === idReal
+          );
+          if (orig) {
+            orig.activo = nuevoEstado;
+            orig.estado = nuevoEstado;
+          }
+          this.filtrarMedicamentos();
           this.cdr.detectChanges();
 
           Swal.fire({

@@ -18,6 +18,7 @@ import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-cli
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { environment } from '../../environments/environment';
 import {
   ResultadoConsumoKit,
   OrigenClinicoConsumo,
@@ -904,13 +905,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
+    const backendBase = (environment.backendUrl || '').replace(/\/+$/, '');
     if (u.startsWith('/media/')) {
-      return `https://backendvetericano-production.up.railway.app${u}`;
+      return `${backendBase}${u}`;
     }
     if (u.startsWith('media/')) {
-      return `https://backendvetericano-production.up.railway.app/${u}`;
+      return `${backendBase}/${u}`;
     }
-    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+    return `${backendBase}/media/${u}`;
   }
 
   extraerFotoDeObjeto(item: any): string {

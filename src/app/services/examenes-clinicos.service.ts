@@ -279,6 +279,22 @@ export class ExamenesClinicosService {
       };
     });
 
+    let resultadosFinales = itemsNormalizados;
+    if (Array.isArray(resp)) {
+      const term = (busqueda || '').trim().toLowerCase();
+      if (term) {
+        resultadosFinales = itemsNormalizados.filter((e) =>
+          (e.nombre || '').toLowerCase().includes(term) ||
+          (e.descripcion || '').toLowerCase().includes(term) ||
+          (e.tipo || '').toLowerCase().includes(term)
+        );
+      }
+      count = resultadosFinales.length;
+      totalPages = Math.ceil(count / pageSize) || 1;
+      const start = Math.max(0, (page - 1) * pageSize);
+      resultadosFinales = resultadosFinales.slice(start, start + pageSize);
+    }
+
     return {
       count,
       total_pages: totalPages,
@@ -286,7 +302,7 @@ export class ExamenesClinicosService {
       page_size: pageSize,
       next: resp?.next || null,
       previous: resp?.previous || null,
-      results: itemsNormalizados
+      results: resultadosFinales
     };
   }
 

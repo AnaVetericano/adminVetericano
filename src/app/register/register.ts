@@ -96,5 +96,3 @@ this.authService.registrar(this.register).subscribe({
     this.router.navigate(['/iniciodesesionadministrador']);
   }
 }
-
-// perra 

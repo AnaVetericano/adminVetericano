@@ -849,29 +849,11 @@ export class AuthService {
     return this.http.put(`${this.baseUrlVoluntariado}/postulaciones/${id}/`, postulacion);
   }
   listarSeguimientos(): Observable<any> {
-
-    const token = localStorage.getItem('token');
-
-    const headers = {
-      Authorization: `Bearer ${token}`
-    };
-
-    return this.http.get<any>(
-      'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/listar/',
-      { headers }
-    );
+    return this.http.get<any>(`${environment.apiUrlPeticiones}seguimiento/listar/`);
   }
 
   obtenerSeguimientoPorId(idSeguimiento: number): Observable<any> {
-    const token = localStorage.getItem('token');
-    const headers = {
-      Authorization: `Bearer ${token}`
-    };
-
-    return this.http.get<any>(
-      `https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/${idSeguimiento}/`,
-      { headers }
-    );
+    return this.http.get<any>(`${environment.apiUrlPeticiones}seguimiento/${idSeguimiento}/`);
   }
 
   eliminarPostulacionVoluntariado(id: number) {
@@ -897,7 +879,7 @@ export class AuthService {
   }
 
   // AnaC 
-  private apiUrlPeticiones = 'https://backendvetericano-production.up.railway.app/api/peticiones/listar/';
+  private apiUrlPeticiones = `${environment.apiUrlPeticiones}listar/`;
 
   obtenerPeticiones(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrlPeticiones);

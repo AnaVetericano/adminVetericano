@@ -89,11 +89,11 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
                         <!-- SIN PROVEEDORES -->
-                        <tr *ngIf="proveedores.length === 0">
+                        <tr *ngIf="proveedoresFiltrados.length === 0">
                             <td colspan="6" class="text-center py-8 text-slate-400 font-medium">
                                 <div class="flex flex-col items-center gap-2 py-6">
                                     <app-animal-icon tipo="conejo" [tamano]="56" />
-                                    No hay proveedores registrados.
+                                    {{ proveedores.length === 0 ? 'No hay proveedores registrados.' : 'No se encontraron proveedores para la búsqueda.' }}
                                 </div>
                             </td>
                         </tr>

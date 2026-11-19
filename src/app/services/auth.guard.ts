@@ -26,14 +26,20 @@ export const loginGuard: CanActivateFn = () => {
   if (token) {
     if (authService.isSuperAdmin()) {
       router.navigate(['/inicio-admin/super-dashboard']);
+      return false;
     } else if (authService.isJuridico()) {
       router.navigate(['/inicio-admin/dashboard-juridico']);
+      return false;
     } else if (authService.isVeterinario()) {
       router.navigate(['/inicio-admin/dashboard-veterinario']);
+      return false;
+    } else if (authService.isAdmin()) {
+      router.navigate(['/inicio-admin/graficas']);
+      return false;
     } else {
-      router.navigate(['/inicio-admin']);
+      authService.logout();
+      return true;
     }
-    return false;
   }
   return true;
 };
@@ -83,8 +89,11 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     router.navigate(['/inicio-admin/dashboard-juridico']);
   } else if (authService.isVeterinario()) {
     router.navigate(['/inicio-admin/dashboard-veterinario']);
+  } else if (authService.isAdmin()) {
+    router.navigate(['/inicio-admin/graficas']);
   } else {
-    router.navigate(['/inicio-admin']);
+    authService.logout();
+    router.navigate(['/iniciodesesionadministrador']);
   }
 
   return false;

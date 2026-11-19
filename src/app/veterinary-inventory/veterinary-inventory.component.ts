@@ -127,12 +127,16 @@ export class VeterinaryInventoryComponent implements OnInit {
             } catch {}
           }
           this.cargarDatos();
-    this.cargarCatalogoGeneral();
+          this.cargarCatalogoGeneral();
         },
-        error: () => this.cargarDatos()
+        error: () => {
+          this.cargarDatos();
+          this.cargarCatalogoGeneral();
+        }
       });
     } else {
       this.cargarDatos();
+      this.cargarCatalogoGeneral();
     }
   }
 

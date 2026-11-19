@@ -2443,7 +2443,7 @@ export class ActaSeresSintientes implements OnInit {
         sincronizacion_offline: false
       };
 
-      const urlCrearSeguimiento = 'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/crear/';
+      const urlCrearSeguimiento = `${environment.apiUrlPeticiones}seguimiento/crear/`;
       this.http.post<any>(urlCrearSeguimiento, payloadSeguimiento, { headers }).subscribe({
         next: (respSeg) => {
           console.log('Seguimiento creado con éxito:', respSeg);
@@ -3414,13 +3414,14 @@ export class ActaSeresSintientes implements OnInit {
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
+    const backendBase = (environment.backendUrl || '').replace(/\/+$/, '');
     if (u.startsWith('/media/')) {
-      return `https://backendvetericano-production.up.railway.app${u}`;
+      return `${backendBase}${u}`;
     }
     if (u.startsWith('media/')) {
-      return `https://backendvetericano-production.up.railway.app/${u}`;
+      return `${backendBase}/${u}`;
     }
-    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+    return `${backendBase}/media/${u}`;
   }
 
   /**

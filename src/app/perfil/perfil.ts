@@ -211,7 +211,7 @@ export class PerfilComponent implements OnInit {
   }
 
   private persistirPerfil(fotoUrl: string): void {
-    const credencialVeterinaria = (this.usuario.matricula || this.usuario.tarjeta_profesional || '').trim();
+    const credencialVeterinaria = (this.usuario.tarjeta_profesional || this.usuario.matricula || '').trim();
 
     const datosActualizados: Partial<UserSession> = {
       nombre: this.usuario.nombre.trim(),
@@ -227,10 +227,7 @@ export class PerfilComponent implements OnInit {
       foto_perfil: fotoUrl || ''
     };
 
-    // Actualizamos de inmediato en el estado reactivo local y localStorage
-    this.authService.actualizarSesion(datosActualizados);
-
-    // Si tenemos id de usuario, enviamos al backend
+    // Si tenemos id de usuario, enviamos al backend primero antes de mutar la sesión local
     if (this.usuario.id_usuario) {
       const payloadBackend = {
         nombre: this.usuario.nombre.trim(),
@@ -238,6 +235,7 @@ export class PerfilComponent implements OnInit {
         identificacion: this.usuario.identificacion.trim(),
         email: this.usuario.email.trim(),
         telefono: this.usuario.telefono.trim(),
+        direccion: this.usuario.direccion.trim() || null,
         matricula_profesional: credencialVeterinaria || null,
         foto_perfil: fotoUrl || null,
         foto: fotoUrl || null
@@ -280,6 +278,7 @@ export class PerfilComponent implements OnInit {
         }
       });
     } else {
+      this.authService.actualizarSesion(datosActualizados);
       this.guardando = false;
       this.subiendoACloudinary = false;
       this.cdr.detectChanges();

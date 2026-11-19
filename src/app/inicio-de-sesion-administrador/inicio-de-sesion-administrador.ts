@@ -55,11 +55,9 @@ export class InicioDeSesionAdministradorComponent {
     // Limpiar tokens y sesión anterior antes de intentar loguearse
     this.authService.logout();
 
-    console.log('Credenciales enviadas:', this.usuario);
-
     // Petición a la API usando AuthService
     this.authService.login(this.usuario).subscribe({
-      next: (res: any) => {
+      next: () => {
         // Redirección inteligente según el rol del usuario autenticado
         if (this.authService.isSuperAdmin()) {
           this.router.navigate(['/inicio-admin/super-dashboard']);
@@ -67,8 +65,16 @@ export class InicioDeSesionAdministradorComponent {
           this.router.navigate(['/inicio-admin/dashboard-juridico']);
         } else if (this.authService.isVeterinario()) {
           this.router.navigate(['/inicio-admin/dashboard-veterinario']);
+        } else if (this.authService.isAdmin()) {
+          this.router.navigate(['/inicio-admin/graficas']);
         } else {
-          this.router.navigate(['/inicio-admin']);
+          this.authService.logout();
+          Swal.fire({
+            title: 'Acceso no permitido',
+            text: 'Esta cuenta no cuenta con permisos para ingresar al panel administrativo web.',
+            icon: 'warning',
+            confirmButtonText: 'Aceptar'
+          });
         }
       },
       error: (err: any) => {
