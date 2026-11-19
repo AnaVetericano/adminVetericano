@@ -410,6 +410,10 @@ export class Compra implements OnInit {
   }
 
   guardarCompra(): void {
+    if (this.guardando) {
+      return;
+    }
+
     if (!this.idProveedorSeleccionado) {
       Swal.fire({
         title: 'Campos obligatorios incompletos',
@@ -540,6 +544,16 @@ export class Compra implements OnInit {
         error: (err) => {
           this.guardando = false;
           console.error('Error al registrar la compra:', err);
+          if (err?.status === 0 || (typeof err?.status === 'number' && err.status >= 500)) {
+            this.obtenerDatos();
+            Swal.fire({
+              title: 'Confirmación pendiente por error de red',
+              text: 'La respuesta del servidor fue incierta. Se actualizó la lista de compras; verifique si la factura ya quedó registrada antes de volver a enviarla.',
+              icon: 'warning',
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
           const msj = this.extraerMensajeError(err, 'No fue posible guardar la compra en el servidor.');
           Swal.fire({
             title: 'No fue posible guardar el registro',
@@ -552,8 +566,11 @@ export class Compra implements OnInit {
   }
 
   private extraerMensajeError(err: any, mensajePorDefecto: string): string {
-    if (!err?.error) return mensajePorDefecto;
+    if (!err?.error) {
+      return err?.message || mensajePorDefecto;
+    }
     if (typeof err.error === 'string') return err.error;
+    if (err.error.detalle) return err.error.detalle;
     if (err.error.detail) return err.error.detail;
     if (typeof err.error === 'object') {
       const primerCampo = Object.keys(err.error)[0];

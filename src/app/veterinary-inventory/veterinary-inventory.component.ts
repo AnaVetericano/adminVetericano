@@ -360,9 +360,9 @@ export class VeterinaryInventoryComponent implements OnInit {
 
       this.guardandoConsumo = true;
       this.inventoryService.registrarConsumo(item.id_medicamento, cant, this.observacionesConsumo).subscribe({
-        next: (exito) => {
+        next: (resultado) => {
           this.guardandoConsumo = false;
-          if (exito) {
+          if (resultado.estado === 'CONFIRMADO') {
             this.cargarDatos();
             this.cerrarModalConsumo();
 
@@ -372,11 +372,22 @@ export class VeterinaryInventoryComponent implements OnInit {
               text: `Se ${cant === 1 ? 'descontó' : 'descontaron'} ${cant} ${cant === 1 ? 'unidad' : 'unidades'} de ${item.nombre} del inventario de campo.`,
               confirmButtonText: 'Aceptar'
             });
+          } else if (resultado.estado === 'PENDIENTE') {
+            // Registro local conservado, pero sin confirmación del servidor: nunca se muestra como éxito
+            this.cargarDatos();
+            this.cerrarModalConsumo();
+
+            Swal.fire({
+              icon: 'warning',
+              title: 'Consumo pendiente de sincronizar',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
           } else {
             Swal.fire({
               icon: 'error',
               title: 'No fue posible registrar el consumo',
-              text: 'Verifique los datos e intente nuevamente.',
+              text: resultado.mensaje || 'Verifique los datos e intente nuevamente.',
               confirmButtonText: 'Aceptar'
             });
           }
