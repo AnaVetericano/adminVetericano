@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Chart } from 'chart.js/auto';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   VeterinaryInventoryService,
   KitAlertasResponse,
@@ -73,6 +75,17 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['peticion.*', 'kit.*', 'catalogo.medicamentos_actualizado'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => {
+        if (ev.event_type.startsWith('peticion.')) this.cargarPeticiones();
+        else if (ev.event_type.startsWith('kit.')) { this.cargarDatosMaletin(); this.cargarSolicitudes(); }
+        else this.cargarCatalogoGeneral();
+      });
+  }
 
   // Pestaña activa principal: 'peticiones' | 'maletin' | 'solicitudes'
   pestanaActiva: 'peticiones' | 'maletin' | 'solicitudes' = 'peticiones';

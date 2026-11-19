@@ -5,14 +5,23 @@ import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
 import { AuthService } from '../services/auth';
+import { NotificacionesRealtimeService } from '../services/notificaciones-realtime.service';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
+import { NotificacionesCampanaComponent } from '../notificaciones-campana/notificaciones-campana';
 import { EncabezadoPaginaService } from '../page-title/page-title';
 
 @Component({
   selector: 'app-inicio-administrador',
   standalone: true,
-  imports: [RouterOutlet, RouterLinkActive, RouterLink, CommonModule, AnimalIconComponent],
+  imports: [
+    RouterOutlet,
+    RouterLinkActive,
+    RouterLink,
+    CommonModule,
+    AnimalIconComponent,
+    NotificacionesCampanaComponent
+  ],
   templateUrl: './Inicio-administrador.html',
   styleUrl: './Inicio-administrador.css'
 })
@@ -21,6 +30,7 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   public authService = inject(AuthService);
   public inventoryService = inject(VeterinaryInventoryService);
   public alertasDuplicadosService = inject(AlertasDuplicadosService);
+  public notificacionesRealtime = inject(NotificacionesRealtimeService);
   /** Título de la página activa que se muestra en la barra superior (solo presentación). */
   public encabezadoPagina = inject(EncabezadoPaginaService);
 
@@ -46,6 +56,8 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    this.notificacionesRealtime.iniciar();
+
     if (this.authService.isVeterinario() || this.authService.isAdmin()) {
       this.alertasMaletinSub = this.inventoryService.alertasMaletin$.subscribe(alertas => {
         this.medicamentosAlertas = alertas || [];
@@ -61,6 +73,7 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.notificacionesRealtime.detener();
     this.alertasMaletinSub?.unsubscribe();
     this.duplicadosIndiceSub?.unsubscribe();
   }

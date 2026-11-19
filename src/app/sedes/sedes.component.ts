@@ -1,9 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -45,7 +48,12 @@ export class SedesComponent implements OnInit {
     private sedesService: SedesService,
     public authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('admin.sede_actualizada')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarSedes());
+  }
 
   ngOnInit(): void {
     this.cargarSedes();

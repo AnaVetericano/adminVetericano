@@ -1,11 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -153,7 +156,12 @@ export class Medicamentos implements OnInit {
     private router: Router,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('catalogo.medicamentos_actualizado')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.obtenerMedicamentos());
+  }
 
   ngOnInit(): void {
     this.obtenerMedicamentos();

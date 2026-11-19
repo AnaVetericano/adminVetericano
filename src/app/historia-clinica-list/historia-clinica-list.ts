@@ -1,12 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -183,7 +185,12 @@ export class HistoriaClinicaListComponent implements OnInit {
     private historiaService: HistoriaClinicaService,
     private router: Router,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['clinica.atencion_registrada', 'adopcion.catalogo_actualizado'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarHistorias());
+  }
 
   ngOnInit(): void {
     this.nuevoRegistroHistorial.veterinario = this.obtenerVeterinarioSesion();

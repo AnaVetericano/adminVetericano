@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -8,6 +9,7 @@ import {
   EventoVoluntariado,
   PostulacionVoluntariado
 } from '../services/auth';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -73,7 +75,12 @@ export class Voluntarios implements OnInit {
 
   constructor(
     private authService: AuthService
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('voluntariado.*')
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type === 'voluntariado.evento_actualizado' ? this.obtenerEventos() : this.obtenerVoluntarios()));
+  }
 
 
   // INICIALIZAR

@@ -29,5 +29,11 @@ export const environment = {
   apiUrlInventario: `${BACKEND_CLOUD_URL}/api/inventario/`,
   apiUrlMedicamentosCatalogo: `${BACKEND_CLOUD_URL}/api/medicamentos-catalogo/`,
   apiUrlSedes: `${BACKEND_CLOUD_URL}/api/sedes/`,
-  apiUrlSuperAdmin: `${BACKEND_CLOUD_URL}/api/super-administrador/`
+  apiUrlSuperAdmin: `${BACKEND_CLOUD_URL}/api/super-administrador/`,
+
+  // Sistema de notificaciones en tiempo real (WebSockets + REST central)
+  notificacionesHabilitadas: false,
+  wsHabilitado: false,
+  wsUrl: 'wss://REEMPLAZAR-DOMINIO-WS/ws/notificaciones/',
+  wsRoles: [1, 2, 3, 5]
 };

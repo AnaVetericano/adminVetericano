@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 1. Importa ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; // 1. Importa ChangeDetectorRef
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService, EventoVoluntariado, PostulacionVoluntariado } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -55,7 +58,12 @@ export class EventosVoluntariado implements OnInit {
   constructor(
     private authService: AuthService,
     private cdr: ChangeDetectorRef 
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('voluntariado.*')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.obtenerEventos());
+  }
 
   ngOnInit(): void {
     this.obtenerEventos();

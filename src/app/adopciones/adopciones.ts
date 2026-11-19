@@ -1,9 +1,12 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -30,6 +33,13 @@ export class Adopciones implements OnInit {
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
   private historiaService = inject(HistoriaClinicaService);
+
+  constructor() {
+    inject(RealtimeEventosService)
+      .on(['adopcion.catalogo_actualizado', 'clinica.atencion_registrada'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.loadPets());
+  }
 
   // Tu URL exacta de Railway
   private apiUrl = 'https://backendvetericano-production.up.railway.app/api/adopciones/';

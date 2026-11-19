@@ -5,12 +5,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import {
+  ResultadoConsumoKit,
+  construirAvisoGuardadoClinico,
+  extraerConflictosStockFarmacia,
+  resultadoPendientePrevioKit
+} from '../services/consumo-kit-resultado';
 import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { finalize, forkJoin, of, Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -1736,7 +1742,7 @@ export class ActaSeresSintientes implements OnInit {
 
     // Validación estricta de stock en inventario de campo antes de permitir guardar
     const medExcedido = this.medicamentosSeleccionados.find((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
     );
 
     if (medExcedido) {
@@ -1954,18 +1960,38 @@ export class ActaSeresSintientes implements OnInit {
         }
 
         // 2. Registrar Tratamientos asociados a la consulta y descontar del maletín de campo
+        const consumosActa: Observable<ResultadoConsumoKit>[] = [];
         if (idConsultaGenerada && Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
           this.medicamentosSeleccionados.forEach((m: any) => {
             // Descontar del kit de campo si no fue administrado previamente en la tarjeta
-            if (!m.administrado && (m.id || m.id_medicamento)) {
+            // (un PENDIENTE previo o un RECHAZADO ya informado no se reenvía con un client_uuid nuevo: solo se advierte)
+            if (m.descuentoKitPendiente && !m.administrado) {
+              consumosActa.push(of(resultadoPendientePrevioKit(m)));
+            } else if (m.resultadoKitRechazado && !m.administrado) {
+              consumosActa.push(of(m.resultadoKitRechazado as ResultadoConsumoKit));
+            } else if (!m.administrado && (m.id || m.id_medicamento)) {
               const cantUsar = Number(m.cantidadAAdministrar) || 1;
-              this.vetInvSvc.registrarConsumo(
+              consumosActa.push(this.vetInvSvc.registrarConsumo(
                 m.id || m.id_medicamento,
                 cantUsar,
-                `Administración en Acta #${this.numeroRadicadoActual || idConsultaGenerada}`
-              ).subscribe();
-              m.administrado = true;
-              m.cantidadEfectivaAdministrada = cantUsar;
+                `Administración en Acta #${this.numeroRadicadoActual || idConsultaGenerada}`,
+                undefined,
+                // Origen clínico: la consulta que el backend acaba de crear para esta acta (respConsulta.id_consulta)
+                { id_consulta: Number(idConsultaGenerada) }
+              ).pipe(
+                tap((resultado) => {
+                  // Solo CONFIRMADO marca como administrado; PENDIENTE solo bloquea el reenvío
+                  if (resultado.estado === 'CONFIRMADO') {
+                    m.administrado = true;
+                    m.cantidadEfectivaAdministrada = cantUsar;
+                  } else if (resultado.estado === 'PENDIENTE') {
+                    m.descuentoKitPendiente = true;
+                    m.cantidadPendienteKit = cantUsar;
+                  } else {
+                    m.resultadoKitRechazado = resultado;
+                  }
+                })
+              ));
             }
             const detallesExtra = [
               m.descripcion?.trim(),
@@ -2014,16 +2040,34 @@ export class ActaSeresSintientes implements OnInit {
         }
         this.aplicarFiltros();
 
-        Swal.fire({
-          title: 'Historia clínica y consulta guardadas',
-          icon: 'success',
-          html:
-            `<dl class="qa-datos">` +
-            `<dt>Historia clínica</dt><dd>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</dd>` +
-            `<dt>Consulta N°</dt><dd>${this.escaparHtml(String(respConsulta?.id_consulta || 'registrada'))}</dd>` +
-            `</dl>` +
-            `<p class="qa-nota">Guardado exitoso con sistemas, diagnósticos y tratamientos.</p>`,
-          confirmButtonText: 'Aceptar'
+        // El guardado clínico ya fue exitoso; el mensaje final depende del resultado explícito de cada consumo
+        // y de alertas_farmacia (un 200/201 no implica que el descuento del kit se haya aceptado).
+        const conflictosFarmaciaActa = [
+          ...extraerConflictosStockFarmacia(respHistoria),
+          ...extraerConflictosStockFarmacia(respConsulta)
+        ];
+        (consumosActa.length > 0 ? forkJoin(consumosActa) : of([] as ResultadoConsumoKit[])).subscribe((resultados) => {
+          const avisoInventario = construirAvisoGuardadoClinico('acta', resultados, conflictosFarmaciaActa);
+          if (avisoInventario) {
+            Swal.fire({
+              title: 'Acta guardada con advertencias',
+              icon: 'warning',
+              text: `Historia clínica: ${respHistoria?.numero_historia || idHistoria}. Consulta N°: ${respConsulta?.id_consulta || 'registrada'}. ${avisoInventario}`,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+          Swal.fire({
+            title: 'Historia clínica y consulta guardadas',
+            icon: 'success',
+            html:
+              `<dl class="qa-datos">` +
+              `<dt>Historia clínica</dt><dd>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</dd>` +
+              `<dt>Consulta N°</dt><dd>${this.escaparHtml(String(respConsulta?.id_consulta || 'registrada'))}</dd>` +
+              `</dl>` +
+              `<p class="qa-nota">Guardado exitoso con sistemas, diagnósticos y tratamientos.</p>`,
+            confirmButtonText: 'Aceptar'
+          });
         });
 
         // 4. Limpieza total y retorno de sistemas al estado normal
@@ -2326,7 +2370,7 @@ export class ActaSeresSintientes implements OnInit {
     }
 
     const medExcedido = this.medicamentosSeleccionados.find((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
     );
     if (medExcedido) {
       const disp = Number(medExcedido.stockDisponible) || 0;
@@ -2404,7 +2448,7 @@ export class ActaSeresSintientes implements OnInit {
         next: (respSeg) => {
           console.log('Seguimiento creado con éxito:', respSeg);
           const idSegGenerado = respSeg?.id_seguimiento;
-          this.registrarExpedienteClinicoParaNuevo(nombreAnimal, fotoPrincipal, urlsFotos, urlsVideos, idSegGenerado, headers);
+          this.registrarExpedienteClinicoParaNuevo(nombreAnimal, fotoPrincipal, urlsFotos, urlsVideos, idSegGenerado, headers, extraerConflictosStockFarmacia(respSeg));
         },
         error: (errSeg) => {
           console.warn('Fallo en seguimiento/crear, intentando creación directa de expediente clínico:', errSeg);
@@ -2420,8 +2464,14 @@ export class ActaSeresSintientes implements OnInit {
     urlsFotos: string[],
     urlsVideos: string[],
     idSeguimiento: number | null,
-    headers: HttpHeaders
+    headers: HttpHeaders,
+    conflictosFarmaciaPrevios: any[] = []
   ): void {
+    // Administraciones de kit que quedaron PENDIENTE o RECHAZADAS en la tarjeta: se advierten al guardar (no se reenvían)
+    const pendientesKitPrevios: ResultadoConsumoKit[] = (this.medicamentosSeleccionados || [])
+      .filter((m: any) => (m.descuentoKitPendiente || m.resultadoKitRechazado) && !m.administrado)
+      .map((m: any) => m.descuentoKitPendiente ? resultadoPendientePrevioKit(m) : m.resultadoKitRechazado);
+
     const payloadExpediente: any = {
       animal: {
         nombre: nombreAnimal,
@@ -2493,7 +2543,9 @@ export class ActaSeresSintientes implements OnInit {
           via: m.via || 'Oral',
           frecuenciaDuracion: m.frecuencia || 'Según evolución',
           cantidad_usada: Number(m.cantidadAAdministrar) || 1,
-          descontar_inventario: !m.administrado,
+          // Un consumo de kit ya intentado en la tarjeta (PENDIENTE o RECHAZADO) no pasa a descontarse de bodega:
+          // se conserva el comportamiento previo, en el que cualquier intento en la tarjeta dejaba descontar_inventario=false
+          descontar_inventario: !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado,
           responsable_admin: m.responsable_admin || this.nombreVeterinario || '',
           reaccion_comentarios: m.reaccion_comentarios || ''
         }))
@@ -2520,6 +2572,23 @@ export class ActaSeresSintientes implements OnInit {
         const numHc = respExp?.numero_historia || respExp?.historia_id;
         if (idAnimalCreado) {
           this.animalesConHistoriaIds.add(Number(idAnimalCreado));
+        }
+
+        // alertas_farmacia con HTTP 200/201: el registro se guardó pero el descuento del kit no se aceptó
+        const avisoFarmacia = construirAvisoGuardadoClinico('acta', pendientesKitPrevios, [
+          ...conflictosFarmaciaPrevios,
+          ...extraerConflictosStockFarmacia(respExp)
+        ]);
+        if (avisoFarmacia) {
+          Swal.fire({
+            title: 'Acta guardada con advertencias',
+            icon: 'warning',
+            text: `Paciente: ${nombreAnimal}. Historia clínica: ${numHc || 'Registrada'}. ${avisoFarmacia}`,
+            confirmButtonText: 'Aceptar'
+          });
+          this.deseleccionarPaciente();
+          this.cargarSeguimientos();
+          return;
         }
 
         Swal.fire({
@@ -4155,6 +4224,17 @@ export class ActaSeresSintientes implements OnInit {
   }
 
   registrarAdministracion(med: any, indice: number): void {
+    if (med.descuentoKitPendiente && !med.administrado) {
+      // PENDIENTE previo: no se reenvía (evita un segundo consumo con otro client_uuid)
+      Swal.fire({
+        icon: 'info',
+        title: 'Descuento pendiente de sincronizar',
+        text: 'La administración de este medicamento ya quedó registrada solo localmente y su descuento del inventario no está confirmado por el servidor. No se enviará un nuevo descuento.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
     if (med.administrado) {
       Swal.fire({
         icon: 'info',
@@ -4212,31 +4292,61 @@ export class ActaSeresSintientes implements OnInit {
       med.administrando = true;
       this.cdr.detectChanges();
 
-      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en Acta #' + (this.numeroRadicadoActual || '')).subscribe({
-        next: () => {
-          this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
-            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
-          ).subscribe({
-            next: (resp) => {
-              med.administrando = false;
-              med.administrado = true;
-              med.cantidadEfectivaAdministrada = cantidad;
-              med.stockDisponible = Math.max(0, stockActual - cantidad);
-              this.recargarStockMedicamentos();
-              this.cdr.detectChanges();
+      // Origen clínico: el seguimiento de visita cargado desde el servidor (sin seguimiento registrado no hay
+      // vínculo válido y registrarConsumo devuelve RECHAZADO ORIGEN_CLINICO_REQUERIDO sin enviar nada)
+      const idSeguimientoActa = Number(this.seguimientoSeleccionado?.id_seguimiento);
+      const origenActa = !this.seguimientoSeleccionado?.esNuevoAnimal && Number.isInteger(idSeguimientoActa) && idSeguimientoActa > 0
+        ? { id_seguimiento_visita: idSeguimientoActa }
+        : null;
+      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en Acta #' + (this.numeroRadicadoActual || ''), undefined, origenActa).subscribe({
+        next: (resultado: ResultadoConsumoKit) => {
+          med.administrando = false;
+          // Último rechazo del servidor: al guardar se advierte sin reenviarlo (el usuario puede reintentarlo aquí)
+          med.resultadoKitRechazado = resultado.estado === 'RECHAZADO' ? resultado : undefined;
 
-              Swal.fire({
-                icon: 'success',
-                title: 'Administración registrada',
-                html:
-                  `<dl class="qa-datos">` +
-                  `<dt>Medicamento</dt><dd>${nombreMed}</dd>` +
-                  `<dt>Cantidad administrada</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd>` +
-                  `<dt>Saldo restante en maletín</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd>` +
-                  `</dl>`,
-                confirmButtonText: 'Aceptar'
-              });
-            }
+          if (resultado.estado === 'RECHAZADO') {
+            // El backend (o la validación local) rechazó el consumo: no se marca como administrado ni se descuenta
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'error',
+              title: 'No se descontó del inventario',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          if (resultado.estado === 'PENDIENTE') {
+            // No confirmado: no se marca como administrado/descontado; solo se bloquea el reenvío
+            med.descuentoKitPendiente = true;
+            med.cantidadPendienteKit = cantidad;
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Administración pendiente de sincronizar',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          // CONFIRMADO: único caso en que se marca como administrado y descontado
+          med.administrado = true;
+          med.cantidadEfectivaAdministrada = cantidad;
+          med.stockDisponible = Math.max(0, stockActual - cantidad);
+          this.recargarStockMedicamentos();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Administración registrada',
+            html:
+              `<dl class="qa-datos">` +
+              `<dt>Medicamento</dt><dd>${nombreMed}</dd>` +
+              `<dt>Cantidad administrada</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd>` +
+              `<dt>Saldo restante en maletín</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd>` +
+              `</dl>`,
+            confirmButtonText: 'Aceptar'
           });
         },
         error: () => {
@@ -4336,7 +4446,7 @@ export class ActaSeresSintientes implements OnInit {
 
   get hayMedicamentosConStockInsuficiente(): boolean {
     return this.medicamentosSeleccionados.some((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
     );
   }
 

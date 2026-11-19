@@ -1,11 +1,14 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { Graficas } from '../graficas/graficas';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -68,7 +71,12 @@ export class UsuariosRoles implements OnInit{
 
   constructor(private http: HttpClient,private authService: AuthService,
     private cdr: ChangeDetectorRef, private router:Router
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('admin.usuario_gestionado')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.listarUsuarios());
+  }
 
   ngOnInit(): void {
     this.listarUsuarios();

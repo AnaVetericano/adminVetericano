@@ -5,12 +5,14 @@ import {
   AfterViewInit,
   ElementRef,
   ViewChild,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, debounceTime } from 'rxjs/operators';
 import { Chart } from 'chart.js/auto';
 import {
   SuperAdminService,
@@ -19,6 +21,7 @@ import {
   VeterinarioRendimiento
 } from '../services/super-admin.service';
 import { SedesService, Sede } from '../services/sedes.service';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -49,7 +52,12 @@ export class SuperAdminDashboardComponent implements OnInit, AfterViewInit, OnDe
     private superAdminService: SuperAdminService,
     private sedesService: SedesService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['admin.usuario_gestionado', 'admin.sede_actualizada', 'peticion.*'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarDatosDashboard());
+  }
 
   ngOnInit(): void {
     this.cargarDatosDashboard();
