@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { afterEach, vi } from 'vitest';
@@ -418,7 +418,7 @@ describe('HistoriaClinica2Component · hospitalización CBA y plan sanitario', (
 
   it('maneja error al agregar nota hospitalaria sin limpiar la nota ni mostrar éxito', () => {
     vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(
-      throwError(() => ({ status: 500 }))
+      throwError(() => ({ status: 500, error: { detail: 'Error en seguimiento hospitalario' } }))
     );
 
     component.nuevaNotaHospitalaria = 'Nota con fallo de red';
@@ -427,6 +427,60 @@ describe('HistoriaClinica2Component · hospitalización CBA y plan sanitario', (
     expect(component.guardandoNotaHospitalaria).toBe(false);
     expect(component.nuevaNotaHospitalaria).toBe('Nota con fallo de red');
     expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
+  });
+
+  it('fallo en autocreación de hospitalización: propaga error HTTP, no crea nota ficticia, conserva texto y no muestra éxito', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    component.hospitalizacionActiva = null;
+    component.nuevaNotaHospitalaria = 'Paciente en monitoreo nocturno';
+    component.agregarNotaSeguimientoHospitalario();
+
+    httpMock.expectOne(req => req.method === 'GET' && req.url.includes('/hospitalizaciones/?id_consulta=22')).flush([]);
+    httpMock.expectOne(req => req.method === 'POST' && req.url.includes('/hospitalizaciones/'))
+      .flush({ detail: 'No se pudo crear hospitalización' }, { status: 500, statusText: 'Server Error' });
+    httpMock.expectNone(req => req.method === 'POST' && req.url.includes('/seguimientos-hospitalarios/'));
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Paciente en monitoreo nocturno');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({
+      icon: 'error',
+      text: expect.stringContaining('No se pudo crear hospitalización')
+    }));
+  });
+
+  it('fallo en POST de seguimiento tras hospitalización existente: propaga error, conserva nota y no muestra éxito', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    component.hospitalizacionActiva = { id_hospitalizacion: 7, hoja_numero: 1 };
+    component.nuevaNotaHospitalaria = 'Control de hidratación';
+    component.agregarNotaSeguimientoHospitalario();
+
+    httpMock.expectOne(req => req.method === 'POST' && req.url.includes('/seguimientos-hospitalarios/'))
+      .flush({ detail: 'Error persistiendo seguimiento' }, { status: 500, statusText: 'Server Error' });
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Control de hidratación');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({
+      icon: 'error',
+      text: expect.stringContaining('Error persistiendo seguimiento')
+    }));
+  });
+
+  it('no inserta nota ficticia ni muestra éxito si el backend no devuelve id_seguimiento_hosp confirmado', () => {
+    vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(of(null));
+
+    component.nuevaNotaHospitalaria = 'Nota sin confirmación';
+    component.agregarNotaSeguimientoHospitalario();
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Nota sin confirmación');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
     expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
   });
 
