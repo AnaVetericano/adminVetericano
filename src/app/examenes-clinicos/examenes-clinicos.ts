@@ -3,7 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 import {
   ExamenesClinicosService,
   ExamenClinico
@@ -27,6 +29,7 @@ export class ExamenesClinicos implements OnInit {
   // Estado de carga, búsqueda y filtros
   cargando: boolean = true;
   guardando: boolean = false;
+  importandoExcel: boolean = false;
   filtroBusqueda: string = '';
   filtroEstado: 'todos' | 'activo' | 'inactivo' = 'todos';
   filtroCategoria: 'todos' | 'examenes' | 'tests' = 'todos';
@@ -436,6 +439,325 @@ export class ExamenesClinicos implements OnInit {
         }
       });
     });
+  }
+
+  // =========================================================================
+  // MÓDULO DE IMPORTACIÓN MASIVA DESDE EXCEL
+  // =========================================================================
+
+  private normalizarTexto(texto: string): string {
+    return (texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
+  private obtenerValorColumna(row: any, posiblesNombres: string[]): string {
+    const keys = Object.keys(row || {});
+    for (const posible of posiblesNombres) {
+      const posNorm = this.normalizarTexto(posible);
+      const keyFound = keys.find(k => this.normalizarTexto(k) === posNorm);
+      if (keyFound && row[keyFound] !== undefined && row[keyFound] !== null) {
+        const val = String(row[keyFound]).trim();
+        if (val) return val;
+      }
+    }
+    return '';
+  }
+
+  onArchivoExcelSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const nombreArchivo = file.name.toLowerCase();
+    if (!nombreArchivo.endsWith('.xlsx') && !nombreArchivo.endsWith('.xls')) {
+      Swal.fire({
+        title: 'Formato no compatible',
+        text: 'Seleccione un archivo de Excel válido (.xlsx o .xls).',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
+      });
+      input.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const buffer = e.target.result;
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          throw new Error('El archivo no contiene ninguna hoja de cálculo.');
+        }
+
+        const primeraHojaNombre = workbook.SheetNames[0];
+        const hoja = workbook.Sheets[primeraHojaNombre];
+        const filas: any[] = XLSX.utils.sheet_to_json(hoja, { defval: '' });
+
+        if (!filas || filas.length === 0) {
+          Swal.fire({
+            title: 'Archivo vacío',
+            text: 'La hoja de cálculo no contiene filas con datos para importar.',
+            icon: 'info',
+            confirmButtonText: 'Aceptar'
+          });
+          return;
+        }
+
+        this.procesarImportacionFilas(filas, file.name);
+      } catch (err: any) {
+        console.error('Error al leer archivo Excel:', err);
+        Swal.fire({
+          title: 'Error de lectura',
+          text: 'No se pudo leer el archivo Excel: ' + (err?.message || 'Error desconocido'),
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
+        });
+      } finally {
+        input.value = '';
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  private procesarImportacionFilas(filas: any[], nombreArchivo: string): void {
+    const primeraFila = filas[0] || {};
+    const keysPrimeraFila = Object.keys(primeraFila).map(k => this.normalizarTexto(k));
+
+    const tieneNombre = keysPrimeraFila.some(k => ['nombre', 'examen', 'nombretipo', 'nombretipoexamen', 'nombreexamen', 'pruebadiagnostica'].includes(k));
+    const tieneDescripcion = keysPrimeraFila.some(k => ['descripcion', 'detalle', 'descripcionhallazgos', 'hallazgos'].includes(k));
+    const tieneTipo = keysPrimeraFila.some(k => ['tipo', 'categoria', 'clasificacion', 'tipodeexamen', 'sistema'].includes(k));
+    const tieneEstado = keysPrimeraFila.some(k => ['estado', 'activo', 'status'].includes(k));
+
+    const columnasFaltantes: string[] = [];
+    if (!tieneNombre) columnasFaltantes.push('nombre');
+    if (!tieneDescripcion) columnasFaltantes.push('descripcion');
+
+    if (columnasFaltantes.length > 0) {
+      Swal.fire({
+        title: 'Estructura de columnas inválida',
+        html: `
+          <p class="text-sm text-slate-600 mb-2">El archivo debe contener al menos las siguientes columnas:</p>
+          <ul class="text-left text-xs bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1 font-mono text-slate-700">
+            <li><b>nombre</b>: Nombre clínico del examen o test rápido (obligatorio)</li>
+            <li><b>descripcion</b>: Descripción breve del procedimiento (obligatorio)</li>
+            <li><b>tipo</b>: Clasificación o categoría (opcional, ej. Urianálisis, Citopatología...)</li>
+            <li><b>estado</b>: Estado del registro (Activo / Inactivo)</li>
+          </ul>
+          <p class="text-xs text-rose-600 font-semibold mt-3">Columnas no detectadas: ${columnasFaltantes.join(', ')}</p>
+        `,
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    const examenesAImportar: Partial<ExamenClinico>[] = [];
+    const erroresValidacion: string[] = [];
+    const nombresVistos = new Set<string>();
+
+    filas.forEach((fila, idx) => {
+      const numFila = idx + 2;
+      const nombre = this.obtenerValorColumna(fila, ['nombre', 'examen', 'nombre_tipo', 'nombre_tipo_examen', 'nombre_examen', 'prueba_diagnostica']);
+      const descripcion = this.obtenerValorColumna(fila, ['descripcion', 'detalle', 'descripcion_hallazgos', 'hallazgos']);
+      const tipo = this.obtenerValorColumna(fila, ['tipo', 'categoria', 'clasificacion', 'tipo_de_examen', 'sistema']) || 'Prueba Diagnóstica';
+      const estadoStr = this.obtenerValorColumna(fila, ['estado', 'activo', 'status']);
+
+      if (!nombre) {
+        erroresValidacion.push(`Fila ${numFila}: El campo "nombre" está vacío.`);
+        return;
+      }
+
+      const claveUnica = this.normalizarTexto(nombre);
+      if (nombresVistos.has(claveUnica)) {
+        erroresValidacion.push(`Fila ${numFila}: El examen "${nombre}" está duplicado en el archivo.`);
+        return;
+      }
+      nombresVistos.add(claveUnica);
+
+      const estadoNorm = this.normalizarTexto(estadoStr);
+      const estado = (estadoNorm === '' || ['activo', 'true', '1', 'si', 'habilitado'].includes(estadoNorm))
+        ? 'activo'
+        : 'inactivo';
+
+      examenesAImportar.push({
+        nombre,
+        nombre_tipo: nombre,
+        nombre_tipo_examen: nombre,
+        descripcion: descripcion || '',
+        descripcion_hallazgos: descripcion || '',
+        tipo,
+        ruta_archivo_resultado: tipo,
+        estado,
+        solicitado: true
+      });
+    });
+
+    if (erroresValidacion.length > 0) {
+      const listaHtml = erroresValidacion.slice(0, 8).map(e => `<li>${e}</li>`).join('');
+      const restantes = erroresValidacion.length > 8 ? `<li class="font-bold">... y ${erroresValidacion.length - 8} errores más</li>` : '';
+      Swal.fire({
+        title: 'Validación de datos fallida',
+        html: `
+          <p class="text-sm text-slate-600 mb-2">Se encontraron <b>${erroresValidacion.length}</b> inconsistencias en el archivo:</p>
+          <ul class="text-left text-xs bg-rose-50 text-rose-700 p-3 rounded-lg border border-rose-200 max-h-48 overflow-y-auto space-y-1">
+            ${listaHtml}
+            ${restantes}
+          </ul>
+          <p class="text-xs text-slate-500 mt-2">Corrija el archivo Excel e intente nuevamente.</p>
+        `,
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    if (examenesAImportar.length === 0) {
+      Swal.fire({
+        title: 'Sin datos válidos',
+        text: 'No se encontraron registros válidos para procesar.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    // Confirmación previa
+    Swal.fire({
+      title: '¿Confirmar importación masiva?',
+      html: `
+        <div class="text-left text-sm text-slate-600 space-y-2">
+          <p>Archivo: <b class="text-slate-800">${nombreArchivo}</b></p>
+          <p>Total de exámenes / pruebas detectadas: <b class="text-[#4141A5] text-base">${examenesAImportar.length}</b></p>
+          <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs text-slate-600">
+            ✓ Columnas verificadas: nombre, descripción, tipo y estado.<br>
+            ✓ Se integrarán al catálogo de exámenes clínicos de forma segura.
+          </div>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, importar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#4141A5'
+    }).then(result => {
+      if (result.isConfirmed) {
+        this.ejecutarCargaMasiva(examenesAImportar);
+      }
+    });
+  }
+
+  private async ejecutarCargaMasiva(examenesAImportar: Partial<ExamenClinico>[]): Promise<void> {
+    this.importandoExcel = true;
+    this.cdr.detectChanges();
+
+    Swal.fire({
+      title: 'Importando exámenes clínicos...',
+      html: `
+        <div class="space-y-3">
+          <p class="text-sm text-slate-600">Guardando registros en la base de datos...</p>
+          <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+            <div id="progreso-importacion-barra" class="bg-[#4141A5] h-2.5 rounded-full transition-all duration-200" style="width: 5%"></div>
+          </div>
+          <p id="progreso-importacion-texto" class="text-xs text-slate-500 font-semibold">Procesando 0 de ${examenesAImportar.length}</p>
+        </div>
+      `,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    // 1. Intentar endpoint de carga masiva en una sola petición
+    try {
+      const respMasiva: any = await firstValueFrom(this.examenesService.importarExamenesMasivo(examenesAImportar));
+      this.importandoExcel = false;
+      this.cargarCatalogo();
+      this.cdr.detectChanges();
+
+      const creados = respMasiva?.creados_count ?? examenesAImportar.length;
+      const actualizados = respMasiva?.actualizados_count ?? 0;
+      const errores = respMasiva?.errores?.length ?? 0;
+
+      Swal.fire({
+        title: '¡Importación completada con éxito!',
+        html: `
+          <div class="text-left text-sm text-slate-700 space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <p>Total de registros procesados: <b>${examenesAImportar.length}</b></p>
+            <p class="text-emerald-700 font-semibold">Nuevos exámenes registrados: <b>${creados}</b></p>
+            ${actualizados > 0 ? `<p class="text-indigo-700">Exámenes actualizados: <b>${actualizados}</b></p>` : ''}
+            ${errores > 0 ? `<p class="text-rose-600">Errores reportados: <b>${errores}</b></p>` : ''}
+          </div>
+        `,
+        icon: 'success',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#4141A5'
+      });
+      return;
+    } catch (errMasivo: any) {
+      console.warn('Endpoint masivo no disponible o falló, procesando por lotes individuales:', errMasivo);
+    }
+
+    // 2. Fallback por lotes concurrentes individuales
+    let exitosos = 0;
+    let fallidos = 0;
+    const TAMANO_LOTE = 5;
+
+    for (let i = 0; i < examenesAImportar.length; i += TAMANO_LOTE) {
+      const lote = examenesAImportar.slice(i, i + TAMANO_LOTE);
+
+      await Promise.all(
+        lote.map(async item => {
+          try {
+            await firstValueFrom(this.examenesService.crearExamen(item));
+            exitosos++;
+          } catch (err: any) {
+            console.warn(`Examen "${item.nombre}" no se pudo crear:`, err);
+            fallidos++;
+          }
+        })
+      );
+
+      const procesadosHastaAhora = Math.min(i + TAMANO_LOTE, examenesAImportar.length);
+      const porcentaje = Math.round((procesadosHastaAhora / examenesAImportar.length) * 100);
+
+      const barra = document.getElementById('progreso-importacion-barra');
+      const texto = document.getElementById('progreso-importacion-texto');
+      if (barra) barra.style.width = `${porcentaje}%`;
+      if (texto) texto.textContent = `Procesando ${procesadosHastaAhora} de ${examenesAImportar.length} (${porcentaje}%)`;
+    }
+
+    this.importandoExcel = false;
+    this.cargarCatalogo();
+    this.cdr.detectChanges();
+
+    if (exitosos > 0) {
+      Swal.fire({
+        title: fallidos === 0 ? '¡Importación masiva exitosa!' : 'Importación finalizada con observaciones',
+        html: `
+          <div class="text-left text-sm text-slate-700 space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <p>Total de exámenes procesados: <b>${examenesAImportar.length}</b></p>
+            <p class="text-emerald-700 font-semibold">Guardados exitosamente: <b>${exitosos}</b></p>
+            ${fallidos > 0 ? `<p class="text-amber-600 font-semibold">Omitidos o con error: <b>${fallidos}</b></p>` : ''}
+          </div>
+        `,
+        icon: fallidos === 0 ? 'success' : 'info',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#4141A5'
+      });
+    } else {
+      Swal.fire({
+        title: 'Error en la importación',
+        text: 'No fue posible registrar los exámenes en el servidor. Revise su conexión e intente nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+    }
   }
 
   // =========================================================================

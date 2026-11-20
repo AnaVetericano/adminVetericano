@@ -216,6 +216,13 @@ export class ExamenesClinicosService {
   }
 
   /**
+   * Carga masiva de exámenes clínicos al backend
+   */
+  importarExamenesMasivo(examenes: Partial<ExamenClinico>[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}carga-masiva/`, examenes, { headers: this.getHeaders() });
+  }
+
+  /**
    * Normaliza la respuesta según la estructura recibida del backend (results paginados o array plano)
    */
   private normalizarRespuesta(resp: any, page: number, pageSize: number, busqueda: string = ''): RespuestaPaginadaExamenes {
@@ -393,6 +400,48 @@ export class ExamenesClinicosService {
         nombre: 'Glucometría Sérica de Emergencia',
         descripcion: 'Medición enzimática instantánea de glucosa en sangre periférica para monitoreo de hipoglucemia neonatal o cetoacidosis diabética.',
         tipo: 'Prueba de Punto de Atención (POC)',
+        estado: 'activo'
+      },
+      {
+        id_examen: 52,
+        nombre: 'EEG',
+        descripcion: 'Registro eléctrico cerebral para evaluar trastornos neurológicos.',
+        tipo: 'Prueba Diagnóstica',
+        estado: 'activo'
+      },
+      {
+        id_examen: 53,
+        nombre: 'Parcial de Orina',
+        descripcion: 'Análisis físico, químico y microscópico de la orina.',
+        tipo: 'Urianálisis',
+        estado: 'activo'
+      },
+      {
+        id_examen: 54,
+        nombre: 'Coproscópico',
+        descripcion: 'Estudio microscópico y funcional detallado de muestras fecales.',
+        tipo: 'Parasitología',
+        estado: 'activo'
+      },
+      {
+        id_examen: 55,
+        nombre: 'Cultivos',
+        descripcion: 'Aislamiento e identificación de microorganismos en muestras clínicas.',
+        tipo: 'Microbiología',
+        estado: 'activo'
+      },
+      {
+        id_examen: 56,
+        nombre: 'Antibiograma',
+        descripcion: 'Prueba de sensibilidad bacteriana frente a distintos antibióticos.',
+        tipo: 'Microbiología',
+        estado: 'activo'
+      },
+      {
+        id_examen: 57,
+        nombre: 'Biopsia',
+        descripcion: 'Toma y análisis histopatológico de tejido para diagnóstico.',
+        tipo: 'Citopatología',
         estado: 'activo'
       }
     ];

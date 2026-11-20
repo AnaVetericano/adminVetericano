@@ -110,26 +110,30 @@ export interface RespuestaEspecie {
 export interface Patologia {
   id_patologia?: number;
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
 export interface CrearPatologia {
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
 export interface ActualizarPatologia {
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
 export interface RespuestaPatologia {
   id_patologia: number;
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
@@ -785,6 +789,14 @@ export class AuthService {
 
   cambiarEstadoPatologia(id_patologia: number, activo: boolean): Observable<RespuestaPatologia> {
     return this.http.patch<RespuestaPatologia>(`${this.baseUrlPatologias}${id_patologia}/`, { activo });
+  }
+
+  eliminarPatologia(id_patologia: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrlPatologias}${id_patologia}/`);
+  }
+
+  importarPatologiasMasivo(patologias: CrearPatologia[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrlPatologias}carga-masiva/`, patologias);
   }
 
   listUsersActive() {

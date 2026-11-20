@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, forkJoin } from 'rxjs';
+import { Observable, of, forkJoin, throwError } from 'rxjs';
 import { map, catchError, delay, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -270,6 +270,87 @@ export class HistoriaClinicaService {
     const urlHistorias = environment.apiUrlHistorias || `${this.baseUrlClinica}historias/`;
     return this.http.get<any[]>(urlHistorias, { headers: this.authHeaders });
   }
+
+  /**
+   * Construye exactamente la ruta .../api/diagnostico-ia/sugerir/ sin duplicar ni omitir prefijos.
+   * En desarrollo local (ng serve en localhost/127.0.0.1 o environment.production === false),
+   * apunta al backend local: http://127.0.0.1:8000/api/diagnostico-ia/sugerir/
+   */
+  obtenerUrlDiagnosticoIA(): string {
+    const esLocalHost = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+       window.location.hostname === '127.0.0.1' ||
+       window.location.port === '4200');
+
+    const esDev = !environment.production || esLocalHost;
+
+    if (esDev) {
+      const devUrl = (environment as any).apiUrlDiagnosticoIALocal ||
+        (environment as any).apiUrlDiagnosticoIA ||
+        'http://127.0.0.1:8000/api/diagnostico-ia/sugerir/';
+
+      // Si estamos en localhost, asegurar que conecte con el backend local en puerto 8000
+      if (esLocalHost && !devUrl.includes('127.0.0.1:8000') && !devUrl.includes('localhost:8000')) {
+        return 'http://127.0.0.1:8000/api/diagnostico-ia/sugerir/';
+      }
+      return this.normalizarRutaDiagnostico(devUrl);
+    }
+
+    if ((environment as any).apiUrlDiagnosticoIA) {
+      return this.normalizarRutaDiagnostico((environment as any).apiUrlDiagnosticoIA);
+    }
+
+    const hostBase = (environment as any).backendUrl ||
+      (environment as any).apiBaseUrl?.replace(/\/api\/?$/, '') ||
+      (environment.apiUrlClinica ? environment.apiUrlClinica.replace(/\/api\/clinica\/?$/, '').replace(/\/clinica\/?$/, '') : '') ||
+      'https://backendvetericano-production.up.railway.app';
+
+    const cleanHost = hostBase.replace(/\/+$/, '');
+    return `${cleanHost}/api/diagnostico-ia/sugerir/`;
+  }
+
+  private normalizarRutaDiagnostico(url: string): string {
+    let clean = (url || '').trim();
+    // Eliminar posibles duplicaciones o prefijos erróneos
+    clean = clean.replace(/\/clinica\/diagnostico-ia/g, '/diagnostico-ia');
+    if (!clean.includes('/api/diagnostico-ia/')) {
+      clean = clean.replace(/\/diagnostico-ia\//, '/api/diagnostico-ia/');
+    }
+    if (!clean.endsWith('/')) {
+      clean += '/';
+    }
+    if (!clean.endsWith('sugerir/')) {
+      clean = clean.replace(/\/+$/, '') + '/sugerir/';
+    }
+    return clean;
+  }
+
+  /**
+   * Módulo de Apoyo Diagnóstico IA Local (scikit-learn):
+   * Sugiere patologías probables (Top 3-5), exámenes recomendados y justificación clínica.
+   * Conecta a .../api/diagnostico-ia/sugerir/ y reporta en consola la URL exacta intentada.
+   */
+  sugerirDiagnosticoIA(payload: {
+    especie: string;
+    edad_etapa?: string;
+    signos?: string[];
+    tests_rapidos?: { [key: string]: string };
+    examenes_clinicos?: { [key: string]: any };
+    id_consulta?: number | null;
+    id_animal?: number | null;
+    top_k?: number;
+  }): Observable<any> {
+    const url = this.obtenerUrlDiagnosticoIA();
+    console.log('[Diagnóstico IA] Conectando a URL exacta:', url);
+
+    return this.http.post<any>(url, payload, { headers: this.authHeaders }).pipe(
+      catchError((error) => {
+        console.error('[Diagnóstico IA] Error al conectar con la URL exacta:', url, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
 
   /**
    * CORRECCIÓN 1: Estructura del Payload en HistoriaClinicaService.crearExpedienteCompleto()
