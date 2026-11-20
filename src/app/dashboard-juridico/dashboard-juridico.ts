@@ -30,7 +30,6 @@ import {
   crearResumenAlertasVacio
 } from '../models/duplicados.model';
 import { PageTitleComponent } from '../page-title/page-title';
-import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { AuthService } from '../services/auth';
 
 const MAX_ALERTAS_PENDIENTES_DASHBOARD = 5;
@@ -38,7 +37,7 @@ const MAX_ALERTAS_PENDIENTES_DASHBOARD = 5;
 @Component({
   selector: 'app-dashboard-juridico',
   standalone: true,
-  imports: [CommonModule, PageTitleComponent, AnimalIconComponent, RouterLink],
+  imports: [CommonModule, PageTitleComponent, RouterLink],
   templateUrl: './dashboard-juridico.html',
   styleUrl: './dashboard-juridico.css'
 })
