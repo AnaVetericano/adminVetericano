@@ -125,8 +125,7 @@
       <!-- Estado: Cargando detalle -->
       <div *ngIf="cargando" data-testid="estado-cargando"
         class="bg-white rounded-xl border border-slate-200 p-8 text-center space-y-3 shadow-xs">
-        <div
-          class="inline-block w-8 h-8 border-4 border-[#4141A5]/25 border-t-[#4141A5] rounded-full animate-spin"></div>
+        <app-animal-icon tipo="huellas" [tamano]="40" etiqueta="Cargando comparación" />
         <p class="text-sm font-bold text-[#170B3D]">Cargando comparación de la alerta...</p>
         <p class="text-xs text-slate-500 font-medium">
           Consultando peticiones, evidencias multimedia y métricas de similitud.
@@ -318,8 +317,9 @@
                     Detección más reciente
                   </span>
                   <span *ngIf="esSoloLectura && col.esPrincipalGuardada"
-                    class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
-                    ★ Petición Original Conservada
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    Petición Original Conservada
                   </span>
                   <span *ngIf="esSoloLectura && peticionDuplicadaIdGuardada === col.idPeticion"
                     class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1]">
@@ -349,7 +349,7 @@
                   : 'bg-white hover:bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/30'"
                 class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-50">
                 {{ decisionSeleccionada === 'CONFIRMADO' && peticionPrincipalSeleccionada === col.idPeticion
-                  ? '✓ Original seleccionada'
+                  ? 'Original seleccionada'
                   : 'Seleccionar como original' }}
               </button>
             </div>

@@ -2,8 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { forkJoin, of, Observable } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import {
@@ -18,13 +18,24 @@ import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-cli
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import { environment } from '../../environments/environment';
+import {
+  ResultadoConsumoKit,
+  OrigenClinicoConsumo,
+  CODIGO_ORIGEN_CLINICO_REQUERIDO,
+  construirAvisoGuardadoClinico,
+  extraerConflictosStockFarmacia,
+  resultadoPendientePrevioKit,
+  resultadoRechazoLocalKit
+} from '../services/consumo-kit-resultado';
 import { ComponenteConCambiosPendientes } from '../services/pending-changes.guard';
 import { PageTitleComponent } from '../page-title/page-title';
+import { AnimalIconComponent } from '../animal-icon/animal-icon';
 
 @Component({
   selector: 'app-historia-clinica',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageTitleComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PageTitleComponent, AnimalIconComponent],
   templateUrl: './historia-clinica.html',
   styleUrls: ['./historia-clinica.css']
 })
@@ -122,7 +133,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   materialesUtilizados: string = '';
   materiales_utilizados: string = '';
 
-  // Destino CBA
+  // Destino CBA y Seguimiento Hospitalario (/api/clinica/hospitalizaciones/ y /api/clinica/seguimientos-hospitalarios/)
   ingresa_cba: boolean = false;
   ingresaCBA: string = 'NO';
   motivo_ingreso_cba: string = '';
@@ -131,6 +142,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   canilAsignado: string = '';
   funcionario_recibe_cba: string = '';
   funcionarioRecibeCBA: string = '';
+  hojaHospitalizacionNumero: number = 1;
+  hospitalizacionActiva: any = null;
+  seguimientosHospitalarios: any[] = [];
+  nuevaNotaHospitalaria: string = '';
+  guardandoNotaHospitalaria: boolean = false;
 
   // =========================================================================
   // MODELOS ESTRUCTURADOS DEL ACTA MÓVIL (TRIAJE EN CAMPO Y CIERRE CBA)
@@ -215,7 +231,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     estadoDesparasitacion: 'Suministrada',
     estadoEctoparasitos: 'Tratado',
     enfermedadesAnteriores: '',
-    historiaReproductiva: ''
+    historiaReproductiva: '',
+    ultimoCelo: '',
+    fechaUltimoParto: ''
   };
 
   datosPropietario = {
@@ -718,13 +736,122 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.cdr.detectChanges();
   }
 
+  cargarHospitalizacionYSeguimientos(idConsulta?: number | null): void {
+    const idCons = Number(idConsulta || this.historiaOriginal?.id_consulta || 0);
+    if (!idCons || isNaN(idCons) || idCons <= 0) {
+      return;
+    }
+
+    this.historiaService.obtenerHospitalizacionYSeguimientos(idCons).subscribe({
+      next: ({ hospitalizacion, seguimientos }) => {
+        this.hospitalizacionActiva = hospitalizacion || null;
+        if (hospitalizacion?.hoja_numero) {
+          this.hojaHospitalizacionNumero = Number(hospitalizacion.hoja_numero);
+        }
+        this.seguimientosHospitalarios = Array.isArray(seguimientos) ? seguimientos : [];
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  agregarNotaSeguimientoHospitalario(): void {
+    if (this.guardandoNotaHospitalaria) {
+      return;
+    }
+
+    const nota = (this.nuevaNotaHospitalaria || '').trim();
+    if (!nota) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nota vacía',
+        text: 'Escribe la nota de evolución hospitalaria diaria antes de registrarla.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    const idCons = Number(this.historiaOriginal?.id_consulta || this.idHistoria || 0);
+    if (!idCons || isNaN(idCons) || idCons <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Consulta no disponible',
+        text: 'Guarda primero la consulta clínica antes de registrar notas hospitalarias.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.guardandoNotaHospitalaria = true;
+    this.cdr.detectChanges();
+
+    this.historiaService.registrarSeguimientoHospitalario(idCons, nota, {
+      id_hospitalizacion: this.hospitalizacionActiva?.id_hospitalizacion || null,
+      descripcion_estado: `${this.resultado_estado || 'En observación'} — ${this.motivoIngresoNoIngreso || 'Hospitalizado CBA'}`,
+      diagnostico_presuntivo: (this.formHistoria?.get('diagnosticoPrincipal')?.value || this.diagnosticoFinal || 'En estudio clínico').trim(),
+      responsable_clinico: this.funcionarioRecibeCBA || this.nombreVeterinario || 'Veterinario CBA',
+      hoja_numero: Number(this.hojaHospitalizacionNumero || 1)
+    }).subscribe({
+      next: (creado) => {
+        this.guardandoNotaHospitalaria = false;
+        if (!creado || !creado.id_seguimiento_hosp) {
+          this.cdr.detectChanges();
+          Swal.fire({
+            icon: 'error',
+            title: 'No fue posible confirmar la nota hospitalaria',
+            text: 'El servidor no devolvió un registro confirmado de seguimiento hospitalario. Tu nota se conservó para que puedas reintentar.',
+            confirmButtonColor: '#4141a5'
+          });
+          return;
+        }
+
+        if (creado.id_hospitalizacion && !this.hospitalizacionActiva?.id_hospitalizacion) {
+          this.hospitalizacionActiva = {
+            ...(this.hospitalizacionActiva || {}),
+            id_hospitalizacion: creado.id_hospitalizacion,
+            hoja_numero: Number(this.hojaHospitalizacionNumero || 1)
+          };
+        }
+
+        this.nuevaNotaHospitalaria = '';
+        const yaExiste = this.seguimientosHospitalarios.some(
+          (s: any) => Number(s?.id_seguimiento_hosp) === Number(creado.id_seguimiento_hosp)
+        );
+        if (!yaExiste) {
+          this.seguimientosHospitalarios = [creado, ...this.seguimientosHospitalarios];
+        }
+        this.cargarHospitalizacionYSeguimientos(idCons);
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Evolución hospitalaria registrada',
+          text: 'La nota se guardó en el seguimiento hospitalario del CBA.',
+          timer: 1600,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        this.guardandoNotaHospitalaria = false;
+        this.cdr.detectChanges();
+        const detalle = err?.error?.detail || err?.error?.mensaje || err?.message || 'Ocurrió un error al registrar la evolución hospitalaria. Tu nota se conservó para que puedas reintentar.';
+        Swal.fire({
+          icon: 'error',
+          title: 'No fue posible guardar la nota hospitalaria',
+          text: Array.isArray(detalle) ? detalle.join(', ') : String(detalle),
+          confirmButtonColor: '#4141a5'
+        });
+      }
+    });
+  }
+
   iniciarNuevaConsulta(): void {
     Swal.fire({
       icon: 'question',
       title: 'Nueva consulta médica',
       text: `Se iniciará un nuevo registro de atención para ${this.paciente?.nombre || 'el paciente'}, conservando todos sus antecedentes y datos base.`,
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: 'Iniciar consulta',
       cancelButtonText: 'Cancelar'
     }).then((res) => {
       if (res.isConfirmed) {
@@ -894,13 +1021,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
+    const backendBase = (environment.backendUrl || '').replace(/\/+$/, '');
     if (u.startsWith('/media/')) {
-      return `https://backendvetericano-production.up.railway.app${u}`;
+      return `${backendBase}${u}`;
     }
     if (u.startsWith('media/')) {
-      return `https://backendvetericano-production.up.railway.app/${u}`;
+      return `${backendBase}/${u}`;
     }
-    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+    return `${backendBase}/media/${u}`;
   }
 
   extraerFotoDeObjeto(item: any): string {
@@ -1710,8 +1838,13 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             estadoDesparasitacion: sistemasParseados?.['_estado_desparasitacion'] || ((anam.productoDesparasitacion || anam.ultimaDesparasitacion) ? 'Suministrada' : 'En evaluación'),
             estadoEctoparasitos: sistemasParseados?.['_estado_ectoparasitos'] || 'Tratado',
             enfermedadesAnteriores: anam.enfermedadesAnteriores || anam.enfermedadesPrevias || sistemasParseados?.['_enfermedades_anteriores'] || '',
-            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || ''
+            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || '',
+            ultimoCelo: anam.ultimoCelo || raw.fecha_ultimo_celo || sistemasParseados?.['_ultimo_celo'] || '',
+            fechaUltimoParto: anam.fechaUltimoParto || raw.fecha_ultimo_parto || sistemasParseados?.['_fecha_ultimo_parto'] || ''
           };
+          if (sistemasParseados?.['_hoja_hospitalizacion_numero']) {
+            this.hojaHospitalizacionNumero = Number(sistemasParseados['_hoja_hospitalizacion_numero']) || 1;
+          }
 
           if (Array.isArray(data.examenes_solicitados) && data.examenes_solicitados.length > 0) {
             this.examenesSolicitados = data.examenes_solicitados.map((ex: any) => ({
@@ -1882,6 +2015,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         this.formHistoria.markAsPristine();
         this.formHistoria.markAsUntouched();
+        this.cargarHospitalizacionYSeguimientos(data.id_consulta);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -2023,6 +2157,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       icon: 'warning',
       title: 'Confirmar eliminación',
       text: `Se quitará "${examen.nombre}" de la orden de exámenes solicitados.`,
+      customClass: { popup: 'qa-destructivo' },
       showCancelButton: true,
       confirmButtonText: 'Eliminar',
       cancelButtonText: 'Cancelar'
@@ -2040,7 +2175,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     Swal.fire({
       icon: 'success',
       title: 'Evaluación física registrada',
-      text: 'Se han conservado los estados de los 12 sistemas orgánicos para el expediente.'
+      text: 'Se han conservado los estados de los 12 sistemas orgánicos para el expediente.',
+      confirmButtonText: 'Aceptar'
     });
   }
 
@@ -2364,7 +2500,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'info',
         title: 'Medicamento ya prescrito',
-        text: 'Este fármaco ya se encuentra agregado al plan terapéutico.'
+        text: 'Este fármaco ya se encuentra agregado al plan terapéutico.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2421,7 +2558,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'warning',
         title: 'Confirmar eliminación de fármaco',
-        html: `Ya se registró la administración de <b>${med.cantidadEfectivaAdministrada} uds</b> en el inventario.<br><br>¿Desea retirar este tratamiento del registro?`,
+        html: `<p>Ya se registró la administración de <b>${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}</b> en el inventario. ¿Desea retirar este tratamiento del registro?</p>`,
+        customClass: { popup: 'qa-destructivo' },
         showCancelButton: true,
         confirmButtonText: 'Eliminar',
         cancelButtonText: 'Cancelar'
@@ -2450,11 +2588,23 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   registrarAdministracion(med: any, indice: number): void {
+    if (med.descuentoKitPendiente && !med.administrado) {
+      // PENDIENTE previo: no se reenvía (evita un segundo consumo con otro client_uuid)
+      Swal.fire({
+        icon: 'info',
+        title: 'Descuento pendiente de sincronizar',
+        text: 'La administración de este medicamento ya quedó registrada solo localmente y su descuento del maletín no está confirmado por el servidor. No se enviará un nuevo descuento.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
     if (med.administrado) {
       Swal.fire({
         icon: 'info',
         title: 'Ya administrado',
-        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado del maletín.`
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}) y descontado del maletín.`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2464,7 +2614,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'warning',
         title: 'Cantidad inválida',
-        text: 'Ingrese una cantidad numérica mayor a 0 para registrar la administración.'
+        text: 'Ingrese una cantidad numérica mayor a 0 para registrar la administración.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2474,7 +2625,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Sin existencias en maletín',
-        text: `No hay unidades disponibles en el maletín para el medicamento "${med.nombre}".`
+        text: `No hay unidades disponibles en el maletín para el medicamento "${med.nombre}".`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2483,7 +2635,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Stock insuficiente en maletín de campo',
-        text: `No hay suficiente stock en el maletín (Disponibles: ${stockActual}, Solicitados: ${cantidad}). Ajuste la cantidad a descontar.`
+        html: `<p>Ajuste la cantidad a descontar antes de continuar.</p><dl class="qa-datos"><dt>Disponibles</dt><dd class="qa-tono">${stockActual} ${stockActual === 1 ? 'unidad' : 'unidades'}</dd><dt>Solicitadas</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2492,7 +2645,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
     Swal.fire({
       title: 'Confirmar administración y descuento',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b>.<br><br><span class="text-xs text-slate-500">Esta acción descontará las unidades del maletín de campo y actualizará el inventario en tiempo real.</span>`,
+      html: `<p>Se registrará la administración física de <b>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</b> de <b>${nombreMed}</b>.</p><p class="qa-nota">Esta acción descontará las unidades del maletín de campo y actualizará el inventario en tiempo real.</p>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
@@ -2504,26 +2657,51 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       this.cdr.detectChanges();
 
       const idMedEfectivo = Number(med.id || med.id_medicamento);
-      this.vetInvSvc.registrarConsumo(idMedEfectivo, cantidad, 'Administración en historia clínica #' + (this.idHistoria || ''), med.nombre).subscribe({
-        next: () => {
-          this.comprasService.descontarStockMedicamento(idMedEfectivo, cantidad, med.nombre).pipe(
-            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
-          ).subscribe({
-            next: () => {
-              med.administrando = false;
-              med.administrado = true;
-              med.cantidadEfectivaAdministrada = cantidad;
-              med.stockDisponible = Math.max(0, stockActual - cantidad);
-              this.recargarStockMedicamentos();
-              this.formHistoria.markAsDirty();
-              this.cdr.detectChanges();
+      this.consumirKitConOrigenConsulta(idMedEfectivo, cantidad, 'Administración en historia clínica #' + (this.idHistoria || ''), med.nombre).subscribe({
+        next: (resultado: ResultadoConsumoKit) => {
+          med.administrando = false;
+          // Último rechazo del servidor: al guardar se advierte sin reenviarlo (el usuario puede reintentarlo aquí)
+          med.resultadoKitRechazado = resultado.estado === 'RECHAZADO' ? resultado : undefined;
 
-              Swal.fire({
-                icon: 'success',
-                title: 'Descuento registrado',
-                html: `Se descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> del maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`
-              });
-            }
+          if (resultado.estado === 'RECHAZADO') {
+            // El backend (o la validación local) rechazó el consumo: no se marca como administrado ni se descuenta
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'error',
+              title: 'No se descontó del maletín',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          if (resultado.estado === 'PENDIENTE') {
+            // No confirmado: no se marca como administrado/descontado; solo se bloquea el reenvío
+            med.descuentoKitPendiente = true;
+            med.cantidadPendienteKit = cantidad;
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Administración pendiente de sincronizar',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          // CONFIRMADO: único caso en que se marca como administrado y descontado
+          med.administrado = true;
+          med.cantidadEfectivaAdministrada = cantidad;
+          med.stockDisponible = Math.max(0, stockActual - cantidad);
+          this.recargarStockMedicamentos();
+          this.formHistoria.markAsDirty();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Descuento registrado',
+            html: `<p>Se descontó el medicamento del maletín de campo.</p><dl class="qa-datos"><dt>Medicamento</dt><dd>${nombreMed}</dd><dt>Descontado</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd><dt>Saldo restante</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
+            confirmButtonText: 'Aceptar'
           });
         },
         error: () => {
@@ -2532,7 +2710,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           Swal.fire({
             icon: 'error',
             title: 'No fue posible registrar el consumo',
-            text: 'No se pudo registrar la administración en el inventario del maletín. Verifique la conexión e intente nuevamente.'
+            text: 'No se pudo registrar la administración en el inventario del maletín. Verifique la conexión e intente nuevamente.',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -2548,16 +2727,13 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const s = Number(stock) || 0;
     Swal.fire({
       icon: 'warning',
-      title: 'Alerta de stock bajo',
+      title: 'Stock bajo en inventario',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <div class="p-3 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
-            <p class="font-semibold text-[#170B3D]">
-              Quedan <b>${s}</b> unidades de este producto. Solicite reaprovisionamiento al inventario general.
-            </p>
-          </div>
-          <p class="text-xs text-slate-500">Producto en inventario: <b>${nombre}</b></p>
-        </div>
+        <p>Solicite reaprovisionamiento al inventario general.</p>
+        <dl class="qa-datos">
+          <dt>Producto</dt><dd>${nombre}</dd>
+          <dt>Stock disponible</dt><dd class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</dd>
+        </dl>
       `,
       confirmButtonText: 'Aceptar'
     });
@@ -2596,7 +2772,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     Swal.fire({
       icon: 'success',
       title: 'Medicamento alternativo seleccionado',
-      text: `Se seleccionó ${nombre} con ${stock} uds disponibles.`,
+      text: `Se seleccionó ${nombre} con ${stock} ${stock === 1 ? 'unidad' : 'unidades'} ${stock === 1 ? 'disponible' : 'disponibles'}.`,
       timer: 1600,
       showConfirmButton: false
     });
@@ -2604,7 +2780,57 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   get hayMedicamentosConStockInsuficiente(): boolean {
     return this.medicamentosSeleccionados.some((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+    );
+  }
+
+  /**
+   * Resuelve el origen clínico del consumo del kit: la consulta que se está editando, SOLO si el backend
+   * confirma que existe y pertenece a esta historia. En una consulta nueva (aún sin guardar) no existe vínculo:
+   * el id de historiaOriginal sería el de una consulta anterior y no se usa.
+   */
+  private resolverOrigenConsultaKit$(): Observable<{ origen: OrigenClinicoConsumo | null; motivo: string }> {
+    if (this.esNuevaConsulta || this.tieneDatosDesdeActa) {
+      return of({
+        origen: null,
+        motivo: 'La consulta todavía no está registrada en el servidor, así que el descuento del kit no tiene una consulta a la cual vincularse. ' +
+          'No se descontó del inventario: guarda la consulta y registra la administración desde la consulta guardada.'
+      });
+    }
+    const idConsulta = Number(this.historiaOriginal?.id_consulta);
+    const idHistoria = Number(this.historiaOriginal?.id_historia || this.idHistoria);
+    return this.historiaService.verificarConsultaDeHistoria(idConsulta, idHistoria).pipe(
+      map((confirmada) => confirmada
+        ? { origen: { id_consulta: confirmada }, motivo: '' }
+        : {
+            origen: null,
+            motivo: 'No se pudo confirmar con el servidor la consulta de esta historia clínica, así que el descuento del kit no tiene un vínculo válido. ' +
+              'No se envió el consumo y no se descontó del inventario.'
+          })
+    );
+  }
+
+  /** Consume del kit con el origen ya resuelto; sin origen devuelve un RECHAZADO local (sin HTTP). */
+  private consumirKitConOrigen(
+    origen: { origen: OrigenClinicoConsumo | null; motivo: string },
+    idMed: number,
+    cantidad: number,
+    observaciones: string,
+    nombre?: string
+  ): Observable<ResultadoConsumoKit> {
+    if (!origen.origen) {
+      return of(resultadoRechazoLocalKit(
+        { clientUuid: null, idMedicamento: Number(idMed) || 0, unidades: Number(cantidad), nombreMedicamento: nombre },
+        origen.motivo,
+        CODIGO_ORIGEN_CLINICO_REQUERIDO
+      ));
+    }
+    return this.vetInvSvc.registrarConsumo(idMed, cantidad, observaciones, nombre, origen.origen);
+  }
+
+  private consumirKitConOrigenConsulta(idMed: number, cantidad: number, observaciones: string, nombre?: string): Observable<ResultadoConsumoKit> {
+    return this.resolverOrigenConsultaKit$().pipe(
+      switchMap((origen) => this.consumirKitConOrigen(origen, idMed, cantidad, observaciones, nombre))
     );
   }
 
@@ -2616,8 +2842,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     if (this.historiaAnulada) {
       Swal.fire({
         title: 'Historia clínica anulada',
-        text: 'No es posible modificar una historia clínica en estado anulado (Jira HE06-HU013 Escenario 3.0).',
-        icon: 'warning'
+        html: '<p>No es posible modificar una historia clínica en estado anulado.</p><p class="qa-nota">Referencia: <code>Jira HE06-HU013 Escenario 3.0</code></p>',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2626,7 +2853,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         title: 'Stock insuficiente',
         text: 'Existen fármacos en el tratamiento con cantidades solicitadas superiores al stock disponible. Ajuste las cantidades antes de guardar.',
-        icon: 'warning'
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -2686,6 +2914,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       });
     };
 
+    const consumosSolicitados: Array<{ m: any; idMed: number; cantUsar: number }> = [];
+
     if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
       this.medicamentosSeleccionados.forEach((m: any) => {
         if (!m.client_uuid) {
@@ -2711,28 +2941,68 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         const cantUsar = Number(m.cantidadAAdministrar) || 1;
 
-        if (!m.administrado && (idMed > 0 || m.nombre)) {
-          this.vetInvSvc.registrarConsumo(
-            idMed,
-            cantUsar,
-            'Administración al guardar historia clínica #' + (this.idHistoria || ''),
-            m.nombre
-          ).subscribe();
-
-          if (idMed && idMed > 0) {
-            this.comprasService.descontarStockMedicamento(idMed, cantUsar, m.nombre).subscribe();
-          }
-
-          m.administrado = true;
-          m.cantidadEfectivaAdministrada = cantUsar;
-          m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
-          farmacosDescontadosAuto += cantUsar;
-          detallesDescuentoAuto.push(`<b>${m.nombre}</b> (${cantUsar} uds)`);
+        // Un PENDIENTE previo o un RECHAZADO ya informado no se reenvía con un client_uuid nuevo
+        if (!m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (idMed > 0 || m.nombre)) {
+          consumosSolicitados.push({ m, idMed, cantUsar });
         }
       });
-      this.recargarStockMedicamentos();
     }
 
+    // Se espera el resultado explícito de cada consumo antes de construir el DTO:
+    // solo CONFIRMADO cuenta como descuento; RECHAZADO no marca el medicamento como administrado.
+    // El vínculo con la consulta se confirma una sola vez contra el backend; sin él no se envía ningún consumo.
+    const consumos$ = consumosSolicitados.length > 0
+      ? this.resolverOrigenConsultaKit$().pipe(
+          switchMap((origen) => forkJoin(consumosSolicitados.map(c => this.consumirKitConOrigen(
+            origen,
+            c.idMed,
+            c.cantUsar,
+            'Administración al guardar historia clínica #' + (this.idHistoria || ''),
+            c.m.nombre
+          ))))
+        )
+      : of([] as ResultadoConsumoKit[]);
+
+    consumos$.subscribe((resultados: ResultadoConsumoKit[]) => {
+      const consumosNoConfirmados: ResultadoConsumoKit[] = [];
+      resultados.forEach((resultado, i) => {
+        const { m, cantUsar } = consumosSolicitados[i];
+        if (resultado.estado !== 'CONFIRMADO') {
+          // RECHAZADO o PENDIENTE: no se marca como administrado/descontado (PENDIENTE solo bloquea el reenvío)
+          if (resultado.estado === 'PENDIENTE') {
+            m.descuentoKitPendiente = true;
+            m.cantidadPendienteKit = cantUsar;
+          } else {
+            m.resultadoKitRechazado = resultado;
+          }
+          consumosNoConfirmados.push(resultado);
+          return;
+        }
+        m.administrado = true;
+        m.cantidadEfectivaAdministrada = cantUsar;
+        m.stockDisponible = Math.max(0, (Number(m.stockDisponible) || cantUsar) - cantUsar);
+        farmacosDescontadosAuto += cantUsar;
+        detallesDescuentoAuto.push(`<b>${m.nombre}</b> (${cantUsar} uds)`);
+      });
+      // Administraciones previas (tarjeta) que siguen PENDIENTE o RECHAZADAS: se advierten, no se reenvían
+      (this.medicamentosSeleccionados || [])
+        .filter((m: any) => (m.descuentoKitPendiente || m.resultadoKitRechazado) && !m.administrado && !consumosSolicitados.some(c => c.m === m))
+        .forEach((m: any) => consumosNoConfirmados.push(m.descuentoKitPendiente ? resultadoPendientePrevioKit(m) : m.resultadoKitRechazado));
+      if (Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
+        this.recargarStockMedicamentos();
+      }
+      this.enviarEdicionHistoria(anam, formVal, farmacosDescontadosAuto, detallesDescuentoAuto, consumosNoConfirmados);
+    });
+  }
+
+  /** Segunda fase de guardarEdicion(): construye el DTO y persiste la historia clínica. */
+  private enviarEdicionHistoria(
+    anam: string,
+    formVal: any,
+    farmacosDescontadosAuto: number,
+    detallesDescuentoAuto: string[],
+    consumosNoConfirmados: ResultadoConsumoKit[]
+  ): void {
     // Procesar lista de problemas formateada
     const problemasDesdeArray = this.problemasClinicos.filter(p => p && p.trim().length > 0);
     const listaProblemasFinal = problemasDesdeArray.length > 0
@@ -2775,7 +3045,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         _estado_desparasitacion: this.planSanitario.estadoDesparasitacion || 'Suministrada',
         _estado_ectoparasitos: this.planSanitario.estadoEctoparasitos || 'Tratado',
         _enfermedades_anteriores: this.planSanitario.enfermedadesAnteriores || '',
-        _historia_reproductiva: this.planSanitario.historiaReproductiva || ''
+        _historia_reproductiva: this.planSanitario.historiaReproductiva || '',
+        _ultimo_celo: this.planSanitario.ultimoCelo || '',
+        _fecha_ultimo_parto: this.planSanitario.fechaUltimoParto || '',
+        _hoja_hospitalizacion_numero: this.hojaHospitalizacionNumero || 1
       },
       examenes_solicitados: this.examenesSolicitados.map(ex => ({
         id_examen: ex.id_examen || ex.id,
@@ -2808,7 +3081,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         ingresa_cba: this.ingresaCBA,
         motivo_ingreso_no_ingreso: this.motivoIngresoNoIngreso,
         canil_asignado: this.canilAsignado,
-        funcionario_recibe_cba: this.funcionarioRecibeCBA
+        funcionario_recibe_cba: this.funcionarioRecibeCBA,
+        hoja_numero: this.hojaHospitalizacionNumero || 1
       },
       tenedor: {
         nombres: this.nombreAcudiente,
@@ -2821,7 +3095,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         productoDesparasitacion: this.planSanitario.productoDesparasitacion || '',
         enfermedadesAnteriores: this.planSanitario.enfermedadesAnteriores || '',
         alimentacion: this.alimento_marca || '',
-        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero')
+        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero'),
+        ultimoCelo: this.planSanitario.ultimoCelo || '',
+        fechaUltimoParto: this.planSanitario.fechaUltimoParto || ''
       },
       alimento_marca: this.alimento_marca || '',
       esterilizado_opcion: this.esterilizado_opcion || 'No',
@@ -2948,27 +3224,38 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           ? 'Se ha registrado la nueva consulta clínica en la base de datos.'
           : 'Se han guardado todos los cambios en exámenes, sistemas, diagnósticos, evolución, tratamientos y firmas. La modificación quedó registrada en auditoría.';
 
-        let htmlAlerta = `<p class="mb-3 text-slate-700">${textoAlerta}</p>`;
+        let htmlAlerta = `<p>${textoAlerta}</p>`;
         if (detallesDescuentoAuto.length > 0) {
           htmlAlerta += `
-            <div class="mt-3 p-3 bg-white border border-slate-200 border-l-4 border-l-[#067647] rounded-xl text-left text-xs">
-              <p class="font-semibold text-[#170B3D] mb-1.5">
-                Descuento automático de maletín (${farmacosDescontadosAuto} uds):
-              </p>
-              <ul class="list-disc list-inside text-slate-600 space-y-0.5">
-                ${detallesDescuentoAuto.map(d => `<li>${d}</li>`).join('')}
-              </ul>
-              <p class="mt-2 text-[11px] text-slate-500 font-medium">El inventario del kit de campo ha sido actualizado en tiempo real.</p>
-            </div>
+            <p class="qa-nota"><strong>Descuento automático de maletín (${farmacosDescontadosAuto} ${farmacosDescontadosAuto === 1 ? 'unidad' : 'unidades'}):</strong></p>
+            <ul class="list-disc list-inside">
+              ${detallesDescuentoAuto.map(d => `<li>${d}</li>`).join('')}
+            </ul>
+            <p class="qa-nota">El inventario del kit de campo ha sido actualizado en tiempo real.</p>
           `;
         }
 
-        Swal.fire({
-          title: tituloAlerta,
-          html: htmlAlerta,
-          icon: 'success',
-          confirmButtonText: 'Aceptar'
-        }).then(() => {
+        // El 200/201 del guardado clínico no implica que el descuento del kit se haya aceptado
+        const avisoInventario = construirAvisoGuardadoClinico(
+          'historia',
+          consumosNoConfirmados,
+          extraerConflictosStockFarmacia(resp)
+        );
+
+        Swal.fire(avisoInventario
+          ? {
+              title: `${tituloAlerta} con advertencias`,
+              text: avisoInventario,
+              icon: 'warning',
+              confirmButtonText: 'Aceptar'
+            }
+          : {
+              title: tituloAlerta,
+              html: htmlAlerta,
+              icon: 'success',
+              confirmButtonText: 'Aceptar'
+            }
+        ).then(() => {
           if (eraNuevaConsulta) {
             this.volverAlDetalle();
           }
@@ -2983,7 +3270,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         Swal.fire({
           title: 'No fue posible guardar el registro',
           text: msg,
-          icon: 'error'
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
         });
         this.cdr.detectChanges();
       }
@@ -3048,8 +3336,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       title: 'Restablecer valores',
       text: 'Se descartarán las modificaciones actuales y se restaurarán los datos originales cargados.',
       icon: 'question',
+      customClass: { popup: 'qa-destructivo' },
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: 'Restablecer',
       cancelButtonText: 'Cancelar'
     }).then(res => {
       if (res.isConfirmed) {

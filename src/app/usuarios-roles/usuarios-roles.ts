@@ -1,19 +1,21 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { AuthService } from '../services/auth';
-import { Graficas } from '../graficas/graficas';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-usuarios-roles',
   standalone: true,
-  imports: [FormsModule, CommonModule, Graficas, AnimalIconComponent, PageTitleComponent],
+  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './usuarios-roles.html',
   styleUrl: './usuarios-roles.css',
 })
@@ -68,7 +70,12 @@ export class UsuariosRoles implements OnInit{
 
   constructor(private http: HttpClient,private authService: AuthService,
     private cdr: ChangeDetectorRef, private router:Router
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('admin.usuario_gestionado')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.listarUsuarios());
+  }
 
   ngOnInit(): void {
     this.listarUsuarios();
@@ -189,10 +196,10 @@ listarUsuarios(): void {
     };
 
     this.http.post(this.apiUrl, nuevoUsuario).subscribe({
-  next: (response) => {
+  next: () => {
     Swal.fire({
       title: 'Registro guardado',
-      text: 'Usuario creado correctamente' + response,
+      text: 'Usuario creado correctamente.',
       icon: 'success',
       confirmButtonText: 'Aceptar'
     }).then(() => {
@@ -213,12 +220,12 @@ error: (error) => {
       // Si el mensaje es un arreglo, lo unimos. Si no, lo mostramos directo.
       const textoError = Array.isArray(mensajes) ? mensajes.join(', ') : mensajes;
       // Formato: <li><strong>campo:</strong> mensaje de error</li>
-      return `<li><strong>${campo}:</strong> ${textoError}</li>`;
+      return `<dt>${campo}</dt><dd class="qa-tono">${textoError}</dd>`;
     });
 
     if (listaErrores.length > 0) {
       // Envolvemos los elementos en una etiqueta <ul> (lista desordenada)
-      mensajeErrorHtml = `<ul style="text-align: left;">${listaErrores.join('')}</ul>`;
+      mensajeErrorHtml = `<dl class="qa-datos">${listaErrores.join('')}</dl>`;
     }
   }
 
@@ -227,9 +234,7 @@ error: (error) => {
     title: 'No fue posible guardar el registro',
     html: mensajeErrorHtml, // IMPORTANTE: Cambiar 'text' por 'html'
     icon: 'error',
-    confirmButtonText: 'Aceptar',
-    background: '#FFFFFF',
-    color: '#170B3D'
+    confirmButtonText: 'Aceptar'
   });
 }
     });
@@ -259,8 +264,6 @@ actualizarUsuario(): void {
         title: 'Usuario actualizado',
         text: 'Los datos del usuario se actualizaron correctamente.',
         confirmButtonText: 'Aceptar',
-        background: '#FFFFFF',
-        color: '#170B3D',
         timer: 2500,
         timerProgressBar: true
       });
@@ -277,9 +280,7 @@ actualizarUsuario(): void {
         icon: 'error',
         title: 'No fue posible actualizar el registro',
         text: 'No se pudo actualizar el usuario. Intente nuevamente.',
-        confirmButtonText: 'Aceptar',
-        background: '#FFFFFF',
-        color: '#170B3D'
+        confirmButtonText: 'Aceptar'
       });
 
     }
@@ -314,10 +315,9 @@ actualizarUsuario(): void {
       title: `Confirmar ${accion} usuario`,
       icon: 'warning',
       showCancelButton: true,
-      background: '#FFFFFF',
-      color: '#170B3D',
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonText: nuevoEstado ? 'Activar' : 'Inactivar',
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' }
     }).then((result) => {
       if (result.isConfirmed) {
         this.authService.inactivarUsuario(id_usuario, nuevoEstado).subscribe({
@@ -332,7 +332,7 @@ actualizarUsuario(): void {
             console.error(`Error al ${accion} usuario:`, error);
             Swal.fire({
               title: 'No fue posible completar la acción',
-              text: `No se pudo ${accion} el usuario.`,
+              text: `No se pudo ${accion} el usuario. Intente nuevamente.`,
               icon: 'error'
             });
           }
@@ -347,20 +347,16 @@ actualizarUsuario(): void {
     text: 'Se finalizará la sesión actual en el sistema.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Confirmar',
-    cancelButtonText: 'Cancelar',
-    reverseButtons: true,
-    background: '#FFFFFF',
-    color: '#170B3D'
+    confirmButtonText: 'Cerrar sesión',
+    cancelButtonText: 'Cancelar'
   }).then((result) => {
 
     if (result.isConfirmed) {
 
       // Eliminar información de sesión
-      localStorage.removeItem('token');
-      localStorage.removeItem('usuario');
+      this.authService.logout();
 
-      // Ir al componente inicio-administrador
+      // Ir al inicio
       this.router.navigate(['/']);
 
     }
@@ -459,11 +455,8 @@ filtrarPorRol(idRol: number | null): void {
       html: `Se asignará a <b>${usuario.nombre} ${usuario.apellido}</b> el rol <b>${nuevoNombreRol}</b>.`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true,
-      background: '#FFFFFF',
-      color: '#170B3D'
+      confirmButtonText: 'Cambiar rol',
+      cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
         this.ejecutarCambioRol(usuario, nuevoIdRol, nuevoNombreRol);
@@ -492,8 +485,6 @@ filtrarPorRol(idRol: number | null): void {
           title: 'Rol actualizado',
           text: `El rol de ${usuario.nombre} se actualizó a ${nuevoNombreRol} correctamente.`,
           confirmButtonText: 'Aceptar',
-          background: '#FFFFFF',
-          color: '#170B3D',
           timer: 2200,
           timerProgressBar: true
         });
@@ -506,9 +497,7 @@ filtrarPorRol(idRol: number | null): void {
           icon: 'error',
           title: 'No fue posible actualizar el rol',
           text: 'No se pudo actualizar el rol del usuario. Intente nuevamente.',
-          confirmButtonText: 'Aceptar',
-          background: '#FFFFFF',
-          color: '#170B3D'
+          confirmButtonText: 'Aceptar'
         });
       }
     });

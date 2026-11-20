@@ -24,6 +24,7 @@ import {
   UsuarioAlerta
 } from '../../models/duplicados.model';
 import { AlertasDuplicadosService } from '../../services/alertas-duplicados.service';
+import { AnimalIconComponent } from '../../animal-icon/animal-icon';
 
 export type TipoMediaEvidencia = 'imagen' | 'video' | 'archivo';
 
@@ -84,7 +85,7 @@ const EXTENSIONES_ARCHIVO_REGEX = /\.(pdf|doc|docx|xls|xlsx|txt|csv|zip|rar)$/i;
 @Component({
   selector: 'app-alerta-duplicado-comparacion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AnimalIconComponent],
   templateUrl: './alerta-duplicado-comparacion.html',
   styleUrl: './alerta-duplicado-comparacion.css'
 })

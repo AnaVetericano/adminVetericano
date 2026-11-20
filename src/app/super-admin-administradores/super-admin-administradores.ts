@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
@@ -10,6 +11,7 @@ import {
 } from '../services/super-admin.service';
 import { SedesService, Sede } from '../services/sedes.service';
 import { AuthService } from '../services/auth';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -58,7 +60,12 @@ export class SuperAdminAdministradoresComponent implements OnInit {
     private sedesService: SedesService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['admin.usuario_gestionado', 'admin.sede_actualizada'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type === 'admin.sede_actualizada' ? this.cargarSedes() : this.cargarAdministradores()));
+  }
 
   ngOnInit(): void {
     this.cargarSedes();
@@ -360,7 +367,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: nuevoEstado ? 'Activar' : 'Desactivar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' }
     }).then((result) => {
       if (!result.isConfirmed) return;
 
@@ -383,7 +391,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
 
             Swal.fire({
               icon: 'success',
-              title: nuevoEstado ? 'Administrador Activado' : 'Administrador Inactivado',
+              title: nuevoEstado ? 'Administrador activado' : 'Administrador inactivado',
               text: `El estado de ${actualizado.nombre} ${actualizado.apellido || ''} se actualizó en el servidor.`,
               timer: 2000,
               showConfirmButton: false

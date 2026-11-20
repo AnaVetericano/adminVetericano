@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-proveedores',
@@ -23,7 +24,7 @@ export class Proveedores implements OnInit {
   editar = false;
   mostrarFiltros = false;
 
-  private apiUrl = 'https://backendvetericano-production.up.railway.app/api/inventario/proveedores/';
+  private apiUrl = `${environment.apiUrlInventario}proveedores/`;
 
   proveedor = {
     id_proveedor: 0,
@@ -68,9 +69,9 @@ export class Proveedores implements OnInit {
       this.proveedoresFiltrados = [...this.proveedores];
     } else {
       this.proveedoresFiltrados = this.proveedores.filter(p =>
-        (p.nombre && p.nombre.toLowerCase().includes(busqueda)) ||
-        (p.email && p.email.toLowerCase().includes(busqueda)) ||
-        (p.telefono && p.telefono.includes(busqueda))
+        (p.nombre && String(p.nombre).toLowerCase().includes(busqueda)) ||
+        (p.email && String(p.email).toLowerCase().includes(busqueda)) ||
+        (p.telefono && String(p.telefono).toLowerCase().includes(busqueda))
       );
     }
   }
@@ -108,7 +109,12 @@ export class Proveedores implements OnInit {
 
   guardar(): void {
     if (!this.proveedor.nombre || this.proveedor.nombre.trim() === '') {
-      Swal.fire('Error', 'El nombre del proveedor es requerido', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Campo obligatorio',
+        text: 'Ingrese el nombre del proveedor.',
+        confirmButtonText: 'Aceptar'
+      });
       return;
     }
 
@@ -124,27 +130,47 @@ export class Proveedores implements OnInit {
     if (this.editar) {
       this.http.put(`${this.apiUrl}${this.proveedor.id_proveedor}/`, payload, { headers: this.getAuthHeaders() }).subscribe({
         next: () => {
-          Swal.fire('Proveedor actualizado', 'Los datos del proveedor se guardaron correctamente', 'success');
+          Swal.fire({
+            icon: 'success',
+            title: 'Proveedor actualizado',
+            text: 'Los datos del proveedor se guardaron correctamente.',
+            confirmButtonText: 'Aceptar'
+          });
           this.listarProveedores();
           this.cerrarModal();
         },
         error: (err) => {
           console.error('Error al actualizar proveedor:', err);
           const msg = err.error?.detail || err.error?.mensaje || 'No se pudo actualizar el proveedor';
-          Swal.fire('Error', msg, 'error');
+          Swal.fire({
+            icon: 'error',
+            title: 'No fue posible actualizar el proveedor',
+            text: msg,
+            confirmButtonText: 'Aceptar'
+          });
         }
       });
     } else {
       this.http.post(this.apiUrl, payload, { headers: this.getAuthHeaders() }).subscribe({
         next: () => {
-          Swal.fire('Proveedor registrado', 'El proveedor se creó correctamente', 'success');
+          Swal.fire({
+            icon: 'success',
+            title: 'Proveedor registrado',
+            text: 'El proveedor se creó correctamente.',
+            confirmButtonText: 'Aceptar'
+          });
           this.listarProveedores();
           this.cerrarModal();
         },
         error: (err) => {
           console.error('Error al crear proveedor:', err);
           const msg = err.error?.detail || err.error?.mensaje || 'No se pudo registrar el proveedor';
-          Swal.fire('Error', msg, 'error');
+          Swal.fire({
+            icon: 'error',
+            title: 'No fue posible registrar el proveedor',
+            text: msg,
+            confirmButtonText: 'Aceptar'
+          });
         }
       });
     }
@@ -156,10 +182,11 @@ export class Proveedores implements OnInit {
     // Mostramos confirmación
     Swal.fire({
       title: 'Confirmar cambio de estado',
-      text: `Se va a ${nuevoEstado ? 'activar' : 'inactivar'} el proveedor ${proveedorExistente.nombre}`,
+      text: `Se va a ${nuevoEstado ? 'activar' : 'inactivar'} el proveedor ${proveedorExistente.nombre}.`,
       icon: 'warning',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' },
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: nuevoEstado ? 'Activar' : 'Inactivar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -167,13 +194,23 @@ export class Proveedores implements OnInit {
         this.http.patch(`${this.apiUrl}${proveedorExistente.id_proveedor}/`, { activo: nuevoEstado }, { headers: this.getAuthHeaders() }).subscribe({
           next: () => {
             proveedorExistente.activo = nuevoEstado;
-            Swal.fire('Estado actualizado', 'El estado del proveedor se actualizó correctamente', 'success');
+            Swal.fire({
+              icon: 'success',
+              title: 'Estado actualizado',
+              text: 'El estado del proveedor se actualizó correctamente.',
+              confirmButtonText: 'Aceptar'
+            });
             this.cdr.detectChanges();
           },
           error: (err) => {
             console.error('Error al cambiar estado:', err);
             const msg = err.error?.detail || err.error?.mensaje || 'No se pudo cambiar el estado';
-            Swal.fire('Error', msg, 'error');
+            Swal.fire({
+              icon: 'error',
+              title: 'No fue posible cambiar el estado',
+              text: msg,
+              confirmButtonText: 'Aceptar'
+            });
           }
         });
       }

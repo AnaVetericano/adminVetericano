@@ -1,26 +1,7 @@
-<div class="min-h-full px-4 sm:px-6 py-5 font-['Nunito',sans-serif] text-slate-800 antialiased">
+<div class="min-h-full px-4 sm:px-6 pt-3 pb-5 font-['Nunito',sans-serif] text-slate-800 antialiased">
 
-  <!-- ENCABEZADO -->
-  <div class="max-w-screen-2xl mx-auto mb-5 flex flex-wrap items-center justify-end gap-2">
-    <app-page-title titulo="Perfil del Usuario" subtitulo="Gestiona tu información personal, credenciales profesionales y datos compartidos con la aplicación móvil." />
-
-    <!-- BADGE DE ROL Y MÓVIL -->
-    <div
-      class="flex items-center gap-2.5 self-start sm:self-auto bg-white px-4 py-2 rounded-xl shadow-xs border border-slate-200">
-      <div class="w-2 h-2 rounded-full"
-        [ngClass]="usuario.rol.toLowerCase().includes('admin') ? 'bg-[#4141A5]' : 'bg-slate-500'"></div>
-      <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Rol Activo</p>
-        <p class="text-xs font-bold text-[#170B3D] flex items-center gap-1.5">
-          {{ usuario.rol }}
-          <span
-            class="text-[10px] font-semibold text-[#067647] bg-[#ECFDF3] px-2 py-0.5 rounded-md border border-[#ABEFC6]">
-            Web & Móvil
-          </span>
-        </p>
-      </div>
-    </div>
-  </div>
+  <!-- ENCABEZADO: el título se muestra en la barra superior -->
+  <app-page-title titulo="Perfil del Usuario" subtitulo="Gestione su información personal y credenciales profesionales." />
 
   <div class="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
 
@@ -35,25 +16,31 @@
         <div class="relative z-10 pt-6 flex flex-col items-center">
           <div class="relative group">
             <div
-              class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xs bg-slate-100 flex items-center justify-center relative">
-              <img [src]="usuario.foto || avatarPredeterminado" alt="Foto de perfil"
-                class="w-full h-full object-cover object-center" />
+              class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-sm bg-slate-100 flex items-center justify-center relative">
+              @let inicialesPerfil = ((usuario.nombre || '').charAt(0) + (usuario.apellido || '').charAt(0)).toUpperCase();
+              @if (usuario.foto) {
+                <img [src]="usuario.foto" alt="Foto de perfil" class="w-full h-full object-cover object-center" />
+              } @else if (inicialesPerfil) {
+                <span class="w-full h-full flex items-center justify-center bg-[#4141A5] text-white text-4xl font-extrabold tracking-wide select-none" aria-label="Iniciales del usuario">{{ inicialesPerfil }}</span>
+              } @else {
+                <img [src]="avatarPredeterminado" alt="Foto de perfil" class="w-full h-full object-cover object-center" />
+              }
 
-              <!-- Overlay animado durante la subida a Cloudinary -->
+              <!-- Overlay animado durante la subida de la foto -->
               @if (subiendoACloudinary) {
               <div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-[11px] font-semibold p-2 text-center">
                 <svg class="animate-spin h-6 w-6 text-white mb-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                 </svg>
-                <span>Subiendo a Cloudinary...</span>
+                <span>Subiendo foto...</span>
               </div>
               }
             </div>
 
             <!-- BOTÓN PARA CAMBIAR FOTO -->
             <label for="inputFotoPerfil" title="Cambiar foto de perfil"
-              class="absolute bottom-1 right-1 p-2 bg-[#4141A5] hover:bg-[#353583] text-white rounded-full shadow-xs cursor-pointer transition">
+              class="absolute bottom-1 right-1 p-2 bg-white text-[#4141A5] border border-slate-200 rounded-full cursor-pointer transition">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="1.75">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -65,14 +52,8 @@
               class="hidden" />
           </div>
 
-          <!-- Indicador de estado en Cloudinary -->
+          <!-- Estado de la foto: si ya está guardada no se muestra nada (no hace falta decir dónde se guarda) -->
           @if (usuario.foto && usuario.foto.includes('cloudinary.com')) {
-          <span class="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#067647] bg-[#ECFDF3] px-2 py-0.5 rounded-md border border-[#ABEFC6]">
-            <svg class="w-3 h-3 text-[#067647]" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/>
-            </svg>
-            Guardada en Cloudinary
-          </span>
           } @else if (archivoSeleccionado) {
           <span class="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#9A5B13] bg-[#FFF4E5] px-2 py-0.5 rounded-md border border-[#FCD9A6]">
             Nueva foto lista para subir
@@ -83,7 +64,7 @@
           @if (usuario.foto) {
           <button type="button" (click)="eliminarFoto()"
             class="mt-2 text-xs text-[#B42318] hover:opacity-80 font-semibold transition-colors cursor-pointer">
-            Quitar foto personalizada
+            Quitar foto
           </button>
           }
 
@@ -91,9 +72,6 @@
             {{ (usuario.nombre || usuario.apellido) ? (usuario.nombre + ' ' + usuario.apellido) : 'Usuario' }}
           </h2>
 
-          <p class="text-xs text-slate-500 font-medium mt-0.5">
-            {{ usuario.email || 'Sin correo registrado' }}
-          </p>
 
           <div class="mt-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold border"
             [ngClass]="usuario.rol.toLowerCase().includes('admin') ? 'bg-[#4141A5]/5 text-[#4141A5] border-[#4141A5]/20' : 'bg-slate-50 text-slate-700 border-slate-200'">
@@ -103,32 +81,21 @@
           </div>
         </div>
 
-        <!-- RESUMEN RÁPIDO DE CREDENCIALES -->
-        <div class="mt-5 pt-4 border-t border-slate-100 text-left space-y-2.5 text-xs">
-          <div class="flex items-center justify-between text-slate-600">
-            <span class="text-slate-500 font-medium">Cédula:</span>
-            <span class="font-semibold text-[#170B3D]">{{ usuario.identificacion || 'No registrada' }}</span>
-          </div>
+        <!-- RESUMEN DE DATOS -->
+        <dl class="qa-datos mt-5">
+          <dt>Cédula</dt>
+          <dd [class.text-slate-400]="!usuario.identificacion">{{ usuario.identificacion || 'No registrada' }}</dd>
+          <dt>Correo</dt>
+          <dd [class.text-slate-400]="!usuario.email">{{ usuario.email || 'No registrado' }}</dd>
+          <dt>Teléfono</dt>
+          <dd [class.text-slate-400]="!usuario.telefono">{{ usuario.telefono || 'No registrado' }}</dd>
           @if (usuario.rol === 'Veterinario') {
-            <div class="flex items-center justify-between text-slate-600">
-              <span class="text-slate-500 font-medium">Tarjeta Prof.:</span>
-              <span class="font-semibold text-[#4141A5]">{{ usuario.tarjeta_profesional || 'No registrada' }}</span>
-            </div>
-            <div class="flex items-center justify-between text-slate-600">
-              <span class="text-slate-500 font-medium">Matrícula:</span>
-              <span class="font-semibold text-slate-700">{{ usuario.matricula || 'No registrada' }}</span>
-            </div>
-          } @else if (usuario.rol === 'Administrador') {
-            <div class="flex items-center justify-between text-slate-600">
-              <span class="text-slate-500 font-medium">Tipo de Cuenta:</span>
-              <span class="font-semibold text-[#170B3D]">Administrador Principal</span>
-            </div>
-            <div class="flex items-center justify-between text-slate-600">
-              <span class="text-slate-500 font-medium">Nivel de Acceso:</span>
-              <span class="font-semibold text-[#4141A5]">Control Total del CBA</span>
-            </div>
+            <dt>Tarjeta profesional</dt>
+            <dd [class.text-slate-400]="!usuario.tarjeta_profesional">{{ usuario.tarjeta_profesional || 'No registrada' }}</dd>
+            <dt>Matrícula</dt>
+            <dd [class.text-slate-400]="!usuario.matricula">{{ usuario.matricula || 'No registrada' }}</dd>
           }
-        </div>
+        </dl>
       </div>
 
       <!-- NOTA DE SINCRONIZACIÓN MÓVIL -->
@@ -144,14 +111,14 @@
           </div>
           <div>
             @if (usuario.rol === 'Administrador') {
-              <p class="text-sm font-semibold text-[#170B3D]">Panel de Gestión y Supervisión</p>
+              <p class="text-sm font-semibold text-[#170B3D]">Panel de gestión y supervisión</p>
               <p class="text-slate-600 mt-0.5 text-xs">
-                Tu cuenta de Administrador cuenta con privilegios totales para la gestión de usuarios, roles, inventario general, voluntariado y reportería.
+                Su cuenta de administrador tiene acceso completo a la gestión de usuarios, roles, inventario general, voluntariado y reportes.
               </p>
             } @else {
-              <p class="text-sm font-semibold text-[#170B3D]">Sincronización con App Móvil</p>
+              <p class="text-sm font-semibold text-[#170B3D]">Sincronizado con la app móvil</p>
               <p class="text-slate-600 mt-0.5 text-xs">
-                Los cambios en tu información personal y credenciales veterinarias se sincronizan con tu sesión de la
+                Los cambios en su información personal y credenciales veterinarias se reflejan también en su sesión de la
                 aplicación móvil.
               </p>
             }
@@ -174,33 +141,33 @@
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <h3 class="text-base font-bold text-[#170B3D]">Información Personal e Identificación</h3>
+            <h3 class="text-base font-bold text-[#170B3D]">Información personal e identificación</h3>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <!-- NOMBRE -->
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
                 Nombres <span class="text-[#B42318]">*</span>
               </label>
-              <input type="text" name="nombre" [(ngModel)]="usuario.nombre" required placeholder="Ingresa tus nombres"
+              <input type="text" name="nombre" [(ngModel)]="usuario.nombre" required placeholder="Ingrese sus nombres"
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
             </div>
 
             <!-- APELLIDO -->
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
                 Apellidos
               </label>
-              <input type="text" name="apellido" [(ngModel)]="usuario.apellido" placeholder="Ingresa tus apellidos"
+              <input type="text" name="apellido" [(ngModel)]="usuario.apellido" placeholder="Ingrese sus apellidos"
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
             </div>
 
             <!-- CÉDULA / IDENTIFICACIÓN -->
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Cédula de Ciudadanía / Documento
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Cédula de ciudadanía o documento
               </label>
               <input type="text" name="identificacion" [(ngModel)]="usuario.identificacion"
                 placeholder="Número de identificación"
@@ -209,8 +176,8 @@
 
             <!-- ROL (INFORMATIVO) -->
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Rol Asignado
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Rol asignado
               </label>
               <input type="text" [value]="usuario.rol" readonly
                 class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-500 bg-slate-100 cursor-not-allowed" />
@@ -227,15 +194,15 @@
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <h3 class="text-base font-bold text-[#170B3D]">Información de Contacto</h3>
+            <h3 class="text-base font-bold text-[#170B3D]">Información de contacto</h3>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <!-- CORREO ELECTRÓNICO -->
             <div class="sm:col-span-2">
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Correo Electrónico <span class="text-[#B42318]">*</span>
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Correo electrónico <span class="text-[#B42318]">*</span>
               </label>
               <input type="email" name="email" [(ngModel)]="usuario.email" required placeholder="ejemplo@correo.com"
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
@@ -243,19 +210,19 @@
 
             <!-- TELÉFONO -->
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Número de Teléfono / Celular
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Teléfono o celular
               </label>
-              <input type="tel" name="telefono" [(ngModel)]="usuario.telefono" placeholder="Ej: 310 123 4567"
+              <input type="tel" name="telefono" [(ngModel)]="usuario.telefono" placeholder="Ej.: 310 123 4567"
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
             </div>
 
             <!-- DIRECCIÓN -->
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                Dirección de Residencia o Consultorio
+              <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Dirección de residencia o consultorio
               </label>
-              <input type="text" name="direccion" [(ngModel)]="usuario.direccion" placeholder="Ej: Carrera 5 # 10-20"
+              <input type="text" name="direccion" [(ngModel)]="usuario.direccion" placeholder="Ej.: Carrera 5 # 10-20"
                 class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
             </div>
 
@@ -271,33 +238,33 @@
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <h3 class="text-base font-bold text-[#170B3D]">Credenciales Profesionales</h3>
+              <h3 class="text-base font-bold text-[#170B3D]">Credenciales profesionales</h3>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
               <!-- TARJETA PROFESIONAL -->
               <div>
-                <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Tarjeta Profesional (COMVEZCOL)
+                <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                  Tarjeta profesional (COMVEZCOL)
                 </label>
                 <input type="text" name="tarjeta_profesional" [(ngModel)]="usuario.tarjeta_profesional"
-                  placeholder="Ej: TP-123456"
+                  placeholder="Ej.: TP-123456"
                   class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
                 <span class="text-[11px] text-slate-400 mt-1 block">
-                  Utilizada para la firma y emisión de actas clínicas y recetas.
+                  Se usa para firmar actas clínicas y recetas.
                 </span>
               </div>
 
               <!-- MATRÍCULA -->
               <div>
-                <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
-                  Matrícula Profesional
+                <label class="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                  Matrícula profesional
                 </label>
-                <input type="text" name="matricula" [(ngModel)]="usuario.matricula" placeholder="Ej: MAT-98765"
+                <input type="text" name="matricula" [(ngModel)]="usuario.matricula" placeholder="Ej.: MAT-98765"
                   class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition bg-white" />
                 <span class="text-[11px] text-slate-400 mt-1 block">
-                  Número de registro o matrícula profesional complementario.
+                  Número de registro complementario.
                 </span>
               </div>
 
@@ -314,7 +281,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
               </svg>
-              <span>Subiendo a Cloudinary...</span>
+              <span>Subiendo foto...</span>
             } @else if (guardando) {
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -326,7 +293,7 @@
                 stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span>Guardar Cambios</span>
+              <span>Guardar cambios</span>
             }
           </button>
         </div>

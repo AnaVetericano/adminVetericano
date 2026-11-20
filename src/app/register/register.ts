@@ -35,9 +35,7 @@ export class Register {
         title: 'Campos obligatorios incompletos',
         text: 'Complete todos los campos obligatorios para continuar.',
         icon: 'warning',
-        confirmButtonText: 'Aceptar',
-        background: '#ffffff',
-        color: '#170B3D'
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -53,9 +51,7 @@ this.authService.registrar(this.register).subscribe({
       title: 'Registro guardado',
       text: 'Administrador registrado correctamente.',
       icon: 'success',
-      confirmButtonText: 'Aceptar',
-      background: '#ffffff',
-      color: '#170B3D'
+      confirmButtonText: 'Aceptar'
     }).then(() => {
 
       this.router.navigate(['/iniciodesesionadministrador']);
@@ -87,9 +83,7 @@ this.authService.registrar(this.register).subscribe({
       title: 'No fue posible completar el registro',
       text: mensajeReal,
       icon: 'error',
-      confirmButtonText: 'Aceptar',
-      background: '#ffffff',
-      color: '#170B3D'
+      confirmButtonText: 'Aceptar'
     });
 
   }
@@ -102,5 +96,3 @@ this.authService.registrar(this.register).subscribe({
     this.router.navigate(['/iniciodesesionadministrador']);
   }
 }
-
-// perra 

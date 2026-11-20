@@ -1,4 +1,4 @@
-<div class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white min-h-screen">
+<div class="w-full bg-[#F4F5F7] flex flex-col text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white">
 
   <!-- ========================================================================= -->
   <!-- 1. TÍTULO Y BOTÓN DE ACCIÓN EN LA BARRA SUPERIOR (SIN SUB-HEADER)          -->
@@ -16,58 +16,89 @@
   <!-- 2. CONTENIDO PRINCIPAL: 3 COLUMNAS [~25% | ~50% | ~25%]                    -->
   <!--    Aprovecha todo el espacio vertical superior                             -->
   <!-- ========================================================================= -->
-  <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 space-y-4">
+  <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 flex flex-col gap-4">
 
     <!-- Mensaje de Error si ocurre -->
-    <div *ngIf="errorCarga" class="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between text-red-700 text-xs font-bold">
+    <div *ngIf="errorCarga" class="px-4 py-3 bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl flex items-center justify-between text-[#170B3D] text-xs font-semibold">
       <div class="flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
         </svg>
-        <span>{{ errorCarga }}</span>
+        <span class="text-slate-700">{{ errorCarga }}</span>
       </div>
-      <button (click)="cargarDatos(true)" class="underline cursor-pointer hover:text-red-900">Reintentar</button>
+      <button (click)="cargarDatos(true)" class="underline cursor-pointer text-[#B42318] hover:opacity-80">Reintentar</button>
     </div>
 
-    <!-- Grid de 3 Columnas -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    <!-- Selector rápido de vistas de Dashboard por Rol (Supervisión Integral) -->
+    <div *ngIf="authService.isAdmin()" class="hidden">
+      <span class="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">Vista por rol</span>
+      <div class="segmentado inline-flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 overflow-x-auto max-w-full">
+        <a
+          routerLink="/inicio-admin/dashboard-juridico"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 bg-white text-[#4141A5] shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+          </svg>
+          <span>Dashboard Jurídico</span>
+        </a>
+        <a
+          routerLink="/inicio-admin/dashboard-veterinario"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 text-slate-600 hover:text-slate-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span>Dashboard Veterinario</span>
+        </a>
+        <a
+          routerLink="/inicio-admin/graficas"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 text-slate-600 hover:text-slate-900">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span>Dashboard Administrador</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Grid de 3 Columnas perfectamente alineadas al fondo -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
 
       <!-- ===================================================================== -->
       <!-- COLUMNA IZQUIERDA (Operativo & Urgencias) [~25% ancho -> lg:col-span-3]-->
       <!-- ===================================================================== -->
-      <div class="lg:col-span-3 min-w-0 space-y-4">
+      <div class="lg:col-span-3 min-w-0 flex flex-col gap-4 h-full">
 
         <!-- 1. Flujo de Peticiones -->
-        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
-              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D]">Flujo de Peticiones</h3>
+              <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D]">Flujo de Peticiones</h3>
             </div>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4141A5]/10 text-[#4141A5]">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
               Total: {{ metricas.peticiones.total }}
             </span>
           </div>
 
           <!-- Total Radicados -->
           <div class="mt-4">
-            <div class="text-3xl font-black text-[#170B3D] tracking-tight">
+            <div class="text-3xl font-bold text-[#170B3D] tracking-tight">
               {{ metricas.peticiones.total }}
             </div>
-            <p class="text-xs text-gray-400 font-medium mt-0.5">
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
               Radicados ingresados al sistema
             </p>
           </div>
 
           <!-- Barra de Proporción -->
           <div class="mt-4 space-y-1.5">
-            <div class="flex items-center justify-between text-[11px] font-bold text-gray-500">
+            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500">
               <span>Proporción de estados</span>
               <span class="text-slate-600 font-semibold">{{ porcentajeFinalizadas }}% resueltas</span>
             </div>
-            <div class="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+            <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex p-0.5 gap-0.5">
               <div 
-                class="bg-amber-400 h-full rounded-l-full transition-all duration-500" 
+                class="bg-[#9A5B13] h-full rounded-l-full transition-all duration-500" 
                 [style.width.%]="porcentajePendientes" 
                 [title]="'Pendientes: ' + metricas.peticiones.pendientes + ' (' + porcentajePendientes + '%)'">
               </div>
@@ -85,22 +116,22 @@
           </div>
 
           <!-- Desglose Numérico con micro-tarjetas -->
-          <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-gray-100">
-            <div class="bg-amber-50 rounded-2xl p-2.5 border border-amber-100/60 text-center min-w-0">
-              <div class="text-[10px] font-bold text-amber-700 uppercase truncate">Pendientes</div>
-              <div class="text-lg font-black text-amber-700 mt-0.5">{{ metricas.peticiones.pendientes }}</div>
-              <div class="text-[9px] text-amber-600 font-semibold">{{ porcentajePendientes }}%</div>
+          <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
+            <div class="bg-[#FFF4E5] rounded-lg p-2.5 border border-[#FCD9A6] text-center min-w-0">
+              <div class="text-[10px] font-semibold text-[#9A5B13] uppercase truncate">Pendientes</div>
+              <div class="text-lg font-bold text-[#9A5B13] mt-0.5">{{ metricas.peticiones.pendientes }}</div>
+              <div class="text-[9px] text-[#9A5B13] font-semibold">{{ porcentajePendientes }}%</div>
             </div>
-            <div class="bg-indigo-50/60 rounded-2xl p-2.5 border border-indigo-100/60 text-center min-w-0">
-              <div class="text-[10px] font-bold text-[#4141A5] uppercase truncate">En Proceso</div>
-              <div class="text-lg font-black text-[#4141A5] mt-0.5">{{ metricas.peticiones.enProceso }}</div>
+            <div class="bg-[#4141A5]/5 rounded-lg p-2.5 border border-[#4141A5]/20 text-center min-w-0">
+              <div class="text-[10px] font-semibold text-[#4141A5] uppercase truncate">En Proceso</div>
+              <div class="text-lg font-bold text-[#4141A5] mt-0.5">{{ metricas.peticiones.enProceso }}</div>
               <div class="text-[9px] text-[#4141A5]/80 font-semibold">{{ porcentajeEnProceso }}%</div>
             </div>
-            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-200/60 text-center min-w-0">
-              <div class="text-[10px] font-bold text-slate-500 uppercase truncate">Finalizadas</div>
-              <div class="text-lg font-black text-slate-800 mt-0.5">{{ metricas.peticiones.finalizadas }}</div>
-              <div class="inline-flex items-center justify-center gap-1 text-[9px] text-emerald-600 font-bold">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200 text-center min-w-0">
+              <div class="text-[10px] font-semibold text-slate-500 uppercase truncate">Finalizadas</div>
+              <div class="text-lg font-bold text-[#170B3D] mt-0.5">{{ metricas.peticiones.finalizadas }}</div>
+              <div class="inline-flex items-center justify-center gap-1 text-[9px] text-[#067647] font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#067647]"></span>
                 <span>{{ porcentajeFinalizadas }}%</span>
               </div>
             </div>
@@ -108,23 +139,25 @@
         </div>
 
         <!-- 2. Atención Urgente -->
-        <div class="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200/80 rounded-3xl p-5 shadow-xs min-w-0 overflow-hidden relative">
+        <div class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl p-5 shadow-xs min-w-0 overflow-hidden relative">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
-              <span class="text-xs font-black uppercase tracking-wider text-red-700">Atención Urgente</span>
+              <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>
+              <span class="text-xs font-bold uppercase tracking-wide text-[#170B3D]">Atención Urgente</span>
             </div>
-            <div class="w-9 h-9 rounded-2xl bg-white text-red-600 flex items-center justify-center font-bold shadow-xs">
-              🚨
+            <div class="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 text-[#B42318] flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
             </div>
           </div>
 
           <div class="mt-3">
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-black text-red-600 tracking-tight">{{ metricas.peticiones.urgentes }}</span>
-              <span class="text-xs font-bold text-red-700 uppercase">Casos Críticos</span>
+              <span class="text-3xl font-bold text-[#170B3D] tracking-tight">{{ metricas.peticiones.urgentes }}</span>
+              <span class="text-xs font-semibold text-[#B42318] uppercase">Casos Críticos</span>
             </div>
-            <p class="mt-1 text-xs text-red-700/90 font-medium leading-relaxed">
+            <p class="mt-1 text-xs text-slate-600 font-medium leading-relaxed">
               Maltrato prioritario, abandono severo o riesgo vital inminente.
             </p>
           </div>
@@ -133,8 +166,8 @@
           <button
             type="button"
             (click)="irACasosUrgentes()"
-            class="mt-4 w-full py-2.5 px-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            class="mt-4 w-full py-2.5 px-3 bg-[#B42318] hover:opacity-90 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <span>Atender Casos Urgentes</span>
@@ -142,44 +175,50 @@
         </div>
 
         <!-- 3. Seres en CBA -->
-        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
-              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D]">Seres en CBA</h3>
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D]">Seres en CBA</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+                {{ metricas.cba.totalIngresadosCBA }} activos
+              </span>
             </div>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-              {{ metricas.cba.totalIngresadosCBA }} activos
-            </span>
+
+            <div class="mt-3 space-y-2.5">
+              <!-- Observación -->
+              <div class="flex items-center justify-between p-2.5 bg-[#4141A5]/5 hover:bg-[#4141A5]/10 rounded-lg border border-[#4141A5]/20 transition-colors">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
+                  <span class="text-xs font-semibold text-slate-700">En Observación</span>
+                </div>
+                <span class="text-sm font-bold text-[#4141A5]">{{ metricas.cba.enObservacion }}</span>
+              </div>
+
+              <!-- Tratamiento -->
+              <div class="flex items-center justify-between p-2.5 bg-[#FEECEB] hover:bg-[#FEECEB]/80 rounded-lg border border-[#F5B7B1] transition-colors">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#B42318]"></span>
+                  <span class="text-xs font-semibold text-slate-700">En Tratamiento</span>
+                </div>
+                <span class="text-sm font-bold text-[#B42318]">{{ metricas.cba.enTratamiento }}</span>
+              </div>
+
+              <!-- Adopción -->
+              <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-2 h-2 rounded-full bg-[#170B3D]"></span>
+                  <span class="text-xs font-semibold text-slate-700">Aptos Adopción</span>
+                </div>
+                <span class="text-sm font-bold text-[#170B3D]">{{ metricas.cba.aptosAdopcion }}</span>
+              </div>
+            </div>
           </div>
 
-          <div class="mt-3 space-y-2.5">
-            <!-- Observación -->
-            <div class="flex items-center justify-between p-2.5 bg-[#4141A5]/5 hover:bg-[#4141A5]/10 rounded-2xl border border-[#4141A5]/10 transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-[#4141A5]"></span>
-                <span class="text-xs font-bold text-gray-700">En Observación</span>
-              </div>
-              <span class="text-sm font-black text-[#4141A5]">{{ metricas.cba.enObservacion }}</span>
-            </div>
-
-            <!-- Tratamiento -->
-            <div class="flex items-center justify-between p-2.5 bg-red-50/60 hover:bg-red-50 rounded-2xl border border-red-100 transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <span class="text-xs font-bold text-gray-700">En Tratamiento</span>
-              </div>
-              <span class="text-sm font-black text-red-600">{{ metricas.cba.enTratamiento }}</span>
-            </div>
-
-            <!-- Adopción -->
-            <div class="flex items-center justify-between p-2.5 bg-slate-50/70 hover:bg-slate-100/70 rounded-2xl border border-slate-200/70 transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2 h-2 rounded-full bg-[#170B3D]"></span>
-                <span class="text-xs font-bold text-gray-700">Aptos Adopción</span>
-              </div>
-              <span class="text-sm font-black text-[#170B3D]">{{ metricas.cba.aptosAdopcion }}</span>
-            </div>
+          <div class="pt-3 border-t border-slate-100 text-center">
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Centro de Bienestar Animal Popayán</span>
           </div>
         </div>
 
@@ -188,120 +227,136 @@
       <!-- ===================================================================== -->
       <!-- COLUMNA CENTRAL (Núcleo Analítico y Gráficas) [~50% ancho -> lg:col-span-6]-->
       <!-- ===================================================================== -->
-      <div class="lg:col-span-6 min-w-0 space-y-4">
+      <div class="lg:col-span-6 min-w-0 flex flex-col gap-4 h-full">
 
         <!-- 1. Cinta de 4 KPIs Compactos: [Total] [Asignados] [CBA] [% Efectividad] -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <!-- KPI 1: Total -->
-          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
-            <div class="flex items-center justify-between text-gray-400">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Total</span>
-              <span class="text-xs">📋</span>
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+              <span class="text-[11px] font-semibold uppercase tracking-wide">Total</span>
+              <span class="text-[#4141A5]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </span>
             </div>
             <div class="mt-2">
-              <div class="text-2xl font-black text-[#170B3D]">{{ metricas.peticiones.total }}</div>
-              <p class="text-[10px] text-gray-400 font-medium truncate">Peticiones radicadas</p>
+              <div class="text-2xl font-bold text-[#170B3D]">{{ metricas.peticiones.total }}</div>
+              <p class="text-[10px] text-slate-500 font-medium truncate">Peticiones radicadas</p>
             </div>
           </div>
 
           <!-- KPI 2: Asignados -->
-          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
-            <div class="flex items-center justify-between text-gray-400">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Asignados</span>
-              <span class="text-xs">🩺</span>
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+              <span class="text-[11px] font-semibold uppercase tracking-wide">Asignados</span>
+              <span class="text-[#4141A5]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </span>
             </div>
             <div class="mt-2">
-              <div class="text-2xl font-black text-[#4141A5]">{{ totalCasosAsignados }}</div>
-              <p class="text-[10px] text-gray-400 font-medium truncate">A veterinarios</p>
+              <div class="text-2xl font-bold text-[#4141A5]">{{ totalCasosAsignados }}</div>
+              <p class="text-[10px] text-slate-500 font-medium truncate">A veterinarios</p>
             </div>
           </div>
 
           <!-- KPI 3: CBA -->
-          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
-            <div class="flex items-center justify-between text-gray-400">
-              <span class="text-[10px] font-bold uppercase tracking-wider">CBA</span>
-              <span class="text-xs">🐾</span>
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+              <span class="text-[11px] font-semibold uppercase tracking-wide">CBA</span>
+              <span class="text-[#4141A5]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </span>
             </div>
             <div class="mt-2">
-              <div class="text-2xl font-black text-[#170B3D]">{{ metricas.cba.totalIngresadosCBA }}</div>
-              <p class="text-[10px] text-gray-400 font-medium truncate">Seres en centro</p>
+              <div class="text-2xl font-bold text-[#170B3D]">{{ metricas.cba.totalIngresadosCBA }}</div>
+              <p class="text-[10px] text-slate-500 font-medium truncate">Seres en centro</p>
             </div>
           </div>
 
           <!-- KPI 4: % Efectividad -->
-          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col justify-between">
-            <div class="flex items-center justify-between text-gray-400">
-              <span class="text-[10px] font-bold uppercase tracking-wider">Efectividad</span>
-              <span class="text-xs">🎯</span>
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+              <span class="text-[11px] font-semibold uppercase tracking-wide">Efectividad</span>
+              <span class="text-[#4141A5]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
             </div>
             <div class="mt-2">
-              <div class="text-2xl font-black text-[#170B3D]">{{ porcentajeEfectividadGlobal }}%</div>
-              <p class="text-[10px] text-gray-400 font-medium truncate">Casos resueltos</p>
+              <div class="text-2xl font-bold text-[#170B3D]">{{ porcentajeEfectividadGlobal }}%</div>
+              <p class="text-[10px] text-slate-500 font-medium truncate">Casos resueltos</p>
             </div>
           </div>
         </div>
 
         <!-- 2. Gráfica Principal Grande: Casos por Veterinario (Barras) -->
-        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h2 class="text-sm font-extrabold text-[#170B3D] tracking-wide">
+              <h2 class="text-sm font-bold text-[#170B3D]">
                 Casos Asignados por Veterinario
               </h2>
-              <p class="text-[11px] text-gray-400 font-medium">
+              <p class="chart-subtitle text-[0.85rem] text-[#64748B] font-medium">
                 Carga de trabajo y distribución de estados por profesional
               </p>
             </div>
             <div class="flex items-center gap-2">
-              <span class="hidden sm:inline-flex px-2.5 py-1 bg-[#4141A5]/10 text-[#4141A5] text-[10px] font-bold rounded-lg border border-[#4141A5]/20">
+              <span class="hidden sm:inline-flex px-2.5 py-0.5 bg-[#4141A5]/5 text-[#4141A5] text-[10px] font-semibold rounded-md border border-[#4141A5]/20">
                 Barras Apiladas
               </span>
-              <span class="text-xs font-bold text-gray-500">
-                {{ metricas.casosVeterinarios.length }} profesionales
+              <span class="text-xs font-semibold text-slate-500">
+                {{ metricas.casosVeterinarios.length > 7 ? ('Top 7 de ' + metricas.casosVeterinarios.length + ' profesionales') : (metricas.casosVeterinarios.length + ' profesionales') }}
               </span>
             </div>
           </div>
 
           <!-- Canvas Barras Apiladas Grande -->
-          <div class="relative h-64 sm:h-72 w-full mt-3 overflow-hidden">
+          <div class="chart-container relative h-64 sm:h-72 w-full mt-3 overflow-hidden">
             <canvas #chartVeterinarios></canvas>
           </div>
         </div>
 
-        <!-- 3. Fila Dual de Gráficas: [A: Peticiones (Dona)] [B: Seres en CBA (Polar Area)] -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 3. Fila Dual de Gráficas: [A: Peticiones (Dona)] [B: Seres en CBA (Barras Horizontales)] -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 items-stretch">
           
           <!-- Gráfica A: Peticiones (Dona) -->
-          <div class="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col justify-between min-w-0">
-            <div>
-              <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
+            <div class="flex-1 flex flex-col">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div class="min-w-0">
-                  <h3 class="text-xs font-extrabold text-[#170B3D] truncate">A: Peticiones</h3>
-                  <p class="text-[10px] text-gray-400 font-medium truncate">Distribución por estados</p>
+                  <h3 class="text-xs font-bold text-[#170B3D] truncate">A: Peticiones</h3>
+                  <p class="chart-subtitle text-[0.85rem] text-[#64748B] font-medium truncate">Distribución por estados</p>
                 </div>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4141A5]/10 text-[#4141A5]">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
                   Dona
                 </span>
               </div>
-              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
+              <div class="chart-container relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
                 <canvas #chartPeticiones></canvas>
               </div>
             </div>
           </div>
 
-          <!-- Gráfica B: Seres en CBA (Polar Area) -->
-          <div class="bg-white rounded-3xl p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col justify-between min-w-0">
-            <div>
-              <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <!-- Gráfica B: Seres en CBA (Barras Horizontales) -->
+          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
+            <div class="flex-1 flex flex-col">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div class="min-w-0">
-                  <h3 class="text-xs font-extrabold text-[#170B3D] truncate">B: Seres en CBA</h3>
-                  <p class="text-[10px] text-gray-400 font-medium truncate">Estado clínico y adopción</p>
+                  <h3 class="text-xs font-bold text-[#170B3D] truncate">B: Seres en CBA</h3>
+                  <p class="chart-subtitle text-[0.85rem] text-[#64748B] font-medium truncate">Estado clínico y adopción</p>
                 </div>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                  Polar Area
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
+                  Barras Horizontales
                 </span>
               </div>
-              <div class="relative h-44 sm:h-48 w-full mt-2 flex items-center justify-center overflow-hidden">
+              <div class="chart-container relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
                 <canvas #chartCBA></canvas>
               </div>
             </div>
@@ -314,109 +369,111 @@
       <!-- ===================================================================== -->
       <!-- COLUMNA DERECHA (Historial y Equipo) [~25% ancho -> lg:col-span-3]   -->
       <!-- ===================================================================== -->
-      <div class="lg:col-span-3 min-w-0 space-y-4">
+      <div class="lg:col-span-3 min-w-0 flex flex-col gap-4 h-full">
 
         <!-- 1. Últimos Ingresos al CBA (Lista scrolleable limpia) -->
-        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
             <div class="min-w-0">
-              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D] truncate">
+              <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">
                 1. Últimos Ingresos CBA
               </h3>
-              <p class="text-[11px] text-gray-400 font-medium truncate">
+              <p class="text-[11px] text-slate-500 font-medium truncate">
                 Historial de caniles y funcionarios
               </p>
             </div>
-            <span class="text-xs font-bold text-gray-400 shrink-0">
+            <span class="text-xs font-semibold text-slate-400 shrink-0">
               Recientes
             </span>
           </div>
 
-          <!-- Lista scrolleable limpia -->
-          <div class="space-y-2.5 max-h-[300px] sm:max-h-[320px] overflow-y-auto pr-1">
-            <div *ngFor="let item of metricas.cba.ultimosIngresos" class="p-3 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-[#4141A5]/30 hover:shadow-xs transition-all min-w-0">
+          <!-- Lista scrolleable limpia con altura mínima para nivelar -->
+          <div class="space-y-2.5 min-h-[180px] max-h-[200px] overflow-y-auto pr-1">
+            <div *ngFor="let item of metricas.cba.ultimosIngresos" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 hover:shadow-xs transition-all min-w-0">
               <div class="flex items-center justify-between text-[11px]">
-                <span class="px-2 py-0.5 rounded-full font-black bg-[#4141A5]/10 text-[#4141A5] shrink-0">
+                <span class="px-2 py-0.5 rounded-full font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20 shrink-0">
                   {{ item.canil }}
                 </span>
-                <span class="text-gray-400 font-medium text-[10px]">
+                <span class="text-slate-400 font-medium text-[10px]">
                   {{ item.fecha_ingreso | date:'dd/MM/yyyy' }}
                 </span>
               </div>
               <h4 class="text-xs font-bold text-[#170B3D] mt-1.5 line-clamp-1 truncate" [title]="item.motivo">
                 {{ item.motivo }}
               </h4>
-              <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 gap-2">
-                <span class="truncate min-w-0">Receptor: <strong class="text-gray-700">{{ item.funcionario }}</strong></span>
-                <span class="px-1.5 py-0.5 rounded-md font-bold shrink-0 text-[10px]" [ngClass]="obtenerClaseEstadoBadge(item.estado)">
+              <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 gap-2">
+                <span class="truncate min-w-0">Receptor: <strong class="text-slate-700">{{ item.funcionario }}</strong></span>
+                <span class="px-1.5 py-0.5 rounded-md font-semibold shrink-0 text-[10px] border" [ngClass]="obtenerClaseEstadoBadge(item.estado)">
                   {{ item.estado }}
                 </span>
               </div>
             </div>
 
-            <div *ngIf="metricas.cba.ultimosIngresos.length === 0" class="py-6 text-center text-gray-400 font-medium text-xs">
+            <div *ngIf="metricas.cba.ultimosIngresos.length === 0" class="py-6 text-center text-slate-400 font-medium text-xs">
               No hay registros recientes de ingresos activos a CBA.
             </div>
           </div>
         </div>
 
         <!-- 2. Rendimiento Veterinario (Estilo barras horizontales) -->
-        <div class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs min-w-0">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+        <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs min-w-0 flex-1 flex flex-col">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3 shrink-0">
             <div class="min-w-0">
-              <h3 class="text-xs font-black uppercase tracking-wider text-[#170B3D] truncate">
+              <h3 class="text-xs font-bold uppercase tracking-wide text-[#170B3D] truncate">
                 2. Rendimiento Veterinario
               </h3>
-              <p class="text-[11px] text-gray-400 font-medium truncate">
+              <p class="text-[11px] text-slate-500 font-medium truncate">
                 Resolución y efectividad por profesional
               </p>
             </div>
-            <span class="text-xs font-bold text-gray-400 shrink-0">
+            <span class="text-xs font-semibold text-slate-400 shrink-0">
               {{ metricas.casosVeterinarios.length }} vets
             </span>
           </div>
 
-          <!-- Lista de barras horizontales -->
-          <div class="space-y-3 max-h-[300px] sm:max-h-[340px] overflow-y-auto pr-1">
-            <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-2xl border border-gray-100 bg-gray-50/40 hover:bg-white hover:border-gray-200 transition-all min-w-0">
-              <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
-              <div class="flex items-center justify-between gap-2 min-w-0">
-                <div class="flex items-center gap-2 min-w-0">
-                  <div class="w-6 h-6 rounded-full bg-[#4141A5]/10 text-[#4141A5] font-black text-[10px] flex items-center justify-center shrink-0">
-                    {{ vet.nombre_completo.charAt(0) || 'V' }}
+          <!-- Lista de barras horizontales que aprovecha todo el alto restante de la tarjeta -->
+          <div class="relative flex-1 min-h-[260px]">
+            <div class="lg:absolute lg:inset-0 max-h-[380px] lg:max-h-none overflow-y-auto pr-1 space-y-3">
+              <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-lg border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all min-w-0">
+                <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
+                <div class="flex items-center justify-between gap-2 min-w-0">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-6 h-6 rounded-full bg-[#4141A5]/10 text-[#4141A5] font-bold text-[10px] flex items-center justify-center shrink-0">
+                      {{ vet.nombre_completo.charAt(0) || 'V' }}
+                    </div>
+                    <span class="text-xs font-bold text-[#170B3D] truncate" [title]="vet.nombre_completo">
+                      {{ vet.nombre_completo }}
+                    </span>
                   </div>
-                  <span class="text-xs font-bold text-[#170B3D] truncate" [title]="vet.nombre_completo">
-                    {{ vet.nombre_completo }}
+                  <span class="text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
+                    {{ vet.finalizadas }}/{{ vet.total_asignados }} resueltos
                   </span>
                 </div>
-                <span class="text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-full shrink-0">
-                  {{ vet.finalizadas }}/{{ vet.total_asignados }} resueltos
-                </span>
-              </div>
 
-              <!-- Barra horizontal de efectividad en un solo color institucional limpio -->
-              <div class="mt-2.5">
-                <div class="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-1">
-                  <span>Efectividad</span>
-                  <span class="font-black text-[#170B3D]">{{ vet.porcentaje_completado }}%</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                  <div 
-                    class="bg-[#4141A5] h-2 rounded-full transition-all duration-500" 
-                    [style.width.%]="vet.porcentaje_completado">
+                <!-- Barra horizontal de efectividad en un solo color institucional limpio -->
+                <div class="mt-2.5">
+                  <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 mb-1">
+                    <span>Efectividad</span>
+                    <span class="font-bold text-[#170B3D]">{{ vet.porcentaje_completado }}%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      class="bg-[#4141A5] h-2 rounded-full transition-all duration-500" 
+                      [style.width.%]="vet.porcentaje_completado">
+                    </div>
                   </div>
                 </div>
+
+                <!-- Sub-indicadores: Pendientes y En proceso -->
+                <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+                  <span class="text-[#9A5B13] font-semibold">{{ vet.pendientes }} pendientes</span>
+                  <span class="text-[#4141A5] font-semibold">{{ vet.en_proceso }} en proceso</span>
+                </div>
               </div>
 
-              <!-- Sub-indicadores: Pendientes y En proceso -->
-              <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
-                <span class="text-amber-700 font-semibold">{{ vet.pendientes }} pendientes</span>
-                <span class="text-[#4141A5] font-semibold">{{ vet.en_proceso }} en proceso</span>
+              <div *ngIf="metricas.casosVeterinarios.length === 0" class="py-6 text-center text-slate-400 font-medium text-xs">
+                No hay casos asignados a profesionales.
               </div>
-            </div>
-
-            <div *ngIf="metricas.casosVeterinarios.length === 0" class="py-6 text-center text-gray-400 font-medium text-xs">
-              No hay casos asignados a profesionales.
             </div>
           </div>
         </div>
@@ -424,180 +481,6 @@
       </div>
 
     </div>
-
-    <!-- Alertas de Posibles Duplicados (Roles Administrador y Jurídico) -->
-    <section
-      *ngIf="puedeGestionarDuplicados"
-      data-testid="dashboard-juridico-duplicados"
-      class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3.5">
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-2xl bg-slate-50 text-[#9A5B13] border border-slate-200 flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-sm font-black uppercase tracking-wider text-[#170B3D]">
-                Alertas de Posibles Duplicados
-              </h2>
-              <span
-                class="px-2 py-0.5 rounded-full text-[11px] font-bold border"
-                [ngClass]="resumenDuplicados().PENDIENTE > 0
-                  ? 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'">
-                {{ resumenDuplicados().PENDIENTE }} pendientes
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Supervisión preventiva de reportes similares sin modificar radicados ni asignaciones
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          data-testid="btn-ver-todas-alertas-duplicados"
-          (click)="irABandejaDuplicados()"
-          class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shrink-0">
-          <span>Ver todas las alertas</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div
-          data-testid="tarjeta-duplicados-pendientes"
-          class="bg-white rounded-2xl p-4 border border-slate-200 flex items-center justify-between"
-          [ngClass]="resumenDuplicados().PENDIENTE > 0 ? 'border-l-4 border-l-[#9A5B13]' : ''">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Pendientes (PENDIENTE)
-            </span>
-            <div class="text-2xl font-black text-[#170B3D] mt-1">
-              {{ resumenDuplicados().PENDIENTE }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              {{ resumenDuplicados().PENDIENTE > 0 ? 'Requieren revisión comparativa' : 'Al día en revisiones' }}
-            </p>
-          </div>
-        </div>
-
-        <div
-          data-testid="resumen-duplicados-confirmados"
-          class="bg-white rounded-2xl p-4 border border-slate-200 border-l-4 border-l-[#067647] flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Confirmados (CONFIRMADO)
-            </span>
-            <div class="text-2xl font-black text-[#170B3D] mt-1">
-              {{ resumenDuplicados().CONFIRMADO }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">Duplicados validados</p>
-          </div>
-        </div>
-
-        <div
-          data-testid="resumen-duplicados-descartados"
-          class="bg-white rounded-2xl p-4 border border-slate-200 flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Descartados (DESCARTADO)
-            </span>
-            <div class="text-2xl font-black text-[#170B3D] mt-1">
-              {{ resumenDuplicados().DESCARTADO }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Total registradas: {{ resumenDuplicados().total }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div
-        *ngIf="errorDuplicados"
-        data-testid="error-duplicados-dashboard"
-        class="px-4 py-3 bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-2xl flex items-center justify-between gap-3 text-sm text-[#170B3D] font-semibold">
-        <span>{{ errorDuplicados }}</span>
-        <button
-          type="button"
-          (click)="cargarAlertasDuplicados(true)"
-          class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-xs font-semibold cursor-pointer shrink-0">
-          Reintentar
-        </button>
-      </div>
-
-      <div
-        *ngIf="!errorDuplicados && cargandoDuplicados && alertasPendientesRecientes().length === 0"
-        data-testid="cargando-duplicados-dashboard"
-        class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold text-slate-500 flex items-center gap-2">
-        <span class="inline-block w-3.5 h-3.5 border-2 border-[#4141A5] border-t-transparent rounded-full animate-spin"></span>
-        <span>Cargando alertas de posibles duplicados...</span>
-      </div>
-
-      <div
-        *ngIf="!errorDuplicados && !cargandoDuplicados && alertasPendientesRecientes().length === 0"
-        data-testid="sin-alertas-duplicados-dashboard"
-        class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <app-animal-icon tipo="perro" [tamano]="64" />
-          <span>No hay alertas de posibles duplicados pendientes por revisar en este momento.</span>
-        </div>
-        <span *ngIf="resumenDuplicados().total > 0" class="text-slate-500 font-semibold">
-          Histórico revisado: {{ resumenDuplicados().CONFIRMADO + resumenDuplicados().DESCARTADO }}
-        </span>
-      </div>
-
-      <div
-        *ngIf="!errorDuplicados && alertasPendientesRecientes().length > 0"
-        data-testid="lista-alertas-duplicados-recientes"
-        class="space-y-2">
-        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500 px-1">
-          <span>Pendientes más recientes</span>
-          <span>Haz clic en una alerta para abrir el comparador</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button
-            *ngFor="let alerta of alertasPendientesRecientes()"
-            type="button"
-            [attr.data-testid]="'alerta-reciente-' + alerta.id_alerta"
-            (click)="abrirAlertaDuplicado(alerta.id_alerta)"
-            class="w-full text-left p-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#4141A5]/40 transition-colors cursor-pointer flex items-center justify-between gap-3">
-            <div class="min-w-0 space-y-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-                  Alerta #{{ alerta.id_alerta }}
-                </span>
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]">
-                  {{ alerta.estado_revision }}
-                </span>
-                <span class="text-xs font-semibold text-slate-500 truncate">
-                  {{ obtenerTipoAlerta(alerta) }}
-                </span>
-              </div>
-              <div class="text-xs font-bold text-[#170B3D] truncate">
-                {{ obtenerRadicadoAlerta(alerta, 'menor') }} ↔ {{ obtenerRadicadoAlerta(alerta, 'mayor') }}
-              </div>
-              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-500 font-medium">
-                <span>Similitud: <strong class="text-slate-700">{{ formatearSimilitudAlerta(alerta) }}</strong></span>
-                <span>•</span>
-                <span>Distancia: <strong class="text-slate-700">{{ formatearDistanciaAlerta(alerta) }}</strong></span>
-                <span>•</span>
-                <span>{{ alerta.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-            </div>
-
-            <span class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-[#4141A5] text-xs font-semibold shrink-0">
-              Comparar →
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
 
   </main>
 </div>

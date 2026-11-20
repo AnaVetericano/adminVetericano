@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, forkJoin } from 'rxjs';
+import { Observable, of, forkJoin, throwError } from 'rxjs';
 import { map, catchError, delay, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -1182,7 +1182,11 @@ export class HistoriaClinicaService {
       nombre_acudiente: orgObj._acudiente_nombre || tenedor.nombres || tenedor.nombre || raw.nombre_acudiente || '',
       cedula_acudiente: orgObj._acudiente_cedula || tenedor.documentoIdentidad || tenedor.documento || raw.cedula_acudiente || '',
       consultas_anteriores: consultasPrevias,
-      anamnesicos: anamnesicos,
+      anamnesicos: {
+        ...anamnesicos,
+        ultimoCelo: anamnesicos.ultimoCelo || raw.fecha_ultimo_celo || orgObj._ultimo_celo || '',
+        fechaUltimoParto: anamnesicos.fechaUltimoParto || raw.fecha_ultimo_parto || orgObj._fecha_ultimo_parto || ''
+      },
       alimento_marca: orgObj._alimento_marca || anamnesicos.alimentacion || '',
       esterilizado_opcion: orgObj._esterilizado_opcion || (String(anamnesicos.historiaReproductiva || animal.estado_reproductivo || '').toLowerCase().includes('esteril') ? 'Sí' : 'No'),
       condicion_corporal: orgObj._condicion_corporal || examObj.condicionCorporal || '3/5 (Ideal)',
@@ -1674,6 +1678,24 @@ export class HistoriaClinicaService {
   }
 
   /**
+   * Confirma contra el backend (GET /api/clinica/consultas/{id}/) que la consulta existe y pertenece a la
+   * historia indicada. Devuelve el id confirmado o null (no existe, es de otra historia o no se pudo verificar).
+   * Se usa para vincular el consumo del kit a su consulta de origen sin enviar identificadores supuestos.
+   */
+  verificarConsultaDeHistoria(idConsulta: number, idHistoria: number): Observable<number | null> {
+    const idC = Number(idConsulta);
+    const idH = Number(idHistoria);
+    if (!Number.isInteger(idC) || idC <= 0 || !Number.isInteger(idH) || idH <= 0) {
+      return of(null);
+    }
+    const urlConsultas = environment.apiUrlConsultas || `${this.baseUrlClinica}consultas/`;
+    return this.http.get<any>(`${urlConsultas}${idC}/`, { headers: this.authHeaders }).pipe(
+      map((resp) => (Number(resp?.id_consulta) === idC && Number(resp?.id_historia) === idH ? idC : null)),
+      catchError(() => of(null))
+    );
+  }
+
+  /**
    * Criterio 1: Actualiza o consolida la historia clínica del animal en el backend (/api/clinica/expediente-completo/)
    * garantizando persistencia real en base de datos, trazabilidad y auditoría de cambios.
    */
@@ -1732,7 +1754,10 @@ export class HistoriaClinicaService {
       _ingresa_cba: ingresaCbaEdicion,
       _canil_asignado: canilEdicion,
       _motivo_ingreso_cba: motivoCbaEdicion,
-      _funcionario_recibe_cba: funcionarioCbaEdicion
+      _funcionario_recibe_cba: funcionarioCbaEdicion,
+      _ultimo_celo: dto.anamnesicos?.['ultimoCelo'] ?? '',
+      _fecha_ultimo_parto: dto.anamnesicos?.['fechaUltimoParto'] ?? '',
+      _hoja_hospitalizacion_numero: dto.ingreso_cba?.['hoja_numero'] ?? 1
     };
 
     if (dto.ingreso_cba !== undefined) {
@@ -1804,6 +1829,8 @@ export class HistoriaClinicaService {
           enfermedadesAnteriores: dto.anamnesicos?.['enfermedadesAnteriores'] || (historiaActual as any)?.enfermedades_anteriores || '',
           alimentacion: dto.alimento_marca || dto.anamnesicos?.['alimentacion'] || '',
           historiaReproductiva: dto.esterilizado_opcion ? (dto.esterilizado_opcion === 'Sí' ? 'Esterilizado' : 'Entero') : (dto.anamnesicos?.['historiaReproductiva'] || ''),
+          ultimoCelo: dto.anamnesicos?.['ultimoCelo'] || null,
+          fechaUltimoParto: dto.anamnesicos?.['fechaUltimoParto'] || null,
           evolucion: payloadPatch.evolucion,
           tratamientos: payloadPatch.plan_tratamiento
         },
@@ -2001,6 +2028,18 @@ export class HistoriaClinicaService {
             bodyHistoriaCompleta.fecha_ultima_desparasitacion = fechaDesparRaw;
           } else if (dto.anamnesicos?.['ultimaDesparasitacion'] === '') {
             bodyHistoriaCompleta.fecha_ultima_desparasitacion = null;
+          }
+          const fechaCeloRaw = String(dto.anamnesicos?.['ultimoCelo'] || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(fechaCeloRaw)) {
+            bodyHistoriaCompleta.fecha_ultimo_celo = fechaCeloRaw;
+          } else if (dto.anamnesicos?.['ultimoCelo'] === '') {
+            bodyHistoriaCompleta.fecha_ultimo_celo = null;
+          }
+          const fechaPartoRaw = String(dto.anamnesicos?.['fechaUltimoParto'] || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(fechaPartoRaw)) {
+            bodyHistoriaCompleta.fecha_ultimo_parto = fechaPartoRaw;
+          } else if (dto.anamnesicos?.['fechaUltimoParto'] === '') {
+            bodyHistoriaCompleta.fecha_ultimo_parto = null;
           }
           sincronizacionesDirectas.push(
             this.http.patch<any>(urlHistoriaDirecta, bodyHistoriaCompleta, { headers: this.authHeaders }).pipe(
@@ -2321,7 +2360,194 @@ export class HistoriaClinicaService {
       tareas$.push(syncTenedor$);
     }
 
+    // 5. Sincronizar HospitalizacionSeresSintientes (/api/clinica/hospitalizaciones/) y EstadosAnimal (/api/animales/estados/)
+    const ingresaCbaFlag = dto.ingreso_cba?.['ingresa_cba'] === 'SI' || dto.ingreso_cba?.['ingresa_cba'] === true;
+    if (ingresaCbaFlag && idConsulta && Number(idConsulta) > 0) {
+      tareas$.push(
+        this.sincronizarHospitalizacionCba(Number(idConsulta), true, {
+          descripcion_estado: `${dto.resultado_estado || 'En observación'} — ${dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || dto.evolucion || 'Hospitalización CBA'}${dto.ingreso_cba?.['canil_asignado'] ? ' (Canil: ' + dto.ingreso_cba['canil_asignado'] + ')' : ''}`,
+          diagnostico_presuntivo: dto.diagnostico_principal || 'Diagnóstico en evaluación CBA',
+          responsable_clinico: dto.ingreso_cba?.['funcionario_recibe_cba'] || dto.nombre_veterinario || 'Veterinario CBA',
+          hoja_numero: Number(dto.ingreso_cba?.['hoja_numero'] || 1)
+        }).pipe(catchError(() => of(null)))
+      );
+      if (idAnimal && Number(idAnimal) > 0) {
+        tareas$.push(
+          this.registrarEstadoAnimal(
+            Number(idAnimal),
+            'Hospitalizado CBA',
+            dto.ingreso_cba?.['motivo_ingreso_no_ingreso'] || `Ingreso a hospitalización CBA (${dto.ingreso_cba?.['canil_asignado'] || 'Área clínica'})`
+          ).pipe(catchError(() => of(null)))
+        );
+      }
+    }
+
     return tareas$.length > 0 ? forkJoin(tareas$) : of(null);
+  }
+
+  /**
+   * Consulta en /api/animales/estados/ si el estado más reciente del animal coincide con el esperado.
+   */
+  tieneEstadoOficialActual(idAnimal: number, nombreEstado: string): Observable<boolean> {
+    if (!idAnimal || isNaN(Number(idAnimal)) || Number(idAnimal) <= 0) {
+      return of(false);
+    }
+    const apiRoot = this.baseUrlClinica.replace(/\/clinica\/?$/, '/');
+    const urlEstados = `${apiRoot}animales/estados/`;
+    const objetivo = String(nombreEstado || '').trim().toLowerCase();
+
+    return this.http.get<any>(urlEstados, { headers: this.authHeaders }).pipe(
+      map((res) => {
+        const lista = this.extraerLista(res).filter((e: any) => Number(e?.id_animal) === Number(idAnimal));
+        if (lista.length === 0) return false;
+        lista.sort((a: any, b: any) => {
+          const fechaDiff = new Date(b?.fecha_registro || 0).getTime() - new Date(a?.fecha_registro || 0).getTime();
+          if (fechaDiff !== 0) return fechaDiff;
+          return Number(b?.id_estado_animal || 0) - Number(a?.id_estado_animal || 0);
+        });
+        const actual = String(lista[0]?.nombre_estado || '').trim().toLowerCase();
+        return actual === objetivo;
+      })
+    );
+  }
+
+  /**
+   * Registra una transición de estado oficial del animal en /api/animales/estados/ (modelo EstadosAnimal de Django)
+   */
+  registrarEstadoAnimal(idAnimal: number, nombreEstado: string, observacion?: string): Observable<any> {
+    if (!idAnimal || isNaN(Number(idAnimal)) || Number(idAnimal) <= 0) {
+      return of(null);
+    }
+    const apiRoot = this.baseUrlClinica.replace(/\/clinica\/?$/, '/');
+    const urlEstados = `${apiRoot}animales/estados/`;
+    return this.http.post<any>(
+      urlEstados,
+      {
+        id_animal: Number(idAnimal),
+        nombre_estado: String(nombreEstado || 'Estable').substring(0, 50),
+        observacion: observacion || ''
+      },
+      { headers: this.authHeaders }
+    );
+  }
+
+  /**
+   * Crea o actualiza el registro formal de hospitalización en /api/clinica/hospitalizaciones/ (HospitalizacionSeresSintientes)
+   */
+  sincronizarHospitalizacionCba(
+    idConsulta: number,
+    ingresaCba: boolean,
+    datos: {
+      descripcion_estado?: string;
+      diagnostico_presuntivo?: string;
+      responsable_clinico?: string;
+      hoja_numero?: number;
+    }
+  ): Observable<any> {
+    if (!idConsulta || isNaN(Number(idConsulta)) || Number(idConsulta) <= 0 || !ingresaCba) {
+      return throwError(() => new Error('No se encontró una consulta clínica válida para registrar la hospitalización.'));
+    }
+    const urlHosp = `${this.baseUrlClinica}hospitalizaciones/`;
+    return this.http.get<any>(`${urlHosp}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
+      map(res => this.extraerLista(res).filter((h: any) => Number(h?.id_consulta) === Number(idConsulta))),
+      switchMap((existentes: any[]) => {
+        const bodyHosp = {
+          id_consulta: Number(idConsulta),
+          descripcion_estado: datos.descripcion_estado || 'Paciente hospitalizado en CBA bajo monitoreo clínico.',
+          diagnostico_presuntivo: datos.diagnostico_presuntivo || 'En evaluación clínica',
+          responsable_clinico: String(datos.responsable_clinico || 'Veterinario CBA').substring(0, 150),
+          hoja_numero: Number(datos.hoja_numero || 1)
+        };
+        if (existentes.length > 0 && existentes[0]?.id_hospitalizacion) {
+          return this.http.patch<any>(`${urlHosp}${existentes[0].id_hospitalizacion}/`, bodyHosp, { headers: this.authHeaders });
+        }
+        return this.http.post<any>(urlHosp, bodyHosp, { headers: this.authHeaders });
+      })
+    );
+  }
+
+  /**
+   * Obtiene la hospitalización activa de una consulta y sus notas de SeguimientoHospitalario (/api/clinica/seguimientos-hospitalarios/)
+   */
+  obtenerHospitalizacionYSeguimientos(idConsulta: number): Observable<{ hospitalizacion: any | null; seguimientos: any[] }> {
+    if (!idConsulta || isNaN(Number(idConsulta)) || Number(idConsulta) <= 0) {
+      return of({ hospitalizacion: null, seguimientos: [] });
+    }
+    const urlHosp = `${this.baseUrlClinica}hospitalizaciones/`;
+    const urlSegHosp = `${this.baseUrlClinica}seguimientos-hospitalarios/`;
+
+    return this.http.get<any>(`${urlHosp}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
+      map(res => this.extraerLista(res).filter((h: any) => Number(h?.id_consulta) === Number(idConsulta))),
+      catchError(() => of([])),
+      switchMap((hospitalizaciones: any[]) => {
+        const hosp = hospitalizaciones.length > 0 ? hospitalizaciones[hospitalizaciones.length - 1] : null;
+        if (!hosp?.id_hospitalizacion) {
+          return of({ hospitalizacion: null, seguimientos: [] });
+        }
+        return this.http.get<any>(`${urlSegHosp}?id_hospitalizacion=${hosp.id_hospitalizacion}`, { headers: this.authHeaders }).pipe(
+          map(resSeg => {
+            const lista = this.extraerLista(resSeg).filter(
+              (s: any) => Number(s?.id_hospitalizacion) === Number(hosp.id_hospitalizacion)
+            );
+            lista.sort((a: any, b: any) => new Date(b?.fecha || 0).getTime() - new Date(a?.fecha || 0).getTime());
+            return { hospitalizacion: hosp, seguimientos: lista };
+          }),
+          catchError(() => of({ hospitalizacion: hosp, seguimientos: [] }))
+        );
+      })
+    );
+  }
+
+  /**
+   * Registra una nueva nota de evolución hospitalaria en /api/clinica/seguimientos-hospitalarios/
+   * Si la consulta aún no tenía registro en /api/clinica/hospitalizaciones/, lo crea automáticamente primero.
+   */
+  registrarSeguimientoHospitalario(
+    idConsulta: number,
+    evolucion: string,
+    datosHospFallback?: {
+      id_hospitalizacion?: number | null;
+      descripcion_estado?: string;
+      diagnostico_presuntivo?: string;
+      responsable_clinico?: string;
+      hoja_numero?: number;
+    }
+  ): Observable<any> {
+    const urlSegHosp = `${this.baseUrlClinica}seguimientos-hospitalarios/`;
+    const idHospConocido = datosHospFallback?.id_hospitalizacion;
+
+    if (idHospConocido && Number(idHospConocido) > 0) {
+      return this.http.post<any>(
+        urlSegHosp,
+        {
+          id_hospitalizacion: Number(idHospConocido),
+          evolucion: evolucion.trim()
+        },
+        { headers: this.authHeaders }
+      );
+    }
+
+    return this.sincronizarHospitalizacionCba(idConsulta, true, {
+      descripcion_estado: datosHospFallback?.descripcion_estado || 'Hospitalización CBA activa',
+      diagnostico_presuntivo: datosHospFallback?.diagnostico_presuntivo || 'Bajo observación médica',
+      responsable_clinico: datosHospFallback?.responsable_clinico || 'Veterinario CBA',
+      hoja_numero: datosHospFallback?.hoja_numero || 1
+    }).pipe(
+      switchMap((hospCreada) => {
+        const idHosp = hospCreada?.id_hospitalizacion;
+        if (!idHosp) {
+          return throwError(() => new Error('No fue posible obtener un identificador de hospitalización confirmado por el servidor.'));
+        }
+        return this.http.post<any>(
+          urlSegHosp,
+          {
+            id_hospitalizacion: Number(idHosp),
+            evolucion: evolucion.trim()
+          },
+          { headers: this.authHeaders }
+        );
+      })
+    );
   }
 
   /**

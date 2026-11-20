@@ -104,9 +104,8 @@
       <!-- 1. DASHBOARD (Administrador) -->
       @if (authService.isAdmin()) {
         <a
-          routerLink="/inicio-admin"
+          routerLink="/inicio-admin/graficas"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
-          [routerLinkActiveOptions]="{ exact: true }"
           (click)="menuAbierto = false"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors duration-150 cursor-pointer whitespace-nowrap group/item relative"
         >
@@ -487,13 +486,18 @@
         @if (encabezadoPagina.actual()?.botonTexto; as textoBtn) {
           <a
             [routerLink]="encabezadoPagina.actual()?.botonRuta || '/inicio-admin/peticion'"
-            class="px-3.5 py-2 bg-[#170B3D] hover:bg-[#25155c] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+            class="px-3.5 py-2 bg-[#170B3D] hover:bg-[#353583] text-white font-semibold rounded-lg text-xs whitespace-nowrap transition-colors cursor-pointer flex items-center gap-2"
           >
             <span>{{ textoBtn }}</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </a>
+        }
+
+        <!-- CAMPANA CENTRAL DE NOTIFICACIONES EN TIEMPO REAL -->
+        @if (notificacionesRealtime.habilitado) {
+          <app-notificaciones-campana />
         }
 
         <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
@@ -592,8 +596,8 @@
           </div>
         }
 
-        <!-- Separador entre Alertas y el perfil (solo cuando existe el botón de Alertas) -->
-        @if (authService.isVeterinario() || authService.isAdmin()) {
+        <!-- Separador entre Alertas y el perfil -->
+        @if (notificacionesRealtime.habilitado || authService.isVeterinario() || authService.isAdmin()) {
           <span class="hidden sm:block w-px h-6 bg-slate-200" aria-hidden="true"></span>
         }
 

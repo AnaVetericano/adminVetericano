@@ -1,7 +1,7 @@
 <div class="w-full bg-[#F4F5F7] min-h-full text-slate-800 antialiased font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white relative">
 
   <!-- BARRA SUPERIOR / ENCABEZADO -->
-  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-1 w-full">
+  <header class="shrink-0 px-4 sm:px-6 pt-3 pb-0 w-full">
     <app-page-title
       titulo="Inventario Veterinario"
       etiqueta="Kit de Campo"
@@ -140,7 +140,7 @@
   </header>
 
   <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col space-y-5">
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-3 pb-5 flex flex-col space-y-5">
 
     <!-- ALERTA DE LOTES VENCIDOS SEGÚN BACKEND -->
     @if (backendAlertas?.vencidos && backendAlertas!.vencidos.length > 0) {
@@ -407,12 +407,21 @@
                         Este médico veterinario aún no tiene medicamentos o suministros asignados desde el inventario general de CBA. 
                         Los lotes se transfieren directamente desde la tabla de inventario mediante el botón <strong>"Asignar a Veterinario"</strong>.
                       </p>
-                      <a routerLink="/inicio-admin/inventario" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-sm font-semibold transition-colors cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Ir al Inventario General para Asignar
-                      </a>
+                      @if (esAdmin) {
+                        <a routerLink="/inicio-admin/inventario" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-sm font-semibold transition-colors cursor-pointer">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Ir al Inventario General para Asignar
+                        </a>
+                      } @else {
+                        <button type="button" (click)="abrirModalNuevaSolicitud()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-sm font-semibold transition-colors cursor-pointer">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Solicitar Reposición de Maletín
+                        </button>
+                      }
                     </div>
                   </td>
                 </tr>

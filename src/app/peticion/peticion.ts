@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -11,6 +12,7 @@ import { environment } from '../../environments/environment';
 import { DashboardJuridicoComponent } from '../dashboard-juridico/dashboard-juridico';
 import { AuthService } from '../services/auth';
 import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   AlertaDuplicadoResumen,
   ErrorDuplicadosApi,
@@ -226,7 +228,12 @@ export class Peticion implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef,
     public authService: AuthService
-  ) { }
+  ) {
+    inject(RealtimeEventosService)
+      .on(['peticion.*', 'admin.usuario_gestionado'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type.startsWith('admin.') ? this.obtenerFuncionarios() : this.recargarPeticiones()));
+  }
 
   ngOnInit(): void {
     this.vistaJuridica = 'peticiones';
@@ -964,8 +971,14 @@ export class Peticion implements OnInit, OnDestroy {
     if (navigator.share) {
       navigator.share({ title: 'Ubicación del reporte', text: `Ubicación del reporte: ${url}`, url });
     } else {
-      navigator.clipboard.writeText(url);
-      alert('Enlace copiado al portapapeles.');
+      navigator.clipboard?.writeText(url);
+      Swal.fire({
+        icon: 'success',
+        title: 'Enlace copiado',
+        text: 'El enlace de ubicación se copió al portapapeles.',
+        timer: 1800,
+        showConfirmButton: false
+      });
     }
   }
 

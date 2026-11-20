@@ -1,11 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import {
   ExamenesClinicosService,
   ExamenClinico
 } from '../services/examenes-clinicos.service';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -77,7 +80,12 @@ export class ExamenesClinicos implements OnInit {
   constructor(
     private examenesService: ExamenesClinicosService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('catalogo.clinico_actualizado')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarCatalogo());
+  }
 
   ngOnInit(): void {
     this.cargarCatalogo();
@@ -274,7 +282,8 @@ export class ExamenesClinicos implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Campos obligatorios incompletos',
-        text: 'Ingrese el nombre del examen clínico antes de guardar.'
+        text: 'Ingrese el nombre del examen clínico antes de guardar.',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -331,7 +340,8 @@ export class ExamenesClinicos implements OnInit {
           Swal.fire({
             icon: 'error',
             title: 'No fue posible actualizar el registro',
-            text: 'No se pudo actualizar el examen clínico.'
+            text: 'No se pudo actualizar el examen clínico. Verifique la conexión e intente nuevamente.',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -355,7 +365,8 @@ export class ExamenesClinicos implements OnInit {
           Swal.fire({
             icon: 'error',
             title: 'No fue posible guardar el registro',
-            text: 'No se pudo registrar el examen clínico.'
+            text: 'No se pudo registrar el examen clínico. Verifique la conexión e intente nuevamente.',
+            confirmButtonText: 'Aceptar'
           });
         }
       });
@@ -365,7 +376,12 @@ export class ExamenesClinicos implements OnInit {
   cambiarEstado(item: ExamenClinico): void {
     const id = item.id_procedimiento_catalogo || item.id_examen || (item as any).id;
     if (!id) {
-      Swal.fire('Error', 'No se encontró el identificador del examen.', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Identificador no encontrado',
+        text: 'No se encontró el identificador del examen. Recargue la página e intente nuevamente.',
+        confirmButtonText: 'Aceptar'
+      });
       return;
     }
 
@@ -378,8 +394,9 @@ export class ExamenesClinicos implements OnInit {
       title: 'Confirmar cambio de estado',
       text: `El examen clínico "${nombreMostrar}" quedará como ${nuevoEstado}.`,
       icon: 'warning',
+      customClass: { popup: esActivo ? 'qa-destructivo' : '' },
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: esActivo ? 'Inactivar' : 'Activar',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (!result.isConfirmed) return;
@@ -413,7 +430,8 @@ export class ExamenesClinicos implements OnInit {
           Swal.fire({
             icon: 'error',
             title: 'No fue posible actualizar el estado',
-            text: 'No se pudo cambiar el estado del examen clínico.'
+            text: 'No se pudo cambiar el estado del examen clínico. Verifique la conexión e intente nuevamente.',
+            confirmButtonText: 'Aceptar'
           });
         }
       });

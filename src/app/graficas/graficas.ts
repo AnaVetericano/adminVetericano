@@ -1,10 +1,13 @@
-import { Component, ElementRef, ViewChild, OnInit, OnDestroy, ChangeDetectorRef, inject, computed } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef, inject, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth';
 import { Chart } from 'chart.js/auto';
 import { CommonModule, NgIf } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { AlertasDuplicadosService } from '../services/alertas-duplicados.service';
+import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import {
   ErrorDuplicadosApi,
   ResumenConteosAlertas,
@@ -15,11 +18,12 @@ import { PageTitleComponent } from '../page-title/page-title';
 
 @Component({
   selector: 'app-graficas',
-  imports: [NgIf, CommonModule, RouterLink, AnimalIconComponent, PageTitleComponent],
+  standalone: true,
+  imports: [NgIf, CommonModule, RouterLink, FormsModule, AnimalIconComponent, PageTitleComponent],
   templateUrl: './graficas.html',
   styleUrl: './graficas.css',
 })
-export class Graficas implements OnInit, OnDestroy {
+export class Graficas implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('GraficUsers') GraficUsers!: ElementRef<HTMLCanvasElement>;
   @ViewChild('GraficUsersRol') GraficUsersRol!: ElementRef<HTMLCanvasElement>;
 
@@ -53,6 +57,11 @@ export class Graficas implements OnInit, OnDestroy {
     return this.puedeGestionarDuplicados ? this.alertasDuplicadosService.totalPendientes() : 0;
   }
 
+  usuarios: any[] = [];
+  usuariosFiltrados: any[] = [];
+  busquedaUsuario: string = '';
+  filtroRol: string = 'TODOS';
+
   get totalUsuarios(): number {
     return this.activosPie + this.inactivosPie;
   }
@@ -61,7 +70,20 @@ export class Graficas implements OnInit, OnDestroy {
     return this.rolAdm + this.rolJud + this.rolVet;
   }
 
-  constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {}
+  get porcentajeActivos(): number {
+    return this.totalUsuarios > 0 ? Math.round((this.activosPie / this.totalUsuarios) * 100) : 0;
+  }
+
+  get porcentajeOperativo(): number {
+    return this.totalUsuarios > 0 ? Math.round((this.totalOperativo / this.totalUsuarios) * 100) : 0;
+  }
+
+  constructor(private authService: AuthService, private cdr: ChangeDetectorRef) {
+    inject(RealtimeEventosService)
+      .on(['admin.usuario_gestionado', 'peticion.posible_duplicado', 'peticion.duplicado_resuelto'])
+      .pipe(debouncePorTipo(1000), takeUntilDestroyed())
+      .subscribe((ev) => (ev.event_type.startsWith('admin.') ? this.ListAllUsersActives() : this.cargarResumenDuplicados(true)));
+  }
 
   ngOnInit() {
     this.ListAllUsersActives();
@@ -106,12 +128,22 @@ export class Graficas implements OnInit, OnDestroy {
       });
   }
 
+  ngAfterViewInit() {
+    setTimeout(() => {
+      if (!this.chartUsersActive && !this.cargandoGrafica) {
+        this.LoadGraficUsersActive();
+        this.LoadGraficUsersRol();
+      }
+    }, 200);
+  }
+
   ListAllUsersActives() {
     this.cargandoGrafica = true;
 
     this.authService.listUsersActive().subscribe({
       next: (response: any[]) => {
         const lista = Array.isArray(response) ? response : [];
+        this.usuarios = lista;
         this.activosPie = lista.filter(u => u.activo === true).length;
         this.inactivosPie = lista.filter(u => u.activo === false).length;
 
@@ -134,6 +166,7 @@ export class Graficas implements OnInit, OnDestroy {
         this.rolVet = lista.filter(u => normalizarRol(u) === 'veterinario').length;
         this.rolPet = lista.filter(u => normalizarRol(u) === 'peticionario').length;
 
+        this.filtrarUsuarios();
         this.cargandoGrafica = false;
 
         this.LoadGraficUsersActive();
@@ -147,6 +180,42 @@ export class Graficas implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  filtrarUsuarios(): void {
+    const term = (this.busquedaUsuario || '').toLowerCase().trim();
+    this.usuariosFiltrados = this.usuarios.filter(u => {
+      const matchTexto = !term ||
+        (u.nombre && u.nombre.toLowerCase().includes(term)) ||
+        (u.apellido && u.apellido.toLowerCase().includes(term)) ||
+        (u.email && u.email.toLowerCase().includes(term)) ||
+        (u.identificacion && String(u.identificacion).includes(term));
+
+      if (!matchTexto) return false;
+
+      if (this.filtroRol === 'TODOS') return true;
+      const r = String(u.nombre_rol || '').toLowerCase();
+      const id = Number(u.id_rol);
+      if (this.filtroRol === 'ADMIN') return r.includes('adm') || id === 1;
+      if (this.filtroRol === 'JURIDICO') return r.includes('jur') || id === 2;
+      if (this.filtroRol === 'VETERINARIO') return r.includes('vet') || id === 3;
+      if (this.filtroRol === 'PETICIONARIO') return r.includes('pet') || id === 4;
+      return true;
+    });
+  }
+
+  setFiltroRol(rol: string): void {
+    this.filtroRol = rol;
+    this.filtrarUsuarios();
+  }
+
+  obtenerClaseRol(rolNombre: string, idRol?: number): string {
+    const r = String(rolNombre || '').toLowerCase();
+    const id = Number(idRol);
+    if (r.includes('adm') || id === 1) return 'bg-[#170B3D]/10 text-[#170B3D] border-[#170B3D]/20';
+    if (r.includes('jur') || id === 2) return 'bg-[#4141A5]/10 text-[#4141A5] border-[#4141A5]/20';
+    if (r.includes('vet') || id === 3) return 'bg-[#F1C63C]/15 text-[#170B3D] border-[#F1C63C]/50';
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   }
 
   LoadGraficUsersActive() {
@@ -183,7 +252,7 @@ export class Graficas implements OnInit, OnDestroy {
               usePointStyle: true,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569',
-              padding: 16
+              padding: 12
             }
           }
         }
@@ -232,7 +301,7 @@ export class Graficas implements OnInit, OnDestroy {
               usePointStyle: true,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569',
-              padding: 16
+              padding: 12
             }
           }
         }

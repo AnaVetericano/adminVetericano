@@ -5,12 +5,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { ComprasService } from '../services/compras.service';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
+import {
+  ResultadoConsumoKit,
+  construirAvisoGuardadoClinico,
+  extraerConflictosStockFarmacia,
+  resultadoPendientePrevioKit
+} from '../services/consumo-kit-resultado';
 import { PatologiaService, Patologia } from '../services/patologia.service';
 import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { finalize, forkJoin, of, Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { PageTitleComponent } from '../page-title/page-title';
@@ -249,30 +255,35 @@ export class ActaSeresSintientes implements OnInit {
       moco: null as boolean | null,
       dificultadRespirar: null as boolean | null,
       tos: null as boolean | null,
-      laganeo: null as boolean | null
+      laganeo: null as boolean | null,
+      comentario: ''
     },
     digestivo: {
       vomito: null as boolean | null,
       diarrea: null as boolean | null,
       desnutrido: null as boolean | null,
-      deshidratado: null as boolean | null
+      deshidratado: null as boolean | null,
+      comentario: ''
     },
     musculoEsqueletico: {
       caidaPatas: null as boolean | null,
       cojera: null as boolean | null,
       heridaAbierta: null as boolean | null,
       gusanosMiasis: null as boolean | null,
-      postrado: null as boolean | null
+      postrado: null as boolean | null,
+      comentario: ''
     },
     dermatologico: {
       peladuras: null as boolean | null,
       heridasSangre: null as boolean | null,
-      pulgasGarrapatas: null as boolean | null
+      pulgasGarrapatas: null as boolean | null,
+      comentario: ''
     },
     genitourinario: {
       masaSecrecion: null as boolean | null,
       gestante: null as boolean | null,
-      enCelo: null as boolean | null
+      enCelo: null as boolean | null,
+      comentario: ''
     }
   };
 
@@ -1026,18 +1037,25 @@ export class ActaSeresSintientes implements OnInit {
         return m[1].toUpperCase().includes('S');
       };
 
+      const parseComentarioSistema = (regex: RegExp): string => {
+        const m = quejaRaw.match(regex);
+        return m?.[1]?.trim() || '';
+      };
+
       const resp = {
         moco: parseTriajeItem(/Presenta moco:\s*(S[ÍI]|NO)/i),
         dificultadRespirar: parseTriajeItem(/(?:Se le )?dificulta respirar:\s*(S[ÍI]|NO)/i),
         tos: parseTriajeItem(/Tos:\s*(S[ÍI]|NO)/i),
-        laganeo: parseTriajeItem(/Lagaña o lagrimeo:\s*(S[ÍI]|NO)/i)
+        laganeo: parseTriajeItem(/Lagaña o lagrimeo:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario respiratorio:\s*([^\n\r]+)/i)
       };
 
       const dig = {
         vomito: parseTriajeItem(/Presenta vómito:\s*(S[ÍI]|NO)/i),
         diarrea: parseTriajeItem(/Presenta diarrea:\s*(S[ÍI]|NO)/i),
         desnutrido: parseTriajeItem(/(?:Muy )?flaco o desnutrido:\s*(S[ÍI]|NO)/i),
-        deshidratado: parseTriajeItem(/Deshidratado:\s*(S[ÍI]|NO)/i)
+        deshidratado: parseTriajeItem(/Deshidratado:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario digestivo:\s*([^\n\r]+)/i)
       };
 
       const musc = {
@@ -1045,19 +1063,22 @@ export class ActaSeresSintientes implements OnInit {
         cojera: parseTriajeItem(/(?:Cojo|Cojera evidente):\s*(S[ÍI]|NO)/i),
         heridaAbierta: parseTriajeItem(/(?:Presenta )?herida abierta(?: profunda)?:\s*(S[ÍI]|NO)/i),
         gusanosMiasis: parseTriajeItem(/(?:Observa moscos o gusanos|Gusanos \/ Miasis activa):\s*(S[ÍI]|NO)/i),
-        postrado: parseTriajeItem(/(?:Animal )?postrado(?: \/ no se levanta)?:\s*(S[ÍI]|NO)/i)
+        postrado: parseTriajeItem(/(?:Animal )?postrado(?: \/ no se levanta)?:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario m[úu]sculo-?esquel[ée]tico:\s*([^\n\r]+)/i)
       };
 
       const derm = {
         peladuras: parseTriajeItem(/(?:Presenta )?peladuras(?: \/ Alopecia)?:\s*(S[ÍI]|NO)/i),
         heridasSangre: parseTriajeItem(/Heridas con sangre:\s*(S[ÍI]|NO)/i),
-        pulgasGarrapatas: parseTriajeItem(/(?:Infestación de )?pulgas o garrapatas:\s*(S[ÍI]|NO)/i)
+        pulgasGarrapatas: parseTriajeItem(/(?:(?:Infestación de )?pulgas o garrapatas|Hectoparásitos):\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario dermatol[óo]gico:\s*([^\n\r]+)/i)
       };
 
       const genit = {
         masaSecrecion: parseTriajeItem(/(?:Presenta )?masa(?:,| o)? (?:tumor o )?secreción(?: genital)?:\s*(S[ÍI]|NO)/i),
         gestante: parseTriajeItem(/(?:Se encuentra |Posible hembra )?gestante:\s*(S[ÍI]|NO)/i),
-        enCelo: parseTriajeItem(/(?:Se encuentra |Hembra )?en celo:\s*(S[ÍI]|NO)/i)
+        enCelo: parseTriajeItem(/(?:Se encuentra |Hembra )?en celo:\s*(S[ÍI]|NO)/i),
+        comentario: parseComentarioSistema(/Comentario g[ée]nito-?urinario:\s*([^\n\r]+)/i)
       };
 
       const todos = [
@@ -1591,20 +1612,20 @@ export class ActaSeresSintientes implements OnInit {
       titulo = 'El servidor rechazó algunos datos';
       mensajeHtml = detalle.length
         ? detalle.map(linea => this.escaparHtml(linea)).join('<br>')
-        : 'Verifica los campos obligatorios del formulario.';
+        : 'Verifique los campos obligatorios del formulario.';
     } else if (error.status === 401 || error.status === 403) {
-      mensajeHtml = 'Tu sesión ha expirado o no tiene permisos. Por favor, inicia sesión nuevamente.';
+      mensajeHtml = 'Su sesión ha expirado o no tiene permisos. Inicie sesión nuevamente.';
     } else if (error.status === 0) {
       const servidor = environment.backendUrl || 'el servidor en la nube';
-      mensajeHtml = `No se pudo conectar con el servidor en <b>${this.escaparHtml(servidor)}</b>.<br>Verifica la conexión a internet o el estado del backend desplegado.`;
+      mensajeHtml = `No se pudo conectar con el servidor en <b>${this.escaparHtml(servidor)}</b>.<br>Verifique la conexión a internet o el estado del backend desplegado.`;
     } else if (error.status >= 500) {
-      mensajeHtml = 'El servidor en la nube reportó un error interno (500). Revisa los registros del backend.';
+      mensajeHtml = 'El servidor en la nube reportó un error interno (500). Revise los registros del backend.';
     }
 
     Swal.fire({
       icon: 'error',
       title: titulo,
-      html: `<div style="text-align:left;font-size:13px">${mensajeHtml}</div>`,
+      html: `<p>${mensajeHtml}</p>`,
       confirmButtonText: 'Aceptar'
     });
   }
@@ -1658,11 +1679,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: false,
       totalAlertas: 0,
-      respiratorio: { moco: null, dificultadRespirar: null, tos: null, laganeo: null },
-      digestivo: { vomito: null, diarrea: null, desnutrido: null, deshidratado: null },
-      musculoEsqueletico: { caidaPatas: null, cojera: null, heridaAbierta: null, gusanosMiasis: null, postrado: null },
-      dermatologico: { peladuras: null, heridasSangre: null, pulgasGarrapatas: null },
-      genitourinario: { masaSecrecion: null, gestante: null, enCelo: null }
+      respiratorio: { moco: null, dificultadRespirar: null, tos: null, laganeo: null, comentario: '' },
+      digestivo: { vomito: null, diarrea: null, desnutrido: null, deshidratado: null, comentario: '' },
+      musculoEsqueletico: { caidaPatas: null, cojera: null, heridaAbierta: null, gusanosMiasis: null, postrado: null, comentario: '' },
+      dermatologico: { peladuras: null, heridasSangre: null, pulgasGarrapatas: null, comentario: '' },
+      genitourinario: { masaSecrecion: null, gestante: null, enCelo: null, comentario: '' }
     };
     this.tratamientosCampo = { tratamientoTexto: '', medicamentosMaletin: [] };
     this.resolucionCierre = {
@@ -1721,7 +1742,7 @@ export class ActaSeresSintientes implements OnInit {
 
     // Validación estricta de stock en inventario de campo antes de permitir guardar
     const medExcedido = this.medicamentosSeleccionados.find((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
     );
 
     if (medExcedido) {
@@ -1939,18 +1960,38 @@ export class ActaSeresSintientes implements OnInit {
         }
 
         // 2. Registrar Tratamientos asociados a la consulta y descontar del maletín de campo
+        const consumosActa: Observable<ResultadoConsumoKit>[] = [];
         if (idConsultaGenerada && Array.isArray(this.medicamentosSeleccionados) && this.medicamentosSeleccionados.length > 0) {
           this.medicamentosSeleccionados.forEach((m: any) => {
             // Descontar del kit de campo si no fue administrado previamente en la tarjeta
-            if (!m.administrado && (m.id || m.id_medicamento)) {
+            // (un PENDIENTE previo o un RECHAZADO ya informado no se reenvía con un client_uuid nuevo: solo se advierte)
+            if (m.descuentoKitPendiente && !m.administrado) {
+              consumosActa.push(of(resultadoPendientePrevioKit(m)));
+            } else if (m.resultadoKitRechazado && !m.administrado) {
+              consumosActa.push(of(m.resultadoKitRechazado as ResultadoConsumoKit));
+            } else if (!m.administrado && (m.id || m.id_medicamento)) {
               const cantUsar = Number(m.cantidadAAdministrar) || 1;
-              this.vetInvSvc.registrarConsumo(
+              consumosActa.push(this.vetInvSvc.registrarConsumo(
                 m.id || m.id_medicamento,
                 cantUsar,
-                `Administración en Acta #${this.numeroRadicadoActual || idConsultaGenerada}`
-              ).subscribe();
-              m.administrado = true;
-              m.cantidadEfectivaAdministrada = cantUsar;
+                `Administración en Acta #${this.numeroRadicadoActual || idConsultaGenerada}`,
+                undefined,
+                // Origen clínico: la consulta que el backend acaba de crear para esta acta (respConsulta.id_consulta)
+                { id_consulta: Number(idConsultaGenerada) }
+              ).pipe(
+                tap((resultado) => {
+                  // Solo CONFIRMADO marca como administrado; PENDIENTE solo bloquea el reenvío
+                  if (resultado.estado === 'CONFIRMADO') {
+                    m.administrado = true;
+                    m.cantidadEfectivaAdministrada = cantUsar;
+                  } else if (resultado.estado === 'PENDIENTE') {
+                    m.descuentoKitPendiente = true;
+                    m.cantidadPendienteKit = cantUsar;
+                  } else {
+                    m.resultadoKitRechazado = resultado;
+                  }
+                })
+              ));
             }
             const detallesExtra = [
               m.descripcion?.trim(),
@@ -1999,14 +2040,34 @@ export class ActaSeresSintientes implements OnInit {
         }
         this.aplicarFiltros();
 
-        Swal.fire({
-          title: 'Historia clínica y consulta guardadas',
-          icon: 'success',
-          html:
-            `Historia clínica: <b>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</b><br>` +
-            `Consulta N°: <b>${this.escaparHtml(String(respConsulta?.id_consulta || 'registrada'))}</b><br>` +
-            `<b>Guardado exitoso con sistemas, diagnósticos y tratamientos</b>`,
-          confirmButtonText: 'Aceptar'
+        // El guardado clínico ya fue exitoso; el mensaje final depende del resultado explícito de cada consumo
+        // y de alertas_farmacia (un 200/201 no implica que el descuento del kit se haya aceptado).
+        const conflictosFarmaciaActa = [
+          ...extraerConflictosStockFarmacia(respHistoria),
+          ...extraerConflictosStockFarmacia(respConsulta)
+        ];
+        (consumosActa.length > 0 ? forkJoin(consumosActa) : of([] as ResultadoConsumoKit[])).subscribe((resultados) => {
+          const avisoInventario = construirAvisoGuardadoClinico('acta', resultados, conflictosFarmaciaActa);
+          if (avisoInventario) {
+            Swal.fire({
+              title: 'Acta guardada con advertencias',
+              icon: 'warning',
+              text: `Historia clínica: ${respHistoria?.numero_historia || idHistoria}. Consulta N°: ${respConsulta?.id_consulta || 'registrada'}. ${avisoInventario}`,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+          Swal.fire({
+            title: 'Historia clínica y consulta guardadas',
+            icon: 'success',
+            html:
+              `<dl class="qa-datos">` +
+              `<dt>Historia clínica</dt><dd>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</dd>` +
+              `<dt>Consulta N°</dt><dd>${this.escaparHtml(String(respConsulta?.id_consulta || 'registrada'))}</dd>` +
+              `</dl>` +
+              `<p class="qa-nota">Guardado exitoso con sistemas, diagnósticos y tratamientos.</p>`,
+            confirmButtonText: 'Aceptar'
+          });
         });
 
         // 4. Limpieza total y retorno de sistemas al estado normal
@@ -2030,8 +2091,10 @@ export class ActaSeresSintientes implements OnInit {
           title: 'Historia clínica registrada',
           icon: 'success',
           html:
-            `Historia clínica N°: <b>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</b> guardada en el sistema.<br>` +
-            `<b>Atención: La consulta clínica no pudo adjuntarse (${errConsulta?.status || 'ver consola'}).</b>`,
+            `<dl class="qa-datos">` +
+            `<dt>Historia clínica N°</dt><dd>${this.escaparHtml(String(respHistoria?.numero_historia || idHistoria))}</dd>` +
+            `</dl>` +
+            `<p class="qa-nota">Atención: la consulta clínica no pudo adjuntarse (<code>${errConsulta?.status || 'ver consola'}</code>).</p>`,
           confirmButtonText: 'Aceptar'
         });
         this.reiniciarFormularioClinico();
@@ -2130,11 +2193,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: true,
       totalAlertas: 0,
-      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
     };
     this.diagnosticoFinal = 'Consulta médica general / Sin patología infectocontagiosa evidente';
     this.materialesUtilizados = 'Curación tópica, valoración física y desinfección preventiva.';
@@ -2307,7 +2370,7 @@ export class ActaSeresSintientes implements OnInit {
     }
 
     const medExcedido = this.medicamentosSeleccionados.find((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
     );
     if (medExcedido) {
       const disp = Number(medExcedido.stockDisponible) || 0;
@@ -2380,12 +2443,12 @@ export class ActaSeresSintientes implements OnInit {
         sincronizacion_offline: false
       };
 
-      const urlCrearSeguimiento = 'https://backendvetericano-production.up.railway.app/api/peticiones/seguimiento/crear/';
+      const urlCrearSeguimiento = `${environment.apiUrlPeticiones}seguimiento/crear/`;
       this.http.post<any>(urlCrearSeguimiento, payloadSeguimiento, { headers }).subscribe({
         next: (respSeg) => {
           console.log('Seguimiento creado con éxito:', respSeg);
           const idSegGenerado = respSeg?.id_seguimiento;
-          this.registrarExpedienteClinicoParaNuevo(nombreAnimal, fotoPrincipal, urlsFotos, urlsVideos, idSegGenerado, headers);
+          this.registrarExpedienteClinicoParaNuevo(nombreAnimal, fotoPrincipal, urlsFotos, urlsVideos, idSegGenerado, headers, extraerConflictosStockFarmacia(respSeg));
         },
         error: (errSeg) => {
           console.warn('Fallo en seguimiento/crear, intentando creación directa de expediente clínico:', errSeg);
@@ -2401,8 +2464,14 @@ export class ActaSeresSintientes implements OnInit {
     urlsFotos: string[],
     urlsVideos: string[],
     idSeguimiento: number | null,
-    headers: HttpHeaders
+    headers: HttpHeaders,
+    conflictosFarmaciaPrevios: any[] = []
   ): void {
+    // Administraciones de kit que quedaron PENDIENTE o RECHAZADAS en la tarjeta: se advierten al guardar (no se reenvían)
+    const pendientesKitPrevios: ResultadoConsumoKit[] = (this.medicamentosSeleccionados || [])
+      .filter((m: any) => (m.descuentoKitPendiente || m.resultadoKitRechazado) && !m.administrado)
+      .map((m: any) => m.descuentoKitPendiente ? resultadoPendientePrevioKit(m) : m.resultadoKitRechazado);
+
     const payloadExpediente: any = {
       animal: {
         nombre: nombreAnimal,
@@ -2474,7 +2543,9 @@ export class ActaSeresSintientes implements OnInit {
           via: m.via || 'Oral',
           frecuenciaDuracion: m.frecuencia || 'Según evolución',
           cantidad_usada: Number(m.cantidadAAdministrar) || 1,
-          descontar_inventario: !m.administrado,
+          // Un consumo de kit ya intentado en la tarjeta (PENDIENTE o RECHAZADO) no pasa a descontarse de bodega:
+          // se conserva el comportamiento previo, en el que cualquier intento en la tarjeta dejaba descontar_inventario=false
+          descontar_inventario: !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado,
           responsable_admin: m.responsable_admin || this.nombreVeterinario || '',
           reaccion_comentarios: m.reaccion_comentarios || ''
         }))
@@ -2503,15 +2574,36 @@ export class ActaSeresSintientes implements OnInit {
           this.animalesConHistoriaIds.add(Number(idAnimalCreado));
         }
 
+        // alertas_farmacia con HTTP 200/201: el registro se guardó pero el descuento del kit no se aceptó
+        const avisoFarmacia = construirAvisoGuardadoClinico('acta', pendientesKitPrevios, [
+          ...conflictosFarmaciaPrevios,
+          ...extraerConflictosStockFarmacia(respExp)
+        ]);
+        if (avisoFarmacia) {
+          Swal.fire({
+            title: 'Acta guardada con advertencias',
+            icon: 'warning',
+            text: `Paciente: ${nombreAnimal}. Historia clínica: ${numHc || 'Registrada'}. ${avisoFarmacia}`,
+            confirmButtonText: 'Aceptar'
+          });
+          this.deseleccionarPaciente();
+          this.cargarSeguimientos();
+          return;
+        }
+
         Swal.fire({
           title: 'Historia clínica creada',
           icon: 'success',
           html:
-            `Paciente: <b>${this.escaparHtml(nombreAnimal)}</b><br>` +
-            `Historia Clínica: <b>${this.escaparHtml(String(numHc || 'Registrada'))}</b><br>` +
-            (idSeguimiento ? `Acta Oficial N°: <b>#${idSeguimiento}</b><br>` : '') +
-            (urlsFotos.length > 0 || urlsVideos.length > 0 ? `<b>${urlsFotos.length} fotos y ${urlsVideos.length} videos adjuntos</b><br>` : '') +
-            `<b>Paciente registrado con constantes, diagnóstico y tratamientos</b>`,
+            `<dl class="qa-datos">` +
+            `<dt>Paciente</dt><dd>${this.escaparHtml(nombreAnimal)}</dd>` +
+            `<dt>Historia clínica</dt><dd>${this.escaparHtml(String(numHc || 'Registrada'))}</dd>` +
+            (idSeguimiento ? `<dt>Acta oficial N°</dt><dd>#${idSeguimiento}</dd>` : '') +
+            (urlsFotos.length > 0 || urlsVideos.length > 0
+              ? `<dt>Evidencias adjuntas</dt><dd>${urlsFotos.length} ${urlsFotos.length === 1 ? 'foto' : 'fotos'} y ${urlsVideos.length} ${urlsVideos.length === 1 ? 'video' : 'videos'}</dd>`
+              : '') +
+            `</dl>` +
+            `<p class="qa-nota">Paciente registrado con constantes, diagnóstico y tratamientos.</p>`,
           confirmButtonText: 'Aceptar'
         });
 
@@ -2524,8 +2616,8 @@ export class ActaSeresSintientes implements OnInit {
           title: 'Registro completado',
           icon: 'success',
           html:
-            `Paciente <b>${this.escaparHtml(nombreAnimal)}</b> registrado en el sistema con acta oficial.<br>` +
-            `<b>Los datos y evidencias han sido guardados.</b>`,
+            `<p>Paciente <b>${this.escaparHtml(nombreAnimal)}</b> registrado en el sistema con acta oficial.</p>` +
+            `<p class="qa-nota">Los datos y evidencias han sido guardados.</p>`,
           confirmButtonText: 'Aceptar'
         });
         this.deseleccionarPaciente();
@@ -2897,7 +2989,7 @@ export class ActaSeresSintientes implements OnInit {
 
           Swal.fire({
             title: 'Historia clínica generada',
-            html: `Se formalizó la historia clínica de <b>${this.escaparHtml(nombre)}</b> (${this.escaparHtml(String(numHc))}).<br><b>El paciente ha pasado a la pestaña de Completados.</b>`,
+            html: `<p>Se formalizó la historia clínica de <b>${this.escaparHtml(nombre)}</b> (${this.escaparHtml(String(numHc))}).</p><p class="qa-nota">El paciente ha pasado a la pestaña de Completados.</p>`,
             icon: 'success',
             confirmButtonText: 'Aceptar'
           });
@@ -3322,13 +3414,14 @@ export class ActaSeresSintientes implements OnInit {
     if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:image/') || u.startsWith('images/') || u.startsWith('/images/')) {
       return u;
     }
+    const backendBase = (environment.backendUrl || '').replace(/\/+$/, '');
     if (u.startsWith('/media/')) {
-      return `https://backendvetericano-production.up.railway.app${u}`;
+      return `${backendBase}${u}`;
     }
     if (u.startsWith('media/')) {
-      return `https://backendvetericano-production.up.railway.app/${u}`;
+      return `${backendBase}/${u}`;
     }
-    return `https://backendvetericano-production.up.railway.app/media/${u}`;
+    return `${backendBase}/media/${u}`;
   }
 
   /**
@@ -4132,11 +4225,22 @@ export class ActaSeresSintientes implements OnInit {
   }
 
   registrarAdministracion(med: any, indice: number): void {
+    if (med.descuentoKitPendiente && !med.administrado) {
+      // PENDIENTE previo: no se reenvía (evita un segundo consumo con otro client_uuid)
+      Swal.fire({
+        icon: 'info',
+        title: 'Descuento pendiente de sincronizar',
+        text: 'La administración de este medicamento ya quedó registrada solo localmente y su descuento del inventario no está confirmado por el servidor. No se enviará un nuevo descuento.',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
     if (med.administrado) {
       Swal.fire({
         icon: 'info',
         title: 'Medicamento ya administrado',
-        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} uds) y descontado de inventario.`,
+        text: `Este medicamento ya fue administrado (${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}) y descontado de inventario.`,
         confirmButtonText: 'Aceptar'
       });
       return;
@@ -4178,7 +4282,7 @@ export class ActaSeresSintientes implements OnInit {
 
     Swal.fire({
       title: 'Confirmar administración y descuento',
-      html: `Se registrará la administración física de <b>${cantidad} uds</b> de <b>${nombreMed}</b> al paciente.<br><br><b>Esta acción descontará las unidades de los lotes activos en el inventario de la clínica.</b>`,
+      html: `<p>Se registrará la administración física de <b>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</b> de <b>${nombreMed}</b> al paciente.</p><p class="qa-nota">Esta acción descontará las unidades de los lotes activos en el inventario de la clínica.</p>`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Confirmar',
@@ -4189,26 +4293,61 @@ export class ActaSeresSintientes implements OnInit {
       med.administrando = true;
       this.cdr.detectChanges();
 
-      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en Acta #' + (this.numeroRadicadoActual || '')).subscribe({
-        next: () => {
-          this.comprasService.descontarStockMedicamento(med.id, cantidad, med.nombre).pipe(
-            catchError(() => of({ restante: Math.max(0, stockActual - cantidad) }))
-          ).subscribe({
-            next: (resp) => {
-              med.administrando = false;
-              med.administrado = true;
-              med.cantidadEfectivaAdministrada = cantidad;
-              med.stockDisponible = Math.max(0, stockActual - cantidad);
-              this.recargarStockMedicamentos();
-              this.cdr.detectChanges();
+      // Origen clínico: el seguimiento de visita cargado desde el servidor (sin seguimiento registrado no hay
+      // vínculo válido y registrarConsumo devuelve RECHAZADO ORIGEN_CLINICO_REQUERIDO sin enviar nada)
+      const idSeguimientoActa = Number(this.seguimientoSeleccionado?.id_seguimiento);
+      const origenActa = !this.seguimientoSeleccionado?.esNuevoAnimal && Number.isInteger(idSeguimientoActa) && idSeguimientoActa > 0
+        ? { id_seguimiento_visita: idSeguimientoActa }
+        : null;
+      this.vetInvSvc.registrarConsumo(med.id, cantidad, 'Administración en Acta #' + (this.numeroRadicadoActual || ''), undefined, origenActa).subscribe({
+        next: (resultado: ResultadoConsumoKit) => {
+          med.administrando = false;
+          // Último rechazo del servidor: al guardar se advierte sin reenviarlo (el usuario puede reintentarlo aquí)
+          med.resultadoKitRechazado = resultado.estado === 'RECHAZADO' ? resultado : undefined;
 
-              Swal.fire({
-                icon: 'success',
-                title: 'Administración registrada',
-                html: `Se administraron y descontaron <b>${cantidad} uds</b> de <b>${nombreMed}</b> del maletín de campo.<br>Saldo restante en maletín: <b>${med.stockDisponible} uds</b>.`,
-                confirmButtonText: 'Aceptar'
-              });
-            }
+          if (resultado.estado === 'RECHAZADO') {
+            // El backend (o la validación local) rechazó el consumo: no se marca como administrado ni se descuenta
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'error',
+              title: 'No se descontó del inventario',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          if (resultado.estado === 'PENDIENTE') {
+            // No confirmado: no se marca como administrado/descontado; solo se bloquea el reenvío
+            med.descuentoKitPendiente = true;
+            med.cantidadPendienteKit = cantidad;
+            this.cdr.detectChanges();
+            Swal.fire({
+              icon: 'warning',
+              title: 'Administración pendiente de sincronizar',
+              text: resultado.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            return;
+          }
+
+          // CONFIRMADO: único caso en que se marca como administrado y descontado
+          med.administrado = true;
+          med.cantidadEfectivaAdministrada = cantidad;
+          med.stockDisponible = Math.max(0, stockActual - cantidad);
+          this.recargarStockMedicamentos();
+          this.cdr.detectChanges();
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Administración registrada',
+            html:
+              `<dl class="qa-datos">` +
+              `<dt>Medicamento</dt><dd>${nombreMed}</dd>` +
+              `<dt>Cantidad administrada</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd>` +
+              `<dt>Saldo restante en maletín</dt><dd>${med.stockDisponible} ${med.stockDisponible === 1 ? 'unidad' : 'unidades'}</dd>` +
+              `</dl>`,
+            confirmButtonText: 'Aceptar'
           });
         },
         error: () => {
@@ -4217,7 +4356,7 @@ export class ActaSeresSintientes implements OnInit {
           Swal.fire({
             icon: 'error',
             title: 'No fue posible descontar del inventario',
-            text: 'No fue posible registrar la administración en el inventario del maletín.',
+            text: 'No fue posible registrar la administración en el inventario del maletín. Intente nuevamente.',
             confirmButtonText: 'Aceptar'
           });
         }
@@ -4231,10 +4370,11 @@ export class ActaSeresSintientes implements OnInit {
       Swal.fire({
         icon: 'warning',
         title: 'Confirmar retiro de medicamento',
-        html: `Atención: Ya se registró la administración y se descontaron <b>${med.cantidadEfectivaAdministrada} uds</b> de <b>${med.nombre}</b> en el inventario físico.<br><br>Confirme si desea retirar este tratamiento del formulario.`,
+        html: `<p>Ya se registró la administración y se descontaron <b>${med.cantidadEfectivaAdministrada} ${med.cantidadEfectivaAdministrada === 1 ? 'unidad' : 'unidades'}</b> de <b>${med.nombre}</b> en el inventario físico.</p><p class="qa-nota">Confirme si desea retirar este tratamiento del formulario.</p>`,
         showCancelButton: true,
         confirmButtonText: 'Eliminar',
-        cancelButtonText: 'Cancelar'
+        cancelButtonText: 'Cancelar',
+        customClass: { popup: 'qa-destructivo' }
       }).then((res) => {
         if (res.isConfirmed) {
           this.medicamentosSeleccionados.splice(indice, 1);
@@ -4259,14 +4399,11 @@ export class ActaSeresSintientes implements OnInit {
       icon: 'warning',
       title: 'Alerta de stock bajo',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <div class="p-3 bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl">
-            <p class="font-semibold text-[#170B3D]">
-              Quedan <b>${s}</b> unidades de este producto. Solicite reaprovisionamiento al inventario general.
-            </p>
-          </div>
-          <p class="text-xs text-slate-600">Producto en maletín: <b>${nombre}</b></p>
-        </div>
+        <dl class="qa-datos">
+          <dt>Producto en maletín</dt><dd>${nombre}</dd>
+          <dt>Stock disponible</dt><dd class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</dd>
+        </dl>
+        <p class="qa-nota">Solicite reaprovisionamiento al inventario general.</p>
       `,
       confirmButtonText: 'Aceptar'
     });
@@ -4302,7 +4439,7 @@ export class ActaSeresSintientes implements OnInit {
     Swal.fire({
       icon: 'success',
       title: 'Medicamento alternativo seleccionado',
-      text: `Se seleccionó ${nombre} con ${stock} uds disponibles.`,
+      text: `Se seleccionó ${nombre} con ${stock} ${stock === 1 ? 'unidad disponible' : 'unidades disponibles'}.`,
       timer: 1600,
       showConfirmButton: false
     });
@@ -4310,7 +4447,7 @@ export class ActaSeresSintientes implements OnInit {
 
   get hayMedicamentosConStockInsuficiente(): boolean {
     return this.medicamentosSeleccionados.some((m: any) =>
-      !m.administrado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
+      !m.administrado && !m.descuentoKitPendiente && !m.resultadoKitRechazado && (Number(m.cantidadAAdministrar) || 0) > (Number(m.stockDisponible) || 0)
     );
   }
 
@@ -4394,7 +4531,7 @@ export class ActaSeresSintientes implements OnInit {
       Swal.fire({
         icon: 'error',
         title: 'No fue posible guardar',
-        text: 'No fue posible guardar la evaluación.',
+        text: 'No fue posible guardar la evaluación. Intente nuevamente.',
         confirmButtonText: 'Aceptar'
       });
     }
@@ -4421,11 +4558,11 @@ export class ActaSeresSintientes implements OnInit {
       this.triajeSistemasCampo = {
         tieneEvaluacion: true,
         totalAlertas: 0,
-        respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-        digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-        musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-        dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-        genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+        respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+        digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+        musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+        dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+        genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
       };
     }
     if (!(this.triajeSistemasCampo as any)[sistema]) {
@@ -4441,17 +4578,17 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: true,
       totalAlertas: 0,
-      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
     };
     this.recalcularAlertasSistemas();
     this.cdr.detectChanges();
     Swal.fire({
       icon: 'success',
-      title: 'Sistemas en Campo Normalizados',
+      title: 'Sistemas en campo normalizados',
       text: 'Todos los 19 hallazgos se marcaron como Normales (NO presenta anomalías).',
       timer: 1200,
       showConfirmButton: false
@@ -4462,11 +4599,11 @@ export class ActaSeresSintientes implements OnInit {
     this.triajeSistemasCampo = {
       tieneEvaluacion: true,
       totalAlertas: 0,
-      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false },
-      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false },
-      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false },
-      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false },
-      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false }
+      respiratorio: { moco: false, dificultadRespirar: false, tos: false, laganeo: false, comentario: '' },
+      digestivo: { vomito: false, diarrea: false, desnutrido: false, deshidratado: false, comentario: '' },
+      musculoEsqueletico: { caidaPatas: false, cojera: false, heridaAbierta: false, gusanosMiasis: false, postrado: false, comentario: '' },
+      dermatologico: { peladuras: false, heridasSangre: false, pulgasGarrapatas: false, comentario: '' },
+      genitourinario: { masaSecrecion: false, gestante: false, enCelo: false, comentario: '' }
     };
     this.recalcularAlertasSistemas();
     this.cdr.detectChanges();
@@ -4687,7 +4824,7 @@ export class ActaSeresSintientes implements OnInit {
       showCancelButton: true,
       confirmButtonText: 'Eliminar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true
+      customClass: { popup: 'qa-destructivo' }
     }).then((resultado) => {
       if (resultado.isConfirmed) {
         this.examenesSolicitados.splice(indice, 1);

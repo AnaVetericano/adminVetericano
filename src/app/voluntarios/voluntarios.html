@@ -5,19 +5,9 @@
          BARRA SUPERIOR
     ====================================================== -->
 
-    <header class="shrink-0 w-full max-w-screen-2xl mx-auto flex flex-wrap items-center justify-end gap-2 px-4 sm:px-6 pt-3 pb-1">
+    <header class="shrink-0 w-full max-w-screen-2xl mx-auto flex flex-wrap items-center justify-end gap-2 px-4 sm:px-6 py-0">
 
         <app-page-title titulo="Voluntarios" />
-
-        <!-- Enlace a Gestión de Jornadas / Eventos -->
-        <a routerLink="/inicio-admin/eventos-voluntariado"
-           class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
-                  bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>Gestionar Jornadas</span>
-        </a>
 
     </header>
 
@@ -26,7 +16,7 @@
          CONTENEDOR PRINCIPAL
     ====================================================== -->
 
-    <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 py-5
+    <main class="flex-1 max-w-screen-2xl w-full mx-auto px-4 sm:px-6 pt-3 pb-5
                  flex flex-col overflow-hidden">
 
 
@@ -34,14 +24,14 @@
              BUSCADOR Y BOTÓN CREAR
         ====================================================== -->
 
-        <div class="flex flex-col sm:flex-row justify-between
-                    items-stretch sm:items-center gap-3 mb-4 shrink-0">
+        <div class="flex flex-wrap justify-between
+                    items-center gap-3 mb-4 shrink-0">
 
 
             <!-- BUSCADOR Y FILTRO -->
 
             <div class="flex items-center bg-white rounded-lg
-                        border border-slate-300 w-full sm:w-2/3 h-10
+                        border border-slate-300 w-full md:w-2/5 lg:w-1/2 h-10
                         focus-within:border-[#4141A5]
                         focus-within:ring-2 focus-within:ring-[#4141A5]/20
                         transition-colors">
@@ -165,35 +155,49 @@
 
 
             <!-- =================================================
-                 BOTÓN CREAR
+                 ACCIONES Y BOTÓN CREAR
             ================================================== -->
 
-            <button
-                type="button"
-                (click)="abrirModalCrear()"
-                class="flex items-center justify-center gap-2
-                       bg-[#4141A5] hover:bg-[#353583]
-                       text-white font-semibold px-4 py-2
-                       rounded-lg
-                       transition-colors
-                       text-sm whitespace-nowrap">
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
 
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="w-4 h-4 shrink-0"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke="currentColor"
-                     stroke-width="2">
+                <!-- Enlace a Gestión de Jornadas / Eventos -->
+                <a routerLink="/inicio-admin/eventos-voluntariado"
+                   class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
+                          bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#4141A5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Gestionar Jornadas</span>
+                </a>
 
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M12 4v16m8-8H4"/>
+                <button
+                    type="button"
+                    (click)="abrirModalCrear()"
+                    class="flex items-center justify-center gap-2
+                           bg-[#4141A5] hover:bg-[#353583]
+                           text-white font-semibold px-4 py-2
+                           rounded-lg
+                           transition-colors
+                           text-sm whitespace-nowrap">
 
-                </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-4 h-4 shrink-0"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor"
+                         stroke-width="2">
 
-                Crear Voluntario
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M12 4v16m8-8H4"/>
 
-            </button>
+                    </svg>
+
+                    Crear Voluntario
+
+                </button>
+
+            </div>
 
         </div>
 

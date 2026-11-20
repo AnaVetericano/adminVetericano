@@ -10,10 +10,13 @@ import {
   inject,
   computed
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { Chart } from 'chart.js/auto';
+import { Router, RouterLink } from '@angular/router';
+import { Chart, Plugin } from 'chart.js/auto';
 import { Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import {
   DashboardJuridicoService,
   ResumenDashboardJuridico,
@@ -26,15 +29,15 @@ import {
   ResumenConteosAlertas,
   crearResumenAlertasVacio
 } from '../models/duplicados.model';
-import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { AuthService } from '../services/auth';
 
 const MAX_ALERTAS_PENDIENTES_DASHBOARD = 5;
 
 @Component({
   selector: 'app-dashboard-juridico',
   standalone: true,
-  imports: [CommonModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, PageTitleComponent, RouterLink],
   templateUrl: './dashboard-juridico.html',
   styleUrl: './dashboard-juridico.css'
 })
@@ -74,6 +77,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   private chartCBA?: Chart;
 
   readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  // Para mostrar el selector de vistas por rol solo al Administrador (supervisión)
+  readonly authService = inject(AuthService);
   cargandoDuplicados = false;
   errorDuplicados = '';
   private duplicadosSub?: Subscription;
@@ -116,7 +121,12 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     private dashboardService: DashboardJuridicoService,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on(['peticion.*', 'clinica.atencion_registrada', 'adopcion.catalogo_actualizado'])
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.cargarDatos(true));
+  }
 
   ngOnInit(): void {
     this.cargarDatos(false);
@@ -209,27 +219,51 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Resuelve el color exacto para las series de datos según la paleta monocroma de marca:
-   * - Serie Primaria (En proceso / En observación): Índigo #4141A5
-   * - Serie Destacada (Pendiente / Asignada): Dorado #F1C63C
-   * - Serie Oscura (Finalizada / Egresado / Adopción): Tinta #170B3D
-   * - Serie Secundaria (En tratamiento / Crítico / Urgente): Índigo medio rgba(65, 65, 165, 0.55)
+   * Formatea una cadena a Title Case (ej. "RUBY NORAYDA" -> "Ruby Norayda").
+   */
+  formatearTitleCase(texto: string): string {
+    return (texto || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  /**
+   * Resuelve el color semántico diferenciado para cada estado en las gráficas:
+   * - En revisión: Índigo #4141A5
+   * - En observación: Azul medio #0284C7
+   * - En tratamiento / Crítico / Urgente: Rojo clínico #C83E4D
+   * - En proceso / En curso: Violeta #7C3AED
+   * - Asignada / Pendiente / Advertencia: Dorado #F1C63C
+   * - Alta médica / Duplicada / Descartada: Gris #94A3B8
+   * - Finalizada / Cerrada / Apto / Adopción: Tinta #170B3D
    */
   obtenerColorGrafica(nombre: string, indexFallback: number = 0): string {
     const n = (nombre || '').toLowerCase();
-    if (n.includes('tratam') || n.includes('crit') || n.includes('urgente') || n.includes('grave')) {
-      return 'rgba(65, 65, 165, 0.55)';
-    }
-    if (n.includes('proceso') || n.includes('curso') || n.includes('observaci')) {
+    if (n.includes('revis')) {
       return '#4141A5';
+    }
+    if (n.includes('observaci')) {
+      return '#0284C7';
+    }
+    if (n.includes('tratam') || n.includes('crit') || n.includes('urgente') || n.includes('grave')) {
+      return '#C83E4D';
+    }
+    if (n.includes('proceso') || n.includes('curso')) {
+      return '#7C3AED';
     }
     if (n.includes('pend') || n.includes('asig') || n.includes('advert')) {
       return '#F1C63C';
     }
-    if (n.includes('finaliz') || n.includes('revis') || n.includes('cerr') || n.includes('adop') || n.includes('egres')) {
+    if (n.includes('alta') || n.includes('duplic') || n.includes('descart') || n.includes('anulad')) {
+      return '#94A3B8';
+    }
+    if (n.includes('finaliz') || n.includes('cerr') || n.includes('atendid') || n.includes('resuelt') || n.includes('adop') || n.includes('apto') || n.includes('egres')) {
       return '#170B3D';
     }
-    const paleta = ['#170B3D', '#4141A5', 'rgba(65, 65, 165, 0.55)', 'rgba(65, 65, 165, 0.28)', '#94A3B8', '#CBD5E1'];
+    const paleta = ['#4141A5', '#0284C7', '#F1C63C', '#C83E4D', '#94A3B8', '#170B3D', '#7C3AED'];
     return paleta[indexFallback % paleta.length];
   }
 
@@ -276,7 +310,48 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     const ctx = this.chartPeticionesRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const colores = labels.map((label, idx) => this.obtenerColorGrafica(label, idx));
+    const paletaFallback = ['#4141A5', '#0284C7', '#F1C63C', '#C83E4D', '#94A3B8', '#170B3D', '#7C3AED'];
+    const usados = new Set<string>();
+    const colores = labels.map((label, idx) => {
+      let color = this.obtenerColorGrafica(label, idx);
+      if (usados.has(color)) {
+        const alternativo = paletaFallback.find((c) => !usados.has(c));
+        if (alternativo) {
+          color = alternativo;
+        }
+      }
+      usados.add(color);
+      return color;
+    });
+
+    const totalPeticiones =
+      this.metricas?.peticiones?.total ||
+      data.reduce((acc, val) => acc + (Number(val) || 0), 0);
+
+    const centerTextPlugin: Plugin<'doughnut'> = {
+      id: 'centerTextPlugin',
+      afterDraw: (chart) => {
+        const { ctx: chartCtx, chartArea } = chart;
+        if (!chartArea) return;
+
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        chartCtx.save();
+        chartCtx.textAlign = 'center';
+        chartCtx.textBaseline = 'middle';
+
+        chartCtx.font = "bold 24px 'Nunito', sans-serif";
+        chartCtx.fillStyle = '#170B3D';
+        chartCtx.fillText(String(totalPeticiones), centerX, centerY - 7);
+
+        chartCtx.font = "bold 11px 'Nunito', sans-serif";
+        chartCtx.fillStyle = '#64748B';
+        chartCtx.fillText('TOTAL CASOS', centerX, centerY + 13);
+
+        chartCtx.restore();
+      }
+    };
 
     this.chartPeticiones = new Chart(ctx, {
       type: 'doughnut',
@@ -286,7 +361,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           data,
           backgroundColor: colores,
           borderWidth: 2,
-          borderColor: '#ffffff',
+          borderColor: '#FFFFFF',
+          borderRadius: 4,
           hoverOffset: 6
         }]
       },
@@ -299,6 +375,8 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
             labels: {
               boxWidth: 10,
               usePointStyle: true,
+              pointStyle: 'circle',
+              padding: 14,
               font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569'
             }
@@ -306,16 +384,20 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
           tooltip: {
             callbacks: {
               label: (context) => {
-                const total = context.dataset.data.reduce((a: any, b: any) => Number(a) + Number(b), 0);
+                const total = (context.dataset.data as number[]).reduce(
+                  (a, b) => Number(a) + Number(b),
+                  0
+                );
                 const valor = Number(context.raw || 0);
                 const porcentaje = total > 0 ? Math.round((valor / total) * 100) : 0;
-                return ` ${context.label}: ${valor} casos (${porcentaje}%)`;
+                return ` ${context.label}: ${valor} (${porcentaje}%)`;
               }
             }
           }
         },
-        cutout: '70%'
-      }
+        cutout: '72%'
+      },
+      plugins: [centerTextPlugin]
     });
   }
 
@@ -328,10 +410,18 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     const ctx = this.chartVeterinariosRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    // Tomamos hasta 7 veterinarios más activos
+    // Tomamos hasta 7 veterinarios más activos y normalizamos sus nombres a Title Case
     const vets = this.metricas.casosVeterinarios.slice(0, 7);
     const labels = vets.length > 0
-      ? vets.map((v) => v.nombre_completo.split(' ')[0] + ' ' + (v.nombre_completo.split(' ')[1] || ''))
+      ? vets.map((v) => {
+          const primerosDosNombres = (v.nombre_completo || '')
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .join(' ');
+          return this.formatearTitleCase(primerosDosNombres) || 'Sin nombre';
+        })
       : ['Sin asignación'];
 
     const dataPendientes = vets.length > 0 ? vets.map((v) => v.pendientes) : [0];
@@ -369,6 +459,10 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
         scales: {
           x: {
             stacked: true,
@@ -399,6 +493,17 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
               font: { family: 'Nunito', size: 11, weight: 'bold' },
               color: '#475569'
             }
+          },
+          tooltip: {
+            callbacks: {
+              footer: (tooltipItems) => {
+                const total = tooltipItems.reduce(
+                  (acc, item) => acc + (Number(item.parsed?.y ?? item.raw) || 0),
+                  0
+                );
+                return `Total asignados: ${total}`;
+              }
+            }
           }
         }
       }
@@ -406,7 +511,7 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * 3. Gráfica Polar Area: Animales ingresados al CBA y sus estados
+   * 3. Gráfica de Barras Horizontales: Animales ingresados al CBA y sus estados clínicos
    */
   private crearGraficaCBA(): void {
     if (!this.chartCBARef?.nativeElement) return;
@@ -414,73 +519,77 @@ export class DashboardJuridicoComponent implements OnInit, OnDestroy {
     const ctx = this.chartCBARef.nativeElement.getContext('2d');
     if (!ctx) return;
 
+    let obs = Number(this.metricas?.cba?.enObservacion ?? 0);
+    let trat = Number(this.metricas?.cba?.enTratamiento ?? 0);
+    let adop = Number(this.metricas?.cba?.aptosAdopcion ?? 0);
+
     const dist = this.metricas?.cba?.distribucionEstados;
-    const estados = dist ? Object.keys(dist) : [];
-    const valores = dist ? Object.values(dist) : [];
-
-    let labels: string[];
-    let data: number[];
-
-    if (estados.length > 0) {
-      labels = estados;
-      data = valores.map((v) => Number(v) || 0);
-    } else {
-      const obs = Number(this.metricas?.cba?.enObservacion ?? 0);
-      const trat = Number(this.metricas?.cba?.enTratamiento ?? 0);
-      const adop = Number(this.metricas?.cba?.aptosAdopcion ?? 0);
-
-      labels = ['En Observación', 'En Tratamiento', 'Apto Adopción'];
-      data = [obs, trat, adop];
+    if (obs === 0 && trat === 0 && adop === 0 && dist && Object.keys(dist).length > 0) {
+      for (const [clave, valor] of Object.entries(dist)) {
+        const k = clave.toLowerCase();
+        const cantidad = Number(valor) || 0;
+        if (k.includes('tratam') || k.includes('crit') || k.includes('grave')) {
+          trat += cantidad;
+        } else if (k.includes('adop') || k.includes('apto') || k.includes('recuperad') || k.includes('favor')) {
+          adop += cantidad;
+        } else if (k.includes('observ') || k.includes('evalua')) {
+          obs += cantidad;
+        }
+      }
     }
 
-    const colores = labels.map((label, idx) => {
-      const l = label.toLowerCase();
-      if (l.includes('tratam') || l.includes('crit') || l.includes('grave')) return 'rgba(217, 45, 32, 0.85)';
-      if (l.includes('observ') || l.includes('evalua')) return 'rgba(65, 65, 165, 0.85)';
-      if (l.includes('adop') || l.includes('recuperad') || l.includes('favor')) return '#170B3D';
-      return this.obtenerColorGrafica(label, idx);
-    });
+    const labels = ['En Observación', 'En Tratamiento', 'Apto Adopción'];
+    const data = [obs, trat, adop];
+    const colores = ['#4141A5', '#C83E4D', '#170B3D'];
 
     this.chartCBA = new Chart(ctx, {
-      type: 'polarArea',
+      type: 'bar',
       data: {
         labels,
         datasets: [{
+          label: 'Seres en CBA',
           data,
           backgroundColor: colores,
-          borderColor: '#ffffff',
-          borderWidth: 2
+          borderRadius: 6,
+          barThickness: 22
         }]
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              font: { family: 'Nunito', size: 11 },
+              color: '#64748B'
+            },
+            grid: { color: '#EEF0F3' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              font: { family: 'Nunito', size: 11, weight: 'bold' },
+              color: '#475569'
+            }
+          }
+        },
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              boxWidth: 8,
-              usePointStyle: true,
-              font: { family: 'Nunito', size: 10, weight: 'bold' },
-              color: '#64748B'
-            }
+            display: false
           },
           tooltip: {
             callbacks: {
               label: (context) => {
                 const datasetData = context.dataset.data as number[];
                 const total = datasetData.reduce((a, b) => Number(a) + Number(b), 0);
-                const valor = Number(context.raw || 0);
+                const valor = Number(context.parsed?.x ?? context.raw ?? 0);
                 const porcentaje = total > 0 ? Math.round((valor / total) * 100) : 0;
                 return ` ${context.label}: ${valor} seres (${porcentaje}%)`;
               }
             }
-          }
-        },
-        scales: {
-          r: {
-            ticks: { display: false },
-            grid: { color: '#EEF0F3' }
           }
         }
       }

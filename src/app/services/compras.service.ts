@@ -125,9 +125,20 @@ export class ComprasService {
     return this.http.get<Compra>(`${this.baseUrlInventario}compras/${id}/`);
   }
 
+  /**
+   * Registra la compra de forma atómica en el backend.
+   * Nota de esquema: la tabla `compra` no cuenta actualmente con llave de idempotencia (`client_uuid`);
+   * la protección ante doble envío depende del bloqueo `guardando` en UI y de no reintentar automáticamente
+   * ante respuestas inciertas de red/timeout.
+   */
   crearCompra(payload: {
     id_proveedor: number;
-    detalles?: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number }>;
+    detalles?: Array<{
+      id_medicamento: number;
+      cantidad: number;
+      precio_unitario?: number;
+      fecha_vencimiento?: string | null;
+    }>;
   }): Observable<Compra> {
     return this.http.post<Compra>(`${this.baseUrlInventario}compras/`, payload);
   }
@@ -152,7 +163,8 @@ export class ComprasService {
     id_compra: number;
     id_medicamento: number;
     cantidad: number;
-    precio_unitario: number;
+    precio_unitario?: number;
+    fecha_vencimiento?: string | null;
   }): Observable<DetalleCompra> {
     return this.http.post<DetalleCompra>(`${this.baseUrlInventario}detalles-compra/`, payload);
   }
@@ -173,49 +185,12 @@ export class ComprasService {
     return this.http.delete<any>(`${this.baseUrlInventario}detalles-compra/${id}/`);
   }
 
-  // --- Endpoints de Inventarios (desvinculación segura de FK) ---
+  // --- Endpoints de Inventarios (solo consulta y metadatos seguros) ---
 
   listarInventarios(): Observable<any[]> {
     return this.http.get<any>(`${this.baseUrlInventario}inventarios/`).pipe(
       map(res => Array.isArray(res) ? res : (res.results || [])),
       catchError(() => of([]))
-    );
-  }
-
-  desvincularDetalleInventario(idInventario: number): Observable<any> {
-    return this.http.patch<any>(`${this.baseUrlInventario}inventarios/${idInventario}/`, {
-      id_detalle_compra: null
-    }).pipe(
-      catchError(() => of(null))
-    );
-  }
-
-  desvincularYLimpiarDetalles(detallesIds: number[]): Observable<any> {
-    if (!detallesIds || detallesIds.length === 0) {
-      return of([]);
-    }
-
-    return this.listarInventarios().pipe(
-      switchMap((inventarios: any[]) => {
-        const inventariosAfectados = inventarios.filter(inv =>
-          inv.id_detalle_compra && detallesIds.includes(Number(inv.id_detalle_compra))
-        );
-
-        const desvinculaciones = inventariosAfectados.map(inv =>
-          this.desvincularDetalleInventario(inv.id_inventario)
-        );
-
-        const obsDesvinculacion = desvinculaciones.length > 0 ? forkJoin(desvinculaciones) : of([]);
-
-        return obsDesvinculacion.pipe(
-          switchMap(() => {
-            const eliminaciones = detallesIds.map(id =>
-              this.eliminarDetalleCompra(id).pipe(catchError(() => of(null)))
-            );
-            return forkJoin(eliminaciones);
-          })
-        );
-      })
     );
   }
 
@@ -347,127 +322,23 @@ export class ComprasService {
               })
             };
 
-            // Enviamos la compra con sus detalles directamente al endpoint nativo del backend (/api/inventario/compras/)
-            // El backend crea la Compra, DetalleCompra e Inventarios (lote con cantidad_actual) de forma atómica
+            // Enviamos la compra con sus detalles y fecha_vencimiento directamente al backend (/api/inventario/compras/).
+            // El backend crea atómicamente Compra, DetalleCompra, Inventarios y Kardex ENTRADA_COMPRA;
+            // por lo tanto no se reintenta ni se simulan lotes desde el cliente, y cualquier error se propaga.
             return this.crearCompra(payloadBackend).pipe(
               map((compraCreada: any) => {
                 const idCompra = Number(compraCreada.id_compra ?? compraCreada.id);
-                const detallesRetornados = (compraCreada.detalles && compraCreada.detalles.length > 0)
+                const detallesRetornados = Array.isArray(compraCreada.detalles)
                   ? compraCreada.detalles.map((cd: any, idx: number) => ({
                       ...cd,
                       fecha_vencimiento: cd.fecha_vencimiento || detallesAsegurados[idx]?.fecha_vencimiento
                     }))
-                  : detallesAsegurados.map((d, idx) => ({
-                      id_detalle_compra: idx + 1,
-                      id_compra: idCompra,
-                      id_medicamento: d.id_medicamento,
-                      cantidad: d.cantidad,
-                      precio_unitario: 0,
-                      fecha_vencimiento: d.fecha_vencimiento
-                    }));
+                  : [];
 
                 return {
                   compra: { ...compraCreada, id_compra: idCompra },
                   detalles: detallesRetornados
                 };
-              }),
-              switchMap(res =>
-                this.sincronizarInventariosParaDetalles(res.detalles).pipe(
-                  map(() => res),
-                  catchError(() => of(res))
-                )
-              )
-            );
-          })
-        );
-      })
-    );
-  }
-
-  // --- Transacción compuesta: Actualizar Compra y sincronizar sus Detalles ---
-
-  actualizarCompraCompleta(
-    idCompra: number,
-    idProveedor: number,
-    detallesNuevos: DetalleRegistroFila[],
-    detallesOriginalesIds: number[],
-    listaMedicamentos: MedicamentoItem[] = []
-  ): Observable<any> {
-    const obsMedicamentos = (listaMedicamentos && listaMedicamentos.length > 0)
-      ? of(listaMedicamentos)
-      : this.listarMedicamentos().pipe(catchError(() => of([])));
-
-    return forkJoin({
-      catalogo: this.listarMedicamentosCatalogo(),
-      medicamentos: obsMedicamentos
-    }).pipe(
-      switchMap(({ catalogo, medicamentos }) => {
-        const resoluciones = detallesNuevos.map(f =>
-          this.asegurarIdMedicamentoParaDetalle(Number(f.id_medicamento), medicamentos, catalogo).pipe(
-            map(idValido => ({
-              ...f,
-              id_medicamento: idValido
-            }))
-          )
-        );
-
-        const obsFilasAseguradas = resoluciones.length > 0 ? forkJoin(resoluciones) : of([]);
-
-        return obsFilasAseguradas.pipe(
-          switchMap(filasAseguradas => {
-            return this.actualizarCompra(idCompra, { id_proveedor: Number(idProveedor) }).pipe(
-              switchMap((compraActualizada: Compra) => {
-                const idsAEliminar = detallesOriginalesIds.filter(
-                  idOriginal => !filasAseguradas.some(f => f.id_detalle_compra === idOriginal)
-                );
-
-                const filasAActualizar = filasAseguradas.filter(f => f.id_detalle_compra);
-                const filasACrear = filasAseguradas.filter(f => !f.id_detalle_compra);
-
-                const obsEliminar = idsAEliminar.length > 0
-                  ? this.desvincularYLimpiarDetalles(idsAEliminar)
-                  : of([]);
-
-                return obsEliminar.pipe(
-                  switchMap(() => {
-                    const obsActualizar = filasAActualizar.map(f =>
-                      this.actualizarDetalleCompra(Number(f.id_detalle_compra), {
-                        id_compra: idCompra,
-                        id_medicamento: Number(f.id_medicamento),
-                        cantidad: Number(f.cantidad),
-                        precio_unitario: Number(f.precio_unitario)
-                      })
-                    );
-
-                    const obsCrear = filasACrear.map(f =>
-                      this.crearDetalleCompra({
-                        id_compra: idCompra,
-                        id_medicamento: Number(f.id_medicamento),
-                        cantidad: Number(f.cantidad),
-                        precio_unitario: Number(f.precio_unitario)
-                      })
-                    );
-
-                    const todasLasPeticiones = [...obsActualizar, ...obsCrear];
-
-                    if (todasLasPeticiones.length === 0) {
-                      return of({ compra: compraActualizada, detalles: [] });
-                    }
-
-                    return forkJoin(todasLasPeticiones).pipe(
-                      map(detallesSincronizados => ({
-                        compra: compraActualizada,
-                        detalles: detallesSincronizados
-                      })),
-                      switchMap((resultado: any) =>
-                        this.sincronizarInventariosParaDetalles(resultado.detalles).pipe(
-                          map(() => resultado),
-                          catchError(() => of(resultado))
-                        )
-                      )
-                    );
-                  })
-                );
               })
             );
           })
@@ -476,114 +347,34 @@ export class ComprasService {
     );
   }
 
-  crearInventario(payload: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrlInventario}inventarios/`, payload).pipe(
-      catchError(() => of(null))
-    );
+  // --- Operaciones de Edición / Anulación bloqueadas hasta soporte formal en backend ---
+
+  actualizarCompraCompleta(
+    _idCompra: number,
+    _idProveedor: number,
+    _detallesNuevos: DetalleRegistroFila[],
+    _detallesOriginalesIds: number[],
+    _listaMedicamentos: MedicamentoItem[] = []
+  ): Observable<any> {
+    return throwError(() => new Error(
+      'La edición retroactiva de facturas y detalles de compra está deshabilitada para preservar la integridad de lotes y Kardex.'
+    ));
   }
 
-  actualizarInventario(idInventario: number, payload: any): Observable<any> {
-    return this.http.patch<any>(`${this.baseUrlInventario}inventarios/${idInventario}/`, payload).pipe(
-      catchError(() => of(null))
-    );
+  actualizarInventario(
+    idInventario: number,
+    payload: { estado?: string; fecha_vencimiento?: string | null }
+  ): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrlInventario}inventarios/${idInventario}/`, payload);
   }
 
-  eliminarInventario(idInventario: number): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrlInventario}inventarios/${idInventario}/`).pipe(
-      catchError(() => of(null))
-    );
+  anularCompra(_idCompra: number, _motivo: string = 'Anulación solicitada por administración', _idUsuario?: number): Observable<any> {
+    return throwError(() => new Error(
+      'La anulación de compras no está soportada en esta versión del backend porque requiere reversión transaccional certificada en Kardex.'
+    ));
   }
 
-  private payloadEntrada(detalle: any): any {
-    // Campos reales tabla inventarios: id_detalle_compra, cantidad_actual, fecha_vencimiento, estado
-    const cantidad = Number(detalle?.cantidad) || 0;
-    const base: any = {
-      id_detalle_compra: Number(detalle?.id_detalle_compra ?? detalle?.id),
-      cantidad_actual: cantidad,
-      estado: 'Disponible'
-    };
-    if (detalle?.fecha_vencimiento) {
-      base.fecha_vencimiento = detalle.fecha_vencimiento;
-    }
-    return base;
-  }
-
-  private crearEntradaConFallback(detalle: any): Observable<any> {
-    const base = this.payloadEntrada(detalle);
-    if (!base.id_detalle_compra) return of(null);
-    return this.crearInventario(base).pipe(
-      switchMap((creado) => {
-        if (creado) return of(creado);
-        const fallback: any = { id_detalle_compra: base.id_detalle_compra, cantidad_actual: base.cantidad_actual };
-        if (base.fecha_vencimiento) fallback.fecha_vencimiento = base.fecha_vencimiento;
-        return this.crearInventario(fallback);
-      }),
-      catchError(() => of(null))
-    );
-  }
-
-  asegurarInventarioParaDetalle(detalle: any): Observable<any> {
-    const idDet = Number(detalle?.id_detalle_compra ?? detalle?.id);
-    if (!idDet) return of(null);
-    return this.listarInventarios().pipe(
-      switchMap((invs: any[]) => {
-        const existente = (invs || []).find((inv: any) =>
-          Number(inv.id_detalle_compra) === idDet
-        );
-        if (existente) {
-          const idInv = Number(existente.id_inventario ?? existente.id);
-          const cantidad = Number(detalle?.cantidad) || 0;
-          const patchData: any = { cantidad_actual: cantidad };
-          if (detalle?.fecha_vencimiento) {
-            patchData.fecha_vencimiento = detalle.fecha_vencimiento;
-          }
-          return this.actualizarInventario(idInv, patchData);
-        }
-        return this.crearEntradaConFallback(detalle);
-      }),
-      catchError(() => of(null))
-    );
-  }
-
-  sincronizarInventariosParaDetalles(detalles: any[]): Observable<any> {
-    if (!detalles || detalles.length === 0) return of([]);
-    const peticiones = detalles
-      .filter((d: any) => d && (d.id_detalle_compra ?? d.id))
-      .map((d: any) => this.asegurarInventarioParaDetalle(d));
-    if (peticiones.length === 0) return of([]);
-    return forkJoin(peticiones).pipe(catchError(() => of([])));
-  }
-
-  // --- Anulación Lógica y Segura de Compras ---
-
-  /**
-   * Anulación lógica y compensatoria de compra:
-   * Llama al endpoint de anulación atómica del backend o ejecuta PATCH con estado = 'ANULADA'.
-   * Si la base de datos o el trigger rechaza la anulación (por existencias asignadas o consumidas),
-   * propaga el error con la causa exacta.
-   */
-  anularCompra(idCompra: number, motivo: string = 'Anulación solicitada por administración', idUsuario?: number): Observable<any> {
-    const payload = {
-      motivo,
-      id_usuario: idUsuario || 18,
-      estado: 'ANULADA'
-    };
-    return this.http.post<any>(`${this.baseUrlInventario}compras/${idCompra}/anular/`, payload).pipe(
-      catchError((err) => {
-        // Si el backend no tiene el endpoint /anular/, intenta PATCH de estado
-        if (err.status === 404 || err.status === 405) {
-          return this.http.patch<any>(`${this.baseUrlInventario}compras/${idCompra}/`, {
-            estado: 'ANULADA',
-            motivo_anulacion: motivo
-          });
-        }
-        return throwError(() => err);
-      })
-    );
-  }
-
-  eliminarCompraConDetalles(idCompra: number, detallesIds: number[], motivo?: string): Observable<any> {
-    // Redirige al flujo seguro de anulación lógica para prevenir desajustes en el kardex
+  eliminarCompraConDetalles(idCompra: number, _detallesIds: number[], motivo?: string): Observable<any> {
     return this.anularCompra(idCompra, motivo);
   }
 
@@ -737,72 +528,18 @@ export class ComprasService {
   }
 
   /**
-   * Descuenta stock físico de los lotes de inventario de un medicamento.
-   * Utiliza exclusivamente la operación real PATCH en /api/inventario/inventarios/{id}/.
-   * Valida stock suficiente y no permite sobregiros.
+   * Deshabilitado: los descuentos de stock en clínica y actas se registran
+   * exclusivamente a través del módulo de kit veterinario (/api/inventario/kit/sincronizar-offline/)
+   * para conservar el Kardex inmutable y no mutar directamente Bodega General.
    */
   descontarStockMedicamento(
-    idMedicamento: number,
-    cantidadADescontar: number,
-    nombreMedicamento?: string
+    _idMedicamento: number,
+    _cantidadADescontar: number,
+    _nombreMedicamento?: string
   ): Observable<{ exito: boolean; descontado: number; restante: number }> {
-    const cantNum = Number(cantidadADescontar);
-    if (isNaN(cantNum) || cantNum <= 0) {
-      return throwError(() => new Error('La cantidad a administrar debe ser un número mayor a cero.'));
-    }
-
-    return this.obtenerLotesDisponiblesParaMedicamento(idMedicamento, nombreMedicamento).pipe(
-      switchMap((lotesDisponibles: any[]) => {
-        const totalDisponible = lotesDisponibles.reduce((sum, l) => sum + (Number(l.cantidad_actual) || 0), 0);
-
-        if (totalDisponible <= 0) {
-          return throwError(() => new Error(`No hay existencias disponibles en inventario para este medicamento.`));
-        }
-
-        if (cantNum > totalDisponible) {
-          return throwError(() => new Error(
-            `Stock insuficiente. Intentas administrar ${cantNum} uds, pero solo quedan ${totalDisponible} uds disponibles en inventario.`
-          ));
-        }
-
-        // Distribuir el descuento entre los lotes (consumir por orden de vencimiento/lote)
-        let pendientePorDescontar = cantNum;
-        const operacionesActualizacion: Observable<any>[] = [];
-
-        for (const lote of lotesDisponibles) {
-          if (pendientePorDescontar <= 0) break;
-
-          const disponibleEnLote = Number(lote.cantidad_actual) || 0;
-          const aDescontarDeEsteLote = Math.min(disponibleEnLote, pendientePorDescontar);
-          const nuevaCantidadLote = disponibleEnLote - aDescontarDeEsteLote;
-          const nuevoEstado = nuevaCantidadLote <= 0 ? 'Agotado' : (lote.estado || 'Disponible');
-
-          operacionesActualizacion.push(
-            this.actualizarInventario(lote.id_inventario, {
-              cantidad_actual: nuevaCantidadLote,
-              estado: nuevoEstado
-            }).pipe(
-              switchMap(res => {
-                if (res === null) {
-                  return throwError(() => new Error(`Error del servidor al actualizar lote #${lote.id_inventario}`));
-                }
-                return of(res);
-              })
-            )
-          );
-
-          pendientePorDescontar -= aDescontarDeEsteLote;
-        }
-
-        return forkJoin(operacionesActualizacion).pipe(
-          map(() => ({
-            exito: true,
-            descontado: cantNum,
-            restante: totalDisponible - cantNum
-          }))
-        );
-      })
-    );
+    return throwError(() => new Error(
+      'El descuento directo de existencias en Bodega General está bloqueado. Use el flujo oficial del kit veterinario.'
+    ));
   }
 }
 

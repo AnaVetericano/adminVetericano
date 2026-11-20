@@ -1,11 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -153,7 +156,12 @@ export class Medicamentos implements OnInit {
     private router: Router,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    inject(RealtimeEventosService)
+      .on('catalogo.medicamentos_actualizado')
+      .pipe(debounceTime(1000), takeUntilDestroyed())
+      .subscribe(() => this.obtenerMedicamentos());
+  }
 
   ngOnInit(): void {
     this.obtenerMedicamentos();
@@ -339,7 +347,8 @@ export class Medicamentos implements OnInit {
         Swal.fire({
           title: 'No fue posible cargar los medicamentos',
           text: 'Verifique la conexión e intente nuevamente.',
-          icon: 'error'
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
         });
       }
     });
@@ -414,8 +423,9 @@ export class Medicamentos implements OnInit {
     if (!this.medicamento.nombre.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes ingresar el nombre del medicamento.',
-        icon: 'warning'
+        text: 'Ingrese el nombre del medicamento.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -423,8 +433,9 @@ export class Medicamentos implements OnInit {
     if (!this.medicamento.tipo.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes ingresar el tipo de medicamento.',
-        icon: 'warning'
+        text: 'Ingrese el tipo de medicamento.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -432,8 +443,9 @@ export class Medicamentos implements OnInit {
     if (!this.medicamento.via_administracion?.trim()) {
       Swal.fire({
         title: 'Campo obligatorio',
-        text: 'Debes seleccionar la vía de administración.',
-        icon: 'warning'
+        text: 'Seleccione la vía de administración.',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -442,8 +454,9 @@ export class Medicamentos implements OnInit {
       const info = this.infoUnidadActual;
       Swal.fire({
         title: 'Campo obligatorio',
-        text: `Debes ingresar una cantidad válida en ${info.nombreUnidad}.`,
-        icon: 'warning'
+        text: `Ingrese una cantidad válida en ${info.nombreUnidad}.`,
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -467,7 +480,8 @@ export class Medicamentos implements OnInit {
             icon: 'success',
             title: 'Medicamento actualizado',
             text: 'Los datos del medicamento se guardaron correctamente.',
-            timer: 2000
+            timer: 2000,
+            confirmButtonText: 'Aceptar'
           });
           this.cerrarModal();
           this.obtenerMedicamentos();
@@ -484,7 +498,7 @@ export class Medicamentos implements OnInit {
               msj = `${primerCampo}: ${Array.isArray(valor) ? valor.join(' ') : valor}`;
             }
           }
-          Swal.fire({ icon: 'error', title: 'No fue posible actualizar el medicamento', text: msj });
+          Swal.fire({ icon: 'error', title: 'No fue posible actualizar el medicamento', text: msj, confirmButtonText: 'Aceptar' });
         }
       });
     } else {
@@ -494,7 +508,8 @@ export class Medicamentos implements OnInit {
             title: 'Medicamento registrado',
             text: 'El medicamento se creó correctamente.',
             icon: 'success',
-            timer: 2000
+            timer: 2000,
+            confirmButtonText: 'Aceptar'
           });
           this.cerrarModal();
           this.obtenerMedicamentos();
@@ -519,7 +534,7 @@ export class Medicamentos implements OnInit {
               msj = `${primerCampo}: ${Array.isArray(valor) ? valor.join(' ') : valor}`;
             }
           }
-          Swal.fire({ title: 'No fue posible registrar el medicamento', text: msj, icon: 'error' });
+          Swal.fire({ title: 'No fue posible registrar el medicamento', text: msj, icon: 'error', confirmButtonText: 'Aceptar' });
         }
       });
     }
@@ -532,11 +547,12 @@ export class Medicamentos implements OnInit {
     const accion = nuevoEstado ? 'activar' : 'inactivar';
 
     Swal.fire({
-      title: `Confirmar cambio de estado`,
+      title: 'Confirmar cambio de estado',
       text: `El medicamento "${m.nombre}" será ${nuevoEstado ? 'activado' : 'inactivado'}.`,
       icon: 'warning',
+      customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' },
       showCancelButton: true,
-      confirmButtonText: `Confirmar`,
+      confirmButtonText: nuevoEstado ? 'Activar' : 'Inactivar',
       cancelButtonText: 'Cancelar'
     }).then((resultado) => {
       if (!resultado.isConfirmed) return;
@@ -545,7 +561,14 @@ export class Medicamentos implements OnInit {
         next: () => {
           m.activo = nuevoEstado;
           m.estado = nuevoEstado;
-          this.medicamentosOriginales = [...this.medicamentos];
+          const orig = this.medicamentosOriginales.find(
+            (item: any) => (item.id || item.id_medicamento) === idReal
+          );
+          if (orig) {
+            orig.activo = nuevoEstado;
+            orig.estado = nuevoEstado;
+          }
+          this.filtrarMedicamentos();
           this.cdr.detectChanges();
 
           Swal.fire({
@@ -558,7 +581,7 @@ export class Medicamentos implements OnInit {
         error: (err: any) => {
           console.error(`Error al ${accion}:`, err);
           const msj = err?.error?.detail || `No se pudo ${accion} el medicamento.`;
-          Swal.fire({ title: 'No fue posible completar la acción', text: msj, icon: 'error' });
+          Swal.fire({ title: 'No fue posible completar la acción', text: msj, icon: 'error', confirmButtonText: 'Aceptar' });
         }
       });
     });
@@ -590,8 +613,9 @@ export class Medicamentos implements OnInit {
     if (!nombreArchivo.endsWith('.xlsx') && !nombreArchivo.endsWith('.xls')) {
       Swal.fire({
         title: 'Formato no compatible',
-        text: 'Selecciona un archivo de Excel válido (.xlsx o .xls).',
-        icon: 'warning'
+        text: 'Seleccione un archivo de Excel válido (.xlsx o .xls).',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       input.value = '';
       return;
@@ -614,7 +638,8 @@ export class Medicamentos implements OnInit {
           Swal.fire({
             title: 'Archivo vacío',
             text: 'La primera hoja del archivo no contiene filas con datos.',
-            icon: 'info'
+            icon: 'info',
+            confirmButtonText: 'Aceptar'
           });
           return;
         }
@@ -625,7 +650,8 @@ export class Medicamentos implements OnInit {
         Swal.fire({
           title: 'Error de lectura',
           text: 'No se pudo leer el archivo Excel: ' + (err?.message || 'Error desconocido'),
-          icon: 'error'
+          icon: 'error',
+          confirmButtonText: 'Aceptar'
         });
       } finally {
         input.value = '';
@@ -635,8 +661,9 @@ export class Medicamentos implements OnInit {
     reader.onerror = () => {
       Swal.fire({
         title: 'Error de archivo',
-        text: 'No se pudo cargar el archivo seleccionado.',
-        icon: 'error'
+        text: 'No se pudo cargar el archivo seleccionado. Intente seleccionarlo nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
       });
       input.value = '';
     };
@@ -832,7 +859,8 @@ export class Medicamentos implements OnInit {
       Swal.fire({
         title: 'Sin registros válidos',
         text: 'No se encontraron registros de medicamentos con nombre válido para importar.',
-        icon: 'warning'
+        icon: 'warning',
+        confirmButtonText: 'Aceptar'
       });
       return;
     }
@@ -841,15 +869,17 @@ export class Medicamentos implements OnInit {
     const confirmacion = await Swal.fire({
       title: 'Confirmar importación masiva',
       html: `
-        <div class="text-left text-sm space-y-2">
-          <p>Archivo: <b class="text-[#4141A5]">${nombreArchivo}</b></p>
-          <p>Total de medicamentos identificados: <b>${registrosAProcesar.length}</b></p>
-          <p class="text-xs text-slate-500 mt-2">Los medicamentos que no coincidan exactamente con el catálogo se clasificarán automáticamente como <b>"Otros"</b>.</p>
-        </div>
+        <dl class="qa-datos">
+          <dt>Archivo</dt>
+          <dd>${nombreArchivo}</dd>
+          <dt>Medicamentos identificados</dt>
+          <dd>${registrosAProcesar.length}</dd>
+        </dl>
+        <p class="qa-nota">Los medicamentos que no coincidan exactamente con el catálogo se clasificarán automáticamente como <b>"Otros"</b>.</p>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Confirmar',
+      confirmButtonText: 'Importar',
       cancelButtonText: 'Cancelar'
     });
 
@@ -861,7 +891,7 @@ export class Medicamentos implements OnInit {
     // Diálogo de progreso interactivo
     Swal.fire({
       title: 'Importando medicamentos...',
-      html: `Procesando <b>0</b> de <b>${registrosAProcesar.length}</b> medicamentos...`,
+      html: `<p>Procesando <b>0</b> de <b>${registrosAProcesar.length}</b> ${registrosAProcesar.length === 1 ? 'medicamento' : 'medicamentos'}...</p>`,
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
@@ -918,30 +948,16 @@ export class Medicamentos implements OnInit {
         icon: fallidos === 0 ? 'success' : 'warning',
         title: fallidos === 0 ? 'Importación completada' : 'Importación finalizada con novedades',
         html: `
-          <div class="text-left text-sm space-y-2.5 py-1">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-              <div class="flex justify-between items-center text-slate-700">
-                <span>Total de filas leídas:</span>
-                <b>${registrosAProcesar.length}</b>
-              </div>
-              <div class="flex justify-between items-center text-[#4141A5] font-semibold">
-                <span>Guardados con éxito:</span>
-                <b>${exitosos}</b>
-              </div>
-              <div class="flex justify-between items-center text-[#9A5B13] font-semibold">
-                <span>Asignados con campos en "Otros":</span>
-                <b>${conOtros}</b>
-              </div>
-              ${fallidos > 0 ? `
-              <div class="flex justify-between items-center text-[#B42318] font-semibold">
-                <span>No se pudieron registrar:</span>
-                <b>${fallidos}</b>
-              </div>` : ''}
-            </div>
-            <p class="text-xs text-slate-500">
-              ${conOtros > 0 ? 'Los medicamentos con discrepancias de catálogo fueron asignados a "Otros" para mantener la consistencia de inventario.' : 'Todos los medicamentos coincidieron exactamente con el catálogo.'}
-            </p>
-          </div>
+          <dl class="qa-datos">
+            <dt>Total de filas leídas</dt>
+            <dd>${registrosAProcesar.length}</dd>
+            <dt>Guardados con éxito</dt>
+            <dd>${exitosos}</dd>
+            <dt>Asignados con campos en "Otros"</dt>
+            <dd>${conOtros}</dd>
+            ${fallidos > 0 ? `<dt>No se pudieron registrar</dt><dd class="qa-tono">${fallidos}</dd>` : ''}
+          </dl>
+          <p class="qa-nota">${conOtros > 0 ? 'Los medicamentos con discrepancias de catálogo fueron asignados a "Otros" para mantener la consistencia de inventario.' : 'Todos los medicamentos coincidieron exactamente con el catálogo.'}</p>
         `,
         confirmButtonText: 'Aceptar'
       });
@@ -953,8 +969,9 @@ export class Medicamentos implements OnInit {
 
       Swal.fire({
         title: 'Error en la importación',
-        text: 'No se pudo procesar la importación masiva.',
-        icon: 'error'
+        text: 'No se pudo procesar la importación masiva. Verifique el archivo e intente nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
       });
     }
   }

@@ -1,11 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { AuthService, CrearEspecie, ActualizarEspecie } from '../services/auth';
+import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 
@@ -43,7 +46,12 @@ private http: HttpClient,
 private authService: AuthService,
 private cdr: ChangeDetectorRef,
 private router: Router
-) {}
+) {
+  inject(RealtimeEventosService)
+    .on('catalogo.clinico_actualizado')
+    .pipe(debounceTime(1000), takeUntilDestroyed())
+    .subscribe(() => this.listarEspecies());
+}
 
 ngOnInit(): void {
 this.listarEspecies();
@@ -74,7 +82,7 @@ this.authService.listarEspecies().subscribe({
 
     Swal.fire({
       title: 'No fue posible cargar las especies',
-      text: 'No se pudieron cargar las especies.',
+      text: 'No se pudieron cargar las especies. Verifique la conexión e intente nuevamente.',
       icon: 'error',
       confirmButtonText: 'Aceptar'
     });
@@ -262,8 +270,6 @@ this.authService.actualizarEspecie(
       title: 'Especie actualizada',
       text: 'Los datos se actualizaron correctamente.',
       confirmButtonText: 'Aceptar',
-      background: '#FFFFFF',
-      color: '#170B3D',
       timer: 2500,
       timerProgressBar: true
     });
@@ -313,9 +319,11 @@ Swal.fire({
 
   icon: 'warning',
 
+  customClass: { popup: nuevoEstado ? '' : 'qa-destructivo' },
+
   showCancelButton: true,
 
-  confirmButtonText: 'Confirmar',
+  confirmButtonText: nuevoEstado ? 'Activar' : 'Inactivar',
 
   cancelButtonText: 'Cancelar'
 
@@ -355,7 +363,8 @@ Swal.fire({
       Swal.fire({
         title: 'No fue posible completar la acción',
         text: mensajeError,
-        icon: 'error'
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
       });
 
     }
