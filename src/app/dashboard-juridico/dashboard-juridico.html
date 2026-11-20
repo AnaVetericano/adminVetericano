@@ -303,7 +303,7 @@
               <h2 class="text-sm font-bold text-[#170B3D]">
                 Casos Asignados por Veterinario
               </h2>
-              <p class="text-[11px] text-slate-500 font-medium">
+              <p class="chart-subtitle text-[0.85rem] text-[#64748B] font-medium">
                 Carga de trabajo y distribución de estados por profesional
               </p>
             </div>
@@ -312,18 +312,18 @@
                 Barras Apiladas
               </span>
               <span class="text-xs font-semibold text-slate-500">
-                {{ metricas.casosVeterinarios.length }} profesionales
+                {{ metricas.casosVeterinarios.length > 7 ? ('Top 7 de ' + metricas.casosVeterinarios.length + ' profesionales') : (metricas.casosVeterinarios.length + ' profesionales') }}
               </span>
             </div>
           </div>
 
           <!-- Canvas Barras Apiladas Grande -->
-          <div class="relative h-64 sm:h-72 w-full mt-3 overflow-hidden">
+          <div class="chart-container relative h-64 sm:h-72 w-full mt-3 overflow-hidden">
             <canvas #chartVeterinarios></canvas>
           </div>
         </div>
 
-        <!-- 3. Fila Dual de Gráficas: [A: Peticiones (Dona)] [B: Seres en CBA (Polar Area)] -->
+        <!-- 3. Fila Dual de Gráficas: [A: Peticiones (Dona)] [B: Seres en CBA (Barras Horizontales)] -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 items-stretch">
           
           <!-- Gráfica A: Peticiones (Dona) -->
@@ -332,31 +332,31 @@
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div class="min-w-0">
                   <h3 class="text-xs font-bold text-[#170B3D] truncate">A: Peticiones</h3>
-                  <p class="text-[10px] text-slate-500 font-medium truncate">Distribución por estados</p>
+                  <p class="chart-subtitle text-[0.85rem] text-[#64748B] font-medium truncate">Distribución por estados</p>
                 </div>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
                   Dona
                 </span>
               </div>
-              <div class="relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
+              <div class="chart-container relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
                 <canvas #chartPeticiones></canvas>
               </div>
             </div>
           </div>
 
-          <!-- Gráfica B: Seres en CBA (Polar Area) -->
+          <!-- Gráfica B: Seres en CBA (Barras Horizontales) -->
           <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between min-w-0 h-full">
             <div class="flex-1 flex flex-col">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div class="min-w-0">
                   <h3 class="text-xs font-bold text-[#170B3D] truncate">B: Seres en CBA</h3>
-                  <p class="text-[10px] text-slate-500 font-medium truncate">Estado clínico y adopción</p>
+                  <p class="chart-subtitle text-[0.85rem] text-[#64748B] font-medium truncate">Estado clínico y adopción</p>
                 </div>
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-50 text-slate-600 border border-slate-200">
-                  Polar Area
+                  Barras Horizontales
                 </span>
               </div>
-              <div class="relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
+              <div class="chart-container relative flex-1 min-h-[176px] w-full mt-2 flex items-center justify-center overflow-hidden">
                 <canvas #chartCBA></canvas>
               </div>
             </div>
@@ -431,47 +431,49 @@
             </span>
           </div>
 
-          <!-- Lista de barras horizontales expandible a la misma altura de las columnas centrales -->
-          <div class="space-y-3 flex-1 min-h-[260px] max-h-[355px] overflow-y-auto pr-1">
-            <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-lg border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all min-w-0">
-              <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
-              <div class="flex items-center justify-between gap-2 min-w-0">
-                <div class="flex items-center gap-2 min-w-0">
-                  <div class="w-6 h-6 rounded-full bg-[#4141A5]/10 text-[#4141A5] font-bold text-[10px] flex items-center justify-center shrink-0">
-                    {{ vet.nombre_completo.charAt(0) || 'V' }}
+          <!-- Lista de barras horizontales que aprovecha todo el alto restante de la tarjeta -->
+          <div class="relative flex-1 min-h-[260px]">
+            <div class="lg:absolute lg:inset-0 max-h-[380px] lg:max-h-none overflow-y-auto pr-1 space-y-3">
+              <div *ngFor="let vet of metricas.casosVeterinarios" class="p-3 rounded-lg border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all min-w-0">
+                <!-- Fila superior: Avatar, Nombre y Casos Resueltos -->
+                <div class="flex items-center justify-between gap-2 min-w-0">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-6 h-6 rounded-full bg-[#4141A5]/10 text-[#4141A5] font-bold text-[10px] flex items-center justify-center shrink-0">
+                      {{ vet.nombre_completo.charAt(0) || 'V' }}
+                    </div>
+                    <span class="text-xs font-bold text-[#170B3D] truncate" [title]="vet.nombre_completo">
+                      {{ vet.nombre_completo }}
+                    </span>
                   </div>
-                  <span class="text-xs font-bold text-[#170B3D] truncate" [title]="vet.nombre_completo">
-                    {{ vet.nombre_completo }}
+                  <span class="text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
+                    {{ vet.finalizadas }}/{{ vet.total_asignados }} resueltos
                   </span>
                 </div>
-                <span class="text-[11px] font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full shrink-0">
-                  {{ vet.finalizadas }}/{{ vet.total_asignados }} resueltos
-                </span>
-              </div>
 
-              <!-- Barra horizontal de efectividad en un solo color institucional limpio -->
-              <div class="mt-2.5">
-                <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 mb-1">
-                  <span>Efectividad</span>
-                  <span class="font-bold text-[#170B3D]">{{ vet.porcentaje_completado }}%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div 
-                    class="bg-[#4141A5] h-2 rounded-full transition-all duration-500" 
-                    [style.width.%]="vet.porcentaje_completado">
+                <!-- Barra horizontal de efectividad en un solo color institucional limpio -->
+                <div class="mt-2.5">
+                  <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 mb-1">
+                    <span>Efectividad</span>
+                    <span class="font-bold text-[#170B3D]">{{ vet.porcentaje_completado }}%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      class="bg-[#4141A5] h-2 rounded-full transition-all duration-500" 
+                      [style.width.%]="vet.porcentaje_completado">
+                    </div>
                   </div>
                 </div>
+
+                <!-- Sub-indicadores: Pendientes y En proceso -->
+                <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+                  <span class="text-[#9A5B13] font-semibold">{{ vet.pendientes }} pendientes</span>
+                  <span class="text-[#4141A5] font-semibold">{{ vet.en_proceso }} en proceso</span>
+                </div>
               </div>
 
-              <!-- Sub-indicadores: Pendientes y En proceso -->
-              <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
-                <span class="text-[#9A5B13] font-semibold">{{ vet.pendientes }} pendientes</span>
-                <span class="text-[#4141A5] font-semibold">{{ vet.en_proceso }} en proceso</span>
+              <div *ngIf="metricas.casosVeterinarios.length === 0" class="py-6 text-center text-slate-400 font-medium text-xs">
+                No hay casos asignados a profesionales.
               </div>
-            </div>
-
-            <div *ngIf="metricas.casosVeterinarios.length === 0" class="py-6 text-center text-slate-400 font-medium text-xs">
-              No hay casos asignados a profesionales.
             </div>
           </div>
         </div>
@@ -479,180 +481,6 @@
       </div>
 
     </div>
-
-    <!-- Alertas de Posibles Duplicados (Roles Administrador y Jurídico) -->
-    <section
-      *ngIf="puedeGestionarDuplicados"
-      data-testid="dashboard-juridico-duplicados"
-      class="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-lg bg-slate-50 text-[#9A5B13] border border-slate-200 flex items-center justify-center shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-sm font-bold text-[#170B3D]">
-                Alertas de Posibles Duplicados
-              </h2>
-              <span
-                class="px-2 py-0.5 rounded-full text-[11px] font-bold border"
-                [ngClass]="resumenDuplicados().PENDIENTE > 0
-                  ? 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'">
-                {{ resumenDuplicados().PENDIENTE }} pendientes
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Supervisión preventiva de reportes similares sin modificar radicados ni asignaciones
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          data-testid="btn-ver-todas-alertas-duplicados"
-          (click)="irABandejaDuplicados()"
-          class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#4141A5] hover:bg-[#353583] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shrink-0">
-          <span>Ver todas las alertas</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div
-          data-testid="tarjeta-duplicados-pendientes"
-          class="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between"
-          [ngClass]="resumenDuplicados().PENDIENTE > 0 ? 'border-l-4 border-l-[#9A5B13]' : ''">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Pendientes (PENDIENTE)
-            </span>
-            <div class="text-2xl font-bold text-[#170B3D] mt-1">
-              {{ resumenDuplicados().PENDIENTE }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              {{ resumenDuplicados().PENDIENTE > 0 ? 'Requieren revisión comparativa' : 'Al día en revisiones' }}
-            </p>
-          </div>
-        </div>
-
-        <div
-          data-testid="resumen-duplicados-confirmados"
-          class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#067647] flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Confirmados (CONFIRMADO)
-            </span>
-            <div class="text-2xl font-bold text-[#170B3D] mt-1">
-              {{ resumenDuplicados().CONFIRMADO }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">Duplicados validados</p>
-          </div>
-        </div>
-
-        <div
-          data-testid="resumen-duplicados-descartados"
-          class="bg-white rounded-xl p-4 border border-slate-200 flex items-center justify-between">
-          <div>
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Descartados (DESCARTADO)
-            </span>
-            <div class="text-2xl font-bold text-[#170B3D] mt-1">
-              {{ resumenDuplicados().DESCARTADO }}
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Total registradas: {{ resumenDuplicados().total }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div
-        *ngIf="errorDuplicados"
-        data-testid="error-duplicados-dashboard"
-        class="px-4 py-3 bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl flex items-center justify-between gap-3 text-sm text-[#170B3D] font-semibold">
-        <span>{{ errorDuplicados }}</span>
-        <button
-          type="button"
-          (click)="cargarAlertasDuplicados(true)"
-          class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-xs font-semibold cursor-pointer shrink-0">
-          Reintentar
-        </button>
-      </div>
-
-      <div
-        *ngIf="!errorDuplicados && cargandoDuplicados && alertasPendientesRecientes().length === 0"
-        data-testid="cargando-duplicados-dashboard"
-        class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 flex items-center gap-2">
-        <span class="inline-block w-3.5 h-3.5 border-2 border-[#4141A5] border-t-transparent rounded-full animate-spin"></span>
-        <span>Cargando alertas de posibles duplicados...</span>
-      </div>
-
-      <div
-        *ngIf="!errorDuplicados && !cargandoDuplicados && alertasPendientesRecientes().length === 0"
-        data-testid="sin-alertas-duplicados-dashboard"
-        class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div class="flex flex-col items-center sm:items-start gap-2">
-          <app-animal-icon tipo="perro" [tamano]="64" />
-          <span>No hay alertas de posibles duplicados pendientes por revisar en este momento.</span>
-        </div>
-        <span *ngIf="resumenDuplicados().total > 0" class="text-slate-500 font-semibold">
-          Histórico revisado: {{ resumenDuplicados().CONFIRMADO + resumenDuplicados().DESCARTADO }}
-        </span>
-      </div>
-
-      <div
-        *ngIf="!errorDuplicados && alertasPendientesRecientes().length > 0"
-        data-testid="lista-alertas-duplicados-recientes"
-        class="space-y-2">
-        <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500 px-1">
-          <span>Pendientes más recientes</span>
-          <span>Haz clic en una alerta para abrir el comparador</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button
-            *ngFor="let alerta of alertasPendientesRecientes()"
-            type="button"
-            [attr.data-testid]="'alerta-reciente-' + alerta.id_alerta"
-            (click)="abrirAlertaDuplicado(alerta.id_alerta)"
-            class="w-full text-left p-3.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-[#4141A5]/40 transition-colors cursor-pointer flex items-center justify-between gap-3">
-            <div class="min-w-0 space-y-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20">
-                  Alerta #{{ alerta.id_alerta }}
-                </span>
-                <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6]">
-                  {{ alerta.estado_revision }}
-                </span>
-                <span class="text-xs font-semibold text-slate-500 truncate">
-                  {{ obtenerTipoAlerta(alerta) }}
-                </span>
-              </div>
-              <div class="text-xs font-bold text-[#170B3D] truncate">
-                {{ obtenerRadicadoAlerta(alerta, 'menor') }} ↔ {{ obtenerRadicadoAlerta(alerta, 'mayor') }}
-              </div>
-              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-500 font-medium">
-                <span>Similitud: <strong class="text-slate-700">{{ formatearSimilitudAlerta(alerta) }}</strong></span>
-                <span>•</span>
-                <span>Distancia: <strong class="text-slate-700">{{ formatearDistanciaAlerta(alerta) }}</strong></span>
-                <span>•</span>
-                <span>{{ alerta.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-            </div>
-
-            <span class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-[#4141A5] text-xs font-semibold shrink-0">
-              Comparar →
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
 
   </main>
 </div>
