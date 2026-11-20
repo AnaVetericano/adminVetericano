@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, forkJoin } from 'rxjs';
+import { Observable, of, forkJoin, throwError } from 'rxjs';
 import { map, catchError, delay, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -2386,6 +2386,32 @@ export class HistoriaClinicaService {
   }
 
   /**
+   * Consulta en /api/animales/estados/ si el estado más reciente del animal coincide con el esperado.
+   */
+  tieneEstadoOficialActual(idAnimal: number, nombreEstado: string): Observable<boolean> {
+    if (!idAnimal || isNaN(Number(idAnimal)) || Number(idAnimal) <= 0) {
+      return of(false);
+    }
+    const apiRoot = this.baseUrlClinica.replace(/\/clinica\/?$/, '/');
+    const urlEstados = `${apiRoot}animales/estados/`;
+    const objetivo = String(nombreEstado || '').trim().toLowerCase();
+
+    return this.http.get<any>(urlEstados, { headers: this.authHeaders }).pipe(
+      map((res) => {
+        const lista = this.extraerLista(res).filter((e: any) => Number(e?.id_animal) === Number(idAnimal));
+        if (lista.length === 0) return false;
+        lista.sort((a: any, b: any) => {
+          const fechaDiff = new Date(b?.fecha_registro || 0).getTime() - new Date(a?.fecha_registro || 0).getTime();
+          if (fechaDiff !== 0) return fechaDiff;
+          return Number(b?.id_estado_animal || 0) - Number(a?.id_estado_animal || 0);
+        });
+        const actual = String(lista[0]?.nombre_estado || '').trim().toLowerCase();
+        return actual === objetivo;
+      })
+    );
+  }
+
+  /**
    * Registra una transición de estado oficial del animal en /api/animales/estados/ (modelo EstadosAnimal de Django)
    */
   registrarEstadoAnimal(idAnimal: number, nombreEstado: string, observacion?: string): Observable<any> {
@@ -2419,12 +2445,11 @@ export class HistoriaClinicaService {
     }
   ): Observable<any> {
     if (!idConsulta || isNaN(Number(idConsulta)) || Number(idConsulta) <= 0 || !ingresaCba) {
-      return of(null);
+      return throwError(() => new Error('No se encontró una consulta clínica válida para registrar la hospitalización.'));
     }
     const urlHosp = `${this.baseUrlClinica}hospitalizaciones/`;
     return this.http.get<any>(`${urlHosp}?id_consulta=${idConsulta}`, { headers: this.authHeaders }).pipe(
       map(res => this.extraerLista(res).filter((h: any) => Number(h?.id_consulta) === Number(idConsulta))),
-      catchError(() => of([])),
       switchMap((existentes: any[]) => {
         const bodyHosp = {
           id_consulta: Number(idConsulta),
@@ -2434,13 +2459,9 @@ export class HistoriaClinicaService {
           hoja_numero: Number(datos.hoja_numero || 1)
         };
         if (existentes.length > 0 && existentes[0]?.id_hospitalizacion) {
-          return this.http.patch<any>(`${urlHosp}${existentes[0].id_hospitalizacion}/`, bodyHosp, { headers: this.authHeaders }).pipe(
-            catchError(() => of(existentes[0]))
-          );
+          return this.http.patch<any>(`${urlHosp}${existentes[0].id_hospitalizacion}/`, bodyHosp, { headers: this.authHeaders });
         }
-        return this.http.post<any>(urlHosp, bodyHosp, { headers: this.authHeaders }).pipe(
-          catchError(() => of(null))
-        );
+        return this.http.post<any>(urlHosp, bodyHosp, { headers: this.authHeaders });
       })
     );
   }
@@ -2515,7 +2536,7 @@ export class HistoriaClinicaService {
       switchMap((hospCreada) => {
         const idHosp = hospCreada?.id_hospitalizacion;
         if (!idHosp) {
-          return of(null);
+          return throwError(() => new Error('No fue posible obtener un identificador de hospitalización confirmado por el servidor.'));
         }
         return this.http.post<any>(
           urlSegHosp,

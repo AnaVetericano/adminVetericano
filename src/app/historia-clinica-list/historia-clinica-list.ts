@@ -4,8 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { forkJoin, Observable, of } from 'rxjs';
-import { catchError, debounceTime, finalize, switchMap } from 'rxjs/operators';
+import { forkJoin, Observable, of, throwError } from 'rxjs';
+import { catchError, debounceTime, finalize, switchMap, tap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { HistoriaClinicaService } from '../services/historia-clinica.service';
 import { AuthService } from '../services/auth';
@@ -182,6 +182,13 @@ export class HistoriaClinicaListComponent implements OnInit {
   private mapaConsultasPorHistoria: Map<number, any> = new Map();
   private mapaConsultasPorAnimal: Map<number, any> = new Map();
   private enviosAdopcionEnCurso: Set<number> = new Set();
+  private progresoAdopcion: Map<number, {
+    historiaActualizada: boolean;
+    consultasActualizadas: boolean;
+    animalActualizado: boolean;
+    adopcionActualizada: boolean;
+    estadoRegistrado: boolean;
+  }> = new Map();
 
   constructor(
     private http: HttpClient,
@@ -1765,6 +1772,17 @@ export class HistoriaClinicaListComponent implements OnInit {
       return;
     }
 
+    // Reservar la operación antes de abrir el diálogo de confirmación para impedir dobles solicitudes
+    if (claveEnCurso > 0) {
+      this.enviosAdopcionEnCurso.add(claveEnCurso);
+    }
+
+    const liberarReserva = () => {
+      if (claveEnCurso > 0) {
+        this.enviosAdopcionEnCurso.delete(claveEnCurso);
+      }
+    };
+
     const animalCache = (idAnim && !isNaN(idAnim)) ? (this.mapaAnimales.get(idAnim) || {}) : {};
     const descripcionPorDefecto =
       animalCache.observaciones ||
@@ -1788,103 +1806,152 @@ export class HistoriaClinicaListComponent implements OnInit {
       confirmButtonText: 'Confirmar alta y enviar a adopción',
       cancelButtonText: 'Cancelar'
     }).then((result) => {
-      if (!result.isConfirmed) return;
-      if (claveEnCurso > 0 && this.enviosAdopcionEnCurso.has(claveEnCurso)) return;
-      if (claveEnCurso > 0) {
-        this.enviosAdopcionEnCurso.add(claveEnCurso);
+      if (!result.isConfirmed) {
+        liberarReserva();
+        return;
+      }
+
+      // Revalidar estado tras confirmar el diálogo
+      if (historia.disponible_adopcion && !historia.ingresa_cba) {
+        liberarReserva();
+        return;
       }
 
       const descripcionFinal = String(result.value || descripcionPorDefecto).trim() || descripcionPorDefecto;
       const fotoAnimal = historia.animal_foto || animalCache.foto_url || '';
+      const esAdmin = this.authService.isAdmin();
 
-      // 1. Preparar actualizaciones clínicas y del animal en PostgreSQL
-      const tareasActualizacion: Observable<any>[] = [];
-
-      if (idHist > 0) {
-        const urlHistoria = `${environment.apiUrlHistorias || (environment.apiUrlClinica + 'historias/')}${idHist}/`;
-        tareasActualizacion.push(
-          this.http.patch(urlHistoria, { estado_general: 'Estable' }, { headers: this.authHeaders }).pipe(
-            catchError(() => of(null))
-          )
-        );
-
-        const urlConsHist = `${environment.apiUrlClinica}consultas/?id_historia=${idHist}`;
-        tareasActualizacion.push(
-          this.http.get<any>(urlConsHist, { headers: this.authHeaders }).pipe(
-            catchError(() => of(null)),
-            switchMap((resCons) => {
-              const arrCons = Array.isArray(resCons) ? resCons : (resCons?.results || []);
-              const filtradas = arrCons.filter((c: any) => Number(c?.id_historia) === idHist && c?.id_consulta);
-              if (filtradas.length === 0) return of(null);
-              return forkJoin(
-                filtradas.map((c: any) =>
-                  this.http.patch(
-                    `${environment.apiUrlClinica}consultas/${c.id_consulta}/`,
-                    { ingresa_cba: false, resultado_estado: 'Estable' },
-                    { headers: this.authHeaders }
-                  ).pipe(catchError(() => of(null)))
-                )
-              );
-            })
-          )
-        );
+      const progreso = (claveEnCurso > 0 ? this.progresoAdopcion.get(claveEnCurso) : null) || {
+        historiaActualizada: false,
+        consultasActualizadas: false,
+        animalActualizado: false,
+        adopcionActualizada: false,
+        estadoRegistrado: false
+      };
+      if (claveEnCurso > 0) {
+        this.progresoAdopcion.set(claveEnCurso, progreso);
       }
 
-      if (idAnim > 0) {
-        const urlAnimal = `${environment.apiUrlAnimales || (environment.apiUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnim}/`;
-        tareasActualizacion.push(
-          this.http.patch(
-            urlAnimal,
-            {
-              disponible_adopcion: true,
-              caracteristicas: descripcionFinal,
-              observaciones: descripcionFinal,
-              ...(fotoAnimal ? { foto_url: fotoAnimal } : {})
-            },
+      const envolverErrorPaso = (paso: string) =>
+        catchError((err: any) => throwError(() => ({ paso, original: err })));
+
+      // Paso 1: Actualizar Historia Clínica (si aplica y aún no se completó en un intento previo)
+      const pasoHistoria$: Observable<any> = (idHist > 0 && !progreso.historiaActualizada)
+        ? this.http.patch(
+            `${environment.apiUrlHistorias || (environment.apiUrlClinica + 'historias/')}${idHist}/`,
+            { estado_general: 'Estable' },
             { headers: this.authHeaders }
+          ).pipe(
+            tap(() => { progreso.historiaActualizada = true; }),
+            envolverErrorPaso('actualización de la historia clínica')
           )
-        );
+        : of(null);
 
-        const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL).replace(/\/+$/, '');
-        if (this.authService.isAdmin()) {
-          const urlAdopcion = `${baseUrl}/api/adopciones/${idAnim}/`;
-          tareasActualizacion.push(
-            this.http.put(
-              urlAdopcion,
-              {
-                nombre: historia.animal_nombre || 'Paciente',
-                raza: historia.animal_raza || 'Mestizo',
-                imagen: fotoAnimal || '',
-                descripcion: descripcionFinal,
-                estado: 'Disponible'
-              },
-              { headers: this.authHeaders }
-            ).pipe(catchError(() => of(null)))
-          );
+      // Paso 2: Actualizar Consultas hospitalarias (ingresa_cba = false)
+      const pasoConsultas$ = (): Observable<any> => {
+        if (idHist <= 0 || progreso.consultasActualizadas) {
+          return of(null);
         }
-      }
-
-      const actualizarRegistros$: Observable<any> = tareasActualizacion.length > 0 ? forkJoin(tareasActualizacion) : of(null);
-
-      // 2. Ejecutar actualización y luego registrar el estado oficial «Disponible para Adopción»
-      actualizarRegistros$.pipe(
-        switchMap(() =>
-          idAnim > 0
-            ? this.historiaService.registrarEstadoAnimal(
-                idAnim,
-                'Disponible para Adopción',
-                `Alta médica de hospitalización CBA — ${descripcionFinal}`
+        const urlConsHist = `${environment.apiUrlClinica}consultas/?id_historia=${idHist}`;
+        return this.http.get<any>(urlConsHist, { headers: this.authHeaders }).pipe(
+          switchMap((resCons) => {
+            const arrCons = Array.isArray(resCons) ? resCons : (resCons?.results || []);
+            const filtradas = arrCons.filter((c: any) => Number(c?.id_historia) === idHist && c?.id_consulta);
+            if (filtradas.length === 0) return of(null);
+            return forkJoin(
+              filtradas.map((c: any) =>
+                this.http.patch(
+                  `${environment.apiUrlClinica}consultas/${c.id_consulta}/`,
+                  { ingresa_cba: false, resultado_estado: 'Estable' },
+                  { headers: this.authHeaders }
+                )
               )
-            : of(null)
-        ),
-        finalize(() => {
-          if (claveEnCurso > 0) {
-            this.enviosAdopcionEnCurso.delete(claveEnCurso);
-          }
-        })
+            );
+          }),
+          tap(() => { progreso.consultasActualizadas = true; }),
+          envolverErrorPaso('actualización de las consultas hospitalarias')
+        );
+      };
+
+      // Paso 3: Actualizar ficha del Animal (disponible_adopcion = true)
+      const pasoAnimal$ = (): Observable<any> => {
+        if (idAnim <= 0 || progreso.animalActualizado) {
+          return of(null);
+        }
+        const urlAnimal = `${environment.apiUrlAnimales || (environment.apiUrlClinica.replace(/\/clinica\/$/, '/animales/animales/'))}${idAnim}/`;
+        return this.http.patch(
+          urlAnimal,
+          {
+            disponible_adopcion: true,
+            caracteristicas: descripcionFinal,
+            observaciones: descripcionFinal,
+            ...(fotoAnimal ? { foto_url: fotoAnimal } : {})
+          },
+          { headers: this.authHeaders }
+        ).pipe(
+          tap(() => { progreso.animalActualizado = true; }),
+          envolverErrorPaso('actualización de la ficha del animal')
+        );
+      };
+
+      // Paso 4: Publicar en Adopciones (exclusivo para Administrador)
+      const pasoAdopcion$ = (): Observable<any> => {
+        if (idAnim <= 0 || !esAdmin || progreso.adopcionActualizada) {
+          return of(null);
+        }
+        const baseUrl = (environment.backendUrl || BACKEND_CLOUD_URL).replace(/\/+$/, '');
+        const urlAdopcion = `${baseUrl}/api/adopciones/${idAnim}/`;
+        return this.http.put(
+          urlAdopcion,
+          {
+            nombre: historia.animal_nombre || 'Paciente',
+            raza: historia.animal_raza || 'Mestizo',
+            imagen: fotoAnimal || '',
+            descripcion: descripcionFinal,
+            estado: 'Disponible'
+          },
+          { headers: this.authHeaders }
+        ).pipe(
+          tap(() => { progreso.adopcionActualizada = true; }),
+          envolverErrorPaso('publicación en el módulo de Adopciones')
+        );
+      };
+
+      // Paso 5: Verificar si ya existe estado oficial actual y registrar «Disponible para Adopción»
+      const pasoEstadoOficial$ = (): Observable<any> => {
+        if (idAnim <= 0 || progreso.estadoRegistrado) {
+          return of(null);
+        }
+        return this.historiaService.tieneEstadoOficialActual(idAnim, 'Disponible para Adopción').pipe(
+          switchMap((yaRegistrado) => {
+            if (yaRegistrado) {
+              return of({ omitido_por_existente: true });
+            }
+            return this.historiaService.registrarEstadoAnimal(
+              idAnim,
+              'Disponible para Adopción',
+              `Alta médica de hospitalización CBA — ${descripcionFinal}`
+            );
+          }),
+          tap(() => { progreso.estadoRegistrado = true; }),
+          envolverErrorPaso('registro del estado oficial «Disponible para Adopción»')
+        );
+      };
+
+      // Ejecución secuencial estricta: si falla un requisito previo, no continúan los siguientes pasos
+      pasoHistoria$.pipe(
+        switchMap(() => pasoConsultas$()),
+        switchMap(() => pasoAnimal$()),
+        switchMap(() => pasoAdopcion$()),
+        switchMap(() => pasoEstadoOficial$()),
+        finalize(() => liberarReserva())
       ).subscribe({
         next: () => {
-          // 3. Actualizar estado en memoria y caché sincronizado solo tras éxito del backend
+          if (claveEnCurso > 0) {
+            this.progresoAdopcion.delete(claveEnCurso);
+          }
+
+          // Actualizar estado en memoria y caché sincronizado solo tras confirmar todo el flujo
           historia.ingresa_cba = false;
           historia.estado_general = 'Estable';
           historia.disponible_adopcion = true;
@@ -1950,17 +2017,33 @@ export class HistoriaClinicaListComponent implements OnInit {
             }
           });
         },
-        error: (err) => {
-          console.error('Error al completar alta y registro de estado para adopción:', err);
+        error: (errEnvuelto: any) => {
+          const pasoFallido = errEnvuelto?.paso || 'proceso de envío a adopción';
+          const errReal = errEnvuelto?.original ?? errEnvuelto;
+          console.error(`Error en ${pasoFallido}:`, errReal);
+
+          const pasosCompletados: string[] = [];
+          if (progreso.historiaActualizada) pasosCompletados.push('historia clínica');
+          if (progreso.consultasActualizadas) pasosCompletados.push('consultas hospitalarias');
+          if (progreso.animalActualizado) pasosCompletados.push('ficha del animal');
+          if (progreso.adopcionActualizada) pasosCompletados.push('publicación en Adopciones');
+
+          const detalleBackend = errReal?.error?.detail || errReal?.error?.mensaje || errReal?.message || '';
+          const notaRecuperacion = pasosCompletados.length > 0
+            ? ` Los cambios ya guardados (${pasosCompletados.join(', ')}) se conservaron; al reintentar se continuará solo con los pasos pendientes.`
+            : ' Ningún paso dependiente posterior fue ejecutado; puede reintentar.';
+
           this.cdr.detectChanges();
           Swal.fire({
             icon: 'error',
-            title: 'No fue posible enviar a Adopción',
-            text: err?.error?.detail || err?.error?.mensaje || 'No se pudo completar el registro oficial del estado «Disponible para Adopción». Intente nuevamente.',
+            title: 'No fue posible completar el envío a Adopción',
+            text: `Falló la operación de ${pasoFallido}.${detalleBackend ? ' ' + detalleBackend : ''}${notaRecuperacion}`,
             confirmButtonText: 'Aceptar'
           });
         }
       });
+    }).catch(() => {
+      liberarReserva();
     });
   }
 

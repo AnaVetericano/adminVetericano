@@ -756,6 +756,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   }
 
   agregarNotaSeguimientoHospitalario(): void {
+    if (this.guardandoNotaHospitalaria) {
+      return;
+    }
+
     const nota = (this.nuevaNotaHospitalaria || '').trim();
     if (!nota) {
       Swal.fire({
@@ -767,7 +771,17 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       return;
     }
 
-    const idCons = Number(this.historiaOriginal?.id_consulta || this.idHistoria || 1);
+    const idCons = Number(this.historiaOriginal?.id_consulta || this.idHistoria || 0);
+    if (!idCons || isNaN(idCons) || idCons <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Consulta no disponible',
+        text: 'Guarda primero la consulta clínica antes de registrar notas hospitalarias.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
     this.guardandoNotaHospitalaria = true;
     this.cdr.detectChanges();
 
@@ -780,16 +794,32 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     }).subscribe({
       next: (creado) => {
         this.guardandoNotaHospitalaria = false;
+        if (!creado || !creado.id_seguimiento_hosp) {
+          this.cdr.detectChanges();
+          Swal.fire({
+            icon: 'error',
+            title: 'No fue posible confirmar la nota hospitalaria',
+            text: 'El servidor no devolvió un registro confirmado de seguimiento hospitalario. Tu nota se conservó para que puedas reintentar.',
+            confirmButtonColor: '#4141a5'
+          });
+          return;
+        }
+
+        if (creado.id_hospitalizacion && !this.hospitalizacionActiva?.id_hospitalizacion) {
+          this.hospitalizacionActiva = {
+            ...(this.hospitalizacionActiva || {}),
+            id_hospitalizacion: creado.id_hospitalizacion,
+            hoja_numero: Number(this.hojaHospitalizacionNumero || 1)
+          };
+        }
+
         this.nuevaNotaHospitalaria = '';
-        const nuevoItem = creado?.id_seguimiento_hosp
-          ? creado
-          : {
-              id_seguimiento_hosp: Date.now(),
-              id_hospitalizacion: this.hospitalizacionActiva?.id_hospitalizacion || 1,
-              evolucion: nota,
-              fecha: new Date().toISOString()
-            };
-        this.seguimientosHospitalarios = [nuevoItem, ...this.seguimientosHospitalarios];
+        const yaExiste = this.seguimientosHospitalarios.some(
+          (s: any) => Number(s?.id_seguimiento_hosp) === Number(creado.id_seguimiento_hosp)
+        );
+        if (!yaExiste) {
+          this.seguimientosHospitalarios = [creado, ...this.seguimientosHospitalarios];
+        }
         this.cargarHospitalizacionYSeguimientos(idCons);
         this.cdr.detectChanges();
 
@@ -801,13 +831,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           showConfirmButton: false
         });
       },
-      error: () => {
+      error: (err) => {
         this.guardandoNotaHospitalaria = false;
         this.cdr.detectChanges();
+        const detalle = err?.error?.detail || err?.error?.mensaje || err?.message || 'Ocurrió un error al registrar la evolución hospitalaria. Tu nota se conservó para que puedas reintentar.';
         Swal.fire({
           icon: 'error',
           title: 'No fue posible guardar la nota hospitalaria',
-          text: 'Ocurrió un error al registrar la evolución hospitalaria. Intenta nuevamente.',
+          text: Array.isArray(detalle) ? detalle.join(', ') : String(detalle),
           confirmButtonColor: '#4141a5'
         });
       }
