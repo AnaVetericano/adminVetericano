@@ -11,6 +11,7 @@ export interface Patologia {
   id_patologia: number;
   nombre: string;
   descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo?: boolean;
 }
 

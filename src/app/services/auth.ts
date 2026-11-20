@@ -111,6 +111,7 @@ export interface Patologia {
   id_patologia?: number;
   nombre: string;
   descripcion: string;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
@@ -130,6 +131,7 @@ export interface RespuestaPatologia {
   id_patologia: number;
   nombre: string;
   descripcion: string;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
