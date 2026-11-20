@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { afterEach, vi } from 'vitest';
 import Swal from 'sweetalert2';
 
@@ -332,5 +332,129 @@ describe('HistoriaClinica2Component · resultado explícito del consumo del kit'
     const alerta = swalSpy.mock.calls[0][0] as any;
     expect(alerta.icon).toBe('success');
     expect(alerta.html).toContain('Descuento automático de maletín');
+  });
+});
+
+describe('HistoriaClinica2Component · hospitalización CBA y plan sanitario', () => {
+  let fixture: ComponentFixture<HistoriaClinica2Component>;
+  let component: HistoriaClinica2Component;
+  let historiaSvc: HistoriaClinicaService;
+  let swalSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    await TestBed.configureTestingModule({
+      imports: [HistoriaClinica2Component],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+    }).compileComponents();
+
+    swalSpy = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    fixture = TestBed.createComponent(HistoriaClinica2Component);
+    component = fixture.componentInstance;
+    historiaSvc = TestBed.inject(HistoriaClinicaService);
+    vi.spyOn(component, 'cargarHistoria').mockImplementation(() => {
+      component.idHistoria = 11;
+      component.historiaOriginal = { id_historia: 11, id_consulta: 22, id_animal: 33 } as any;
+      component.cargando = false;
+    });
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+    TestBed.resetTestingModule();
+  });
+
+  it('muestra hojaHospitalizacionNumero, seguimientosHospitalarios y controles de nota cuando ingresaCBA es SI', () => {
+    component.pestanaPrincipal = 'atencion';
+    component.ingresaCBA = 'SI';
+    component.ingresa_cba = true;
+    component.hojaHospitalizacionNumero = 3;
+    component.seguimientosHospitalarios = [
+      { id_seguimiento_hosp: 1, evolucion: 'Paciente come con buen apetito', fecha: '2026-11-19T10:00:00Z' }
+    ];
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.textContent).toContain('Hoja Hospitalización N°');
+    expect(host.textContent).toContain('Bitácora de Seguimiento Hospitalario CBA');
+    expect(host.textContent).toContain('Paciente come con buen apetito');
+
+    const inputHoja = host.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
+    expect(inputHoja).toBeTruthy();
+
+    const botonAgregar = Array.from(host.querySelectorAll('button')).find(
+      b => b.textContent?.includes('Agregar Nota Hospitalaria')
+    );
+    expect(botonAgregar).toBeTruthy();
+  });
+
+  it('permite agregar una nota de seguimiento hospitalario y actualiza la bitácora', async () => {
+    const registrarSpy = vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(
+      of({ id_seguimiento_hosp: 99, id_hospitalizacion: 4, evolucion: 'Turno noche: signos estables', fecha: '2026-11-19T22:00:00Z' })
+    );
+    vi.spyOn(historiaSvc, 'obtenerHospitalizacionYSeguimientos').mockReturnValue(
+      of({
+        hospitalizacion: { id_hospitalizacion: 4, hoja_numero: 2 },
+        seguimientos: [{ id_seguimiento_hosp: 99, id_hospitalizacion: 4, evolucion: 'Turno noche: signos estables', fecha: '2026-11-19T22:00:00Z' }]
+      })
+    );
+
+    component.ingresaCBA = 'SI';
+    component.hojaHospitalizacionNumero = 2;
+    component.nuevaNotaHospitalaria = 'Turno noche: signos estables';
+    component.agregarNotaSeguimientoHospitalario();
+    fixture.detectChanges();
+
+    expect(registrarSpy).toHaveBeenCalledTimes(1);
+    expect(registrarSpy.mock.calls[0][0]).toBe(22);
+    expect(registrarSpy.mock.calls[0][1]).toBe('Turno noche: signos estables');
+    expect(component.nuevaNotaHospitalaria).toBe('');
+    expect(component.seguimientosHospitalarios.length).toBe(1);
+    expect(component.seguimientosHospitalarios[0].evolucion).toBe('Turno noche: signos estables');
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'success' }));
+  });
+
+  it('maneja error al agregar nota hospitalaria sin limpiar la nota ni mostrar éxito', () => {
+    vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(
+      throwError(() => ({ status: 500 }))
+    );
+
+    component.nuevaNotaHospitalaria = 'Nota con fallo de red';
+    component.agregarNotaSeguimientoHospitalario();
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Nota con fallo de red');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
+  });
+
+  it('conserva y envía planSanitario.ultimoCelo, planSanitario.fechaUltimoParto y hojaHospitalizacionNumero al guardar', async () => {
+    component.pestanaPrincipal = 'plan_sanitario';
+    component.ingresaCBA = 'SI';
+    component.hojaHospitalizacionNumero = 4;
+    component.planSanitario.ultimoCelo = '2026-09-15';
+    component.planSanitario.fechaUltimoParto = '2026-03-10';
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.textContent).toContain('Fecha de Último Celo');
+    expect(host.textContent).toContain('Fecha de Último Parto');
+
+    const actualizarSpy = vi.spyOn(historiaSvc, 'actualizarHistoria').mockReturnValue(
+      of({ success: true, mensaje: 'ok', historia_id: 11, consulta_id: 22 } as any)
+    );
+    component.medicamentosSeleccionados = [];
+    component.guardarEdicion();
+    await vi.waitFor(() => expect(actualizarSpy).toHaveBeenCalledTimes(1));
+
+    const dto: any = actualizarSpy.mock.calls[0][1];
+    expect(dto.anamnesicos.ultimoCelo).toBe('2026-09-15');
+    expect(dto.anamnesicos.fechaUltimoParto).toBe('2026-03-10');
+    expect(dto.organos_sistemas._ultimo_celo).toBe('2026-09-15');
+    expect(dto.organos_sistemas._fecha_ultimo_parto).toBe('2026-03-10');
+    expect(dto.organos_sistemas._hoja_hospitalizacion_numero).toBe(4);
+    expect(dto.ingreso_cba.hoja_numero).toBe(4);
   });
 });
