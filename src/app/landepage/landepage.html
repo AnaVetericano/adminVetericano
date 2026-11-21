@@ -37,7 +37,7 @@
       </div>
 
       <!-- Botones Centrados -->
-      <div class="w-full max-w-[280px] space-y-3 mt-7 sm:mt-8 lg:mt-10">
+      <div class="w-full max-w-[280px] lg:max-w-[320px] space-y-3 mt-7 sm:mt-8 lg:mt-10">
         <button
           type="button"
           (click)="iniciarSesion()"
@@ -101,21 +101,14 @@
 
     <div class="pt-2 lg:pt-4">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 bg-white border border-slate-200 text-[#4141A5] rounded-lg flex items-center justify-center shrink-0">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.75"
-            stroke="currentColor"
-            class="w-5 h-5 text-[#4141A5]"
+        <div class="w-9 h-9 bg-white border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
+          <img
+            src="images/logoVetIcon.svg"
+            alt="Isotipo VETERICANO"
+            width="24"
+            height="24"
+            class="w-6 h-6 object-contain"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M21.75 8.25c0 5.25-9.75 11.25-9.75 11.25S2.25 13.5 2.25 8.25a5.25 5.25 0 0 1 9.75-2.79 5.25 5.25 0 0 1 9.75 2.79Z"
-            />
-          </svg>
         </div>
 
         <h3
@@ -123,7 +116,7 @@
                  font-bold
                  text-[#170B3D]"
         >
-          VETERICANO
+          Panel de Administración
         </h3>
       </div>
 
@@ -133,7 +126,7 @@
                leading-relaxed
                text-slate-600"
       >
-        Panel de administración para gestionar peticiones, rescates y coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
+        Gestiona peticiones, rescates y la coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
       </p>
     </div>
 
