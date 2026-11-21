@@ -81,6 +81,7 @@ export interface HistoriaClinicaEdicion {
   motivo_consulta: string;
   diagnostico_principal: string;
   diagnostico_diferencial?: string;
+  id_patologia?: number | null;
   lista_problemas?: string;
   evolucion: string;
   pronostico: string;
@@ -269,6 +270,62 @@ export class HistoriaClinicaService {
   listarHistoriasClinicas(): Observable<any[]> {
     const urlHistorias = environment.apiUrlHistorias || `${this.baseUrlClinica}historias/`;
     return this.http.get<any[]>(urlHistorias, { headers: this.authHeaders });
+  }
+
+  /**
+   * Construye la URL exacta de .../api/diagnostico-ia/sugerir/ alineada con la configuración de environment.
+   */
+  obtenerUrlDiagnosticoIA(): string {
+    const envAny = environment as any;
+    if (envAny.apiUrlDiagnosticoIA) {
+      return this.normalizarRutaDiagnostico(envAny.apiUrlDiagnosticoIA);
+    }
+
+    const hostBase =
+      envAny.backendUrl ||
+      envAny.apiBaseUrl?.replace(/\/api\/?$/, '') ||
+      (environment.apiUrlClinica
+        ? environment.apiUrlClinica.replace(/\/api\/clinica\/?$/, '').replace(/\/clinica\/?$/, '')
+        : '') ||
+      'https://backendvetericano-production.up.railway.app';
+
+    const cleanHost = String(hostBase).replace(/\/+$/, '');
+    return this.normalizarRutaDiagnostico(`${cleanHost}/api/diagnostico-ia/sugerir/`);
+  }
+
+  private normalizarRutaDiagnostico(url: string): string {
+    let clean = (url || '').trim();
+    clean = clean.replace(/\/clinica\/diagnostico-ia/g, '/diagnostico-ia');
+    if (!clean.includes('/api/diagnostico-ia/')) {
+      clean = clean.replace(/\/diagnostico-ia\//, '/api/diagnostico-ia/');
+    }
+    if (!clean.endsWith('/')) {
+      clean += '/';
+    }
+    if (!clean.endsWith('sugerir/')) {
+      clean = clean.replace(/\/+$/, '') + '/sugerir/';
+    }
+    return clean;
+  }
+
+  /**
+   * Módulo de Apoyo Diagnóstico IA Local (scikit-learn):
+   * Sugiere patologías probables (Top 3-5), exámenes recomendados y justificación clínica.
+   */
+  sugerirDiagnosticoIA(payload: {
+    especie: string;
+    edad_etapa?: string;
+    signos?: string[];
+    tests_rapidos?: { [key: string]: string };
+    examenes_clinicos?: { [key: string]: any };
+    id_consulta?: number | null;
+    id_animal?: number | null;
+    top_k?: number;
+  }): Observable<any> {
+    const url = this.obtenerUrlDiagnosticoIA();
+    return this.http.post<any>(url, payload, { headers: this.authHeaders }).pipe(
+      catchError((error) => throwError(() => error))
+    );
   }
 
   /**
@@ -1007,18 +1064,45 @@ export class HistoriaClinicaService {
     const listaProblemasRaw = hoja2Obj.listaProblemas ?? ultimaConsulta.lista_problemas ?? raw.lista_problemas ?? '';
     const listaProblemasStr = Array.isArray(listaProblemasRaw) ? listaProblemasRaw.join('\n') : String(listaProblemasRaw || '');
 
-    // Exámenes complementarios
+    // Exámenes complementarios (conservando estado_medicion y hallazgos)
     let examenes: any[] = [];
     const examenesRaw = hoja2Obj.examenes || hoja2Obj.examenesSolicitados || ultimaConsulta.examenes_complementarios || raw.examenes_solicitados;
     if (Array.isArray(examenesRaw)) {
-      examenes = examenesRaw;
-    } else if (examenesRaw && typeof examenesRaw === 'object') {
-      examenes = Object.keys(examenesRaw).map(k => ({
-        id_examen: null,
-        nombre: k,
-        estado: examenesRaw[k] ? 'solicitado' : 'pendiente',
-        resultado: ''
+      examenes = examenesRaw.map((ex: any) => ({
+        ...ex,
+        id_examen: ex?.id_examen ?? ex?.id ?? null,
+        nombre: ex?.nombre || ex?.nombre_tipo_examen || ex?.nombre_tipo || 'Examen',
+        tipo: ex?.tipo || ex?.ruta_archivo_resultado || 'General',
+        estado: ex?.estado || 'Solicitado',
+        estado_medicion: ex?.estado_medicion || '',
+        hallazgos: ex?.hallazgos !== undefined ? ex.hallazgos : (ex?.resultado || ''),
+        resultado: ex?.resultado || ex?.hallazgos || '',
+        ruta_archivo_resultado: ex?.ruta_archivo_resultado || ''
       }));
+    } else if (examenesRaw && typeof examenesRaw === 'object') {
+      examenes = Object.keys(examenesRaw).map(k => {
+        const val = examenesRaw[k];
+        if (val && typeof val === 'object') {
+          return {
+            id_examen: val.id_examen ?? null,
+            nombre: val.nombre || k,
+            tipo: val.tipo || 'General',
+            estado: val.estado || 'Solicitado',
+            estado_medicion: val.estado_medicion || 'pendiente',
+            hallazgos: val.hallazgos !== undefined ? val.hallazgos : (val.resultado || ''),
+            resultado: val.resultado || val.hallazgos || '',
+            ruta_archivo_resultado: val.ruta_archivo_resultado || ''
+          };
+        }
+        return {
+          id_examen: null,
+          nombre: k,
+          estado: val ? 'solicitado' : 'pendiente',
+          estado_medicion: 'pendiente',
+          hallazgos: '',
+          resultado: ''
+        };
+      });
     }
 
     // Tratamientos: consolidar tanto de la consulta actual como de atenciones previas (ej. app móvil / actas)
@@ -1152,6 +1236,11 @@ export class HistoriaClinicaService {
       diagnostico_diferencial: orgObj._diagnostico_diferencial !== undefined
         ? orgObj._diagnostico_diferencial
         : (hoja2Obj.diagnosticoDiferencial || ultimaConsulta.diagnostico_diferencial || raw.diagnostico_diferencial || ''),
+      id_patologia: (() => {
+        const rawId = hoja2Obj.idPatologia ?? hoja2Obj.id_patologia ?? ultimaConsulta.id_patologia ?? raw.id_patologia ?? null;
+        const parsed = Number(rawId);
+        return rawId !== null && rawId !== undefined && !isNaN(parsed) && parsed > 0 ? parsed : null;
+      })(),
       lista_problemas: listaProblemasStr,
       evolucion: evolucionStr,
       pronostico: hoja2Obj.pronostico || ultimaConsulta.pronostico || raw.pronostico || 'Favorable',
@@ -1776,8 +1865,9 @@ export class HistoriaClinicaService {
       },
       motivo_consulta: (dto.motivo_consulta || 'Consulta General').trim(),
       diagnostico_principal: (dto.diagnostico_principal || 'Consulta médica general').trim(),
-      diagnostico_diferencial: dto.hallazgos_examen !== undefined ? dto.hallazgos_examen : '',
+      diagnostico_diferencial: (dto.diagnostico_diferencial || '').trim(),
       hallazgos_examen: dto.hallazgos_examen !== undefined ? dto.hallazgos_examen : '',
+      id_patologia: dto.id_patologia || null,
       evolucion: (dto.evolucion || 'Paciente evaluado en campo en condición estable bajo seguimiento clínico veterinario.').trim(),
       pronostico: dto.pronostico || 'Favorable',
       plan_tratamiento: (dto.plan_tratamiento || 'Tratamiento ambulatorio, curación y cuidados preventivos en CBA.').trim(),

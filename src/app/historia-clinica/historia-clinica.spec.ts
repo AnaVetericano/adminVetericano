@@ -512,3 +512,194 @@ describe('HistoriaClinica2Component · hospitalización CBA y plan sanitario', (
     expect(dto.ingreso_cba.hoja_numero).toBe(4);
   });
 });
+
+describe('HistoriaClinica2Component · Diagnóstico IA, Exámenes y Correcciones de Integración', () => {
+  let fixture: ComponentFixture<HistoriaClinica2Component>;
+  let component: HistoriaClinica2Component;
+  let historiaSvc: HistoriaClinicaService;
+  let swalSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    await TestBed.configureTestingModule({
+      imports: [HistoriaClinica2Component],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+    }).compileComponents();
+
+    swalSpy = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    fixture = TestBed.createComponent(HistoriaClinica2Component);
+    component = fixture.componentInstance;
+    historiaSvc = TestBed.inject(HistoriaClinicaService);
+    vi.spyOn(component, 'cargarHistoria').mockImplementation(() => {
+      component.idHistoria = 15;
+      component.historiaOriginal = { id_historia: 15, id_consulta: 30, id_animal: 40 } as any;
+      component.cargando = false;
+    });
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+    TestBed.resetTestingModule();
+  });
+
+  it('renderiza un único panel de resultados IA cuando panelDiagnosticoIAVisible es true', () => {
+    component.pestanaPrincipal = 'atencion';
+    component.panelDiagnosticoIAVisible = true;
+    component.resultadoDiagnosticoIA = {
+      modelo_info: { total_patologias_evaluadas: 84 },
+      diagnosticos_sugeridos: [
+        {
+          id_patologia: 9,
+          nombre: 'Parvovirosis Canina (CPV-2)',
+          tipo_de_enfermedad: 'Infecciosa',
+          probabilidad: 0.92,
+          porcentaje_confianza: '92.0%',
+          justificacion: 'Vómitos, diarrea hemorrágica y test positivo.'
+        }
+      ],
+      examenes_recomendados: []
+    };
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    const paneles = host.querySelectorAll('#panel-resultado-diagnostico-ia');
+    expect(paneles.length).toBe(1);
+    expect(host.textContent?.match(/Apoyo Diagnóstico IA Local/g)?.length).toBe(1);
+  });
+
+  it('aplicarSugerenciaIA asigna idPatologiaSeleccionada y patologiaSeleccionada y los envía al guardar', async () => {
+    component.patologias = [
+      { id_patologia: 9, nombre: 'Parvovirosis Canina (CPV-2)', tipo_de_enfermedad: 'Infecciosa', activo: true }
+    ];
+    component.resultadoDiagnosticoIA = {
+      diagnosticos_sugeridos: [
+        {
+          id_patologia: 9,
+          nombre: 'Parvovirosis Canina (CPV-2)',
+          tipo_de_enfermedad: 'Infecciosa',
+          probabilidad: 0.94,
+          porcentaje_confianza: '94.0%',
+          justificacion: 'Test Parvovirus positivo.'
+        },
+        {
+          id_patologia: 12,
+          nombre: 'Gastroenteritis Hemorrágica',
+          tipo_de_enfermedad: 'Digestiva',
+          probabilidad: 0.45,
+          porcentaje_confianza: '45.0%',
+          justificacion: 'Diagnóstico diferencial.'
+        }
+      ]
+    };
+
+    component.aplicarSugerenciaIA(component.resultadoDiagnosticoIA.diagnosticos_sugeridos[0]);
+
+    expect(component.idPatologiaSeleccionada).toBe(9);
+    expect(component.patologiaSeleccionada?.id_patologia).toBe(9);
+    expect(component.formHistoria.get('diagnosticoPrincipal')?.value).toBe('Parvovirosis Canina (CPV-2)');
+
+    const actualizarSpy = vi.spyOn(historiaSvc, 'actualizarHistoria').mockReturnValue(
+      of({ success: true, mensaje: 'ok', historia_id: 15, consulta_id: 30 } as any)
+    );
+    component.medicamentosSeleccionados = [];
+    component.guardarEdicion();
+    await vi.waitFor(() => expect(actualizarSpy).toHaveBeenCalledTimes(1));
+
+    const dto: any = actualizarSpy.mock.calls[0][1];
+    expect(dto.id_patologia).toBe(9);
+  });
+
+  it('conserva estado_medicion y hallazgos en examenes_solicitados al guardar y al normalizar', async () => {
+    component.examenesSolicitados = [
+      {
+        id_examen: 1,
+        nombre: 'Cuadro Hemático',
+        tipo: 'Laboratorio Hematológico',
+        estado: 'Realizado',
+        estado_medicion: 'alterado',
+        hallazgos: 'Leucopenia severa 2.100/uL',
+        resultado: 'Leucopenia severa 2.100/uL'
+      }
+    ];
+
+    const actualizarSpy = vi.spyOn(historiaSvc, 'actualizarHistoria').mockReturnValue(
+      of({ success: true, mensaje: 'ok', historia_id: 15, consulta_id: 30 } as any)
+    );
+    component.medicamentosSeleccionados = [];
+    component.guardarEdicion();
+    await vi.waitFor(() => expect(actualizarSpy).toHaveBeenCalledTimes(1));
+
+    const dto: any = actualizarSpy.mock.calls[0][1];
+    expect(dto.examenes_solicitados[0].estado_medicion).toBe('alterado');
+    expect(dto.examenes_solicitados[0].hallazgos).toBe('Leucopenia severa 2.100/uL');
+
+    const normalizado = component.normalizarItemExamen({
+      id_examen: 1,
+      nombre: 'Cuadro Hemático',
+      estado: 'Realizado',
+      estado_medicion: 'alterado',
+      hallazgos: 'Leucopenia severa 2.100/uL',
+      resultado: 'Leucopenia severa 2.100/uL'
+    });
+    expect(normalizado.estado_medicion).toBe('alterado');
+    expect(normalizado.hallazgos).toBe('Leucopenia severa 2.100/uL');
+  });
+
+  it('procesarYCombinarExamenes no inventa IDs sintéticos 9000+ para exámenes de respaldo', () => {
+    component.procesarYCombinarExamenes([
+      { id_examen: 7, nombre: 'Cuadro Hemático', tipo: 'Laboratorio Hematológico', descripcion: 'Hemograma', estado: 'activo' }
+    ]);
+
+    const cuadro = component.examenesClinicos.find(e => e.nombre === 'Cuadro Hemático');
+    const parvo = component.examenesClinicos.find(e => e.nombre === 'Test Parvovirus');
+    expect(cuadro?.id_examen).toBe(7);
+    expect(parvo?.id_examen).toBeNull();
+    expect(component.examenesClinicos.some(e => Number(e.id_examen) >= 9000)).toBe(false);
+  });
+
+  it('adjuntar archivo no simula guardado exitoso ni sobrescribe examenes_complementarios', () => {
+    const file = new File(['contenido'], 'hemograma.pdf', { type: 'application/pdf' });
+    const event = { target: { files: [file], value: 'hemograma.pdf' } } as unknown as Event;
+
+    component.examenes_complementarios = [{ nombre: 'Cuadro Hemático' }];
+    component.onAdjuntarArchivoExamen(event);
+
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'info' }));
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(component.examenes_complementarios).toEqual([{ nombre: 'Cuadro Hemático' }]);
+  });
+
+  it('cargarHistoria recupera idPatologiaSeleccionada y patologiaSeleccionada al reabrir el expediente', () => {
+    vi.restoreAllMocks();
+    swalSpy = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    component.patologias = [
+      { id_patologia: 9, nombre: 'Parvovirosis Canina (CPV-2)', tipo_de_enfermedad: 'Infecciosa', activo: true }
+    ];
+    component.idHistoria = 15;
+
+    vi.spyOn(historiaSvc, 'obtenerHistoria').mockReturnValue(of({
+      id_historia: 15,
+      id_consulta: 30,
+      id_animal: 40,
+      numero_historia: 'HC-40',
+      fecha_apertura: '2026-11-20T10:00:00Z',
+      estado_general: 'Estable',
+      paciente: { id_animal: 40, nombre: 'Firulais', especie: 'Canino', raza: 'Mestizo', sexo: 'Macho' },
+      motivo_consulta: 'Vómito',
+      diagnostico_principal: 'Parvovirosis Canina (CPV-2)',
+      diagnostico_diferencial: 'Gastroenteritis',
+      id_patologia: 9,
+      evolucion: 'Estable',
+      pronostico: 'Reservado',
+      plan_tratamiento: 'Fluidoterapia',
+      historial_modificaciones: []
+    } as any));
+
+    component.cargarHistoria();
+
+    expect(component.idPatologiaSeleccionada).toBe(9);
+    expect(component.patologiaSeleccionada?.nombre).toBe('Parvovirosis Canina (CPV-2)');
+  });
+});

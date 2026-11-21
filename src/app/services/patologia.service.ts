@@ -78,7 +78,7 @@ export class PatologiaService {
   }
 
   /**
-   * Filtra las patologías por coincidencia en el nombre o descripción
+   * Filtra las patologías por coincidencia en el nombre, clasificación o descripción
    */
   filtrarPatologiasLocales(patologias: Patologia[], termino: string): Patologia[] {
     const busqueda = (termino || '').trim().toLowerCase();
@@ -87,7 +87,8 @@ export class PatologiaService {
     }
     return patologias.filter(p =>
       (p.nombre || '').toLowerCase().includes(busqueda) ||
-      (p.descripcion || '').toLowerCase().includes(busqueda)
+      (p.descripcion || '').toLowerCase().includes(busqueda) ||
+      (p.tipo_de_enfermedad || '').toLowerCase().includes(busqueda)
     );
   }
 
