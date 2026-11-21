@@ -77,12 +77,12 @@ export class Landingpage {
       imageClass: 'hero-slide-mask origin-center scale-[1.12] object-[42%_36%]',
     },
     {
-      src: '/images/hero-team.jpg',
+      src: '/images/imgGroupVetericano.jpeg',
       alt: 'Equipo del proyecto VETERICANO junto a la escultura metálica del Centro de Bienestar Animal',
-      width: 966,
-      height: 1024,
+      width: 1280,
+      height: 960,
       imageClass:
-        'hero-slide-team-mask origin-center scale-100 object-[14%_52%] lg:translate-x-[14%] lg:object-[50%_52%] xl:translate-x-[15%]',
+        'hero-slide-team-mask origin-center scale-100 object-[52%_50%] lg:object-[30%_50%] xl:object-[15%_50%]',
     },
   ];
 
