@@ -38,6 +38,26 @@ describe('Landingpage', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
 
+  it('should render top-right Ingresar button in desktop header and navigate to /login on click', () => {
+    const fixture = TestBed.createComponent(Landingpage);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const el = fixture.nativeElement as HTMLElement;
+
+    const desktopButtons = Array.from(
+      el.querySelectorAll<HTMLButtonElement>('header nav > div:not(#mobile-nav-menu) button')
+    );
+    const ingresarBtn = desktopButtons.find(
+      (btn) => btn.textContent?.trim() === 'Ingresar'
+    );
+
+    expect(ingresarBtn).toBeTruthy();
+    ingresarBtn?.click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/login']);
+  });
+
   it('should switch hero carousel slides on selectSlide and nextSlide', () => {
     const fixture = TestBed.createComponent(Landingpage);
     fixture.detectChanges();
