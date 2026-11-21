@@ -1,0 +1,43 @@
+// =========================================================================================
+// CONFIGURACIÓN EXPLÍCITA PARA DESARROLLO CONTRA BACKEND DJANGO LOCAL (127.0.0.1:8000)
+// =========================================================================================
+// Uso explícito: ng serve --configuration local  (o ng serve -c local)
+// NOTA: Debe colocarse sin barra final ('/').
+export const BACKEND_LOCAL_URL = 'http://127.0.0.1:8000';
+export const BACKEND_CLOUD_URL = 'https://backendvetericano-production.up.railway.app';
+
+export const environment = {
+  production: false,
+  // Servidor raíz local en desarrollo
+  backendUrl: BACKEND_LOCAL_URL,
+  apiBaseUrl: `${BACKEND_LOCAL_URL}/api`,
+
+  // Endpoints del módulo de Peticiones y Notificaciones
+  apiUrlPeticiones: `${BACKEND_LOCAL_URL}/api/peticiones/`,
+
+  // Endpoints del módulo de Historia Clínica
+  apiUrlClinica: `${BACKEND_LOCAL_URL}/api/clinica/`,
+  apiUrlHistorias: `${BACKEND_LOCAL_URL}/api/clinica/historias/`,
+  apiUrlConsultas: `${BACKEND_LOCAL_URL}/api/clinica/consultas/`,
+  apiUrlExpedienteCompleto: `${BACKEND_LOCAL_URL}/api/clinica/expediente-completo/`,
+  apiUrlExpedientePorAnimal: `${BACKEND_LOCAL_URL}/api/clinica/expediente-por-animal/`,
+
+  // Endpoints del módulo de Apoyo Diagnóstico IA Local (scikit-learn)
+  apiUrlDiagnosticoIA: `${BACKEND_LOCAL_URL}/api/diagnostico-ia/sugerir/`,
+
+  // Endpoints de módulos complementarios
+  apiUrlAnimales: `${BACKEND_LOCAL_URL}/api/animales/animales/`,
+  apiUrl: `${BACKEND_LOCAL_URL}/api/usuarios`,
+  apiUrlespecies: `${BACKEND_LOCAL_URL}/api/especies/`,
+  apiUrlMedicamentos: `${BACKEND_LOCAL_URL}/api/medicamentos/`,
+  apiUrlInventario: `${BACKEND_LOCAL_URL}/api/inventario/`,
+  apiUrlMedicamentosCatalogo: `${BACKEND_LOCAL_URL}/api/medicamentos-catalogo/`,
+  apiUrlSedes: `${BACKEND_LOCAL_URL}/api/sedes/`,
+  apiUrlSuperAdmin: `${BACKEND_LOCAL_URL}/api/super-administrador/`,
+
+  // Sistema de notificaciones en tiempo real (WebSockets + REST central)
+  notificacionesHabilitadas: false,
+  wsHabilitado: false,
+  wsUrl: 'ws://127.0.0.1:8002/ws/notificaciones/',
+  wsRoles: [1, 2, 3, 5]
+};
