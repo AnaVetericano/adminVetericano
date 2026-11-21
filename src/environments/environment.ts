@@ -35,5 +35,5 @@ export const environment = {
   notificacionesHabilitadas: false,
   wsHabilitado: false,
   wsUrl: 'wss://REEMPLAZAR-DOMINIO-WS/ws/notificaciones/',
-  wsRoles: [1, 2, 3, 5]
+  wsRoles: [3]
 };

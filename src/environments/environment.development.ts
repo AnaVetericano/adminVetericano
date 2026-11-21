@@ -35,5 +35,5 @@ export const environment = {
   notificacionesHabilitadas: false,
   wsHabilitado: false,
   wsUrl: 'ws://127.0.0.1:8002/ws/notificaciones/',
-  wsRoles: [1, 2, 3, 5]
+  wsRoles: [3]
 };

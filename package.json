@@ -21,6 +21,7 @@
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.26.25",
     "tslib": "^2.3.0",
+    "vercel": "^66.6.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
