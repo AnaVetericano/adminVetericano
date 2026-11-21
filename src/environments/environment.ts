@@ -4,7 +4,6 @@
 // 👉 PEGA AQUÍ LA URL DE TU SERVIDOR DESPLEGADO EN LA NUBE (ej. Render, Supabase, Railway):
 // NOTA: Debe colocarse sin barra final ('/').
 export const BACKEND_CLOUD_URL = 'https://backendvetericano-production.up.railway.app';
-export const BACKEND_LOCAL_URL = 'http://127.0.0.1:8000';
 
 export const environment = {
   production: true,
@@ -24,7 +23,6 @@ export const environment = {
 
   // Endpoints del módulo de Apoyo Diagnóstico IA Local (scikit-learn)
   apiUrlDiagnosticoIA: `${BACKEND_CLOUD_URL}/api/diagnostico-ia/sugerir/`,
-  apiUrlDiagnosticoIALocal: `${BACKEND_LOCAL_URL}/api/diagnostico-ia/sugerir/`,
 
   // Endpoints de módulos complementarios
   apiUrlAnimales: `${BACKEND_CLOUD_URL}/api/animales/animales/`,

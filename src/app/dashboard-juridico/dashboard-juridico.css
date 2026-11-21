@@ -3,3 +3,24 @@
   display: block;
   width: 100%;
 }
+
+.chart-subtitle {
+  color: #64748B;
+  font-size: 0.85rem;
+  line-height: 1.25rem;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.chart-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}

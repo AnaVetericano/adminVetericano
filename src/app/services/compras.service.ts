@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth';
 
 export interface Proveedor {
   id_proveedor: number;
@@ -75,7 +76,19 @@ export interface ResultadoRegistroCompra {
   providedIn: 'root'
 })
 export class ComprasService {
+  private authService = inject(AuthService, { optional: true });
+
   constructor(private http: HttpClient) {}
+
+  private esRolSinBodegaGeneral(): boolean {
+    if (!this.authService) {
+      return false;
+    }
+    if (this.authService.isAdmin() || this.authService.isJuridico() || this.authService.isSuperAdmin()) {
+      return false;
+    }
+    return this.authService.isVeterinario() || !!this.authService.currentUser();
+  }
 
   private get baseUrlInventario(): string {
     const envInventario = (environment as any).apiUrlInventario;
@@ -385,9 +398,10 @@ export class ComprasService {
    * Utiliza las existencias reales de la tabla Inventarios (cantidad_actual).
    */
   obtenerMapaStockMedicamentos(): Observable<{ porId: Map<number, number>; porNombre: Map<string, number> }> {
+    const consultarBodega = !this.esRolSinBodegaGeneral();
     return forkJoin({
-      invs: this.listarInventarios(),
-      dets: this.listarDetallesCompra(),
+      invs: consultarBodega ? this.listarInventarios() : of([]),
+      dets: consultarBodega ? this.listarDetallesCompra() : of([]),
       meds: this.listarMedicamentos().pipe(catchError(() => of([]))),
       cata: this.listarMedicamentosCatalogo().pipe(catchError(() => of([])))
     }).pipe(
@@ -452,9 +466,10 @@ export class ComprasService {
    * Obtiene los lotes de inventario reales con stock disponible para un medicamento específico.
    */
   obtenerLotesDisponiblesParaMedicamento(idMedicamento: number, nombreMedicamento?: string): Observable<any[]> {
+    const consultarBodega = !this.esRolSinBodegaGeneral();
     return forkJoin({
-      invs: this.listarInventarios(),
-      dets: this.listarDetallesCompra(),
+      invs: consultarBodega ? this.listarInventarios() : of([]),
+      dets: consultarBodega ? this.listarDetallesCompra() : of([]),
       cata: this.listarMedicamentosCatalogo().pipe(catchError(() => of([]))),
       meds: this.listarMedicamentos().pipe(catchError(() => of([])))
     }).pipe(

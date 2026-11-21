@@ -14,7 +14,7 @@ import {
   PacienteHistoria
 } from '../services/historia-clinica.service';
 import { PatologiaService, Patologia } from '../services/patologia.service';
-import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
+import { ExamenesClinicosService, ExamenClinico, CATALOGO_CANONICO_EXAMENES } from '../services/examenes-clinicos.service';
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
@@ -142,7 +142,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   materialesUtilizados: string = '';
   materiales_utilizados: string = '';
 
-  // Destino CBA
+  // Destino CBA y Seguimiento Hospitalario (/api/clinica/hospitalizaciones/ y /api/clinica/seguimientos-hospitalarios/)
   ingresa_cba: boolean = false;
   ingresaCBA: string = 'NO';
   motivo_ingreso_cba: string = '';
@@ -151,6 +151,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   canilAsignado: string = '';
   funcionario_recibe_cba: string = '';
   funcionarioRecibeCBA: string = '';
+  hojaHospitalizacionNumero: number = 1;
+  hospitalizacionActiva: any = null;
+  seguimientosHospitalarios: any[] = [];
+  nuevaNotaHospitalaria: string = '';
+  guardandoNotaHospitalaria: boolean = false;
 
   // =========================================================================
   // MODELOS ESTRUCTURADOS DEL ACTA MÓVIL (TRIAJE EN CAMPO Y CIERRE CBA)
@@ -235,7 +240,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     estadoDesparasitacion: 'Suministrada',
     estadoEctoparasitos: 'Tratado',
     enfermedadesAnteriores: '',
-    historiaReproductiva: ''
+    historiaReproductiva: '',
+    ultimoCelo: '',
+    fechaUltimoParto: ''
   };
 
   datosPropietario = {
@@ -291,7 +298,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   resultadoDiagnosticoIA: any = null;
   errorDiagnosticoIA: string = '';
   panelDiagnosticoIAVisible: boolean = false;
-
 
   // =========================================================================
   // VISTA DE CONSULTA CP-VET: NAVEGACIÓN Y CONTADORES DINÁMICOS
@@ -743,6 +749,115 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   cambiarPestanaPrincipal(p: 'atencion' | 'historial' | 'plan_sanitario' | 'receta' | 'auditoria'): void {
     this.pestanaPrincipal = p;
     this.cdr.detectChanges();
+  }
+
+  cargarHospitalizacionYSeguimientos(idConsulta?: number | null): void {
+    const idCons = Number(idConsulta || this.historiaOriginal?.id_consulta || 0);
+    if (!idCons || isNaN(idCons) || idCons <= 0) {
+      return;
+    }
+
+    this.historiaService.obtenerHospitalizacionYSeguimientos(idCons).subscribe({
+      next: ({ hospitalizacion, seguimientos }) => {
+        this.hospitalizacionActiva = hospitalizacion || null;
+        if (hospitalizacion?.hoja_numero) {
+          this.hojaHospitalizacionNumero = Number(hospitalizacion.hoja_numero);
+        }
+        this.seguimientosHospitalarios = Array.isArray(seguimientos) ? seguimientos : [];
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  agregarNotaSeguimientoHospitalario(): void {
+    if (this.guardandoNotaHospitalaria) {
+      return;
+    }
+
+    const nota = (this.nuevaNotaHospitalaria || '').trim();
+    if (!nota) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nota vacía',
+        text: 'Escribe la nota de evolución hospitalaria diaria antes de registrarla.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    const idCons = Number(this.historiaOriginal?.id_consulta || this.idHistoria || 0);
+    if (!idCons || isNaN(idCons) || idCons <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Consulta no disponible',
+        text: 'Guarda primero la consulta clínica antes de registrar notas hospitalarias.',
+        confirmButtonColor: '#4141a5'
+      });
+      return;
+    }
+
+    this.guardandoNotaHospitalaria = true;
+    this.cdr.detectChanges();
+
+    this.historiaService.registrarSeguimientoHospitalario(idCons, nota, {
+      id_hospitalizacion: this.hospitalizacionActiva?.id_hospitalizacion || null,
+      descripcion_estado: `${this.resultado_estado || 'En observación'} — ${this.motivoIngresoNoIngreso || 'Hospitalizado CBA'}`,
+      diagnostico_presuntivo: (this.formHistoria?.get('diagnosticoPrincipal')?.value || this.diagnosticoFinal || 'En estudio clínico').trim(),
+      responsable_clinico: this.funcionarioRecibeCBA || this.nombreVeterinario || 'Veterinario CBA',
+      hoja_numero: Number(this.hojaHospitalizacionNumero || 1)
+    }).subscribe({
+      next: (creado) => {
+        this.guardandoNotaHospitalaria = false;
+        if (!creado || !creado.id_seguimiento_hosp) {
+          this.cdr.detectChanges();
+          Swal.fire({
+            icon: 'error',
+            title: 'No fue posible confirmar la nota hospitalaria',
+            text: 'El servidor no devolvió un registro confirmado de seguimiento hospitalario. Tu nota se conservó para que puedas reintentar.',
+            confirmButtonColor: '#4141a5'
+          });
+          return;
+        }
+
+        if (creado.id_hospitalizacion && !this.hospitalizacionActiva?.id_hospitalizacion) {
+          this.hospitalizacionActiva = {
+            ...(this.hospitalizacionActiva || {}),
+            id_hospitalizacion: creado.id_hospitalizacion,
+            hoja_numero: Number(this.hojaHospitalizacionNumero || 1)
+          };
+        }
+
+        this.nuevaNotaHospitalaria = '';
+        const yaExiste = this.seguimientosHospitalarios.some(
+          (s: any) => Number(s?.id_seguimiento_hosp) === Number(creado.id_seguimiento_hosp)
+        );
+        if (!yaExiste) {
+          this.seguimientosHospitalarios = [creado, ...this.seguimientosHospitalarios];
+        }
+        this.cargarHospitalizacionYSeguimientos(idCons);
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Evolución hospitalaria registrada',
+          text: 'La nota se guardó en el seguimiento hospitalario del CBA.',
+          timer: 1600,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        this.guardandoNotaHospitalaria = false;
+        this.cdr.detectChanges();
+        const detalle = err?.error?.detail || err?.error?.mensaje || err?.message || 'Ocurrió un error al registrar la evolución hospitalaria. Tu nota se conservó para que puedas reintentar.';
+        Swal.fire({
+          icon: 'error',
+          title: 'No fue posible guardar la nota hospitalaria',
+          text: Array.isArray(detalle) ? detalle.join(', ') : String(detalle),
+          confirmButtonColor: '#4141a5'
+        });
+      }
+    });
   }
 
   iniciarNuevaConsulta(): void {
@@ -1738,18 +1853,27 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
             estadoDesparasitacion: sistemasParseados?.['_estado_desparasitacion'] || ((anam.productoDesparasitacion || anam.ultimaDesparasitacion) ? 'Suministrada' : 'En evaluación'),
             estadoEctoparasitos: sistemasParseados?.['_estado_ectoparasitos'] || 'Tratado',
             enfermedadesAnteriores: anam.enfermedadesAnteriores || anam.enfermedadesPrevias || sistemasParseados?.['_enfermedades_anteriores'] || '',
-            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || ''
+            historiaReproductiva: anam.historiaReproductiva || anam.estadoReproductivo || sistemasParseados?.['_historia_reproductiva'] || '',
+            ultimoCelo: anam.ultimoCelo || raw.fecha_ultimo_celo || sistemasParseados?.['_ultimo_celo'] || '',
+            fechaUltimoParto: anam.fechaUltimoParto || raw.fecha_ultimo_parto || sistemasParseados?.['_fecha_ultimo_parto'] || ''
           };
+          if (sistemasParseados?.['_hoja_hospitalizacion_numero']) {
+            this.hojaHospitalizacionNumero = Number(sistemasParseados['_hoja_hospitalizacion_numero']) || 1;
+          }
 
           if (Array.isArray(data.examenes_solicitados) && data.examenes_solicitados.length > 0) {
-            this.examenesSolicitados = data.examenes_solicitados.map((ex: any) => ({
-              id_examen: ex.id_examen || ex.id || null,
-              nombre: ex.nombre || 'Examen',
-              tipo: ex.tipo || 'Laboratorio',
-              estado: ex.estado || 'solicitado',
-              resultado: ex.resultado || '',
-              ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
-            }));
+            this.examenesSolicitados = data.examenes_solicitados.map((ex: any) =>
+              this.normalizarItemExamen({
+                id_examen: ex.id_examen || ex.id || null,
+                nombre: ex.nombre || 'Examen',
+                tipo: ex.tipo || 'Laboratorio',
+                estado: ex.estado || 'solicitado',
+                estado_medicion: ex.estado_medicion || '',
+                hallazgos: ex.hallazgos !== undefined ? ex.hallazgos : (ex.resultado || ''),
+                resultado: ex.resultado || '',
+                ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+              })
+            );
           }
 
           if (data.materiales_utilizados !== undefined) {
@@ -1811,6 +1935,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           if (data.cedula_acudiente || data.paciente?.tenedor_documento) {
             this.cedulaAcudiente = data.cedula_acudiente || data.paciente?.tenedor_documento || this.cedulaAcudiente;
           }
+
+          this.sincronizarPatologiaCargada(
+            data.id_patologia ?? raw.id_patologia ?? null,
+            data.diagnostico_principal || raw.diagnostico_principal || ''
+          );
         }
 
         const evolucionInicial = (data.organos_sistemas?.['_evolucion'] || data.evolucion || this.anamnesis || this.formHistoria.get('evolucion')?.value || '');
@@ -1880,6 +2009,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.mucosas = '';
           this.medicamentosSeleccionados = [];
           this.examenesSolicitados = [];
+          this.archivosExamenesAdjuntos = [];
+          this.resultadoDiagnosticoIA = null;
+          this.errorDiagnosticoIA = '';
+          this.panelDiagnosticoIAVisible = false;
+          this.idPatologiaSeleccionada = null;
+          this.patologiaSeleccionada = null;
           this.pronostico = 'Favorable';
           this.planProcedimientos = '';
           this.materialesUtilizados = '';
@@ -1910,6 +2045,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
         this.formHistoria.markAsPristine();
         this.formHistoria.markAsUntouched();
+        this.cargarHospitalizacionYSeguimientos(data.id_consulta);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -1925,32 +2061,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   // GESTIÓN DEL PASO 2: EXÁMENES CLÍNICOS Y SISTEMAS ORGÁNICOS
   // =========================================================================
 
-  // Catálogo base de respaldo integral: 14 Exámenes Clínicos y 6 Tests Rápidos
-  readonly CATALOGO_BASE_EXAMENES = [
-    // 14 Exámenes Clínicos Activos
-    { nombre: 'Cuadro Hemático', tipo_categoria: 'Examen Clínico', tipo: 'Laboratorio Hematológico', descripcion: 'Hemograma completo automatizado, serie roja, blanca y recuento plaquetario.' },
-    { nombre: 'Química Sanguínea', tipo_categoria: 'Examen Clínico', tipo: 'Bioquímica Clínica', descripcion: 'Perfil hepático, renal, electrolitos y glucosa sérica.' },
-    { nombre: 'Parcial de Orina', tipo_categoria: 'Examen Clínico', tipo: 'Urianálisis', descripcion: 'Análisis físico, químico y microscópico del sedimento urinario.' },
-    { nombre: 'Coprológico', tipo_categoria: 'Examen Clínico', tipo: 'Parasitología', descripcion: 'Diagnóstico parasitológico por flotación y frotis fecal directo.' },
-    { nombre: 'Coproscópico', tipo_categoria: 'Examen Clínico', tipo: 'Parasitología y Digestivo', descripcion: 'Estudio funcional microscópico de digestibilidad y citología fecal.' },
-    { nombre: 'Frotis (raspado piel)', tipo_categoria: 'Examen Clínico', tipo: 'Dermatología', descripcion: 'Raspado cutáneo profundo y superficial para ácaros, bacterias y hongos.' },
-    { nombre: 'Cultivos', tipo_categoria: 'Examen Clínico', tipo: 'Microbiología', descripcion: 'Aislamiento e identificación de bacterias y hongos en muestras biológicas.' },
-    { nombre: 'Antibiograma', tipo_categoria: 'Examen Clínico', tipo: 'Microbiología', descripcion: 'Prueba de susceptibilidad y resistencia antimicrobiana.' },
-    { nombre: 'Biopsia', tipo_categoria: 'Examen Clínico', tipo: 'Histopatología', descripcion: 'Toma y análisis histopatológico de tejido para diagnóstico tisular.' },
-    { nombre: 'Rayos X', tipo_categoria: 'Examen Clínico', tipo: 'Imagenología', descripcion: 'Radiografía digital ortogonal (tórax, abdomen, columna o miembros).' },
-    { nombre: 'Ecografía', tipo_categoria: 'Examen Clínico', tipo: 'Imagenología Ultrasonográfica', descripcion: 'Ultrasonografía abdominal completa o ecofast para fluidos y órganos.' },
-    { nombre: 'ECG', tipo_categoria: 'Examen Clínico', tipo: 'Cardiología', descripcion: 'Electrocardiograma de 6 derivaciones para ritmo y actividad cardíaca.' },
-    { nombre: 'EEG', tipo_categoria: 'Examen Clínico', tipo: 'Neurología', descripcion: 'Electroencefalograma para evaluación de actividad bioeléctrica cerebral.' },
-    { nombre: 'Endoscopia', tipo_categoria: 'Examen Clínico', tipo: 'Endoscopia Diagnóstica', descripcion: 'Exploración visual directa endoscópica digestiva o respiratoria.' },
-    // 6 Tests Rápidos Activos
-    { nombre: 'Test Parvovirus', tipo_categoria: 'Test Rápido', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Inmunocromatografía rápida para detección de antígeno de Parvovirus (CPV).' },
-    { nombre: 'Test de Distemper (Moquillo)', tipo_categoria: 'Test Rápido', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Detección rápida de antígeno del Virus del Distemper Canino (CDV).' },
-    { nombre: 'Test de Leucemia (Felinos)', tipo_categoria: 'Test Rápido', tipo: 'Inmunodiagnóstico Felino', descripcion: 'Ensayo rápido para antígeno p27 del Virus de Leucemia Felina (FeLV).' },
-    { nombre: 'Test de Sida (Felinos)', tipo_categoria: 'Test Rápido', tipo: 'Inmunodiagnóstico Felino', descripcion: 'Ensayo rápido para anticuerpos del Virus de Inmunodeficiencia Felina (FIV).' },
-    { nombre: 'Test Coronavirus', tipo_categoria: 'Test Rápido', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Detección rápida cualitativa de Coronavirus entérico / FCoV.' },
-    { nombre: 'Test Rápido Inmunocromatográfico Parvovirus / Moquillo', tipo_categoria: 'Test Rápido', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Panel rápido combinado antígeno Parvovirus y Distemper canino.' }
-  ];
-
   esTestRapido(item: any): boolean {
     if (!item) return false;
     const nombre = String(item.nombre || item.nombre_tipo_examen || item.nombre_tipo || '').toLowerCase();
@@ -1958,6 +2068,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     return (
       nombre.includes('test') ||
       nombre.includes('prueba rápida') ||
+      nombre.includes('prueba rapida') ||
       nombre.includes('inmunocromat') ||
       tipo.includes('inmunodiagnóstico') ||
       tipo.includes('rápido') ||
@@ -1998,7 +2109,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   normalizarItemExamen(sol: any): any {
     if (!sol) return sol;
-    if (!sol.estado_medicion) {
+    const medActual = String(sol.estado_medicion || '').toLowerCase().trim();
+    if (!medActual) {
       const res = String(sol.resultado || '').toLowerCase().trim();
       if (res.includes('positiv') || res === '+') {
         sol.estado_medicion = 'positivo';
@@ -2011,9 +2123,16 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       } else {
         sol.estado_medicion = 'pendiente';
       }
+    } else {
+      sol.estado_medicion = medActual;
     }
-    if (sol.hallazgos === undefined) {
+    if (sol.hallazgos === undefined || sol.hallazgos === null) {
       sol.hallazgos = sol.resultado || '';
+    }
+    if (sol.estado_medicion && sol.estado_medicion !== 'pendiente') {
+      sol.estado = 'Realizado';
+    } else if (!sol.estado) {
+      sol.estado = 'Solicitado';
     }
     return sol;
   }
@@ -2021,13 +2140,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   actualizarEstadoMedicionExamen(sol: any): void {
     if (!sol) return;
     const med = String(sol.estado_medicion || 'pendiente').toLowerCase().trim();
+    sol.estado_medicion = med || 'pendiente';
+    const hallazgosTxt = String(sol.hallazgos ?? '').trim();
     if (med && med !== 'pendiente') {
       sol.estado = 'Realizado';
-      if (!sol.hallazgos && !sol.resultado) {
-        sol.resultado = med.charAt(0).toUpperCase() + med.slice(1);
-      }
+      sol.resultado = hallazgosTxt || (med.charAt(0).toUpperCase() + med.slice(1));
     } else {
       sol.estado = 'Solicitado';
+      sol.resultado = hallazgosTxt;
     }
     this.formHistoria.markAsDirty();
     this.cdr.detectChanges();
@@ -2060,12 +2180,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.cargandoExamenes = true;
     this.mensajeExamenes = '';
 
-    // Cargar sin límites de paginación (page_size 200) para traer catálogo completo
-    this.examenesService.obtenerExamenes(1, 200).pipe(
-      catchError(() => this.examenesService.obtenerTodos())
-    ).subscribe({
-      next: (resp: any) => {
-        const listaApi: ExamenClinico[] = Array.isArray(resp) ? resp : (resp?.results || []);
+    this.examenesService.obtenerTodos().subscribe({
+      next: (listaApi: ExamenClinico[]) => {
         this.procesarYCombinarExamenes(listaApi);
         this.cargandoExamenes = false;
         this.cdr.detectChanges();
@@ -2081,7 +2197,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   procesarYCombinarExamenes(listaApi: ExamenClinico[]): void {
     const mapa = new Map<string, ExamenClinico>();
 
-    // 1. Incorporar exámenes devueltos por el backend (incluye los creados dinámicamente)
     if (Array.isArray(listaApi)) {
       for (const item of listaApi) {
         if (!item) continue;
@@ -2089,34 +2204,28 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         if (!nombre) continue;
         const key = nombre.toLowerCase();
         const categoria = this.obtenerCategoriaExamen(item);
-        mapa.set(key, {
-          ...item,
-          nombre: nombre,
-          tipo: item.tipo || categoria,
-          estado: item.estado || 'activo'
-        });
+        if (!mapa.has(key)) {
+          mapa.set(key, {
+            ...item,
+            nombre,
+            tipo: item.tipo || categoria,
+            estado: item.estado || 'activo'
+          });
+        }
       }
     }
 
-    // 2. Asegurar que los 14 exámenes clínicos y los 6 tests rápidos base siempre existan
-    let idSintetico = 9000;
-    for (const base of this.CATALOGO_BASE_EXAMENES) {
+    // Completar catálogo canónico sin asignar IDs sintéticos inexistentes en Supabase
+    for (const base of CATALOGO_CANONICO_EXAMENES) {
       const key = base.nombre.toLowerCase();
-      let yaExiste = false;
-      for (const [k, v] of mapa.entries()) {
-        if (k === key || k.includes(key) || key.includes(k)) {
-          yaExiste = true;
-          if (!v.tipo || v.tipo === 'General' || v.tipo === 'Prueba Diagnóstica') {
-            v.tipo = base.tipo;
-          }
-          break;
+      const existente = mapa.get(key);
+      if (existente) {
+        if (!existente.tipo || existente.tipo === 'General' || existente.tipo === 'Prueba Diagnóstica') {
+          existente.tipo = base.tipo;
         }
-      }
-
-      if (!yaExiste) {
-        idSintetico++;
+      } else {
         mapa.set(key, {
-          id_examen: idSintetico,
+          id_examen: null as any,
           nombre: base.nombre,
           tipo: base.tipo,
           descripcion: base.descripcion,
@@ -2188,8 +2297,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     ).trim();
     const idExamen = examen?.id_examen ?? examen?.id ?? null;
     const yaExiste = this.examenesSolicitados.some((item: any) =>
-      (idExamen !== null && item.id_examen === idExamen) ||
-      item.nombre.toLowerCase().trim() === nombreExamen.toLowerCase().trim()
+      (idExamen !== null && idExamen !== undefined && item.id_examen === idExamen) ||
+      String(item.nombre || '').toLowerCase().trim() === nombreExamen.toLowerCase()
     );
 
     if (yaExiste) {
@@ -2250,6 +2359,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     });
   }
 
+  /**
+   * Vista previa local en sesión únicamente: el backend actual no dispone de persistencia
+   * de archivos adjuntos para exámenes, por lo que no se simula guardado exitoso en servidor.
+   */
   onAdjuntarArchivoExamen(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -2272,17 +2385,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       const reader = new FileReader();
       reader.onload = (e: any) => {
         const base64 = e.target.result;
-        const nuevoAdjunto = {
+        this.archivosExamenesAdjuntos.push({
           nombre,
           tamanio: tamanioStr,
           tipo,
           url: base64,
           archivoBase64: base64,
           fecha: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
-        };
-        this.archivosExamenesAdjuntos.push(nuevoAdjunto);
-        this.examenes_complementarios = [...this.archivosExamenesAdjuntos];
-        this.formHistoria.markAsDirty();
+        });
         this.cdr.detectChanges();
       };
       reader.readAsDataURL(file);
@@ -2291,33 +2401,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     input.value = '';
 
     Swal.fire({
-      icon: 'success',
-      title: 'Archivo adjuntado',
-      text: `${archivos.length === 1 ? `"${archivos[0].name}" fue vinculado` : `${archivos.length} archivos fueron vinculados`} a la sección de exámenes.`,
-      timer: 1800,
-      showConfirmButton: false,
-      toast: true,
-      position: 'top-end'
+      icon: 'info',
+      title: 'Vista previa temporal cargada',
+      text: `${archivos.length === 1 ? `"${archivos[0].name}"` : `${archivos.length} archivos`} solo está disponible en esta sesión: los archivos adjuntos aún no se guardan en el servidor.`,
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#4141A5'
     });
   }
 
   eliminarArchivoExamen(indice: number): void {
     if (indice >= 0 && indice < this.archivosExamenesAdjuntos.length) {
-      const nom = this.archivosExamenesAdjuntos[indice].nombre;
       this.archivosExamenesAdjuntos.splice(indice, 1);
-      this.examenes_complementarios = [...this.archivosExamenesAdjuntos];
-      this.formHistoria.markAsDirty();
       this.cdr.detectChanges();
-
-      Swal.fire({
-        icon: 'info',
-        title: 'Archivo retirado',
-        text: `"${nom}" fue eliminado de los adjuntos.`,
-        timer: 1500,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
     }
   }
 
@@ -2382,6 +2477,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.patologias = data;
         this.patologiasFiltradas = [...data];
         this.cargandoPatologias = false;
+        const diagActual = String(
+          this.formHistoria?.get('diagnosticoPrincipal')?.value || this.diagnosticoFinal || ''
+        ).trim();
+        this.sincronizarPatologiaCargada(this.idPatologiaSeleccionada, diagActual);
         this.cdr.detectChanges();
       },
       error: () => {
@@ -2389,6 +2488,30 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private sincronizarPatologiaCargada(idPatologiaRaw: any, diagnosticoNombre: string): void {
+    const idNum = Number(idPatologiaRaw);
+    const idValido = idPatologiaRaw !== null && idPatologiaRaw !== undefined && !isNaN(idNum) && idNum > 0
+      ? idNum
+      : null;
+
+    let encontrada: Patologia | null = null;
+    if (idValido) {
+      encontrada = this.patologias.find(p => Number(p.id_patologia) === idValido) || null;
+    }
+    if (!encontrada && diagnosticoNombre && diagnosticoNombre.trim()) {
+      const nomLower = diagnosticoNombre.trim().toLowerCase();
+      encontrada = this.patologias.find(p => String(p.nombre || '').trim().toLowerCase() === nomLower) || null;
+    }
+
+    if (encontrada) {
+      this.idPatologiaSeleccionada = encontrada.id_patologia;
+      this.patologiaSeleccionada = encontrada;
+    } else if (idValido) {
+      this.idPatologiaSeleccionada = idValido;
+      this.patologiaSeleccionada = null;
+    }
   }
 
   filtrarPatologias(): void {
@@ -2442,16 +2565,14 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     const especie = especieRaw.includes('fel') || especieRaw.includes('gat') ? 'gato' : 'perro';
     const edadEtapa = String(this.paciente?.edad_aproximada || 'adulto').trim();
 
-    // Extraer signos desde anamnesis y motivo de consulta
     const signosArr: string[] = [];
     const anamnesisTxt = String(this.formHistoria?.get('anamnesis')?.value || this.anamnesis || '').trim();
-    const motivoTxt = String(this.formHistoria?.get('motivoConsulta')?.value || '').trim();
+    const motivoTxt = String(this.formHistoria?.get('motivo_consulta')?.value || this.motivo_consulta || '').trim();
     const hallazgosTxt = String(this.descripcionHallazgos || this.formHistoria?.get('hallazgos_examen')?.value || '').trim();
 
     if (anamnesisTxt) signosArr.push(anamnesisTxt);
     if (motivoTxt) signosArr.push(motivoTxt);
 
-    // Enriquecer signos con sistemas anormales
     if (this.sistemas) {
       Object.keys(this.sistemas).forEach(k => {
         if (this.sistemas[k] === 'AN') {
@@ -2463,7 +2584,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       signosArr.push(this.observacionesSistemas.trim());
     }
 
-    // Mapear tests rápidos y exámenes clínicos solicitados diferenciados
     const testsRapidos: { [key: string]: string } = {};
     const examenesClinicos: { [key: string]: any } = {};
 
@@ -2471,7 +2591,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       for (const sol of this.examenesSolicitados) {
         this.normalizarItemExamen(sol);
         const estadoMedicion = String(sol.estado_medicion || 'pendiente').toLowerCase().trim();
-        // Criterio estricto: Solo enviar ítems que NO estén en Pendiente
         if (!estadoMedicion || estadoMedicion === 'pendiente') {
           continue;
         }
@@ -2482,10 +2601,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         const hallazgoTexto = String(sol.hallazgos || sol.resultado || '').trim();
 
         if (this.esTestRapido(sol)) {
-          // Tests Rápidos: "Nombre del Test": "positivo" | "negativo"
           testsRapidos[nom] = estadoMedicion === 'positivo' ? 'positivo' : 'negativo';
         } else {
-          // Exámenes Clínicos: "Nombre del Examen": { "estado": "normal" | "alterado" | "positivo" | "negativo", "hallazgos": "..." }
           let estadoExamen: 'normal' | 'alterado' | 'positivo' | 'negativo' = 'alterado';
           if (estadoMedicion === 'normal' || estadoMedicion === 'alterado' || estadoMedicion === 'positivo' || estadoMedicion === 'negativo') {
             estadoExamen = estadoMedicion;
@@ -2498,7 +2615,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       }
     }
 
-    // Agregar hallazgos paraclínicos generales si existen
     if (hallazgosTxt) {
       examenesClinicos['Hallazgos Clínicos'] = {
         estado: 'alterado',
@@ -2507,11 +2623,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     }
 
     const payload = {
-      especie: especie,
+      especie,
       edad_etapa: edadEtapa,
       signos: signosArr,
       tests_rapidos: testsRapidos,
       examenes_clinicos: examenesClinicos,
+      id_consulta: this.historiaOriginal?.id_consulta || null,
       id_animal: this.idAnimal || this.paciente?.id_animal || null,
       top_k: 5
     };
@@ -2521,7 +2638,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.panelDiagnosticoIAVisible = true;
     this.cdr.detectChanges();
 
-    // Scroll inmediato hacia el panel de resultados IA
     setTimeout(() => {
       const el = document.getElementById('panel-resultado-diagnostico-ia');
       if (el) {
@@ -2535,7 +2651,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.cargandoDiagnosticoIA = false;
         this.cdr.detectChanges();
 
-        // Scroll suave al completar la respuesta
         setTimeout(() => {
           const el = document.getElementById('panel-resultado-diagnostico-ia');
           if (el) {
@@ -2562,13 +2677,30 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   aplicarSugerenciaIA(sugerencia: any): void {
     if (!sugerencia) return;
+
+    const nombreSugerido = String(sugerencia.nombre || '').trim();
+    const idSugerido = Number(sugerencia.id_patologia);
+
+    // Vincular contra el catálogo oficial cargado desde Supabase (priorizando coincidencia por nombre)
+    const patPorNombre = nombreSugerido
+      ? this.patologias.find(p => String(p.nombre || '').trim().toLowerCase() === nombreSugerido.toLowerCase())
+      : undefined;
+    const patPorId = !patPorNombre && !isNaN(idSugerido) && idSugerido > 0
+      ? this.patologias.find(p => Number(p.id_patologia) === idSugerido)
+      : undefined;
+    const patResuelta = patPorNombre || patPorId || null;
+
+    this.patologiaSeleccionada = patResuelta;
+    this.idPatologiaSeleccionada = patResuelta?.id_patologia
+      ?? (!isNaN(idSugerido) && idSugerido > 0 ? idSugerido : null);
+
+    const nombreFinal = patResuelta?.nombre || nombreSugerido;
     this.formHistoria.patchValue({
-      diagnosticoPrincipal: sugerencia.nombre
+      diagnosticoPrincipal: nombreFinal
     });
-    this.diagnosticoFinal = sugerencia.nombre;
+    this.diagnosticoFinal = nombreFinal;
     this.formHistoria.get('diagnosticoPrincipal')?.markAsDirty();
 
-    // Asignar los otros diagnósticos sugeridos a diferencial
     if (this.resultadoDiagnosticoIA?.diagnosticos_sugeridos) {
       const otros = this.resultadoDiagnosticoIA.diagnosticos_sugeridos
         .filter((d: any) => d.nombre !== sugerencia.nombre)
@@ -2581,7 +2713,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       }
     }
 
-    // Agregar justificación orientativa a lista de problemas si está vacía
     const problemasActuales = String(this.formHistoria.get('listaProblemas')?.value || '').trim();
     if (!problemasActuales && sugerencia.justificacion) {
       this.formHistoria.patchValue({
@@ -2593,7 +2724,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     Swal.fire({
       icon: 'success',
       title: 'Diagnóstico aplicado',
-      text: `Se ha establecido "${sugerencia.nombre}" como Diagnóstico Principal.`,
+      text: `Se ha establecido "${nombreFinal}" como Diagnóstico Principal.`,
       timer: 2000,
       showConfirmButton: false,
       toast: true,
@@ -2609,15 +2740,16 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       this.examenesSolicitados = [];
     }
 
+    const nombreRec = String(rec.examen).trim();
     const yaExiste = this.examenesSolicitados.some((e: any) =>
-      String(e.nombre || '').toLowerCase().trim() === String(rec.examen).toLowerCase().trim()
+      String(e.nombre || '').toLowerCase().trim() === nombreRec.toLowerCase()
     );
 
     if (yaExiste) {
       Swal.fire({
         icon: 'info',
         title: 'Examen ya registrado',
-        text: `El examen "${rec.examen}" ya se encuentra en la lista de exámenes solicitados.`,
+        text: `El examen "${nombreRec}" ya se encuentra en la lista de exámenes solicitados.`,
         timer: 2200,
         showConfirmButton: false,
         toast: true,
@@ -2626,20 +2758,25 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       return;
     }
 
-    const esTest = this.esTestRapido({ nombre: rec.examen, tipo: rec.tipo });
+    const catalogoMatch = this.examenesClinicos.find(
+      ex => String(ex.nombre || '').toLowerCase().trim() === nombreRec.toLowerCase()
+    );
+    const esTest = this.esTestRapido({ nombre: nombreRec, tipo: rec.tipo });
     this.examenesSolicitados.push({
-      nombre: rec.examen,
-      tipo: rec.tipo || (esTest ? 'Test Rápido' : 'Examen Clínico'),
+      id_examen: catalogoMatch?.id_examen ?? null,
+      nombre: catalogoMatch?.nombre || nombreRec,
+      tipo: catalogoMatch?.tipo || rec.tipo || (esTest ? 'Inmunodiagnóstico Rápido' : 'Laboratorio Clínico'),
       estado: 'Solicitado',
       estado_medicion: 'pendiente',
       resultado: '',
       hallazgos: `Prioridad: ${rec.prioridad} - ${rec.motivo}`
     });
+    this.formHistoria.markAsDirty();
 
     Swal.fire({
       icon: 'success',
       title: 'Examen agregado',
-      text: `Se agregó "${rec.examen}" a la tabla de exámenes clínicos.`,
+      text: `Se agregó "${nombreRec}" a la tabla de exámenes clínicos.`,
       timer: 2000,
       showConfirmButton: false,
       toast: true,
@@ -2653,7 +2790,6 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.panelDiagnosticoIAVisible = false;
     this.cdr.detectChanges();
   }
-
 
   // =========================================================================
   // GESTIÓN DEL PASO 4: FÁRMACOS, INSUMOS, CBA Y FIRMAS
@@ -3449,16 +3585,29 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         _estado_desparasitacion: this.planSanitario.estadoDesparasitacion || 'Suministrada',
         _estado_ectoparasitos: this.planSanitario.estadoEctoparasitos || 'Tratado',
         _enfermedades_anteriores: this.planSanitario.enfermedadesAnteriores || '',
-        _historia_reproductiva: this.planSanitario.historiaReproductiva || ''
+        _historia_reproductiva: this.planSanitario.historiaReproductiva || '',
+        _ultimo_celo: this.planSanitario.ultimoCelo || '',
+        _fecha_ultimo_parto: this.planSanitario.fechaUltimoParto || '',
+        _hoja_hospitalizacion_numero: this.hojaHospitalizacionNumero || 1
       },
-      examenes_solicitados: this.examenesSolicitados.map(ex => ({
-        id_examen: ex.id_examen || ex.id,
-        nombre: ex.nombre,
-        tipo: ex.tipo,
-        estado: ex.estado || 'solicitado',
-        resultado: ex.resultado || '',
-        ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
-      })),
+      examenes_solicitados: this.examenesSolicitados.map(ex => {
+        const medicion = String(ex.estado_medicion || 'pendiente').toLowerCase().trim();
+        const hallazgosTxt = String(ex.hallazgos ?? ex.resultado ?? '').trim();
+        const estadoFinal = ex.estado || (medicion !== 'pendiente' ? 'Realizado' : 'Solicitado');
+        const resultadoFinal = String(
+          ex.resultado || hallazgosTxt || (medicion !== 'pendiente' ? medicion : '')
+        ).trim();
+        return {
+          id_examen: ex.id_examen || ex.id || null,
+          nombre: ex.nombre,
+          tipo: ex.tipo,
+          estado: estadoFinal,
+          estado_medicion: medicion,
+          hallazgos: hallazgosTxt,
+          resultado: resultadoFinal,
+          ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+        };
+      }),
       tratamientos: this.medicamentosSeleccionados.map(m => ({
         id_tratamiento: m.id_tratamiento || null,
         id_medicamento: m.id,
@@ -3482,7 +3631,8 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         ingresa_cba: this.ingresaCBA,
         motivo_ingreso_no_ingreso: this.motivoIngresoNoIngreso,
         canil_asignado: this.canilAsignado,
-        funcionario_recibe_cba: this.funcionarioRecibeCBA
+        funcionario_recibe_cba: this.funcionarioRecibeCBA,
+        hoja_numero: this.hojaHospitalizacionNumero || 1
       },
       tenedor: {
         nombres: this.nombreAcudiente,
@@ -3495,7 +3645,9 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         productoDesparasitacion: this.planSanitario.productoDesparasitacion || '',
         enfermedadesAnteriores: this.planSanitario.enfermedadesAnteriores || '',
         alimentacion: this.alimento_marca || '',
-        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero')
+        historiaReproductiva: this.esterilizado_opcion === 'Sí' ? 'Esterilizado' : (this.planSanitario.historiaReproductiva || 'Entero'),
+        ultimoCelo: this.planSanitario.ultimoCelo || '',
+        fechaUltimoParto: this.planSanitario.fechaUltimoParto || ''
       },
       alimento_marca: this.alimento_marca || '',
       esterilizado_opcion: this.esterilizado_opcion || 'No',

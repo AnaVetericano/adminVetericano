@@ -903,7 +903,7 @@ export class AuthService {
     return this.http.get<any>(`${this.getCleanUrl()}/inventario/compras/`);
   }
 
-  crearCompra(payload: { id_proveedor: number }): Observable<any> {
+  crearCompra(payload: { id_proveedor: number; detalles?: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number; fecha_vencimiento?: string | null }> }): Observable<any> {
     return this.http.post<any>(`${this.getCleanUrl()}/inventario/compras/`, payload);
   }
 

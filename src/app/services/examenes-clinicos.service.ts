@@ -47,6 +47,36 @@ export interface RespuestaPaginadaExamenes {
   results: ExamenClinico[];
 }
 
+export const CATALOGO_CANONICO_EXAMENES: Array<{
+  nombre: string;
+  tipo: string;
+  descripcion: string;
+  es_test: boolean;
+}> = [
+  // 14 Exámenes Clínicos oficiales (alineados con knowledge_base.py / Supabase)
+  { nombre: 'Cuadro Hemático', tipo: 'Laboratorio Hematológico', descripcion: 'Hemograma completo automatizado, serie roja, blanca y recuento plaquetario.', es_test: false },
+  { nombre: 'Química Sanguínea', tipo: 'Química Sanguínea', descripcion: 'Perfil hepático, renal, electrolitos y glucosa sérica.', es_test: false },
+  { nombre: 'Parcial de Orina', tipo: 'Urianálisis', descripcion: 'Análisis físico, químico y microscópico del sedimento urinario.', es_test: false },
+  { nombre: 'Coprológico', tipo: 'Parasitología', descripcion: 'Diagnóstico parasitológico por flotación y frotis fecal directo.', es_test: false },
+  { nombre: 'Coproscópico', tipo: 'Parasitología', descripcion: 'Estudio microscópico y funcional detallado de muestras fecales.', es_test: false },
+  { nombre: 'Frotis (raspado piel)', tipo: 'Dermatología', descripcion: 'Raspado cutáneo profundo y superficial para ácaros, bacterias y hongos.', es_test: false },
+  { nombre: 'Cultivos', tipo: 'Microbiología', descripcion: 'Aislamiento e identificación de microorganismos en muestras clínicas.', es_test: false },
+  { nombre: 'Antibiograma', tipo: 'Microbiología', descripcion: 'Prueba de sensibilidad bacteriana frente a distintos antibióticos.', es_test: false },
+  { nombre: 'Biopsia', tipo: 'Citopatología', descripcion: 'Toma y análisis histopatológico de tejido para diagnóstico.', es_test: false },
+  { nombre: 'Rayos X', tipo: 'Imagenología', descripcion: 'Radiografía digital ortogonal (tórax, abdomen, columna o miembros).', es_test: false },
+  { nombre: 'Ecografía', tipo: 'Imagenología Ultrasonográfica', descripcion: 'Ultrasonografía abdominal completa o ecofast para fluidos y órganos.', es_test: false },
+  { nombre: 'ECG', tipo: 'Cardiología', descripcion: 'Electrocardiograma de 6 derivaciones para ritmo y actividad cardíaca.', es_test: false },
+  { nombre: 'EEG', tipo: 'Neurología', descripcion: 'Registro eléctrico cerebral para evaluar trastornos neurológicos.', es_test: false },
+  { nombre: 'Endoscopia', tipo: 'Endoscopia', descripcion: 'Exploración visual directa endoscópica digestiva o respiratoria.', es_test: false },
+  // 6 Tests Rápidos oficiales
+  { nombre: 'Test Parvovirus', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Inmunocromatografía rápida para detección de antígeno de Parvovirus (CPV).', es_test: true },
+  { nombre: 'Test de Distemper (Moquillo)', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Detección rápida de antígeno del Virus del Distemper Canino (CDV).', es_test: true },
+  { nombre: 'Test de Leucemia (Felinos)', tipo: 'Inmunodiagnóstico Felino', descripcion: 'Ensayo rápido para antígeno p27 del Virus de Leucemia Felina (FeLV).', es_test: true },
+  { nombre: 'Test de Sida (Felinos)', tipo: 'Inmunodiagnóstico Felino', descripcion: 'Ensayo rápido para anticuerpos del Virus de Inmunodeficiencia Felina (FIV).', es_test: true },
+  { nombre: 'Test Coronavirus', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Detección rápida cualitativa de Coronavirus entérico / FCoV.', es_test: true },
+  { nombre: 'Test Rápido Inmunocromatográfico Parvovirus / Moquillo', tipo: 'Inmunodiagnóstico Rápido', descripcion: 'Detección cualitativa rápida combinada de antígeno de Parvovirus Canino (CPV) y Distemper Canino (CDV).', es_test: true }
+];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -74,7 +104,8 @@ export class ExamenesClinicosService {
   obtenerExamenes(page: number = 1, pageSize: number = 8, busqueda: string = ''): Observable<RespuestaPaginadaExamenes> {
     let params = new HttpParams()
       .set('page', page.toString())
-      .set('page_size', pageSize.toString());
+      .set('page_size', pageSize.toString())
+      .set('solo_catalogo', 'true');
 
     if (busqueda && busqueda.trim()) {
       params = params.set('search', busqueda.trim());
@@ -92,12 +123,13 @@ export class ExamenesClinicosService {
   }
 
   /**
-   * Obtiene la totalidad de los exámenes clínicos para filtrado local en cliente
+   * Obtiene la totalidad de los exámenes clínicos del catálogo para filtrado local en cliente
    */
   obtenerTodos(): Observable<ExamenClinico[]> {
-    return this.http.get<any>(this.baseUrl, { headers: this.getHeaders() }).pipe(
+    const params = new HttpParams().set('solo_catalogo', 'true');
+    return this.http.get<any>(this.baseUrl, { headers: this.getHeaders(), params }).pipe(
       map((resp: any) => {
-        const paginada = this.normalizarRespuesta(resp, 1, 100);
+        const paginada = this.normalizarRespuesta(resp, 1, 200);
         return paginada.results;
       }),
       catchError(() => of(this.getMockExamenes()))
@@ -314,137 +346,18 @@ export class ExamenesClinicosService {
   }
 
   /**
-   * Catálogo maestro de exámenes clínicos oficiales (CBA Popayán)
+   * Catálogo maestro de exámenes clínicos oficiales (alineado con Supabase / knowledge_base)
    */
   private getMockExamenes(): ExamenClinico[] {
-    return [
-      {
-        id_examen: 1,
-        nombre: 'Hemograma Completo Automatizado (Cuadro Hemático)',
-        descripcion: 'Evaluación cuantitativa y cualitativa de las líneas eritroide, leucocitaria y plaquetaria. Indispensable para detectar anemias, infecciones agudas o crónicas, trombocitopenias e inflamación sistémica.',
-        tipo: 'Laboratorio Hematológico',
-        estado: 'activo'
-      },
-      {
-        id_examen: 2,
-        nombre: 'Perfil Bioquímico Hepático y Renal',
-        descripcion: 'Cuantificación sérica de ALT, AST, fosfatasa alcalina, bilirrubinas, creatinina, nitrógeno ureico (BUN) y proteínas totales para evaluar la función metabólica y toxicidad orgánica.',
-        tipo: 'Química Sanguínea',
-        estado: 'activo'
-      },
-      {
-        id_examen: 3,
-        nombre: 'Radiografía Digital de Tórax (2 Vistas: LL y VD)',
-        descripcion: 'Estudio imagenológico de campos pulmonares, silueta cardíaca, mediastino y reja costal. Utilizado en sospechas de neumonía, edema pulmonar, cardiomegalia o trauma torácico.',
-        tipo: 'Imagenología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 4,
-        nombre: 'Ecografía Abdominal Focalizada (FAST)',
-        descripcion: 'Exploración ultrasonográfica de órganos abdominales (hígado, bazo, riñones, vejiga y tracto digestivo) para descartar líquido libre peritoneal, masas o alteraciones estructurales.',
-        tipo: 'Imagenología Ultrasonográfica',
-        estado: 'activo'
-      },
-      {
-        id_examen: 5,
-        nombre: 'Uroanálisis Completo y Sedimento Urinario',
-        descripcion: 'Examen físico-químico mediante tiras reactivas y análisis microscópico de sedimento para detección de proteinuria, glucosuria, cilindros, cristales y bacterias.',
-        tipo: 'Urianálisis',
-        estado: 'activo'
-      },
-      {
-        id_examen: 6,
-        nombre: 'Coprológico por Flotación y Frotis Directo',
-        descripcion: 'Diagnóstico parasitológico seriado para identificación de huevos de helmintos, ooquistes de protozoarios (Giardia, Coccidios) y valoración de flora bacteriana fecal.',
-        tipo: 'Parasitología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 7,
-        nombre: 'Raspado Cutáneo Profundo y Tricografía',
-        descripcion: 'Toma de muestra de dermis superficial y profunda con hoja de bisturí para identificación microscópica de ácaros (Demodex canis, Sarcoptes scabiei) y esporas fúngicas.',
-        tipo: 'Dermatología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 8,
-        nombre: 'Test Rápido Inmunocromatográfico Parvovirus / Moquillo',
-        descripcion: 'Detección cualitativa rápida de antígeno de Parvovirus Canino (CPV) y Virus del Distemper Canino (CDV) en heces y secreciones conjuntivales con resultado en 15 minutos.',
-        tipo: 'Inmunodiagnóstico Rápido',
-        estado: 'activo'
-      },
-      {
-        id_examen: 9,
-        nombre: 'Prueba Rápida FeLV / FIV (Leucemia e Inmunodeficiencia Felina)',
-        descripcion: 'Ensayo ELISA en sangre total/suero para detección simultánea de antígeno p27 de FeLV y anticuerpos contra virus de inmunodeficiencia felina (FIV).',
-        tipo: 'Inmunodiagnóstico Felino',
-        estado: 'activo'
-      },
-      {
-        id_examen: 10,
-        nombre: 'Citología Auricular y Frotis de Piel',
-        descripcion: 'Tinción rápida tipo Diff-Quik de exudado ótico o improntas cutáneas para identificar sobrecrecimiento de levaduras (Malassezia pachydermatis) y bacterias cocoides o bacilares.',
-        tipo: 'Citopatología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 11,
-        nombre: 'Electrocardiograma (ECG de 6 Derivaciones)',
-        descripcion: 'Registro eléctrico de la actividad miocárdica para evaluación de arritmias, bloqueos de conducción auriculoventricular y monitoreo prequirúrgico.',
-        tipo: 'Cardiología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 12,
-        nombre: 'Glucometría Sérica de Emergencia',
-        descripcion: 'Medición enzimática instantánea de glucosa en sangre periférica para monitoreo de hipoglucemia neonatal o cetoacidosis diabética.',
-        tipo: 'Prueba de Punto de Atención (POC)',
-        estado: 'activo'
-      },
-      {
-        id_examen: 52,
-        nombre: 'EEG',
-        descripcion: 'Registro eléctrico cerebral para evaluar trastornos neurológicos.',
-        tipo: 'Prueba Diagnóstica',
-        estado: 'activo'
-      },
-      {
-        id_examen: 53,
-        nombre: 'Parcial de Orina',
-        descripcion: 'Análisis físico, químico y microscópico de la orina.',
-        tipo: 'Urianálisis',
-        estado: 'activo'
-      },
-      {
-        id_examen: 54,
-        nombre: 'Coproscópico',
-        descripcion: 'Estudio microscópico y funcional detallado de muestras fecales.',
-        tipo: 'Parasitología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 55,
-        nombre: 'Cultivos',
-        descripcion: 'Aislamiento e identificación de microorganismos en muestras clínicas.',
-        tipo: 'Microbiología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 56,
-        nombre: 'Antibiograma',
-        descripcion: 'Prueba de sensibilidad bacteriana frente a distintos antibióticos.',
-        tipo: 'Microbiología',
-        estado: 'activo'
-      },
-      {
-        id_examen: 57,
-        nombre: 'Biopsia',
-        descripcion: 'Toma y análisis histopatológico de tejido para diagnóstico.',
-        tipo: 'Citopatología',
-        estado: 'activo'
-      }
-    ];
+    return CATALOGO_CANONICO_EXAMENES.map((item, index) => ({
+      id_examen: index + 1,
+      nombre: item.nombre,
+      nombre_tipo: item.nombre,
+      nombre_tipo_examen: item.nombre,
+      descripcion: item.descripcion,
+      tipo: item.tipo,
+      estado: 'activo'
+    }));
   }
 
   private getMockExamenesPaginados(page: number, pageSize: number, busqueda: string = ''): RespuestaPaginadaExamenes {

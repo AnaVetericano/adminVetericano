@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { afterEach, vi } from 'vitest';
 import Swal from 'sweetalert2';
 
@@ -332,5 +332,374 @@ describe('HistoriaClinica2Component · resultado explícito del consumo del kit'
     const alerta = swalSpy.mock.calls[0][0] as any;
     expect(alerta.icon).toBe('success');
     expect(alerta.html).toContain('Descuento automático de maletín');
+  });
+});
+
+describe('HistoriaClinica2Component · hospitalización CBA y plan sanitario', () => {
+  let fixture: ComponentFixture<HistoriaClinica2Component>;
+  let component: HistoriaClinica2Component;
+  let historiaSvc: HistoriaClinicaService;
+  let swalSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    await TestBed.configureTestingModule({
+      imports: [HistoriaClinica2Component],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+    }).compileComponents();
+
+    swalSpy = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    fixture = TestBed.createComponent(HistoriaClinica2Component);
+    component = fixture.componentInstance;
+    historiaSvc = TestBed.inject(HistoriaClinicaService);
+    vi.spyOn(component, 'cargarHistoria').mockImplementation(() => {
+      component.idHistoria = 11;
+      component.historiaOriginal = { id_historia: 11, id_consulta: 22, id_animal: 33 } as any;
+      component.cargando = false;
+    });
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+    TestBed.resetTestingModule();
+  });
+
+  it('muestra hojaHospitalizacionNumero, seguimientosHospitalarios y controles de nota cuando ingresaCBA es SI', () => {
+    component.pestanaPrincipal = 'atencion';
+    component.ingresaCBA = 'SI';
+    component.ingresa_cba = true;
+    component.hojaHospitalizacionNumero = 3;
+    component.seguimientosHospitalarios = [
+      { id_seguimiento_hosp: 1, evolucion: 'Paciente come con buen apetito', fecha: '2026-11-19T10:00:00Z' }
+    ];
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.textContent).toContain('Hoja Hospitalización N°');
+    expect(host.textContent).toContain('Bitácora de Seguimiento Hospitalario CBA');
+    expect(host.textContent).toContain('Paciente come con buen apetito');
+
+    const inputHoja = host.querySelector('input[type="number"][min="1"]') as HTMLInputElement | null;
+    expect(inputHoja).toBeTruthy();
+
+    const botonAgregar = Array.from(host.querySelectorAll('button')).find(
+      b => b.textContent?.includes('Agregar Nota Hospitalaria')
+    );
+    expect(botonAgregar).toBeTruthy();
+  });
+
+  it('permite agregar una nota de seguimiento hospitalario y actualiza la bitácora', async () => {
+    const registrarSpy = vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(
+      of({ id_seguimiento_hosp: 99, id_hospitalizacion: 4, evolucion: 'Turno noche: signos estables', fecha: '2026-11-19T22:00:00Z' })
+    );
+    vi.spyOn(historiaSvc, 'obtenerHospitalizacionYSeguimientos').mockReturnValue(
+      of({
+        hospitalizacion: { id_hospitalizacion: 4, hoja_numero: 2 },
+        seguimientos: [{ id_seguimiento_hosp: 99, id_hospitalizacion: 4, evolucion: 'Turno noche: signos estables', fecha: '2026-11-19T22:00:00Z' }]
+      })
+    );
+
+    component.ingresaCBA = 'SI';
+    component.hojaHospitalizacionNumero = 2;
+    component.nuevaNotaHospitalaria = 'Turno noche: signos estables';
+    component.agregarNotaSeguimientoHospitalario();
+    fixture.detectChanges();
+
+    expect(registrarSpy).toHaveBeenCalledTimes(1);
+    expect(registrarSpy.mock.calls[0][0]).toBe(22);
+    expect(registrarSpy.mock.calls[0][1]).toBe('Turno noche: signos estables');
+    expect(component.nuevaNotaHospitalaria).toBe('');
+    expect(component.seguimientosHospitalarios.length).toBe(1);
+    expect(component.seguimientosHospitalarios[0].evolucion).toBe('Turno noche: signos estables');
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'success' }));
+  });
+
+  it('maneja error al agregar nota hospitalaria sin limpiar la nota ni mostrar éxito', () => {
+    vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(
+      throwError(() => ({ status: 500, error: { detail: 'Error en seguimiento hospitalario' } }))
+    );
+
+    component.nuevaNotaHospitalaria = 'Nota con fallo de red';
+    component.agregarNotaSeguimientoHospitalario();
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Nota con fallo de red');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
+  });
+
+  it('fallo en autocreación de hospitalización: propaga error HTTP, no crea nota ficticia, conserva texto y no muestra éxito', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    component.hospitalizacionActiva = null;
+    component.nuevaNotaHospitalaria = 'Paciente en monitoreo nocturno';
+    component.agregarNotaSeguimientoHospitalario();
+
+    httpMock.expectOne(req => req.method === 'GET' && req.url.includes('/hospitalizaciones/?id_consulta=22')).flush([]);
+    httpMock.expectOne(req => req.method === 'POST' && req.url.includes('/hospitalizaciones/'))
+      .flush({ detail: 'No se pudo crear hospitalización' }, { status: 500, statusText: 'Server Error' });
+    httpMock.expectNone(req => req.method === 'POST' && req.url.includes('/seguimientos-hospitalarios/'));
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Paciente en monitoreo nocturno');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({
+      icon: 'error',
+      text: expect.stringContaining('No se pudo crear hospitalización')
+    }));
+  });
+
+  it('fallo en POST de seguimiento tras hospitalización existente: propaga error, conserva nota y no muestra éxito', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    component.hospitalizacionActiva = { id_hospitalizacion: 7, hoja_numero: 1 };
+    component.nuevaNotaHospitalaria = 'Control de hidratación';
+    component.agregarNotaSeguimientoHospitalario();
+
+    httpMock.expectOne(req => req.method === 'POST' && req.url.includes('/seguimientos-hospitalarios/'))
+      .flush({ detail: 'Error persistiendo seguimiento' }, { status: 500, statusText: 'Server Error' });
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Control de hidratación');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({
+      icon: 'error',
+      text: expect.stringContaining('Error persistiendo seguimiento')
+    }));
+  });
+
+  it('no inserta nota ficticia ni muestra éxito si el backend no devuelve id_seguimiento_hosp confirmado', () => {
+    vi.spyOn(historiaSvc, 'registrarSeguimientoHospitalario').mockReturnValue(of(null));
+
+    component.nuevaNotaHospitalaria = 'Nota sin confirmación';
+    component.agregarNotaSeguimientoHospitalario();
+
+    expect(component.guardandoNotaHospitalaria).toBe(false);
+    expect(component.nuevaNotaHospitalaria).toBe('Nota sin confirmación');
+    expect(component.seguimientosHospitalarios.length).toBe(0);
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
+  });
+
+  it('conserva y envía planSanitario.ultimoCelo, planSanitario.fechaUltimoParto y hojaHospitalizacionNumero al guardar', async () => {
+    component.pestanaPrincipal = 'plan_sanitario';
+    component.ingresaCBA = 'SI';
+    component.hojaHospitalizacionNumero = 4;
+    component.planSanitario.ultimoCelo = '2026-09-15';
+    component.planSanitario.fechaUltimoParto = '2026-03-10';
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.textContent).toContain('Fecha de Último Celo');
+    expect(host.textContent).toContain('Fecha de Último Parto');
+
+    const actualizarSpy = vi.spyOn(historiaSvc, 'actualizarHistoria').mockReturnValue(
+      of({ success: true, mensaje: 'ok', historia_id: 11, consulta_id: 22 } as any)
+    );
+    component.medicamentosSeleccionados = [];
+    component.guardarEdicion();
+    await vi.waitFor(() => expect(actualizarSpy).toHaveBeenCalledTimes(1));
+
+    const dto: any = actualizarSpy.mock.calls[0][1];
+    expect(dto.anamnesicos.ultimoCelo).toBe('2026-09-15');
+    expect(dto.anamnesicos.fechaUltimoParto).toBe('2026-03-10');
+    expect(dto.organos_sistemas._ultimo_celo).toBe('2026-09-15');
+    expect(dto.organos_sistemas._fecha_ultimo_parto).toBe('2026-03-10');
+    expect(dto.organos_sistemas._hoja_hospitalizacion_numero).toBe(4);
+    expect(dto.ingreso_cba.hoja_numero).toBe(4);
+  });
+});
+
+describe('HistoriaClinica2Component · Diagnóstico IA, Exámenes y Correcciones de Integración', () => {
+  let fixture: ComponentFixture<HistoriaClinica2Component>;
+  let component: HistoriaClinica2Component;
+  let historiaSvc: HistoriaClinicaService;
+  let swalSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    localStorage.clear();
+    await TestBed.configureTestingModule({
+      imports: [HistoriaClinica2Component],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+    }).compileComponents();
+
+    swalSpy = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    fixture = TestBed.createComponent(HistoriaClinica2Component);
+    component = fixture.componentInstance;
+    historiaSvc = TestBed.inject(HistoriaClinicaService);
+    vi.spyOn(component, 'cargarHistoria').mockImplementation(() => {
+      component.idHistoria = 15;
+      component.historiaOriginal = { id_historia: 15, id_consulta: 30, id_animal: 40 } as any;
+      component.cargando = false;
+    });
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+    TestBed.resetTestingModule();
+  });
+
+  it('renderiza un único panel de resultados IA cuando panelDiagnosticoIAVisible es true', () => {
+    component.pestanaPrincipal = 'atencion';
+    component.panelDiagnosticoIAVisible = true;
+    component.resultadoDiagnosticoIA = {
+      modelo_info: { total_patologias_evaluadas: 84 },
+      diagnosticos_sugeridos: [
+        {
+          id_patologia: 9,
+          nombre: 'Parvovirosis Canina (CPV-2)',
+          tipo_de_enfermedad: 'Infecciosa',
+          probabilidad: 0.92,
+          porcentaje_confianza: '92.0%',
+          justificacion: 'Vómitos, diarrea hemorrágica y test positivo.'
+        }
+      ],
+      examenes_recomendados: []
+    };
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    const paneles = host.querySelectorAll('#panel-resultado-diagnostico-ia');
+    expect(paneles.length).toBe(1);
+    expect(host.textContent?.match(/Apoyo Diagnóstico IA Local/g)?.length).toBe(1);
+  });
+
+  it('aplicarSugerenciaIA asigna idPatologiaSeleccionada y patologiaSeleccionada y los envía al guardar', async () => {
+    component.patologias = [
+      { id_patologia: 9, nombre: 'Parvovirosis Canina (CPV-2)', tipo_de_enfermedad: 'Infecciosa', activo: true }
+    ];
+    component.resultadoDiagnosticoIA = {
+      diagnosticos_sugeridos: [
+        {
+          id_patologia: 9,
+          nombre: 'Parvovirosis Canina (CPV-2)',
+          tipo_de_enfermedad: 'Infecciosa',
+          probabilidad: 0.94,
+          porcentaje_confianza: '94.0%',
+          justificacion: 'Test Parvovirus positivo.'
+        },
+        {
+          id_patologia: 12,
+          nombre: 'Gastroenteritis Hemorrágica',
+          tipo_de_enfermedad: 'Digestiva',
+          probabilidad: 0.45,
+          porcentaje_confianza: '45.0%',
+          justificacion: 'Diagnóstico diferencial.'
+        }
+      ]
+    };
+
+    component.aplicarSugerenciaIA(component.resultadoDiagnosticoIA.diagnosticos_sugeridos[0]);
+
+    expect(component.idPatologiaSeleccionada).toBe(9);
+    expect(component.patologiaSeleccionada?.id_patologia).toBe(9);
+    expect(component.formHistoria.get('diagnosticoPrincipal')?.value).toBe('Parvovirosis Canina (CPV-2)');
+
+    const actualizarSpy = vi.spyOn(historiaSvc, 'actualizarHistoria').mockReturnValue(
+      of({ success: true, mensaje: 'ok', historia_id: 15, consulta_id: 30 } as any)
+    );
+    component.medicamentosSeleccionados = [];
+    component.guardarEdicion();
+    await vi.waitFor(() => expect(actualizarSpy).toHaveBeenCalledTimes(1));
+
+    const dto: any = actualizarSpy.mock.calls[0][1];
+    expect(dto.id_patologia).toBe(9);
+  });
+
+  it('conserva estado_medicion y hallazgos en examenes_solicitados al guardar y al normalizar', async () => {
+    component.examenesSolicitados = [
+      {
+        id_examen: 1,
+        nombre: 'Cuadro Hemático',
+        tipo: 'Laboratorio Hematológico',
+        estado: 'Realizado',
+        estado_medicion: 'alterado',
+        hallazgos: 'Leucopenia severa 2.100/uL',
+        resultado: 'Leucopenia severa 2.100/uL'
+      }
+    ];
+
+    const actualizarSpy = vi.spyOn(historiaSvc, 'actualizarHistoria').mockReturnValue(
+      of({ success: true, mensaje: 'ok', historia_id: 15, consulta_id: 30 } as any)
+    );
+    component.medicamentosSeleccionados = [];
+    component.guardarEdicion();
+    await vi.waitFor(() => expect(actualizarSpy).toHaveBeenCalledTimes(1));
+
+    const dto: any = actualizarSpy.mock.calls[0][1];
+    expect(dto.examenes_solicitados[0].estado_medicion).toBe('alterado');
+    expect(dto.examenes_solicitados[0].hallazgos).toBe('Leucopenia severa 2.100/uL');
+
+    const normalizado = component.normalizarItemExamen({
+      id_examen: 1,
+      nombre: 'Cuadro Hemático',
+      estado: 'Realizado',
+      estado_medicion: 'alterado',
+      hallazgos: 'Leucopenia severa 2.100/uL',
+      resultado: 'Leucopenia severa 2.100/uL'
+    });
+    expect(normalizado.estado_medicion).toBe('alterado');
+    expect(normalizado.hallazgos).toBe('Leucopenia severa 2.100/uL');
+  });
+
+  it('procesarYCombinarExamenes no inventa IDs sintéticos 9000+ para exámenes de respaldo', () => {
+    component.procesarYCombinarExamenes([
+      { id_examen: 7, nombre: 'Cuadro Hemático', tipo: 'Laboratorio Hematológico', descripcion: 'Hemograma', estado: 'activo' }
+    ]);
+
+    const cuadro = component.examenesClinicos.find(e => e.nombre === 'Cuadro Hemático');
+    const parvo = component.examenesClinicos.find(e => e.nombre === 'Test Parvovirus');
+    expect(cuadro?.id_examen).toBe(7);
+    expect(parvo?.id_examen).toBeNull();
+    expect(component.examenesClinicos.some(e => Number(e.id_examen) >= 9000)).toBe(false);
+  });
+
+  it('adjuntar archivo no simula guardado exitoso ni sobrescribe examenes_complementarios', () => {
+    const file = new File(['contenido'], 'hemograma.pdf', { type: 'application/pdf' });
+    const event = { target: { files: [file], value: 'hemograma.pdf' } } as unknown as Event;
+
+    component.examenes_complementarios = [{ nombre: 'Cuadro Hemático' }];
+    component.onAdjuntarArchivoExamen(event);
+
+    expect(swalSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'info' }));
+    expect(swalSpy.mock.calls.some((c: any[]) => c[0]?.icon === 'success')).toBe(false);
+    expect(component.examenes_complementarios).toEqual([{ nombre: 'Cuadro Hemático' }]);
+  });
+
+  it('cargarHistoria recupera idPatologiaSeleccionada y patologiaSeleccionada al reabrir el expediente', () => {
+    vi.restoreAllMocks();
+    swalSpy = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    component.patologias = [
+      { id_patologia: 9, nombre: 'Parvovirosis Canina (CPV-2)', tipo_de_enfermedad: 'Infecciosa', activo: true }
+    ];
+    component.idHistoria = 15;
+
+    vi.spyOn(historiaSvc, 'obtenerHistoria').mockReturnValue(of({
+      id_historia: 15,
+      id_consulta: 30,
+      id_animal: 40,
+      numero_historia: 'HC-40',
+      fecha_apertura: '2026-11-20T10:00:00Z',
+      estado_general: 'Estable',
+      paciente: { id_animal: 40, nombre: 'Firulais', especie: 'Canino', raza: 'Mestizo', sexo: 'Macho' },
+      motivo_consulta: 'Vómito',
+      diagnostico_principal: 'Parvovirosis Canina (CPV-2)',
+      diagnostico_diferencial: 'Gastroenteritis',
+      id_patologia: 9,
+      evolucion: 'Estable',
+      pronostico: 'Reservado',
+      plan_tratamiento: 'Fluidoterapia',
+      historial_modificaciones: []
+    } as any));
+
+    component.cargarHistoria();
+
+    expect(component.idPatologiaSeleccionada).toBe(9);
+    expect(component.patologiaSeleccionada?.nombre).toBe('Parvovirosis Canina (CPV-2)');
   });
 });

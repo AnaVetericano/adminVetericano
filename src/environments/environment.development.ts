@@ -24,17 +24,16 @@ export const environment = {
 
   // Endpoints del módulo de Apoyo Diagnóstico IA Local (scikit-learn)
   apiUrlDiagnosticoIA: `${BACKEND_LOCAL_URL}/api/diagnostico-ia/sugerir/`,
-  apiUrlDiagnosticoIALocal: `${BACKEND_LOCAL_URL}/api/diagnostico-ia/sugerir/`,
 
   // Endpoints de módulos complementarios
-  apiUrlAnimales: `${BACKEND_CLOUD_URL}/api/animales/animales/`,
-  apiUrl: `${BACKEND_CLOUD_URL}/api/usuarios`,
-  apiUrlespecies: `${BACKEND_CLOUD_URL}/api/especies/`,
-  apiUrlMedicamentos: `${BACKEND_CLOUD_URL}/api/medicamentos/`,
-  apiUrlInventario: `${BACKEND_CLOUD_URL}/api/inventario/`,
-  apiUrlMedicamentosCatalogo: `${BACKEND_CLOUD_URL}/api/medicamentos-catalogo/`,
-  apiUrlSedes: `${BACKEND_CLOUD_URL}/api/sedes/`,
-  apiUrlSuperAdmin: `${BACKEND_CLOUD_URL}/api/super-administrador/`,
+  apiUrlAnimales: `${BACKEND_LOCAL_URL}/api/animales/animales/`,
+  apiUrl: `${BACKEND_LOCAL_URL}/api/usuarios`,
+  apiUrlespecies: `${BACKEND_LOCAL_URL}/api/especies/`,
+  apiUrlMedicamentos: `${BACKEND_LOCAL_URL}/api/medicamentos/`,
+  apiUrlInventario: `${BACKEND_LOCAL_URL}/api/inventario/`,
+  apiUrlMedicamentosCatalogo: `${BACKEND_LOCAL_URL}/api/medicamentos-catalogo/`,
+  apiUrlSedes: `${BACKEND_LOCAL_URL}/api/sedes/`,
+  apiUrlSuperAdmin: `${BACKEND_LOCAL_URL}/api/super-administrador/`,
 
   // Sistema de notificaciones en tiempo real (WebSockets + REST central)
   notificacionesHabilitadas: false,
