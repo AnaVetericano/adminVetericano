@@ -808,3 +808,244 @@ thead th {
   background-image: radial-gradient(circle at 1px 1px, var(--bg-dot-color) 1px, transparent 0);
   background-size: var(--bg-dot-gap) var(--bg-dot-gap);
 }
+
+/* ========================================================================= */
+/* LANDING PAGE: colores, tipografía, tokens de relieve y estilos            */
+/* ========================================================================= */
+@theme {
+  --font-display: 'Nunito', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --color-indigo-brand: #2E3192;
+  --color-navy-hero: #162038;
+  --color-cream-surface: #F6F4F0;
+  --color-gold-accent: #F5B82E;
+  --color-charcoal: #1F2937;
+}
+
+:root {
+  --font-landing-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --raise-gold:
+    4px 4px 10px rgba(23, 11, 61, 0.16),
+    -3px -3px 8px rgba(255, 255, 255, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    inset 0 -2px 0 rgba(133, 77, 14, 0.28);
+  --raise-gold-hover:
+    6px 6px 14px rgba(23, 11, 61, 0.20),
+    -4px -4px 10px rgba(255, 255, 255, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56),
+    inset 0 -2px 0 rgba(133, 77, 14, 0.28);
+  --raise-hero-press:
+    0 2px 6px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  --panel-raise-hover:
+    6px 6px 14px rgba(23, 11, 61, 0.13),
+    -5px -5px 12px rgba(255, 255, 255, 1);
+  --tile-raise-dark:
+    2px 2px 6px rgba(23, 11, 61, 0.24),
+    -2px -2px 5px rgba(255, 255, 255, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(23, 11, 61, 0.28);
+}
+
+@layer components {
+  /* ========================================================================= */
+  /* SUPERFICIES, TARJETAS, HUNDIMIENTOS Y CUADRITOS DE ÍCONO                  */
+  /* ========================================================================= */
+
+  /* Paneles blancos de primer nivel (no clicables): levitan suavemente */
+  .surface-panel {
+    border-color: var(--panel-border);
+    box-shadow: var(--panel-raise);
+  }
+
+  /* Tarjetas blancas con interacción al pasar el cursor */
+  .surface-card {
+    border-color: var(--panel-border);
+    box-shadow: var(--panel-raise);
+  }
+
+  .surface-card:hover {
+    box-shadow: var(--panel-raise-hover);
+  }
+
+  /* Sub-tarjetas informativas claras dentro de un panel: hundidas en reposo */
+  .surface-sunk-card {
+    border-color: var(--panel-border);
+    box-shadow: var(--sunk);
+  }
+
+  .surface-sunk-card:hover {
+    box-shadow: var(--panel-raise-hover);
+  }
+
+  /* Selector de pestañas en cápsula: canal hundido; la opción activa levita */
+  .surface-segmentado {
+    background-color: color-mix(in oklab, #FFFFFF 65%, #F6F4F0);
+    border-color: var(--panel-border);
+    box-shadow: var(--sunk);
+  }
+
+  /* Cuadritos de ícono: levitan como un botón chico (ganan sobre el hundido) */
+  .surface-tile {
+    box-shadow: var(--tile-raise);
+  }
+
+  .group:hover .surface-tile {
+    box-shadow: var(--tile-raise-dark);
+  }
+
+  /* Badges / pills con micro-relieve o hundimiento */
+  .surface-pill-raise {
+    box-shadow: var(--tile-raise);
+  }
+
+  .surface-pill-sunk {
+    box-shadow: var(--sunk);
+  }
+
+  .surface-track-sunk {
+    box-shadow: var(--track-sunk);
+  }
+
+  /* ========================================================================= */
+  /* BOTONES CON ELEVACIÓN Y LEVITACIÓN                                        */
+  /* ========================================================================= */
+  .btn-indigo-grad,
+  .btn-outline-grad,
+  .btn-hero-white-grad,
+  .btn-hero-glass-grad,
+  .btn-gold-grad {
+    transition:
+      background-position 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      background 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 200ms ease,
+      box-shadow 200ms ease,
+      transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-indigo-grad {
+    --lev-hover: var(--raise-dark-hover);
+    background: linear-gradient(135deg, #2e3192 0%, #22267a 52%, #162038 100%);
+    background-size: 165% 100%;
+    background-position: 0% 50%;
+    box-shadow: var(--raise-dark);
+  }
+
+  .btn-indigo-grad:hover:not(:disabled) {
+    background-position: 100% 50%;
+    transform: translateY(var(--lev-lift));
+    box-shadow: var(--raise-dark-hover);
+  }
+
+  .btn-indigo-grad:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--raise-press);
+  }
+
+  .btn-indigo-grad:focus-visible {
+    box-shadow: var(--raise-dark-hover), var(--lev-focus-ring);
+  }
+
+  .btn-outline-grad {
+    background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+    border: 1px solid #d1d5db;
+    box-shadow: var(--raise-light);
+  }
+
+  .btn-outline-grad:hover:not(:disabled) {
+    background: linear-gradient(180deg, #f9fafb 0%, #e5e7eb 100%);
+    border-color: #9ca3af;
+    transform: translateY(var(--lev-lift));
+    box-shadow: var(--raise-light-hover);
+  }
+
+  .btn-outline-grad:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--raise-press);
+  }
+
+  .btn-outline-grad:focus-visible {
+    box-shadow: var(--raise-light-hover), var(--lev-focus-ring);
+  }
+
+  .btn-hero-white-grad {
+    background: linear-gradient(180deg, #ffffff 0%, #edf0f6 100%);
+    box-shadow:
+      4px 6px 16px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 #ffffff,
+      inset 0 -2px 0 rgba(23, 11, 61, 0.12);
+  }
+
+  .btn-hero-white-grad:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffffff 0%, #dfe5ef 100%);
+    transform: translateY(var(--lev-lift));
+    box-shadow:
+      6px 10px 22px rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 #ffffff,
+      inset 0 -2px 0 rgba(23, 11, 61, 0.14);
+  }
+
+  .btn-hero-white-grad:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--raise-hero-press);
+  }
+
+  .btn-hero-glass-grad {
+    background: linear-gradient(135deg, rgba(22, 32, 56, 0.72) 0%, rgba(46, 49, 146, 0.36) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(6px);
+    box-shadow:
+      4px 5px 14px rgba(0, 0, 0, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -2px 0 rgba(10, 15, 30, 0.35);
+  }
+
+  .btn-hero-glass-grad:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(46, 49, 146, 0.5) 100%);
+    border-color: #ffffff;
+    transform: translateY(var(--lev-lift));
+    box-shadow:
+      6px 8px 20px rgba(0, 0, 0, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.36),
+      inset 0 -2px 0 rgba(10, 15, 30, 0.35);
+  }
+
+  .btn-hero-glass-grad:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--raise-hero-press);
+  }
+
+  .btn-gold-grad {
+    --lev-hover: var(--raise-gold-hover);
+    background: linear-gradient(135deg, #f9cd63 0%, #f5b82e 50%, #df9a11 100%);
+    background-size: 165% 100%;
+    background-position: 0% 50%;
+    box-shadow: var(--raise-gold);
+  }
+
+  .btn-gold-grad:hover:not(:disabled) {
+    background-position: 100% 50%;
+    transform: translateY(var(--lev-lift));
+    box-shadow: var(--raise-gold-hover);
+  }
+
+  .btn-gold-grad:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--raise-press);
+  }
+
+  .btn-gold-grad:focus-visible {
+    box-shadow: var(--raise-gold-hover), var(--lev-focus-ring);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(
+      .btn-indigo-grad,
+      .btn-outline-grad,
+      .btn-hero-white-grad,
+      .btn-hero-glass-grad,
+      .btn-gold-grad
+    ):hover {
+      transform: none;
+    }
+  }
+}
