@@ -53,7 +53,14 @@
 
         <!-- Botones de acción + Logo SENA (Desktop) -->
         <div class="hidden items-center gap-3 lg:flex">
-        
+          <button
+            type="button"
+            (click)="goToLogin()"
+            class="btn-outline-grad cursor-pointer rounded-[6px] px-4 py-2 text-sm font-semibold text-[#1F2937] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E3192]"
+          >
+            Ingresar
+          </button>
+
           <button
             type="button"
             (click)="scrollToSection('descargar-app')"
