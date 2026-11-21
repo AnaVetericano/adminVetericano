@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Swal from 'sweetalert2';
 
 import { ComprasService } from './compras.service';
+import { AuthService } from './auth';
 import { Compra } from '../compra/compra';
 import { Inventario } from '../inventario/inventario';
 
@@ -174,5 +175,25 @@ describe('ComprasService & flujo seguro de bodega/compras', () => {
     httpMock.expectNone((r) => r.method === 'PATCH' && r.url.includes('/inventarios/'));
     expect(comp.guardandoAsignacion).toBe(false);
     expect(comp.errorAsignacion).toContain('Fallo controlado');
+  });
+
+  it('obtenerMapaStockMedicamentos evita HTTP 403 en /inventarios/ y /detalles-compra/ cuando el rol es Veterinario', () => {
+    const authService = TestBed.inject(AuthService);
+    vi.spyOn(authService, 'isAdmin').mockReturnValue(false);
+    vi.spyOn(authService, 'isJuridico').mockReturnValue(false);
+    vi.spyOn(authService, 'isSuperAdmin').mockReturnValue(false);
+    vi.spyOn(authService, 'isVeterinario').mockReturnValue(true);
+
+    let mapaResultado: any;
+    service.obtenerMapaStockMedicamentos().subscribe((res) => (mapaResultado = res));
+
+    httpMock.expectNone((r) => r.url.includes('/inventario/inventarios/') || r.url.includes('/inventario/detalles-compra/'));
+    const medsReq = httpMock.expectOne((r) => r.url.endsWith('/medicamentos/'));
+    const cataReq = httpMock.expectOne((r) => r.url.includes('/medicamentos-catalogo/'));
+    medsReq.flush([]);
+    cataReq.flush([]);
+
+    expect(mapaResultado).toBeTruthy();
+    expect(mapaResultado.porId.size).toBe(0);
   });
 });

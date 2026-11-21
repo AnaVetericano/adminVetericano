@@ -101,6 +101,51 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   }
 
   cargarAlertasIniciales(): void {
+    const mapearDesdeAlertas = (alertas: any) => {
+      const mapa = new Map<number, any>();
+      const registrar = (arr: any[] | undefined, nivel: string, extra?: (a: any) => Partial<any>) => {
+        for (const a of arr || []) {
+          const id = Number(a?.id_medicamento);
+          if (!id) continue;
+          const prev = mapa.get(id) || {
+            id_medicamento: id,
+            nombre: a?.nombre || `Medicamento #${id}`,
+            saldo_disponible: a?.saldo_disponible ?? 0,
+            nivelStock: 'OPTIMO',
+            tieneVencidos: false,
+            proximoAVencer: false
+          };
+          if (nivel !== 'OPTIMO') {
+            prev.nivelStock = nivel;
+          }
+          if (a?.saldo_disponible !== undefined) {
+            prev.saldo_disponible = a.saldo_disponible;
+          }
+          if (extra) {
+            Object.assign(prev, extra(a));
+          }
+          mapa.set(id, prev);
+        }
+      };
+
+      registrar(alertas?.bajos, 'BAJO');
+      registrar(alertas?.criticos, 'CRITICO');
+      registrar(alertas?.agotados, 'AGOTADO');
+      registrar(alertas?.vencidos, 'OPTIMO', () => ({ tieneVencidos: true }));
+      registrar(alertas?.proximos_a_vencer, 'OPTIMO', () => ({ proximoAVencer: true }));
+      return Array.from(mapa.values());
+    };
+
+    if (!this.authService.isVeterinario()) {
+      this.inventoryService.obtenerAlertasKit().subscribe({
+        next: (alertas) => {
+          this.inventoryService.setAlertasMaletin(mapearDesdeAlertas(alertas));
+        },
+        error: () => {}
+      });
+      return;
+    }
+
     this.inventoryService.obtenerMiKit().subscribe({
       next: (resp) => {
         const items = resp.items || [];

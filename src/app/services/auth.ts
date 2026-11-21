@@ -110,26 +110,30 @@ export interface RespuestaEspecie {
 export interface Patologia {
   id_patologia?: number;
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
 export interface CrearPatologia {
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
 export interface ActualizarPatologia {
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
 export interface RespuestaPatologia {
   id_patologia: number;
   nombre: string;
-  descripcion: string;
+  descripcion?: string | null;
+  tipo_de_enfermedad?: string | null;
   activo: boolean;
 }
 
@@ -787,6 +791,14 @@ export class AuthService {
     return this.http.patch<RespuestaPatologia>(`${this.baseUrlPatologias}${id_patologia}/`, { activo });
   }
 
+  eliminarPatologia(id_patologia: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrlPatologias}${id_patologia}/`);
+  }
+
+  importarPatologiasMasivo(patologias: CrearPatologia[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrlPatologias}carga-masiva/`, patologias);
+  }
+
   listUsersActive() {
     const urlLimpia = this.apiUrl.endsWith('/') ? this.apiUrl.slice(0, -1) : this.apiUrl;
     return this.http.get<any>(`${urlLimpia}/usuarios/`).pipe(
@@ -891,7 +903,7 @@ export class AuthService {
     return this.http.get<any>(`${this.getCleanUrl()}/inventario/compras/`);
   }
 
-  crearCompra(payload: { id_proveedor: number }): Observable<any> {
+  crearCompra(payload: { id_proveedor: number; detalles?: Array<{ id_medicamento: number; cantidad: number; precio_unitario?: number; fecha_vencimiento?: string | null }> }): Observable<any> {
     return this.http.post<any>(`${this.getCleanUrl()}/inventario/compras/`, payload);
   }
 

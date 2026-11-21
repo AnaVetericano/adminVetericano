@@ -347,8 +347,21 @@ export class VeterinaryInventoryService {
    * B3. Crear solicitud de reposición o devolución
    * POST /api/inventario/kit/solicitudes/
    */
-  public crearSolicitudKit(payload: SolicitudKitPayload): Observable<any> {
-    return this.http.post<any>(`${this.baseUrlKit}solicitudes/`, payload);
+  public crearSolicitudKit(payload: SolicitudKitPayload | any): Observable<any> {
+    const body: any = {
+      tipo_solicitud: payload?.tipo_solicitud || payload?.tipo || 'REPOSICION',
+      motivo: (payload?.motivo || payload?.justificacion || 'Solicitud de kit veterinario').trim(),
+    };
+    if (payload?.es_reposicion_total !== undefined) {
+      body.es_reposicion_total = Boolean(payload.es_reposicion_total);
+    }
+    if (Array.isArray(payload?.items) && payload.items.length > 0) {
+      body.items = payload.items.map((it: any) => ({
+        id_medicamento: Number(it.id_medicamento),
+        cantidad: Number(it.cantidad ?? it.cantidad_solicitada)
+      }));
+    }
+    return this.http.post<any>(`${this.baseUrlKit}solicitudes/`, body);
   }
 
   /**
@@ -373,7 +386,10 @@ export class VeterinaryInventoryService {
    */
   public aprobarSolicitudKit(
     idSolicitud: number,
-    payload: { observaciones_gestor?: string; aprobaciones: { id_medicamento: number; cantidad_aprobada: number }[] }
+    payload: {
+      observaciones_gestor?: string;
+      aprobaciones?: { id_detalle_solicitud?: number; id_medicamento?: number; cantidad_aprobada: number }[];
+    }
   ): Observable<any> {
     return this.http.post<any>(`${this.baseUrlKit}solicitudes/${idSolicitud}/aprobar/`, payload);
   }
@@ -415,22 +431,24 @@ export class VeterinaryInventoryService {
   public cargarInventarioVeterinario(idVetParam?: number): Observable<VeterinaryKitItem[]> {
     const sesion: any = this.authService.currentUser();
     const rol = String(sesion?.rol ?? sesion?.['nombre_rol'] ?? '').toLowerCase();
-    const esAdmin = rol.includes('admin') || rol.includes('jur') || Number(sesion?.id_rol) === 1 || Number(sesion?.id_rol) === 2;
+    const idRol = Number(sesion?.id_rol);
+    const esAdmin = rol.includes('admin') || rol.includes('jur') || idRol === 1 || idRol === 2 || idRol === 5;
+    const esVeterinario = idRol === 3 || (rol.includes('vet') && !esAdmin);
 
     const idVet = idVetParam || this.getVeterinarioLogueadoId();
 
     // Consulta del Kit según rol y contexto:
-    // Si es Administrador supervisando un maletín, se consulta exclusivamente el kit de ese veterinario.
-    // Nunca debe caer en obtenerMiKit() para evitar mezclar la sesión del administrador con el maletín supervisado.
-    const kitRequest$ = (esAdmin && idVet)
-      ? this.obtenerKitVeterinario(idVet).pipe(
+    // Veterinario consulta siempre su propio kit (mi-kit/); nunca kit/veterinario/{id}/ (evita HTTP 403).
+    // Administrador/Jurídico consulta el kit del veterinario supervisado únicamente si existe idVet válido.
+    const kitRequest$ = esVeterinario
+      ? this.obtenerMiKit().pipe(
           catchError(() => of({ total_unidades: 0, items: [] }))
         )
-      : (idVet ? this.obtenerKitVeterinario(idVet).pipe(
-          catchError(() => this.obtenerMiKit().pipe(catchError(() => of({ total_unidades: 0, items: [] }))))
-        ) : this.obtenerMiKit().pipe(
-          catchError(() => of({ total_unidades: 0, items: [] }))
-        ));
+      : (esAdmin && idVet
+          ? this.obtenerKitVeterinario(idVet).pipe(
+              catchError(() => of({ total_unidades: 0, items: [] }))
+            )
+          : of({ total_unidades: 0, items: [] }));
 
     return forkJoin({
       kit: kitRequest$,
@@ -884,16 +902,25 @@ export class VeterinaryInventoryService {
   public obtenerVeterinarios(): Observable<any[]> {
     const urlBase = environment.apiUrl.endsWith('/') ? environment.apiUrl.slice(0, -1) : environment.apiUrl;
     const clean = urlBase.replace(/\/usuarios$/, '');
+    const sesion: any = this.authService.currentUser();
+    const rolStr = String(sesion?.rol ?? sesion?.['nombre_rol'] ?? '').toLowerCase();
+    const idRol = Number(sesion?.id_rol);
+    const puedeListarUsuarios =
+      idRol === 1 ||
+      idRol === 5 ||
+      (rolStr.includes('admin') && !rolStr.includes('jur'));
 
     return forkJoin({
       funcionarios: this.http.get<any>(`${clean}/peticiones/seguimiento/funcionarios/`).pipe(
         map(res => Array.isArray(res) ? res : (res?.['results'] || [])),
         catchError(() => of([]))
       ),
-      usuarios: this.http.get<any>(`${urlBase}/usuarios/`).pipe(
-        map(res => Array.isArray(res) ? res : (res?.['results'] || [])),
-        catchError(() => of([]))
-      )
+      usuarios: puedeListarUsuarios
+        ? this.http.get<any>(`${urlBase}/usuarios/`).pipe(
+            map(res => Array.isArray(res) ? res : (res?.['results'] || [])),
+            catchError(() => of([]))
+          )
+        : of([])
     }).pipe(
       map(({ funcionarios, usuarios }) => {
         const mapaVets = new Map<number, any>();
@@ -912,7 +939,7 @@ export class VeterinaryInventoryService {
           const id = Number(f['id_usuario'] ?? f['id']);
           const rol = String(f['rol'] ?? f['nombre_rol'] ?? '').toLowerCase();
           const idRol = Number(f['id_rol'] ?? 0);
-          if (idRol === 2 || idRol === 3 || rol.includes('veterinario')) {
+          if (idRol === 3 || rol.includes('veterinario')) {
             const nombre = `${f['nombre'] || ''} ${f['apellido'] || ''}`.trim() || f['username'] || `Veterinario #${id}`;
             mapaVets.set(id, {
               id_usuario: id,
@@ -931,7 +958,7 @@ export class VeterinaryInventoryService {
           const id = Number(u['id_usuario'] ?? u['id']);
           const idRol = Number(u['id_rol']?.['id_rol'] ?? u['id_rol'] ?? 0);
           const nombreRol = String(u['nombre_rol'] ?? u['id_rol']?.['nombre_rol'] ?? '').toLowerCase();
-          if (idRol === 2 || idRol === 3 || nombreRol.includes('veterinario')) {
+          if (idRol === 3 || nombreRol.includes('veterinario')) {
             if (!mapaVets.has(id)) {
               const nombre = `${u['nombre'] || ''} ${u['apellido'] || ''}`.trim() || u['username'] || `Veterinario #${id}`;
               mapaVets.set(id, {
