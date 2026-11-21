@@ -14,7 +14,7 @@ import {
   PacienteHistoria
 } from '../services/historia-clinica.service';
 import { PatologiaService, Patologia } from '../services/patologia.service';
-import { ExamenesClinicosService, ExamenClinico } from '../services/examenes-clinicos.service';
+import { ExamenesClinicosService, ExamenClinico, CATALOGO_CANONICO_EXAMENES } from '../services/examenes-clinicos.service';
 import { ComprasService } from '../services/compras.service';
 import { AuthService } from '../services/auth';
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
@@ -77,11 +77,20 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   mensajeExamenes: string = '';
   busquedaExamen: string = '';
   paginaActualExamenes: number = 1;
-  tamanoPaginaExamenes: number = 5;
+  tamanoPaginaExamenes: number = 50;
   totalExamenes: number = 0;
+  filtroCategoriaExamen: 'todos' | 'examen' | 'test' = 'todos';
   examenSeleccionadoParaSolicitud: ExamenClinico | null = null;
   examenesSolicitados: any[] = [];
   descripcionHallazgos: string = '';
+  archivosExamenesAdjuntos: Array<{
+    nombre: string;
+    tamanio: string;
+    tipo: 'pdf' | 'imagen' | 'documento';
+    url: string;
+    archivoBase64?: string;
+    fecha: string;
+  }> = [];
 
   // Grilla Interactiva de los 12 Sistemas (N: Normal, AN: Anormal, NE: No examinado)
   sistemas: { [key: string]: string } = {
@@ -283,6 +292,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
 
   mostrarModalCancelar: boolean = false;
   mostrarDetalleAuditoria: boolean = true;
+
+  // Módulo de Apoyo Diagnóstico con IA Local (scikit-learn)
+  cargandoDiagnosticoIA: boolean = false;
+  resultadoDiagnosticoIA: any = null;
+  errorDiagnosticoIA: string = '';
+  panelDiagnosticoIAVisible: boolean = false;
 
   // =========================================================================
   // VISTA DE CONSULTA CP-VET: NAVEGACIÓN Y CONTADORES DINÁMICOS
@@ -1847,14 +1862,18 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           }
 
           if (Array.isArray(data.examenes_solicitados) && data.examenes_solicitados.length > 0) {
-            this.examenesSolicitados = data.examenes_solicitados.map((ex: any) => ({
-              id_examen: ex.id_examen || ex.id || null,
-              nombre: ex.nombre || 'Examen',
-              tipo: ex.tipo || 'Laboratorio',
-              estado: ex.estado || 'solicitado',
-              resultado: ex.resultado || '',
-              ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
-            }));
+            this.examenesSolicitados = data.examenes_solicitados.map((ex: any) =>
+              this.normalizarItemExamen({
+                id_examen: ex.id_examen || ex.id || null,
+                nombre: ex.nombre || 'Examen',
+                tipo: ex.tipo || 'Laboratorio',
+                estado: ex.estado || 'solicitado',
+                estado_medicion: ex.estado_medicion || '',
+                hallazgos: ex.hallazgos !== undefined ? ex.hallazgos : (ex.resultado || ''),
+                resultado: ex.resultado || '',
+                ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+              })
+            );
           }
 
           if (data.materiales_utilizados !== undefined) {
@@ -1916,6 +1935,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           if (data.cedula_acudiente || data.paciente?.tenedor_documento) {
             this.cedulaAcudiente = data.cedula_acudiente || data.paciente?.tenedor_documento || this.cedulaAcudiente;
           }
+
+          this.sincronizarPatologiaCargada(
+            data.id_patologia ?? raw.id_patologia ?? null,
+            data.diagnostico_principal || raw.diagnostico_principal || ''
+          );
         }
 
         const evolucionInicial = (data.organos_sistemas?.['_evolucion'] || data.evolucion || this.anamnesis || this.formHistoria.get('evolucion')?.value || '');
@@ -1985,6 +2009,12 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
           this.mucosas = '';
           this.medicamentosSeleccionados = [];
           this.examenesSolicitados = [];
+          this.archivosExamenesAdjuntos = [];
+          this.resultadoDiagnosticoIA = null;
+          this.errorDiagnosticoIA = '';
+          this.panelDiagnosticoIAVisible = false;
+          this.idPatologiaSeleccionada = null;
+          this.patologiaSeleccionada = null;
           this.pronostico = 'Favorable';
           this.planProcedimientos = '';
           this.materialesUtilizados = '';
@@ -2031,6 +2061,98 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
   // GESTIÓN DEL PASO 2: EXÁMENES CLÍNICOS Y SISTEMAS ORGÁNICOS
   // =========================================================================
 
+  esTestRapido(item: any): boolean {
+    if (!item) return false;
+    const nombre = String(item.nombre || item.nombre_tipo_examen || item.nombre_tipo || '').toLowerCase();
+    const tipo = String(item.tipo || item.ruta_archivo_resultado || item.nombre_tipo || '').toLowerCase();
+    return (
+      nombre.includes('test') ||
+      nombre.includes('prueba rápida') ||
+      nombre.includes('prueba rapida') ||
+      nombre.includes('inmunocromat') ||
+      tipo.includes('inmunodiagnóstico') ||
+      tipo.includes('rápido') ||
+      tipo.includes('test') ||
+      nombre.includes('parvovirus') ||
+      nombre.includes('distemper') ||
+      nombre.includes('moquillo') ||
+      nombre.includes('leucemia') ||
+      nombre.includes('sida') ||
+      nombre.includes('felv') ||
+      nombre.includes('fiv') ||
+      nombre.includes('coronavirus')
+    );
+  }
+
+  obtenerCategoriaExamen(item: any): 'Test Rápido' | 'Examen Clínico' {
+    return this.esTestRapido(item) ? 'Test Rápido' : 'Examen Clínico';
+  }
+
+  get totalExamenesClinicos(): number {
+    return this.examenesClinicos.filter(e => !this.esTestRapido(e)).length;
+  }
+
+  get totalTestsRapidos(): number {
+    return this.examenesClinicos.filter(e => this.esTestRapido(e)).length;
+  }
+
+  get totalExamenesMedidos(): number {
+    return (this.examenesSolicitados || []).filter(
+      e => e.estado_medicion && e.estado_medicion !== 'pendiente'
+    ).length;
+  }
+
+  setFiltroCategoriaExamen(cat: 'todos' | 'examen' | 'test'): void {
+    this.filtroCategoriaExamen = cat;
+    this.filtrarExamenes();
+  }
+
+  normalizarItemExamen(sol: any): any {
+    if (!sol) return sol;
+    const medActual = String(sol.estado_medicion || '').toLowerCase().trim();
+    if (!medActual) {
+      const res = String(sol.resultado || '').toLowerCase().trim();
+      if (res.includes('positiv') || res === '+') {
+        sol.estado_medicion = 'positivo';
+      } else if (res.includes('negativ') || res === '-') {
+        sol.estado_medicion = 'negativo';
+      } else if (res.includes('alter') || res.includes('anormal')) {
+        sol.estado_medicion = 'alterado';
+      } else if (res.includes('norm')) {
+        sol.estado_medicion = 'normal';
+      } else {
+        sol.estado_medicion = 'pendiente';
+      }
+    } else {
+      sol.estado_medicion = medActual;
+    }
+    if (sol.hallazgos === undefined || sol.hallazgos === null) {
+      sol.hallazgos = sol.resultado || '';
+    }
+    if (sol.estado_medicion && sol.estado_medicion !== 'pendiente') {
+      sol.estado = 'Realizado';
+    } else if (!sol.estado) {
+      sol.estado = 'Solicitado';
+    }
+    return sol;
+  }
+
+  actualizarEstadoMedicionExamen(sol: any): void {
+    if (!sol) return;
+    const med = String(sol.estado_medicion || 'pendiente').toLowerCase().trim();
+    sol.estado_medicion = med || 'pendiente';
+    const hallazgosTxt = String(sol.hallazgos ?? '').trim();
+    if (med && med !== 'pendiente') {
+      sol.estado = 'Realizado';
+      sol.resultado = hallazgosTxt || (med.charAt(0).toUpperCase() + med.slice(1));
+    } else {
+      sol.estado = 'Solicitado';
+      sol.resultado = hallazgosTxt;
+    }
+    this.formHistoria.markAsDirty();
+    this.cdr.detectChanges();
+  }
+
   get totalPaginasExamenes(): number {
     return Math.ceil(this.examenesFiltrados.length / this.tamanoPaginaExamenes) || 1;
   }
@@ -2059,31 +2181,92 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
     this.mensajeExamenes = '';
 
     this.examenesService.obtenerTodos().subscribe({
-      next: (lista: ExamenClinico[]) => {
-        this.examenesClinicos = lista;
-        this.examenesFiltrados = [...lista];
-        this.totalExamenes = lista.length;
+      next: (listaApi: ExamenClinico[]) => {
+        this.procesarYCombinarExamenes(listaApi);
         this.cargandoExamenes = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        this.mensajeExamenes = 'No se pudieron cargar los exámenes clínicos.';
+        this.procesarYCombinarExamenes([]);
         this.cargandoExamenes = false;
         this.cdr.detectChanges();
       }
     });
   }
 
+  procesarYCombinarExamenes(listaApi: ExamenClinico[]): void {
+    const mapa = new Map<string, ExamenClinico>();
+
+    if (Array.isArray(listaApi)) {
+      for (const item of listaApi) {
+        if (!item) continue;
+        const nombre = String(item.nombre || item.nombre_tipo_examen || item.nombre_tipo || '').trim();
+        if (!nombre) continue;
+        const key = nombre.toLowerCase();
+        const categoria = this.obtenerCategoriaExamen(item);
+        if (!mapa.has(key)) {
+          mapa.set(key, {
+            ...item,
+            nombre,
+            tipo: item.tipo || categoria,
+            estado: item.estado || 'activo'
+          });
+        }
+      }
+    }
+
+    // Completar catálogo canónico sin asignar IDs sintéticos inexistentes en Supabase
+    for (const base of CATALOGO_CANONICO_EXAMENES) {
+      const key = base.nombre.toLowerCase();
+      const existente = mapa.get(key);
+      if (existente) {
+        if (!existente.tipo || existente.tipo === 'General' || existente.tipo === 'Prueba Diagnóstica') {
+          existente.tipo = base.tipo;
+        }
+      } else {
+        mapa.set(key, {
+          id_examen: null as any,
+          nombre: base.nombre,
+          tipo: base.tipo,
+          descripcion: base.descripcion,
+          estado: 'activo'
+        });
+      }
+    }
+
+    const resultado = Array.from(mapa.values()).filter(e => e.estado !== 'inactivo');
+    resultado.sort((a, b) => {
+      const catA = this.esTestRapido(a) ? 1 : 0;
+      const catB = this.esTestRapido(b) ? 1 : 0;
+      if (catA !== catB) return catA - catB;
+      return a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+    });
+
+    this.examenesClinicos = resultado;
+    this.totalExamenes = resultado.length;
+    this.filtrarExamenes();
+  }
+
   filtrarExamenes(): void {
     const query = (this.busquedaExamen || '').trim().toLowerCase();
-    if (!query) {
-      this.examenesFiltrados = [...this.examenesClinicos];
-    } else {
-      this.examenesFiltrados = this.examenesClinicos.filter(e =>
+    let lista = [...this.examenesClinicos];
+
+    if (this.filtroCategoriaExamen === 'examen') {
+      lista = lista.filter(e => !this.esTestRapido(e));
+    } else if (this.filtroCategoriaExamen === 'test') {
+      lista = lista.filter(e => this.esTestRapido(e));
+    }
+
+    if (query) {
+      lista = lista.filter(e =>
         (e.nombre && e.nombre.toLowerCase().includes(query)) ||
-        (e.descripcion && e.descripcion.toLowerCase().includes(query))
+        (e.descripcion && e.descripcion.toLowerCase().includes(query)) ||
+        (e.tipo && e.tipo.toLowerCase().includes(query)) ||
+        (this.esTestRapido(e) ? 'test rapido' : 'examen clinico').includes(query)
       );
     }
+
+    this.examenesFiltrados = lista;
     this.paginaActualExamenes = 1;
   }
 
@@ -2111,31 +2294,34 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       examen?.nombre_tipo ||
       examen?.tipo ||
       'Examen clínico'
-    );
+    ).trim();
     const idExamen = examen?.id_examen ?? examen?.id ?? null;
     const yaExiste = this.examenesSolicitados.some((item: any) =>
-      (idExamen !== null && item.id_examen === idExamen) ||
-      item.nombre === nombreExamen
+      (idExamen !== null && idExamen !== undefined && item.id_examen === idExamen) ||
+      String(item.nombre || '').toLowerCase().trim() === nombreExamen.toLowerCase()
     );
 
     if (yaExiste) {
       Swal.fire({
         icon: 'info',
         title: 'Examen ya agregado',
-        text: 'Este examen ya se encuentra en la orden del paciente.',
+        text: `"${nombreExamen}" ya se encuentra en la orden del paciente.`,
         confirmButtonText: 'Aceptar'
       });
       return;
     }
 
+    const esTest = this.esTestRapido(examen);
     this.examenesSolicitados.push({
       ...examen,
       id_examen: idExamen,
       nombre: nombreExamen,
-      tipo: examen?.tipo || 'General',
+      tipo: examen?.tipo || (esTest ? 'Inmunodiagnóstico Rápido' : 'Laboratorio Clínico'),
       descripcion: examen?.descripcion || '',
-      estado: examen?.estado || 'solicitado',
-      resultado: examen?.resultado || '',
+      estado: 'Solicitado',
+      estado_medicion: 'pendiente',
+      resultado: '',
+      hallazgos: '',
       ruta_archivo_resultado: examen?.ruta_archivo_resultado || ''
     });
     this.formHistoria.markAsDirty();
@@ -2145,8 +2331,11 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       title: 'Examen ordenado',
       text: `${nombreExamen} fue agregado a la orden médica.`,
       timer: 1400,
-      showConfirmButton: false
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
     });
+    this.cdr.detectChanges();
   }
 
   eliminarExamen(indice: number): void {
@@ -2168,6 +2357,94 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * Vista previa local en sesión únicamente: el backend actual no dispone de persistencia
+   * de archivos adjuntos para exámenes, por lo que no se simula guardado exitoso en servidor.
+   */
+  onAdjuntarArchivoExamen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const archivos = Array.from(input.files);
+    for (const file of archivos) {
+      const nombre = file.name;
+      const tamanioNum = file.size;
+      const tamanioStr = tamanioNum > 1024 * 1024
+        ? `${(tamanioNum / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.round(tamanioNum / 1024)} KB`;
+
+      let tipo: 'pdf' | 'imagen' | 'documento' = 'documento';
+      if (file.type.includes('pdf') || nombre.toLowerCase().endsWith('.pdf')) {
+        tipo = 'pdf';
+      } else if (file.type.includes('image')) {
+        tipo = 'imagen';
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const base64 = e.target.result;
+        this.archivosExamenesAdjuntos.push({
+          nombre,
+          tamanio: tamanioStr,
+          tipo,
+          url: base64,
+          archivoBase64: base64,
+          fecha: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+        });
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    input.value = '';
+
+    Swal.fire({
+      icon: 'info',
+      title: 'Vista previa temporal cargada',
+      text: `${archivos.length === 1 ? `"${archivos[0].name}"` : `${archivos.length} archivos`} solo está disponible en esta sesión: los archivos adjuntos aún no se guardan en el servidor.`,
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#4141A5'
+    });
+  }
+
+  eliminarArchivoExamen(indice: number): void {
+    if (indice >= 0 && indice < this.archivosExamenesAdjuntos.length) {
+      this.archivosExamenesAdjuntos.splice(indice, 1);
+      this.cdr.detectChanges();
+    }
+  }
+
+  visualizarArchivoExamen(adj: any): void {
+    if (!adj) return;
+    const url = adj.url || adj.archivoBase64;
+    if (!url) {
+      Swal.fire('No disponible', 'El archivo no tiene una URL válida para previsualización.', 'info');
+      return;
+    }
+
+    if (adj.tipo === 'imagen') {
+      Swal.fire({
+        title: adj.nombre,
+        imageUrl: url,
+        imageAlt: adj.nombre,
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#4141A5'
+      });
+    } else {
+      const win = window.open();
+      if (win) {
+        win.document.write(
+          `<html><head><title>${adj.nombre}</title></head><body style="margin:0;"><iframe src="${url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe></body></html>`
+        );
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = adj.nombre;
+        link.click();
+      }
+    }
   }
 
   guardarSistemas(): void {
@@ -2200,6 +2477,10 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.patologias = data;
         this.patologiasFiltradas = [...data];
         this.cargandoPatologias = false;
+        const diagActual = String(
+          this.formHistoria?.get('diagnosticoPrincipal')?.value || this.diagnosticoFinal || ''
+        ).trim();
+        this.sincronizarPatologiaCargada(this.idPatologiaSeleccionada, diagActual);
         this.cdr.detectChanges();
       },
       error: () => {
@@ -2207,6 +2488,30 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private sincronizarPatologiaCargada(idPatologiaRaw: any, diagnosticoNombre: string): void {
+    const idNum = Number(idPatologiaRaw);
+    const idValido = idPatologiaRaw !== null && idPatologiaRaw !== undefined && !isNaN(idNum) && idNum > 0
+      ? idNum
+      : null;
+
+    let encontrada: Patologia | null = null;
+    if (idValido) {
+      encontrada = this.patologias.find(p => Number(p.id_patologia) === idValido) || null;
+    }
+    if (!encontrada && diagnosticoNombre && diagnosticoNombre.trim()) {
+      const nomLower = diagnosticoNombre.trim().toLowerCase();
+      encontrada = this.patologias.find(p => String(p.nombre || '').trim().toLowerCase() === nomLower) || null;
+    }
+
+    if (encontrada) {
+      this.idPatologiaSeleccionada = encontrada.id_patologia;
+      this.patologiaSeleccionada = encontrada;
+    } else if (idValido) {
+      this.idPatologiaSeleccionada = idValido;
+      this.patologiaSeleccionada = null;
+    }
   }
 
   filtrarPatologias(): void {
@@ -2248,6 +2553,241 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       diagnosticoPrincipal: pat.nombre
     });
     this.formHistoria.get('diagnosticoPrincipal')?.markAsDirty();
+    this.cdr.detectChanges();
+  }
+
+  // =========================================================================
+  // INTEGRACIÓN CON MÓDULO DE APOYO DIAGNÓSTICO IA LOCAL (scikit-learn)
+  // =========================================================================
+
+  solicitarSugerenciaIA(): void {
+    const especieRaw = String(this.paciente?.especie || '').toLowerCase().trim();
+    const especie = especieRaw.includes('fel') || especieRaw.includes('gat') ? 'gato' : 'perro';
+    const edadEtapa = String(this.paciente?.edad_aproximada || 'adulto').trim();
+
+    const signosArr: string[] = [];
+    const anamnesisTxt = String(this.formHistoria?.get('anamnesis')?.value || this.anamnesis || '').trim();
+    const motivoTxt = String(this.formHistoria?.get('motivo_consulta')?.value || this.motivo_consulta || '').trim();
+    const hallazgosTxt = String(this.descripcionHallazgos || this.formHistoria?.get('hallazgos_examen')?.value || '').trim();
+
+    if (anamnesisTxt) signosArr.push(anamnesisTxt);
+    if (motivoTxt) signosArr.push(motivoTxt);
+
+    if (this.sistemas) {
+      Object.keys(this.sistemas).forEach(k => {
+        if (this.sistemas[k] === 'AN') {
+          signosArr.push(`Sistema ${k} alterado`);
+        }
+      });
+    }
+    if (this.observacionesSistemas) {
+      signosArr.push(this.observacionesSistemas.trim());
+    }
+
+    const testsRapidos: { [key: string]: string } = {};
+    const examenesClinicos: { [key: string]: any } = {};
+
+    if (Array.isArray(this.examenesSolicitados)) {
+      for (const sol of this.examenesSolicitados) {
+        this.normalizarItemExamen(sol);
+        const estadoMedicion = String(sol.estado_medicion || 'pendiente').toLowerCase().trim();
+        if (!estadoMedicion || estadoMedicion === 'pendiente') {
+          continue;
+        }
+
+        const nom = String(sol.nombre || sol.nombre_tipo_examen || '').trim();
+        if (!nom) continue;
+
+        const hallazgoTexto = String(sol.hallazgos || sol.resultado || '').trim();
+
+        if (this.esTestRapido(sol)) {
+          testsRapidos[nom] = estadoMedicion === 'positivo' ? 'positivo' : 'negativo';
+        } else {
+          let estadoExamen: 'normal' | 'alterado' | 'positivo' | 'negativo' = 'alterado';
+          if (estadoMedicion === 'normal' || estadoMedicion === 'alterado' || estadoMedicion === 'positivo' || estadoMedicion === 'negativo') {
+            estadoExamen = estadoMedicion;
+          }
+          examenesClinicos[nom] = {
+            estado: estadoExamen,
+            hallazgos: hallazgoTexto
+          };
+        }
+      }
+    }
+
+    if (hallazgosTxt) {
+      examenesClinicos['Hallazgos Clínicos'] = {
+        estado: 'alterado',
+        hallazgos: hallazgosTxt
+      };
+    }
+
+    const payload = {
+      especie,
+      edad_etapa: edadEtapa,
+      signos: signosArr,
+      tests_rapidos: testsRapidos,
+      examenes_clinicos: examenesClinicos,
+      id_consulta: this.historiaOriginal?.id_consulta || null,
+      id_animal: this.idAnimal || this.paciente?.id_animal || null,
+      top_k: 5
+    };
+
+    this.cargandoDiagnosticoIA = true;
+    this.errorDiagnosticoIA = '';
+    this.panelDiagnosticoIAVisible = true;
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      const el = document.getElementById('panel-resultado-diagnostico-ia');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 60);
+
+    this.historiaService.sugerirDiagnosticoIA(payload).subscribe({
+      next: (resp) => {
+        this.resultadoDiagnosticoIA = resp;
+        this.cargandoDiagnosticoIA = false;
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          const el = document.getElementById('panel-resultado-diagnostico-ia');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 120);
+      },
+      error: (err) => {
+        this.cargandoDiagnosticoIA = false;
+        this.errorDiagnosticoIA = err?.error?.detail || err?.error?.message ||
+          'No fue posible obtener sugerencia del motor diagnóstico IA. Verifique que el servicio esté activo.';
+        this.cdr.detectChanges();
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sugerencia Diagnóstica IA',
+          text: this.errorDiagnosticoIA,
+          confirmButtonColor: '#4141A5',
+          confirmButtonText: 'Entendido'
+        });
+      }
+    });
+  }
+
+  aplicarSugerenciaIA(sugerencia: any): void {
+    if (!sugerencia) return;
+
+    const nombreSugerido = String(sugerencia.nombre || '').trim();
+    const idSugerido = Number(sugerencia.id_patologia);
+
+    // Vincular contra el catálogo oficial cargado desde Supabase (priorizando coincidencia por nombre)
+    const patPorNombre = nombreSugerido
+      ? this.patologias.find(p => String(p.nombre || '').trim().toLowerCase() === nombreSugerido.toLowerCase())
+      : undefined;
+    const patPorId = !patPorNombre && !isNaN(idSugerido) && idSugerido > 0
+      ? this.patologias.find(p => Number(p.id_patologia) === idSugerido)
+      : undefined;
+    const patResuelta = patPorNombre || patPorId || null;
+
+    this.patologiaSeleccionada = patResuelta;
+    this.idPatologiaSeleccionada = patResuelta?.id_patologia
+      ?? (!isNaN(idSugerido) && idSugerido > 0 ? idSugerido : null);
+
+    const nombreFinal = patResuelta?.nombre || nombreSugerido;
+    this.formHistoria.patchValue({
+      diagnosticoPrincipal: nombreFinal
+    });
+    this.diagnosticoFinal = nombreFinal;
+    this.formHistoria.get('diagnosticoPrincipal')?.markAsDirty();
+
+    if (this.resultadoDiagnosticoIA?.diagnosticos_sugeridos) {
+      const otros = this.resultadoDiagnosticoIA.diagnosticos_sugeridos
+        .filter((d: any) => d.nombre !== sugerencia.nombre)
+        .map((d: any) => `${d.nombre} (${d.porcentaje_confianza})`)
+        .join('; ');
+
+      if (otros) {
+        this.formHistoria.patchValue({ diagnosticoDiferencial: otros });
+        this.formHistoria.get('diagnosticoDiferencial')?.markAsDirty();
+      }
+    }
+
+    const problemasActuales = String(this.formHistoria.get('listaProblemas')?.value || '').trim();
+    if (!problemasActuales && sugerencia.justificacion) {
+      this.formHistoria.patchValue({
+        listaProblemas: `Hallazgos sospecha clínica: ${sugerencia.justificacion}`
+      });
+      this.formHistoria.get('listaProblemas')?.markAsDirty();
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Diagnóstico aplicado',
+      text: `Se ha establecido "${nombreFinal}" como Diagnóstico Principal.`,
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+
+    this.cdr.detectChanges();
+  }
+
+  solicitarExamenDesdeIA(rec: any): void {
+    if (!rec?.examen) return;
+    if (!this.examenesSolicitados) {
+      this.examenesSolicitados = [];
+    }
+
+    const nombreRec = String(rec.examen).trim();
+    const yaExiste = this.examenesSolicitados.some((e: any) =>
+      String(e.nombre || '').toLowerCase().trim() === nombreRec.toLowerCase()
+    );
+
+    if (yaExiste) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Examen ya registrado',
+        text: `El examen "${nombreRec}" ya se encuentra en la lista de exámenes solicitados.`,
+        timer: 2200,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+      return;
+    }
+
+    const catalogoMatch = this.examenesClinicos.find(
+      ex => String(ex.nombre || '').toLowerCase().trim() === nombreRec.toLowerCase()
+    );
+    const esTest = this.esTestRapido({ nombre: nombreRec, tipo: rec.tipo });
+    this.examenesSolicitados.push({
+      id_examen: catalogoMatch?.id_examen ?? null,
+      nombre: catalogoMatch?.nombre || nombreRec,
+      tipo: catalogoMatch?.tipo || rec.tipo || (esTest ? 'Inmunodiagnóstico Rápido' : 'Laboratorio Clínico'),
+      estado: 'Solicitado',
+      estado_medicion: 'pendiente',
+      resultado: '',
+      hallazgos: `Prioridad: ${rec.prioridad} - ${rec.motivo}`
+    });
+    this.formHistoria.markAsDirty();
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Examen agregado',
+      text: `Se agregó "${nombreRec}" a la tabla de exámenes clínicos.`,
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
+    });
+
+    this.cdr.detectChanges();
+  }
+
+  cerrarPanelIA(): void {
+    this.panelDiagnosticoIAVisible = false;
     this.cdr.detectChanges();
   }
 
@@ -3050,14 +3590,24 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         _fecha_ultimo_parto: this.planSanitario.fechaUltimoParto || '',
         _hoja_hospitalizacion_numero: this.hojaHospitalizacionNumero || 1
       },
-      examenes_solicitados: this.examenesSolicitados.map(ex => ({
-        id_examen: ex.id_examen || ex.id,
-        nombre: ex.nombre,
-        tipo: ex.tipo,
-        estado: ex.estado || 'solicitado',
-        resultado: ex.resultado || '',
-        ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
-      })),
+      examenes_solicitados: this.examenesSolicitados.map(ex => {
+        const medicion = String(ex.estado_medicion || 'pendiente').toLowerCase().trim();
+        const hallazgosTxt = String(ex.hallazgos ?? ex.resultado ?? '').trim();
+        const estadoFinal = ex.estado || (medicion !== 'pendiente' ? 'Realizado' : 'Solicitado');
+        const resultadoFinal = String(
+          ex.resultado || hallazgosTxt || (medicion !== 'pendiente' ? medicion : '')
+        ).trim();
+        return {
+          id_examen: ex.id_examen || ex.id || null,
+          nombre: ex.nombre,
+          tipo: ex.tipo,
+          estado: estadoFinal,
+          estado_medicion: medicion,
+          hallazgos: hallazgosTxt,
+          resultado: resultadoFinal,
+          ruta_archivo_resultado: ex.ruta_archivo_resultado || ''
+        };
+      }),
       tratamientos: this.medicamentosSeleccionados.map(m => ({
         id_tratamiento: m.id_tratamiento || null,
         id_medicamento: m.id,

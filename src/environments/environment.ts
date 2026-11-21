@@ -21,6 +21,9 @@ export const environment = {
   apiUrlExpedienteCompleto: `${BACKEND_CLOUD_URL}/api/clinica/expediente-completo/`,
   apiUrlExpedientePorAnimal: `${BACKEND_CLOUD_URL}/api/clinica/expediente-por-animal/`,
 
+  // Endpoints del módulo de Apoyo Diagnóstico IA Local (scikit-learn)
+  apiUrlDiagnosticoIA: `${BACKEND_CLOUD_URL}/api/diagnostico-ia/sugerir/`,
+
   // Endpoints de módulos complementarios
   apiUrlAnimales: `${BACKEND_CLOUD_URL}/api/animales/animales/`,
   apiUrl: `${BACKEND_CLOUD_URL}/api/usuarios`,

@@ -79,11 +79,45 @@ export class InicioDeSesionAdministradorComponent {
       },
       error: (err: any) => {
         this.authService.logout();
-        const mensajeRaw = err.error?.detail || err.error?.mensaje || err.error?.error || err.error?.non_field_errors?.[0] || '';
-        const mensaje = mensajeRaw || 'Credenciales incorrectas, intenta de nuevo.';
+        const status = Number(err?.status);
+        const mensajeRaw =
+          (typeof err?.error === 'object' && err?.error !== null
+            ? (err.error.detail || err.error.mensaje || err.error.error || err.error.non_field_errors?.[0])
+            : '') || '';
+
+        if (status === 0) {
+          Swal.fire({
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor backend. Verifique que esté encendido y revise su red.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+          });
+          return;
+        }
+
+        if (status >= 500) {
+          Swal.fire({
+            title: 'Error del servidor',
+            text: mensajeRaw || `Ocurrió un error interno en el servidor (HTTP ${status}). Intente nuevamente en unos momentos.`,
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+          });
+          return;
+        }
+
+        if (status === 404) {
+          Swal.fire({
+            title: 'Servicio no disponible',
+            text: mensajeRaw || 'No se encontró el servicio de autenticación en el servidor (HTTP 404).',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+          });
+          return;
+        }
+
         Swal.fire({
           title: 'Credenciales inválidas',
-          text: mensaje === 'Credenciales incorrectas, intenta de nuevo.' ? 'Credenciales incorrectas. Verifique sus datos e intente nuevamente.' : mensaje,
+          text: mensajeRaw || 'Credenciales incorrectas. Verifique sus datos e intente nuevamente.',
           icon: 'error',
           confirmButtonText: 'Aceptar'
         });
@@ -109,7 +143,14 @@ export class InicioDeSesionAdministradorComponent {
         this.cargandoPaso1 = false;
       },
       error: (err: any) => {
-        this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'No se pudo enviar el correo.';
+        const st = Number(err?.status);
+        if (st === 0) {
+          this.mensajeError = 'No se pudo conectar con el servidor. Verifique su conexión o que el backend esté activo.';
+        } else if (st >= 500) {
+          this.mensajeError = `Error interno del servidor (HTTP ${st}). Intente nuevamente en unos momentos.`;
+        } else {
+          this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'No se pudo enviar el correo.';
+        }
         this.cargandoPaso1 = false;
       }
     });
@@ -152,7 +193,14 @@ export class InicioDeSesionAdministradorComponent {
         }, 2000);
       },
       error: (err: any) => {
-        this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'Código incorrecto o expirado.';
+        const st = Number(err?.status);
+        if (st === 0) {
+          this.mensajeError = 'No se pudo conectar con el servidor. Verifique su conexión o que el backend esté activo.';
+        } else if (st >= 500) {
+          this.mensajeError = `Error interno del servidor (HTTP ${st}). Intente nuevamente en unos momentos.`;
+        } else {
+          this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'Código incorrecto o expirado.';
+        }
         this.cargandoPaso2 = false;
       }
     });
