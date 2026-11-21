@@ -801,13 +801,47 @@ export class HistoriaClinicaService {
    * y consultas_anteriores, fusionando ambos objetos antes de pasarlos por mapearRespuestaBackend().
    * Si GET ${this.apiUrl}/expediente-completo/${id}/ devuelve 404, hace fallback a GET ${this.apiUrl}/expediente-por-animal/${id}/.
    */
+  private normalizarIdRuta(valor: unknown): string {
+    const texto = String(valor ?? '').trim();
+    if (!texto || texto === 'null' || texto === 'undefined' || texto === 'NaN' || texto === 'None') {
+      return '';
+    }
+    if (/^\d+$/.test(texto) && Number(texto) > 0) {
+      return String(Number(texto));
+    }
+    return '';
+  }
+
   obtenerHistoriaPorId(
     id: string | number,
     nombrePaciente?: string,
     idAnimal?: number | string | null
   ): Observable<HistoriaClinicaEdicion> {
-    const cleanId = String(id || '').trim();
-    const cleanIdAnimal = idAnimal ? String(idAnimal).trim() : '';
+    const cleanId = this.normalizarIdRuta(id);
+    const cleanIdAnimal = this.normalizarIdRuta(idAnimal);
+
+    if (!cleanId && !cleanIdAnimal) {
+      const nombreClean = String(nombrePaciente || '').trim().toLowerCase();
+      if (nombreClean && nombreClean !== 'paciente') {
+        return this.buscarConsultaPorNombreEnExpediente(nombreClean).pipe(
+          map((consultaEncontrada) => {
+            if (consultaEncontrada) {
+              return this.ensamblarHistoriaDesdeConsultaDirecta(
+                consultaEncontrada,
+                String(consultaEncontrada.id_historia || ''),
+                nombrePaciente,
+                String(consultaEncontrada.id_animal || ''),
+                consultaEncontrada.diagnostico_obj,
+                consultaEncontrada.tratamientos
+              );
+            }
+            return this.crearHistoriaLimpia('', nombrePaciente, '');
+          }),
+          catchError(() => of(this.crearHistoriaLimpia('', nombrePaciente, '')))
+        );
+      }
+      return of(this.crearHistoriaLimpia('', nombrePaciente, ''));
+    }
 
     // ESTRATEGIA 1: Si conocemos id_animal con certeza, el endpoint más fidedigno y directo
     // es expediente-por-animal/${cleanIdAnimal}/, evitando colisiones accidentales de id_consulta.
@@ -853,6 +887,9 @@ export class HistoriaClinicaService {
 
     // ESTRATEGIA 2: Si no tenemos id_animal, consultamos expediente-completo/${cleanId}/
     // pero verificamos que no pertenezca a otro paciente si viene nombrePaciente sugerido.
+    if (!cleanId) {
+      return this.cargarHistoriaPorConsultasFallback(cleanId, cleanIdAnimal, nombrePaciente);
+    }
     const urlExpCompleto = `${this.baseUrlClinica}expediente-completo/${cleanId}/`;
     return this.http.get<any>(urlExpCompleto, { headers: this.authHeaders }).pipe(
       switchMap((expData) => {
@@ -927,16 +964,26 @@ export class HistoriaClinicaService {
     cleanIdAnimal: string,
     nombrePaciente?: string
   ): Observable<HistoriaClinicaEdicion> {
-    const urlConsultasHistoria = `${this.baseUrlClinica}consultas/?id_historia=${cleanId}`;
-    return this.http.get<any>(urlConsultasHistoria, { headers: this.authHeaders }).pipe(
-      map(res => this.extraerLista(res).filter((c: any) => Number(c?.id_historia) === Number(cleanId))),
-      catchError(() => of([])),
+    const idHistValido = this.normalizarIdRuta(cleanId);
+    const idAnimalValido = this.normalizarIdRuta(cleanIdAnimal);
+
+    const consultasHist$ = idHistValido
+      ? this.http.get<any>(`${this.baseUrlClinica}consultas/?id_historia=${idHistValido}`, { headers: this.authHeaders }).pipe(
+          map(res => this.extraerLista(res).filter((c: any) => Number(c?.id_historia) === Number(idHistValido))),
+          catchError(() => of([]))
+        )
+      : of([]);
+
+    return consultasHist$.pipe(
       switchMap((consultas: any[]) => {
         if (consultas && consultas.length > 0) {
           const ultConsulta = consultas[0];
-          return this.cargarDetalleCompletoConsulta(ultConsulta, cleanId, nombrePaciente, cleanIdAnimal);
+          return this.cargarDetalleCompletoConsulta(ultConsulta, idHistValido, nombrePaciente, idAnimalValido);
         }
-        const animalIdParaBuscar = cleanIdAnimal || cleanId;
+        const animalIdParaBuscar = idAnimalValido || idHistValido;
+        if (!animalIdParaBuscar) {
+          return of(this.crearHistoriaLimpia(idHistValido, nombrePaciente, idAnimalValido));
+        }
         const urlConsultasAnimal = `${this.baseUrlClinica}consultas/?id_animal=${animalIdParaBuscar}`;
         return this.http.get<any>(urlConsultasAnimal, { headers: this.authHeaders }).pipe(
           map(res => this.extraerLista(res)),
@@ -946,12 +993,12 @@ export class HistoriaClinicaService {
               const ultConsulta = consultasAnimal[0];
               return this.cargarDetalleCompletoConsulta(
                 ultConsulta,
-                String(ultConsulta.id_historia || cleanId),
+                String(ultConsulta.id_historia || idHistValido),
                 nombrePaciente,
                 animalIdParaBuscar
               );
             }
-            return this.cargarExpedienteSinConsultas(cleanId, cleanIdAnimal, nombrePaciente);
+            return this.cargarExpedienteSinConsultas(idHistValido, idAnimalValido, nombrePaciente);
           })
         );
       })
@@ -1296,8 +1343,8 @@ export class HistoriaClinicaService {
     idAnimal?: number | string | null,
     nombrePaciente?: string | null
   ): Observable<any> {
-    const cleanId = String(idHistoriaOIdConsulta ?? '').trim();
-    const cleanIdAnimal = String(idAnimal ?? '').trim();
+    const cleanId = this.normalizarIdRuta(idHistoriaOIdConsulta);
+    const cleanIdAnimal = this.normalizarIdRuta(idAnimal);
     const cleanNombre = String(nombrePaciente ?? '').trim().toLowerCase();
     const urlConsultas = environment.apiUrlConsultas || `${this.baseUrlClinica}consultas/`;
     const urlHistorias = environment.apiUrlHistorias || `${this.baseUrlClinica}historias/`;
@@ -1552,7 +1599,11 @@ export class HistoriaClinicaService {
     idAnimal: string,
     nombrePaciente?: string
   ): Observable<HistoriaClinicaEdicion> {
-    const animalId = idAnimal || idHistoria;
+    const idHistValido = this.normalizarIdRuta(idHistoria);
+    const animalId = this.normalizarIdRuta(idAnimal) || idHistValido;
+    if (!animalId) {
+      return of(this.crearHistoriaLimpia(idHistValido, nombrePaciente, ''));
+    }
     const urlAnimal = `${this.baseUrlClinica}expediente-por-animal/${animalId}/`;
 
     return this.http.get<any>(urlAnimal, { headers: this.authHeaders }).pipe(
@@ -1639,7 +1690,10 @@ export class HistoriaClinicaService {
         };
       }),
       catchError(() => {
-        const urlHistorias = `${this.baseUrlClinica}historias/${idHistoria}/`;
+        if (!idHistValido) {
+          return of(this.crearHistoriaLimpia('', nombrePaciente, animalId));
+        }
+        const urlHistorias = `${this.baseUrlClinica}historias/${idHistValido}/`;
         return this.http.get<any>(urlHistorias, { headers: this.authHeaders }).pipe(
           map(h => ({
             id_historia: Number(h.id_historia) || Number(idHistoria),

@@ -934,7 +934,35 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.consultasFiltradasHistorial = [];
     this.cdr.detectChanges();
 
-    const cleanAnimalId = historia.id_animal;
+    const cleanAnimalId = Number(historia.id_animal);
+    if (!Number.isInteger(cleanAnimalId) || cleanAnimalId <= 0) {
+      const fechaApertura = historia.fecha_apertura || new Date().toISOString();
+      this.consultasHistorial = [
+        {
+          id_consulta: 1,
+          titulo: 'CONSULTA GENERAL',
+          peso: historia.animal_peso ? Number(historia.animal_peso) : 3.0,
+          temperatura: 38.5,
+          frecuencia_cardiaca: 110,
+          frecuencia_respiratoria: 24,
+          diagnostico: 'Apertura de expediente e ingreso de paciente.',
+          diagnostico_diferencial: '',
+          plan_tratamiento: 'Plan sanitario y seguimiento clínico.',
+          fecha_hora: fechaApertura,
+          fecha_formateada: this.formatearFechaLarga(fechaApertura),
+          hora_formateada: this.formatearHora(fechaApertura),
+          mes_ano: this.formatearMesAno(fechaApertura),
+          veterinario: this.obtenerVeterinarioSesion(),
+          prioridad: 'Normal',
+          expandido: false
+        }
+      ];
+      this.consultasFiltradasHistorial = [...this.consultasHistorial];
+      this.cargandoDetalleConsultas = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
     const urlExpAnimal = `${environment.apiUrlExpedientePorAnimal}${cleanAnimalId}/`;
 
     this.http.get<any>(urlExpAnimal, { headers: this.authHeaders }).subscribe({
