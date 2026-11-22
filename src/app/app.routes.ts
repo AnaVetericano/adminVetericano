@@ -4,6 +4,7 @@ import { Routes } from '@angular/router';
 import { Medicamentos } from './crear-medicamentos/crear-medicamentos';
 import { Especies } from './especies/especies';
 import { Landepage } from './landepage/landepage';
+import { Landingpage } from './landingpage/landingpage';
 import { Register } from './register/register';
 
 import { InicioAdministradorComponent } from './Inicio-administrador/Inicio-administrador';
@@ -36,7 +37,8 @@ import { SuperAdminReportesComponent } from './super-admin-reportes/super-admin-
 import { AuthService } from './services/auth';
 
 export const routes: Routes = [
-  { path: '', component: Landepage },
+  { path: '', component: Landingpage },
+  { path: 'login', component: Landepage },
   { path: 'register', component: Register, canActivate: [loginGuard] },
   { path: 'iniciodesesionadministrador', component: InicioDeSesionAdministradorComponent, canActivate: [loginGuard] },
 

@@ -7,45 +7,37 @@
            bg-white
            flex flex-col
            items-center
-           justify-between
+           justify-center
            px-6 sm:px-12
            py-4 lg:py-8"
   >
-    <div class="flex-1 flex flex-col items-center justify-center w-full">
-      
-      <!-- Textos Centrados con el mismo color y mayor tamaño -->
+    <div class="flex-1 flex flex-col items-center justify-center w-full lg:pb-12">
+
+      <!-- Cabecera y logo centrados -->
       <div class="text-center">
-        <h1
-          class="text-4xl sm:text-5xl lg:text-6xl
+        <p
+          class="text-base sm:text-lg lg:text-xl
                  font-bold
-                 leading-tight
+                 tracking-[0.18em]
+                 uppercase
                  text-[#170B3D]"
         >
           BIENVENIDO A
-        </h1>
-
-        <h2
-          class="text-4xl sm:text-5xl lg:text-6xl
-                 font-bold
-                 leading-tight
-                 text-[#4141A5]
-                 mt-1"
-        >
-          VETERICANO
-        </h2>
-
-        <p
-          class="mt-3 sm:mt-4
-                 text-sm sm:text-base
-                 font-medium
-                 text-slate-600"
-        >
-          Cuidamos a quienes no tienen voz
         </p>
+
+        <h1 class="mt-3 sm:mt-4 flex justify-center">
+          <img
+            src="images/logo-vetericano.svg"
+            alt="VETERICANO"
+            width="942"
+            height="527"
+            class="w-44 sm:w-64 lg:w-80 h-auto object-contain"
+          >
+        </h1>
       </div>
 
       <!-- Botones Centrados -->
-      <div class="w-full max-w-[280px] space-y-3 mt-6 lg:mt-8">
+      <div class="w-full max-w-[280px] lg:max-w-[320px] space-y-3 mt-7 sm:mt-8 lg:mt-10">
         <button
           type="button"
           (click)="iniciarSesion()"
@@ -79,16 +71,7 @@
           Registrar
         </button>
       </div>
-      
-    </div>
 
-    <!-- Logo inferior centrado -->
-    <div class="mt-2 shrink-0 w-full flex justify-center">
-      <img
-        src="images/logoVet.svg"
-        alt="VETERICANO"
-        class="w-20 sm:w-24 h-auto object-contain"
-      >
     </div>
 
   </section>
@@ -118,21 +101,14 @@
 
     <div class="pt-2 lg:pt-4">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 bg-white border border-slate-200 text-[#4141A5] rounded-lg flex items-center justify-center shrink-0">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.75"
-            stroke="currentColor"
-            class="w-5 h-5 text-[#4141A5]"
+        <div class="w-9 h-9 bg-white border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
+          <img
+            src="images/logoVetIcon.svg"
+            alt="Isotipo VETERICANO"
+            width="24"
+            height="24"
+            class="w-6 h-6 object-contain"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M21.75 8.25c0 5.25-9.75 11.25-9.75 11.25S2.25 13.5 2.25 8.25a5.25 5.25 0 0 1 9.75-2.79 5.25 5.25 0 0 1 9.75 2.79Z"
-            />
-          </svg>
         </div>
 
         <h3
@@ -140,7 +116,7 @@
                  font-bold
                  text-[#170B3D]"
         >
-          VETERICANO
+          Panel de gestión veterinaria
         </h3>
       </div>
 
@@ -150,7 +126,7 @@
                leading-relaxed
                text-slate-600"
       >
-        Panel de administración para gestionar peticiones, rescates y coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
+        Gestiona peticiones, rescates y la coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
       </p>
     </div>
 
