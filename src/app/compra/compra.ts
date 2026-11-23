@@ -242,7 +242,8 @@ export class Compra implements OnInit {
     // Ordenar de más reciente a más antigua
     resultado.sort((a, b) => {
       if (a.fecha && b.fecha) {
-        return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+        const fechas = new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+        if (fechas !== 0) return fechas;
       }
       return (b.id_compra || 0) - (a.id_compra || 0);
     });
