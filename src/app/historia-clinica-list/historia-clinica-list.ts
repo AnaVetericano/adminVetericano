@@ -422,7 +422,7 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.historias.sort((a, b) => {
       const fechaA = new Date(a.fecha_apertura || 0).getTime();
       const fechaB = new Date(b.fecha_apertura || 0).getTime();
-      return fechaB - fechaA;
+      return (fechaB - fechaA) || ((b.id_historia || 0) - (a.id_historia || 0));
     });
 
     this.aplicarFiltros(false);

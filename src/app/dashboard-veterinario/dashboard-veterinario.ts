@@ -565,11 +565,16 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
       );
     }
 
-    // Ordenar: urgentes primero, luego más recientes
+    // Ordenar como el backend: abiertas antes que terminadas, urgentes primero, luego más recientes
     lista.sort((a, b) => {
+      const aFin = this.esTerminada(a) ? 1 : 0;
+      const bFin = this.esTerminada(b) ? 1 : 0;
+      if (aFin !== bFin) return aFin - bFin;
       const aUrg = this.esUrgente(a) ? 1 : 0;
       const bUrg = this.esUrgente(b) ? 1 : 0;
       if (aUrg !== bUrg) return bUrg - aUrg;
+      const fechas = this.tiempo(b.fecha) - this.tiempo(a.fecha);
+      if (fechas !== 0) return fechas;
       return (b.id_peticion || 0) - (a.id_peticion || 0);
     });
 
@@ -579,6 +584,17 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   setFiltroPeticion(filtro: 'TODAS' | 'URGENTES' | 'PENDIENTES' | 'PROCESO' | 'ATENDIDAS'): void {
     this.filtroEstadoPeticion = filtro;
     this.filtrarPeticiones();
+  }
+
+  /** Estados terminales (mismo criterio que ESTADOS_TERMINALES_NORM del backend). */
+  private esTerminada(p: PeticionItem): boolean {
+    const st = (p.estado || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return ['finaliz', 'resuelt', 'cancelad', 'rechazad', 'alta medica', 'fallecid', 'duplicad'].some(t => st.startsWith(t));
+  }
+
+  private tiempo(fecha?: string | null): number {
+    const t = fecha ? new Date(fecha).getTime() : 0;
+    return Number.isNaN(t) ? 0 : t;
   }
 
   esUrgente(p: PeticionItem): boolean {
@@ -867,7 +883,15 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
       lista = lista.filter(s => (s.estado || '').toUpperCase().includes('ENTREG'));
     }
 
-    lista.sort((a, b) => (b.id_solicitud || 0) - (a.id_solicitud || 0));
+    // Pendientes primero; luego de la más reciente a la más antigua
+    lista.sort((a, b) => {
+      const aPend = (a.estado || '').toUpperCase().includes('PEND') ? 0 : 1;
+      const bPend = (b.estado || '').toUpperCase().includes('PEND') ? 0 : 1;
+      if (aPend !== bPend) return aPend - bPend;
+      const fechas = this.tiempo(b.fecha_solicitud) - this.tiempo(a.fecha_solicitud);
+      if (fechas !== 0) return fechas;
+      return (b.id_solicitud || 0) - (a.id_solicitud || 0);
+    });
     this.solicitudesFiltradas = lista;
   }
 
