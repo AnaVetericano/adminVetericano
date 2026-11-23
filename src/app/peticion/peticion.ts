@@ -26,6 +26,7 @@ import {
 import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparacion/alerta-duplicado-comparacion';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-peticion',
@@ -38,7 +39,9 @@ import { PageTitleComponent } from '../page-title/page-title';
     AlertaDuplicadoComparacionComponent,
     RouterLink,
     AnimalIconComponent,
-    PageTitleComponent
+    PageTitleComponent,
+    PaginadorComponent,
+    PaginarPipe
   ],
   templateUrl: './peticion.html',
   styleUrl: './peticion.css'
@@ -94,6 +97,8 @@ export class Peticion implements OnInit, OnDestroy {
   filtroAtrasadas = false;
   menuFiltroAbierto = false;
   menuFiltroEstadoAbierto = false;
+  paginaPeticiones = 1;
+  tamanoPaginaPeticiones = TAMANO_PAGINA_PREDETERMINADO;
 
   // Catálogo unificado de estados
   estadosCatalogoPrevistos: string[] = [
@@ -1124,19 +1129,23 @@ export class Peticion implements OnInit, OnDestroy {
   filtrarPorEstadoAsignacion(estado: 'Todos' | 'Asignadas' | 'Sin asignar'): void {
     this.filtroEstadoAsignacion = estado;
     this.menuFiltroAbierto = false;
+    this.paginaPeticiones = 1;
   }
 
   filtrarPorEstadoPeticion(estado: string): void {
     this.filtroEstadoPeticion = estado;
     this.menuFiltroEstadoAbierto = false;
+    this.paginaPeticiones = 1;
   }
 
   filtrarPorPrioridad(prio: 'Todos' | 'Urgentes' | 'Estandar'): void {
     this.filtroPrioridad = prio;
+    this.paginaPeticiones = 1;
   }
 
   toggleFiltroAtrasadas(): void {
     this.filtroAtrasadas = !this.filtroAtrasadas;
+    this.paginaPeticiones = 1;
   }
 
   toggleMenuFiltro(): void {
@@ -1149,6 +1158,7 @@ export class Peticion implements OnInit, OnDestroy {
 
   limpiarBusqueda(): void {
     this.filtroBusqueda = '';
+    this.paginaPeticiones = 1;
   }
 
   limpiarTodosFiltros(): void {
@@ -1157,6 +1167,7 @@ export class Peticion implements OnInit, OnDestroy {
     this.filtroEstadoPeticion = 'Todos';
     this.filtroPrioridad = 'Todos';
     this.filtroAtrasadas = false;
+    this.paginaPeticiones = 1;
   }
 
   tipoLabel(p: any): string {

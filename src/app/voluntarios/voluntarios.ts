@@ -13,6 +13,7 @@ import {
 import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-voluntarios',
@@ -22,7 +23,9 @@ import { PageTitleComponent } from '../page-title/page-title';
     RouterLink,
     FormsModule,
     AnimalIconComponent,
-    PageTitleComponent
+    PageTitleComponent,
+    PaginadorComponent,
+    PaginarPipe
   ],
   templateUrl: './voluntarios.html',
   styleUrl: './voluntarios.css'
@@ -38,6 +41,10 @@ export class Voluntarios implements OnInit {
   cargando: boolean = true;
 
   filtroBusqueda: string = '';
+
+  pagina: number = 1;
+
+  tamanoPagina: number = TAMANO_PAGINA_PREDETERMINADO;
 
   editandoId: number | null = null;
 
@@ -164,6 +171,8 @@ export class Voluntarios implements OnInit {
 
   filtrarVoluntarios(): void {
 
+    this.pagina = 1;
+
     const termino = this.filtroBusqueda
       .toLowerCase()
       .trim();
@@ -212,6 +221,8 @@ export class Voluntarios implements OnInit {
   filtrarPorEvento(
     idEvento: number | null
   ): void {
+
+    this.pagina = 1;
 
     // Cerramos el menú
 

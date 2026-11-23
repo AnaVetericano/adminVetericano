@@ -99,7 +99,7 @@
                 </div>
               </td>
             </tr>
-            <tr *ngFor="let m of medicamentos" class="hover:bg-slate-50 transition-colors group">
+            <tr *ngFor="let m of medicamentos | paginar: pagina : tamanoPagina" class="hover:bg-slate-50 transition-colors group">
               <td class="px-4 py-3 font-semibold text-[#170B3D]">{{ m.nombre }}</td>
               <td class="px-4 py-3 text-slate-600 max-w-xs sm:max-w-md truncate">{{ m.descripcion || 'Sin descripción' }}</td>
               <td class="px-4 py-3 text-center text-slate-700">{{ m.tipo || '-' }}</td>
@@ -138,6 +138,7 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [total]="medicamentos.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
     </div>
 
   </main>

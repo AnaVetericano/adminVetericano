@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Chart } from 'chart.js/auto';
 import {
@@ -21,11 +21,12 @@ import {
 } from '../services/super-admin.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-super-admin-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent],
   templateUrl: './super-admin-reportes.html',
   styleUrl: './super-admin-reportes.css'
 })
@@ -51,6 +52,10 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
   estadisticas: EstadisticasSuperAdmin | null = null;
   peticionesAtendidas: PeticionAtendidaReporte[] = [];
   veterinariosCatalogo: VeterinarioRendimiento[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
+  totalAtendidas = 0;
+  private peticionAtendidas?: Subscription;
 
   // Modal de detalle de caso atendido
   peticionSeleccionada: PeticionAtendidaReporte | null = null;
@@ -74,16 +79,23 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
     this.destruirGraficas();
   }
 
-  consultarReportes(esCargaInicial = false): void {
-    this.cargando = true;
-    this.errorMensaje = '';
-
+  private construirParamsFiltros(): FiltroReportesSuperAdmin {
     const params: FiltroReportesSuperAdmin = {};
     if (this.filtros.fecha) params.fecha = this.filtros.fecha;
     if (this.filtros.fecha_desde) params.fecha_desde = this.filtros.fecha_desde;
     if (this.filtros.fecha_hasta) params.fecha_hasta = this.filtros.fecha_hasta;
     if (this.filtros.estado) params.estado = this.filtros.estado;
     if (this.filtros.veterinario) params.veterinario = this.filtros.veterinario;
+    return params;
+  }
+
+  consultarReportes(esCargaInicial = false): void {
+    this.peticionAtendidas?.unsubscribe();
+    this.pagina = 1;
+    this.cargando = true;
+    this.errorMensaje = '';
+
+    const params = this.construirParamsFiltros();
 
     forkJoin({
       estadisticas: this.superAdminService.obtenerEstadisticas(params).pipe(
@@ -93,18 +105,21 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
           return of(null);
         })
       ),
-      atendidas: this.superAdminService.obtenerReporteAtendidas(params).pipe(
-        catchError((err) => {
-          console.error('Error al obtener peticiones atendidas:', err);
-          if (!this.errorMensaje) {
-            this.errorMensaje = this.extraerMensajeError(err);
-          }
-          return of([] as PeticionAtendidaReporte[]);
-        })
-      )
+      atendidas: this.superAdminService
+        .obtenerReporteAtendidasPaginado(params, this.pagina, this.tamanoPagina)
+        .pipe(
+          catchError((err) => {
+            console.error('Error al obtener peticiones atendidas:', err);
+            if (!this.errorMensaje) {
+              this.errorMensaje = this.extraerMensajeError(err);
+            }
+            return of({ count: 0, results: [] as PeticionAtendidaReporte[] });
+          })
+        )
     }).subscribe(({ estadisticas, atendidas }) => {
       this.estadisticas = estadisticas;
-      this.peticionesAtendidas = atendidas || [];
+      this.peticionesAtendidas = atendidas?.results || [];
+      this.totalAtendidas = atendidas?.count ?? this.peticionesAtendidas.length;
 
       if (esCargaInicial && estadisticas?.por_veterinario) {
         this.veterinariosCatalogo = estadisticas.por_veterinario;
@@ -118,6 +133,31 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
     });
   }
 
+  // Recarga solo la tabla paginada al cambiar página o tamaño sin repetir estadísticas
+  cargarAtendidas(): void {
+    this.cargando = true;
+    this.errorMensaje = '';
+
+    const params = this.construirParamsFiltros();
+    this.peticionAtendidas?.unsubscribe();
+    this.peticionAtendidas = this.superAdminService
+      .obtenerReporteAtendidasPaginado(params, this.pagina, this.tamanoPagina)
+      .subscribe({
+        next: (resp) => {
+          this.peticionesAtendidas = resp?.results || [];
+          this.totalAtendidas = resp?.count ?? this.peticionesAtendidas.length;
+          this.cargando = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error al obtener peticiones atendidas:', err);
+          this.errorMensaje = this.extraerMensajeError(err);
+          this.cargando = false;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
   limpiarFiltros(): void {
     this.filtros = {
       fecha: '',
@@ -126,6 +166,7 @@ export class SuperAdminReportesComponent implements OnInit, AfterViewInit, OnDes
       estado: '',
       veterinario: ''
     };
+    this.pagina = 1;
     this.consultarReportes();
   }
 

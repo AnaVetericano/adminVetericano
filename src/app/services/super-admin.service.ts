@@ -172,6 +172,11 @@ export interface PeticionAtendidaReporte {
   [key: string]: any;
 }
 
+export interface ReporteAtendidasPaginado {
+  count: number;
+  results: PeticionAtendidaReporte[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -270,6 +275,35 @@ export class SuperAdminService {
       map((res) => {
         const raw = Array.isArray(res) ? res : (res?.results || res?.data || []);
         return raw.map((item: any) => this.normalizarPeticionAtendida(item));
+      })
+    );
+  }
+
+  /**
+   * GET /api/super-administrador/reportes/atendidas/?page=<n>&page_size=<m>
+   * Versión paginada en servidor del listado de peticiones/casos atendidos.
+   */
+  obtenerReporteAtendidasPaginado(
+    filtros?: FiltroReportesSuperAdmin,
+    page = 1,
+    pageSize = 20
+  ): Observable<ReporteAtendidasPaginado> {
+    const params = this.construirParamsReportes(filtros)
+      .set('page', String(page))
+      .set('page_size', String(pageSize));
+
+    return this.http.get<any>(`${this.apiUrl}reportes/atendidas/`, { params }).pipe(
+      map((res) => {
+        if (Array.isArray(res)) {
+          const results = res.map((item: any) => this.normalizarPeticionAtendida(item));
+          return { count: results.length, results };
+        }
+        const raw = res?.results || res?.data || [];
+        const results = Array.isArray(raw)
+          ? raw.map((item: any) => this.normalizarPeticionAtendida(item))
+          : [];
+        const count = typeof res?.count === 'number' ? res.count : results.length;
+        return { count, results };
       })
     );
   }

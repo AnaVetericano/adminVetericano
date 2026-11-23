@@ -10,11 +10,12 @@ import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-ev
 import { VeterinaryInventoryService, VeterinaryKitItem } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-inventario-juridico',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './inventario-juridico.html',
   styleUrl: './inventario-juridico.css',
 })
@@ -49,6 +50,8 @@ export class InventarioJuridicoComponent implements OnInit {
   filasBase: any[] = [];
   filtro = '';
   filtroEstado = 'todos';
+  paginaGeneral = 1;
+  tamanoPaginaGeneral = TAMANO_PAGINA_PREDETERMINADO;
   umbralBajo = 10;
   totalCompras = 0;
 
@@ -62,6 +65,8 @@ export class InventarioJuridicoComponent implements OnInit {
   itemsVeterinarioFiltrados: VeterinaryKitItem[] = [];
   filtroVetTexto = '';
   filtroVetEstado = 'todos';
+  paginaVet = 1;
+  tamanoPaginaVet = TAMANO_PAGINA_PREDETERMINADO;
 
   // --- ESTADO MODAL DE ASIGNACIÓN DE LOTE A VETERINARIO ---
   modalAsignarAbierto = false;
@@ -370,10 +375,11 @@ export class InventarioJuridicoComponent implements OnInit {
 
     lista.sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
     this.filasBase = lista;
-    this.filtrarGeneral();
+    this.filtrarGeneral(false);
   }
 
-  filtrarGeneral(): void {
+  filtrarGeneral(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) this.paginaGeneral = 1;
     const t = this.filtro.toLowerCase().trim();
     this.filas = this.filasBase.filter((f: any) => {
       if (this.filtroEstado !== 'todos' && f.estado !== this.filtroEstado) return false;
@@ -394,6 +400,7 @@ export class InventarioJuridicoComponent implements OnInit {
     this.filtro = '';
     this.filtroEstado = 'todos';
     this.filas = [...this.filasBase];
+    this.paginaGeneral = 1;
   }
 
   get totalRef(): number { return this.filasBase.length; }
@@ -652,6 +659,7 @@ export class InventarioJuridicoComponent implements OnInit {
   seleccionarVeterinario(vet: any): void {
     this.veterinarioSeleccionado = vet;
     this.idVeterinarioSeleccionado = Number(vet.id_usuario ?? vet.id);
+    this.paginaVet = 1;
     this.cargarInventarioDeVeterinario(this.idVeterinarioSeleccionado);
   }
 
@@ -662,7 +670,7 @@ export class InventarioJuridicoComponent implements OnInit {
     this.vetInvSvc.cargarInventarioVeterinario(idVet).subscribe({
       next: (items) => {
         this.itemsVeterinario = items || [];
-        this.filtrarKitVeterinario();
+        this.filtrarKitVeterinario(false);
         this.cargandoKitVet = false;
         this.cdr.detectChanges();
       },
@@ -673,7 +681,8 @@ export class InventarioJuridicoComponent implements OnInit {
     });
   }
 
-  filtrarKitVeterinario(): void {
+  filtrarKitVeterinario(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) this.paginaVet = 1;
     const t = this.filtroVetTexto.toLowerCase().trim();
     this.itemsVeterinarioFiltrados = this.itemsVeterinario.filter((item: VeterinaryKitItem) => {
       if (this.filtroVetEstado === 'bajo' && item.saldoDisponible > 10) return false;
@@ -694,6 +703,7 @@ export class InventarioJuridicoComponent implements OnInit {
     this.filtroVetTexto = '';
     this.filtroVetEstado = 'todos';
     this.itemsVeterinarioFiltrados = [...this.itemsVeterinario];
+    this.paginaVet = 1;
   }
 
   get totalItemsVet(): number {

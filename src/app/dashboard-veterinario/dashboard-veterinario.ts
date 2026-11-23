@@ -18,6 +18,7 @@ import {
 } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 export interface PeticionItem {
   id_peticion: number;
@@ -57,7 +58,7 @@ export interface MedicamentoMaletinUI {
 @Component({
   selector: 'app-dashboard-veterinario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './dashboard-veterinario.html',
   styleUrl: './dashboard-veterinario.css'
 })
@@ -109,6 +110,8 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   peticionesFiltradas: PeticionItem[] = [];
   filtroEstadoPeticion: 'TODAS' | 'URGENTES' | 'PENDIENTES' | 'PROCESO' | 'ATENDIDAS' = 'TODAS';
   busquedaPeticion = '';
+  paginaPeticiones = 1;
+  tamanoPaginaPeticiones = TAMANO_PAGINA_PREDETERMINADO;
 
   // Métricas de Peticiones
   totalAsignadas = 0;
@@ -213,6 +216,8 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   solicitudesKit: any[] = [];
   solicitudesFiltradas: any[] = [];
   filtroEstadoSolicitud: 'TODAS' | 'PENDIENTES' | 'APROBADAS' | 'ENTREGADAS' = 'TODAS';
+  paginaSolicitudes = 1;
+  tamanoPaginaSolicitudes = TAMANO_PAGINA_PREDETERMINADO;
 
   // Modal de Solicitudes a Farmacia CBA (Ventana Flotante)
   modalSolicitudesAbierto = false;
@@ -476,7 +481,7 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
         const datos = Array.isArray(res) ? res : (res?.results || res?.data || []);
         this.peticiones = datos;
         this.calcularMetricasPeticiones();
-        this.filtrarPeticiones();
+        this.filtrarPeticiones(false);
         this.cargandoPeticiones = false;
         this.cdr.detectChanges();
         setTimeout(() => {
@@ -522,7 +527,10 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
     }
   }
 
-  filtrarPeticiones(): void {
+  filtrarPeticiones(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.paginaPeticiones = 1;
+    }
     let lista = [...this.peticiones];
 
     // Filtro por Estado
@@ -824,7 +832,7 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
       next: (resp) => {
         const lista = Array.isArray(resp) ? resp : (resp?.results || resp?.data || []);
         this.solicitudesKit = lista;
-        this.filtrarSolicitudes();
+        this.filtrarSolicitudes(false);
         this.cargandoSolicitudes = false;
         this.cdr.detectChanges();
       },
@@ -845,7 +853,10 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
     });
   }
 
-  filtrarSolicitudes(): void {
+  filtrarSolicitudes(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.paginaSolicitudes = 1;
+    }
     let lista = [...this.solicitudesKit];
 
     if (this.filtroEstadoSolicitud === 'PENDIENTES') {

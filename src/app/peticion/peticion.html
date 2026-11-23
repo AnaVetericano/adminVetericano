@@ -309,7 +309,7 @@
               viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input type="text" [(ngModel)]="filtroBusqueda"
+            <input type="text" [(ngModel)]="filtroBusqueda" (ngModelChange)="paginaPeticiones = 1"
               placeholder="Buscar por radicado, tipo, estado, dirección o veterinario..."
               class="w-full outline-none text-sm text-slate-800 placeholder:text-slate-400 bg-transparent truncate">
 
@@ -443,7 +443,7 @@
       <!-- CUADRÍCULA DE TARJETAS DE PETICIONES -->
       <div *ngIf="!cargandoPeticiones && peticionesFiltradas.length > 0" class="mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-          <div *ngFor="let p of peticionesFiltradas"
+          <div *ngFor="let p of peticionesFiltradas | paginar: paginaPeticiones : tamanoPaginaPeticiones"
             class="bg-white rounded-xl p-4 sm:p-5 border shadow-xs transition-colors flex flex-col justify-between space-y-4"
             [ngClass]="esAtrasada(p) ? 'border-slate-200 border-l-4 border-l-[#B42318]' : (esUrgente(p) ? 'border-slate-200 border-l-4 border-l-[#B42318]' : 'border-slate-200 hover:border-[#4141A5]/40')">
 
@@ -578,6 +578,12 @@
 
           </div>
         </div>
+        <app-paginador
+          class="mt-4"
+          variante="suelto"
+          [total]="peticionesFiltradas.length"
+          [(pagina)]="paginaPeticiones"
+          [(tamano)]="tamanoPaginaPeticiones" />
       </div>
 
       <!-- ESTADO VACÍO (SIN RESULTADOS) -->

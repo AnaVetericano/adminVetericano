@@ -172,7 +172,7 @@
               </tr>
             }
 
-            @for (admin of administradoresFiltrados; track admin.id_usuario) {
+            @for (admin of administradoresFiltrados | paginar: pagina : tamanoPagina; track admin.id_usuario) {
               <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                 <!-- Nombre y Rol -->
                 <td class="px-4 py-3 text-sm text-slate-700">
@@ -265,6 +265,7 @@
           </tbody>
         </table>
       </div>
+      <app-paginador [total]="administradoresFiltrados.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
     </div>
 
   </main>

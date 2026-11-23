@@ -133,7 +133,7 @@
                         </tr>
 
                         <!-- Filas dinámicas -->
-                        <tr *ngFor="let p of patologias" class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+                        <tr *ngFor="let p of patologias | paginar: pagina : tamanoPagina" class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                             <td class="px-4 py-3 text-sm font-semibold text-[#170B3D]">{{ p.nombre }}</td>
                             <td class="px-4 py-3 text-xs">
                                 <span *ngIf="p.tipo_de_enfermedad" class="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-slate-100 text-slate-700 border border-slate-200">
@@ -173,6 +173,7 @@
                     </tbody>
                 </table>
             </div>
+            <app-paginador [total]="patologias.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
         </div>
 
     </main>

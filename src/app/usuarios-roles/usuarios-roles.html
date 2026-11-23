@@ -207,7 +207,7 @@
                         </tr>
 
                         <tr
-                            *ngFor="let usuario of usuariosFiltrados"
+                            *ngFor="let usuario of usuariosFiltrados | paginar: pagina : tamanoPagina"
                             class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                             <td class="px-4 py-3 text-sm text-slate-500 font-medium">
                                 {{ usuario.id_usuario }}
@@ -299,6 +299,7 @@
                     </tbody>
                 </table>
             </div>
+            <app-paginador [total]="usuariosFiltrados.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
         </div>
 
     </main>
