@@ -11,11 +11,12 @@ import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-ev
 import { VeterinaryInventoryService } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css',
 })
@@ -26,6 +27,8 @@ export class Inventario implements OnInit {
   filasBase: any[] = [];
   filtro = '';
   filtroEstado = 'todos';
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
   umbralBajo = 10;
   totalCompras = 0;
 
@@ -335,10 +338,11 @@ export class Inventario implements OnInit {
 
     lista.sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
     this.filasBase = lista;
-    this.filtrar();
+    this.filtrar(false);
   }
 
-  filtrar(): void {
+  filtrar(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) this.pagina = 1;
     const t = this.filtro.toLowerCase().trim();
     this.filas = this.filasBase.filter((f: any) => {
       if (this.filtroEstado !== 'todos' && f.estado !== this.filtroEstado) return false;
@@ -355,7 +359,7 @@ export class Inventario implements OnInit {
     });
   }
 
-  limpiar(): void { this.filtro = ''; this.filtroEstado = 'todos'; this.filas = [...this.filasBase]; }
+  limpiar(): void { this.filtro = ''; this.filtroEstado = 'todos'; this.filas = [...this.filasBase]; this.pagina = 1; }
   get totalRef(): number { return this.filasBase.length; }
   get totalUnd(): number { return this.filasBase.filter(f => !f.sinLote).reduce((s: number, f: any) => s + (Number(f.stock) || 0), 0); }
   get totalDisp(): number { return this.filasBase.filter((f: any) => f.estado === 'disponible').length; }

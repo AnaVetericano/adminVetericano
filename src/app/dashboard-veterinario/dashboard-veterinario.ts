@@ -18,6 +18,7 @@ import {
 } from '../services/veterinary-inventory.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 export interface PeticionItem {
   id_peticion: number;
@@ -57,7 +58,7 @@ export interface MedicamentoMaletinUI {
 @Component({
   selector: 'app-dashboard-veterinario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './dashboard-veterinario.html',
   styleUrl: './dashboard-veterinario.css'
 })
@@ -109,6 +110,8 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   peticionesFiltradas: PeticionItem[] = [];
   filtroEstadoPeticion: 'TODAS' | 'URGENTES' | 'PENDIENTES' | 'PROCESO' | 'ATENDIDAS' = 'TODAS';
   busquedaPeticion = '';
+  paginaPeticiones = 1;
+  tamanoPaginaPeticiones = TAMANO_PAGINA_PREDETERMINADO;
 
   // Métricas de Peticiones
   totalAsignadas = 0;
@@ -213,6 +216,8 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   solicitudesKit: any[] = [];
   solicitudesFiltradas: any[] = [];
   filtroEstadoSolicitud: 'TODAS' | 'PENDIENTES' | 'APROBADAS' | 'ENTREGADAS' = 'TODAS';
+  paginaSolicitudes = 1;
+  tamanoPaginaSolicitudes = TAMANO_PAGINA_PREDETERMINADO;
 
   // Modal de Solicitudes a Farmacia CBA (Ventana Flotante)
   modalSolicitudesAbierto = false;
@@ -476,7 +481,7 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
         const datos = Array.isArray(res) ? res : (res?.results || res?.data || []);
         this.peticiones = datos;
         this.calcularMetricasPeticiones();
-        this.filtrarPeticiones();
+        this.filtrarPeticiones(false);
         this.cargandoPeticiones = false;
         this.cdr.detectChanges();
         setTimeout(() => {
@@ -522,7 +527,10 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
     }
   }
 
-  filtrarPeticiones(): void {
+  filtrarPeticiones(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.paginaPeticiones = 1;
+    }
     let lista = [...this.peticiones];
 
     // Filtro por Estado
@@ -557,11 +565,16 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
       );
     }
 
-    // Ordenar: urgentes primero, luego más recientes
+    // Ordenar como el backend: abiertas antes que terminadas, urgentes primero, luego más recientes
     lista.sort((a, b) => {
+      const aFin = this.esTerminada(a) ? 1 : 0;
+      const bFin = this.esTerminada(b) ? 1 : 0;
+      if (aFin !== bFin) return aFin - bFin;
       const aUrg = this.esUrgente(a) ? 1 : 0;
       const bUrg = this.esUrgente(b) ? 1 : 0;
       if (aUrg !== bUrg) return bUrg - aUrg;
+      const fechas = this.tiempo(b.fecha) - this.tiempo(a.fecha);
+      if (fechas !== 0) return fechas;
       return (b.id_peticion || 0) - (a.id_peticion || 0);
     });
 
@@ -571,6 +584,17 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
   setFiltroPeticion(filtro: 'TODAS' | 'URGENTES' | 'PENDIENTES' | 'PROCESO' | 'ATENDIDAS'): void {
     this.filtroEstadoPeticion = filtro;
     this.filtrarPeticiones();
+  }
+
+  /** Estados terminales (mismo criterio que ESTADOS_TERMINALES_NORM del backend). */
+  private esTerminada(p: PeticionItem): boolean {
+    const st = (p.estado || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return ['finaliz', 'resuelt', 'cancelad', 'rechazad', 'alta medica', 'fallecid', 'duplicad'].some(t => st.startsWith(t));
+  }
+
+  private tiempo(fecha?: string | null): number {
+    const t = fecha ? new Date(fecha).getTime() : 0;
+    return Number.isNaN(t) ? 0 : t;
   }
 
   esUrgente(p: PeticionItem): boolean {
@@ -824,7 +848,7 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
       next: (resp) => {
         const lista = Array.isArray(resp) ? resp : (resp?.results || resp?.data || []);
         this.solicitudesKit = lista;
-        this.filtrarSolicitudes();
+        this.filtrarSolicitudes(false);
         this.cargandoSolicitudes = false;
         this.cdr.detectChanges();
       },
@@ -845,7 +869,10 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
     });
   }
 
-  filtrarSolicitudes(): void {
+  filtrarSolicitudes(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.paginaSolicitudes = 1;
+    }
     let lista = [...this.solicitudesKit];
 
     if (this.filtroEstadoSolicitud === 'PENDIENTES') {
@@ -856,7 +883,15 @@ export class DashboardVeterinarioComponent implements OnInit, AfterViewInit, OnD
       lista = lista.filter(s => (s.estado || '').toUpperCase().includes('ENTREG'));
     }
 
-    lista.sort((a, b) => (b.id_solicitud || 0) - (a.id_solicitud || 0));
+    // Pendientes primero; luego de la más reciente a la más antigua
+    lista.sort((a, b) => {
+      const aPend = (a.estado || '').toUpperCase().includes('PEND') ? 0 : 1;
+      const bPend = (b.estado || '').toUpperCase().includes('PEND') ? 0 : 1;
+      if (aPend !== bPend) return aPend - bPend;
+      const fechas = this.tiempo(b.fecha_solicitud) - this.tiempo(a.fecha_solicitud);
+      if (fechas !== 0) return fechas;
+      return (b.id_solicitud || 0) - (a.id_solicitud || 0);
+    });
     this.solicitudesFiltradas = lista;
   }
 

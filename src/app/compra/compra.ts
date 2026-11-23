@@ -16,11 +16,12 @@ import {
 } from '../services/compras.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-compra',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './compra.html',
   styleUrl: './compra.css',
 })
@@ -36,6 +37,8 @@ export class Compra implements OnInit {
   // Filtros
   filtroBusqueda: string = '';
   proveedorFiltroId: number | null = null;
+  pagina: number = 1;
+  tamanoPagina: number = TAMANO_PAGINA_PREDETERMINADO;
 
   // Modal de Registro / Edición
   modalRegistroAbierto: boolean = false;
@@ -239,20 +242,24 @@ export class Compra implements OnInit {
     // Ordenar de más reciente a más antigua
     resultado.sort((a, b) => {
       if (a.fecha && b.fecha) {
-        return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+        const fechas = new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
+        if (fechas !== 0) return fechas;
       }
       return (b.id_compra || 0) - (a.id_compra || 0);
     });
 
     this.compras = resultado;
     this.comprasOriginales = [...resultado];
-    this.filtrarCompras();
+    this.filtrarCompras(false);
   }
 
   /**
    * Filtrar compras por búsqueda de texto y/o proveedor
    */
-  filtrarCompras(): void {
+  filtrarCompras(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const termino = this.filtroBusqueda.toLowerCase().trim();
 
     this.compras = this.comprasOriginales.filter((c) => {
@@ -282,6 +289,7 @@ export class Compra implements OnInit {
     this.filtroBusqueda = '';
     this.proveedorFiltroId = null;
     this.compras = [...this.comprasOriginales];
+    this.pagina = 1;
   }
 
   // --- Métricas acumuladas ---

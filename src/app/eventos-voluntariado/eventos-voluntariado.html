@@ -78,7 +78,7 @@
              class="flex-1 overflow-y-auto pr-1">
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-6">
 
-                <div *ngFor="let evento of eventosFiltrados"
+                <div *ngFor="let evento of eventosFiltrados | paginar: pagina : tamanoPagina"
                      class="bg-white rounded-xl border border-slate-200 shadow-xs transition flex flex-col overflow-hidden group">
 
                     <!-- Imagen de la jornada -->
@@ -158,6 +158,7 @@
                 </div>
 
             </div>
+            <app-paginador class="mt-4" variante="suelto" [total]="eventosFiltrados.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
         </div>
 
     </main>

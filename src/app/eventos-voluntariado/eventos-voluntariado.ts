@@ -8,6 +8,7 @@ import { AuthService, EventoVoluntariado, PostulacionVoluntariado } from '../ser
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 export interface VoluntarioPostulado {
   id?: number;
@@ -21,7 +22,7 @@ export interface VoluntarioPostulado {
 @Component({
   selector: 'app-eventos-voluntariado',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './eventos-voluntariado.html',
   styleUrl: './eventos-voluntariado.css'
 })
@@ -36,6 +37,8 @@ export class EventosVoluntariado implements OnInit {
   modalAbierto: boolean = false;
   editandoId: number | null = null;
   filtroBusqueda: string = '';
+  pagina: number = 1;
+  tamanoPagina: number = TAMANO_PAGINA_PREDETERMINADO;
 
   // Variables para Modal de Postulados
   modalPostuladosAbierto: boolean = false;
@@ -74,7 +77,7 @@ export class EventosVoluntariado implements OnInit {
     this.authService.listarEventosVoluntariado().subscribe({
       next: (data: EventoVoluntariado[]) => {
         this.eventos = data;
-        this.filtrarEventos();
+        this.filtrarEventos(false);
         this.cargando = false;
         
         // 3. Forzar la detección de cambios para que la vista se actualice al primer toque
@@ -94,7 +97,10 @@ export class EventosVoluntariado implements OnInit {
   }
 
   // filtrar eventos
-  filtrarEventos(): void {
+  filtrarEventos(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const query = this.filtroBusqueda.trim().toLowerCase();
     if (!query) {
       this.eventosFiltrados = [...this.eventos];

@@ -10,6 +10,7 @@ import { AuthService, Patologia, CrearPatologia } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 import {
   esEndpointNoDisponible,
   leerPrimeraHojaExcel,
@@ -20,7 +21,7 @@ import {
 @Component({
   selector: 'app-patologias',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './patologias.html',
   styleUrl: './patologias.css',
 })
@@ -28,6 +29,8 @@ export class Patologias implements OnInit {
   modalAbierto: boolean = false;
   patologias: Patologia[] = [];
   patologiasOriginales: Patologia[] = []; 
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
   filtroBusqueda: string = ''; 
   filtroEstado: boolean | null = null;
   filtroTipo: string = '';
@@ -77,7 +80,7 @@ export class Patologias implements OnInit {
       next: (data: any) => {
         const lista: Patologia[] = Array.isArray(data) ? data : (data?.results || []);
         this.patologiasOriginales = lista;
-        this.filtrarPatologias();
+        this.filtrarPatologias(false);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -89,7 +92,10 @@ export class Patologias implements OnInit {
     });
   }
 
-  filtrarPatologias(): void {
+  filtrarPatologias(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const termino = (this.filtroBusqueda || '').toLowerCase().trim();
     const tipoSel = (this.filtroTipo || '').toLowerCase().trim();
 

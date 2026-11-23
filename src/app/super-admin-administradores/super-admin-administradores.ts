@@ -14,11 +14,12 @@ import { AuthService } from '../services/auth';
 import { RealtimeEventosService, debouncePorTipo } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-super-admin-administradores',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './super-admin-administradores.html',
   styleUrl: './super-admin-administradores.css'
 })
@@ -26,6 +27,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
   administradores: AdministradorUsuario[] = [];
   administradoresFiltrados: AdministradorUsuario[] = [];
   sedes: Sede[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
 
   cargando = false;
   guardando = false;
@@ -102,7 +105,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
     this.superAdminService.listarAdministradores().subscribe({
       next: (lista) => {
         this.administradores = lista || [];
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -141,7 +144,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
     return this.sedes.filter((s) => s.activo);
   }
 
-  aplicarFiltros(): void {
+  aplicarFiltros(reiniciarPagina = true): void {
+    if (reiniciarPagina) this.pagina = 1;
     const busqueda = (this.filtroTexto || '')
       .toLowerCase()
       .normalize('NFD')
@@ -386,7 +390,7 @@ export class SuperAdminAdministradoresComponent implements OnInit {
             if (idx !== -1) {
               this.administradores[idx] = actualizado;
             }
-            this.aplicarFiltros();
+            this.aplicarFiltros(false);
             this.cdr.detectChanges();
 
             Swal.fire({

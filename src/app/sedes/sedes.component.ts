@@ -9,11 +9,12 @@ import { AuthService } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-sedes',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './sedes.component.html',
   styleUrl: './sedes.component.css'
 })
@@ -21,6 +22,8 @@ export class SedesComponent implements OnInit {
   // Lista de sedes
   sedes: Sede[] = [];
   sedesFiltradas: Sede[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
   cargando: boolean = true;
   guardando: boolean = false;
   sedesEnTransicion: Set<number> = new Set<number>();
@@ -64,7 +67,7 @@ export class SedesComponent implements OnInit {
     this.sedesService.listarSedes().subscribe({
       next: (data) => {
         this.sedes = data || [];
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -76,7 +79,10 @@ export class SedesComponent implements OnInit {
     });
   }
 
-  aplicarFiltros(): void {
+  aplicarFiltros(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const texto = (this.filtroTexto || '').toLowerCase().trim();
 
     this.sedesFiltradas = this.sedes.filter((s) => {
@@ -288,7 +294,7 @@ export class SedesComponent implements OnInit {
         sede.activo = nuevoEstado;
         sede.is_active = nuevoEstado;
         this.sedesEnTransicion.delete(sede.id_sede);
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
         this.cdr.detectChanges();
 
         const Toast = Swal.mixin({

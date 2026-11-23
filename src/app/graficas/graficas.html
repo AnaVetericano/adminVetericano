@@ -505,7 +505,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs">
-                  <tr *ngFor="let u of usuariosFiltrados" class="hover:bg-slate-50/70 transition-colors">
+                  <tr *ngFor="let u of usuariosFiltrados | paginar: pagina : tamanoPagina" class="hover:bg-slate-50/70 transition-colors">
                     <td class="py-2.5 px-3 whitespace-nowrap">
                       <div class="flex items-center gap-2">
                         <div class="w-7 h-7 rounded-full bg-[#4141A5] text-white font-semibold text-xs flex items-center justify-center shrink-0">
@@ -539,6 +539,8 @@
             </div>
 
           </div>
+
+          <app-paginador class="mt-3" [total]="usuariosFiltrados.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
 
         </div>
       </div>

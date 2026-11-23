@@ -5,12 +5,13 @@ import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-proveedores',
   standalone: true,
-  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
+  imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './proveedores.html',
   styleUrl: './proveedores.css',
 })
@@ -19,6 +20,8 @@ export class Proveedores implements OnInit {
   textoBusqueda: string = '';
   proveedoresFiltrados: any[] = [];
   proveedores: any[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
 
   modal = false;
   editar = false;
@@ -64,6 +67,7 @@ export class Proveedores implements OnInit {
   }
 
   filtrarProveedores(): void {
+    this.pagina = 1;
     const busqueda = this.textoBusqueda.toLowerCase().trim();
     if (!busqueda) {
       this.proveedoresFiltrados = [...this.proveedores];

@@ -192,7 +192,7 @@
           </p>
         </div>
         <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#ECFDF3] text-[#067647] border border-[#ABEFC6]">
-          {{ peticionesAtendidas.length }} casos atendidos
+          {{ totalAtendidas }} casos atendidos
         </span>
       </div>
 
@@ -274,6 +274,12 @@
           </tbody>
         </table>
       </div>
+      <app-paginador
+        [total]="totalAtendidas"
+        [(pagina)]="pagina"
+        [(tamano)]="tamanoPagina"
+        (cambio)="cargarAtendidas()"
+      />
     </section>
 
   </main>
