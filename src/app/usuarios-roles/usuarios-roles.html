@@ -197,11 +197,11 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
                         <!-- SIN USUARIOS -->
-                        <tr *ngIf="usuarios.length === 0">
+                        <tr *ngIf="usuariosFiltrados.length === 0">
                             <td colspan="6" class="text-center py-8 text-slate-400 font-medium">
                                 <div class="flex flex-col items-center gap-2 py-6">
                                     <app-animal-icon tipo="perro" [tamano]="56" />
-                                    No hay usuarios registrados.
+                                    {{ usuarios.length === 0 ? 'No hay usuarios registrados.' : 'No se encontraron usuarios con el filtro aplicado.' }}
                                 </div>
                             </td>
                         </tr>
