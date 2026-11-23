@@ -99,7 +99,7 @@
                         </tr>
 
                         <tr
-                            *ngFor="let proveedor of proveedoresFiltrados"
+                            *ngFor="let proveedor of proveedoresFiltrados | paginar: pagina : tamanoPagina"
                             class="hover:bg-slate-50 transition-colors group">
                             <td class="px-4 py-3 text-slate-500 font-medium">
                                 {{ proveedor.id_proveedor }}
@@ -161,6 +161,7 @@
                     </tbody>
                 </table>
             </div>
+            <app-paginador [total]="proveedoresFiltrados.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
         </div>
 
     </main>

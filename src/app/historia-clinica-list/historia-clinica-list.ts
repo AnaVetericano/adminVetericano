@@ -13,6 +13,7 @@ import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 export interface HistoriaClinicaItem {
   id_historia: number;
@@ -50,7 +51,7 @@ export interface HistoriaClinicaItem {
 @Component({
   selector: 'app-historia-clinica-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './historia-clinica-list.html',
   styleUrl: './historia-clinica-list.css'
 })
@@ -70,6 +71,8 @@ export class HistoriaClinicaListComponent implements OnInit {
   menuFiltroAbierto: boolean = false;
   vistaModo: 'tabla' | 'tarjetas' = 'tabla';
   mostrarHospitalizados: boolean = false;
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
 
   // Modal de detalle y Línea de Tiempo (Estilo CP-Vet)
   modalDetalleAbierto: boolean = false;
@@ -419,10 +422,10 @@ export class HistoriaClinicaListComponent implements OnInit {
     this.historias.sort((a, b) => {
       const fechaA = new Date(a.fecha_apertura || 0).getTime();
       const fechaB = new Date(b.fecha_apertura || 0).getTime();
-      return fechaB - fechaA;
+      return (fechaB - fechaA) || ((b.id_historia || 0) - (a.id_historia || 0));
     });
 
-    this.aplicarFiltros();
+    this.aplicarFiltros(false);
     this.cargando = false;
     this.cdr.detectChanges();
 
@@ -808,7 +811,7 @@ export class HistoriaClinicaListComponent implements OnInit {
                 historia.ingresa_cba = esCba;
                 historia.canil_asignado = ultimaCons.canil_asignado || historia.canil_asignado || '';
                 historia.motivo_ingreso_cba = ultimaCons.motivo_ingreso_cba || historia.motivo_ingreso_cba || '';
-                this.aplicarFiltros();
+                this.aplicarFiltros(false);
               }
             }
           }
@@ -833,12 +836,14 @@ export class HistoriaClinicaListComponent implements OnInit {
 
   cambiarVistaHospitalizados(hospitalizados: boolean): void {
     this.mostrarHospitalizados = hospitalizados;
+    this.pagina = 1;
     this.aplicarFiltros();
     this.cdr.detectChanges();
   }
 
   alternarVistaHospitalizados(): void {
     this.mostrarHospitalizados = !this.mostrarHospitalizados;
+    this.pagina = 1;
     this.aplicarFiltros();
     this.cdr.detectChanges();
   }
@@ -846,7 +851,10 @@ export class HistoriaClinicaListComponent implements OnInit {
   /**
    * Aplica filtros de hospitalizados CBA, texto y estado general
    */
-  aplicarFiltros(): void {
+  aplicarFiltros(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const q = (this.filtroBusqueda || '').trim().toLowerCase();
 
     this.historiasFiltradas = this.historias.filter((h) => {
@@ -1722,7 +1730,7 @@ export class HistoriaClinicaListComponent implements OnInit {
         });
       }
 
-      this.aplicarFiltros();
+      this.aplicarFiltros(false);
       this.guardandoEdicionAnimal = false;
       this.cerrarModalEditarAnimal();
       this.cdr.detectChanges();
@@ -2026,7 +2034,7 @@ export class HistoriaClinicaListComponent implements OnInit {
             });
           }
 
-          this.aplicarFiltros();
+          this.aplicarFiltros(false);
           this.cdr.detectChanges();
 
           const puedeIrAAdopciones = this.authService.isAdmin();

@@ -329,7 +329,7 @@
           </div>
 
           <!-- TARJETAS -->
-          <div *ngFor="let seguimiento of seguimientosFiltrados; trackBy: trackBySeguimiento" (click)="seleccionarSeguimiento(seguimiento)"
+          <div *ngFor="let seguimiento of seguimientosFiltrados | paginar: paginaSeguimientos : tamanoPaginaSeguimientos; trackBy: trackBySeguimiento" (click)="seleccionarSeguimiento(seguimiento)"
             class="border border-slate-200 bg-white rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative cursor-pointer hover:border-[#4141A5] transition-colors duration-200 group">
             <div class="flex items-center gap-3.5 flex-1 min-w-0">
               <div
@@ -372,6 +372,14 @@
             </div>
           </div>
         </div>
+
+        <app-paginador
+          *ngIf="mostrarNuevosCasos && !cargando && !error"
+          class="mt-4"
+          variante="suelto"
+          [total]="seguimientosFiltrados.length"
+          [(pagina)]="paginaSeguimientos"
+          [(tamano)]="tamanoPaginaSeguimientos" />
       </div>
     </div>
 

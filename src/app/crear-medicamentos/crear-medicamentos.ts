@@ -11,6 +11,7 @@ import { AuthService, CrearMedicamento, ActualizarMedicamento } from '../service
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 export interface OpcionViaAdministracion {
   valor: string;
@@ -24,7 +25,7 @@ export interface OpcionViaAdministracion {
 @Component({
   selector: 'app-medicamentos',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './crear-medicamentos.html',
   styleUrl: './crear-medicamentos.css',
 })
@@ -32,6 +33,8 @@ export class Medicamentos implements OnInit {
   modalAbierto: boolean = false;
   medicamentos: any[] = [];
   medicamentosOriginales: any[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
   filtroBusqueda: string = '';
   menuFiltroAbierto: boolean = false;
   cargando: boolean = true;
@@ -354,7 +357,10 @@ export class Medicamentos implements OnInit {
     });
   }
 
-  filtrarMedicamentos(): void {
+  filtrarMedicamentos(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const termino = this.filtroBusqueda.toLowerCase().trim();
     if (!termino) {
       this.medicamentos = [...this.medicamentosOriginales];
@@ -374,6 +380,7 @@ export class Medicamentos implements OnInit {
   }
 
   filtrarPorEstado(estado: boolean | null): void {
+    this.pagina = 1;
     this.menuFiltroAbierto = false;
     if (estado === null) {
       this.medicamentos = [...this.medicamentosOriginales];
@@ -568,7 +575,7 @@ export class Medicamentos implements OnInit {
             orig.activo = nuevoEstado;
             orig.estado = nuevoEstado;
           }
-          this.filtrarMedicamentos();
+          this.filtrarMedicamentos(false);
           this.cdr.detectChanges();
 
           Swal.fire({

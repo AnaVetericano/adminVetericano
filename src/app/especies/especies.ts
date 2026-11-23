@@ -11,11 +11,12 @@ import { AuthService, CrearEspecie, ActualizarEspecie } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
 selector: 'app-especies',
 standalone: true,
-imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent],
+imports: [FormsModule, CommonModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
 templateUrl: './especies.html',
 styleUrl: './especies.css',
 })
@@ -25,6 +26,8 @@ export class Especies implements OnInit {
 
 especies: any[] = [];
 especiesFiltradas: any[] = [];
+pagina = 1;
+tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
 
 modal = false;
 editar = false;
@@ -95,6 +98,7 @@ this.authService.listarEspecies().subscribe({
 
 // BUSCAR ESPECIES
 filtrarEspecies(): void {
+  this.pagina = 1;
   const texto = this.textoBusqueda.trim().toLowerCase();
 
   if (!texto) {
@@ -114,6 +118,7 @@ filtrarEspecies(): void {
 
 limpiarBusqueda(): void {
 
+this.pagina = 1;
 this.textoBusqueda = '';
 this.especiesFiltradas = [...this.especies];
 

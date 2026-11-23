@@ -2633,7 +2633,9 @@ export class HistoriaClinicaService {
             const lista = this.extraerLista(resSeg).filter(
               (s: any) => Number(s?.id_hospitalizacion) === Number(hosp.id_hospitalizacion)
             );
-            lista.sort((a: any, b: any) => new Date(b?.fecha || 0).getTime() - new Date(a?.fecha || 0).getTime());
+            lista.sort((a: any, b: any) =>
+              (new Date(b?.fecha || 0).getTime() - new Date(a?.fecha || 0).getTime())
+              || ((Number(b?.id_seguimiento_hosp) || 0) - (Number(a?.id_seguimiento_hosp) || 0)));
             return { hospitalizacion: hosp, seguimientos: lista };
           }),
           catchError(() => of({ hospitalizacion: hosp, seguimientos: [] }))

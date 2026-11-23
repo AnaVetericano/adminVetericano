@@ -294,7 +294,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              @for (item of itemsFiltrados; track item.id_medicamento) {
+              @for (item of itemsFiltrados | paginar: pagina : tamanoPagina; track item.id_medicamento) {
                 <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                   
                   <!-- COLUMNA 1: PRODUCTO -->
@@ -451,6 +451,7 @@
             <span class="text-[#4141A5] font-semibold">Saldo Total en Kit: {{ totalSaldoDisponible }} uds</span>
           </div>
         </div>
+        <app-paginador class="shrink-0" [total]="itemsFiltrados.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
       }
     </div>
 

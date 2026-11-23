@@ -19,6 +19,7 @@
         <input
           type="text"
           [(ngModel)]="searchTerm"
+          (ngModelChange)="pagina = 1"
           placeholder="Buscar por nombre, raza, descripción o estado..."
           class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20 transition"
         >
@@ -61,7 +62,7 @@
 
       <!-- TARJETA MASCOTA -->
       <div
-        *ngFor="let pet of filteredPets; let i = index"
+        *ngFor="let pet of filteredPets | paginar: pagina : tamanoPagina"
         class="bg-white rounded-xl shadow-xs overflow-hidden border border-slate-200 transition"
       >
 
@@ -152,7 +153,7 @@
 
             <!-- EDITAR -->
             <button
-              (click)="openModal(i)"
+              (click)="openModal(filteredPets.indexOf(pet))"
               class="flex-1 bg-[#4141A5] hover:bg-[#353583] text-white px-4 py-2 rounded-lg font-semibold text-sm transition cursor-pointer"
             >
               Editar
@@ -161,7 +162,7 @@
 
             <!-- ELIMINAR -->
             <button
-              (click)="deletePet(i)"
+              (click)="deletePet(filteredPets.indexOf(pet))"
               class="px-4 py-2 bg-white hover:bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1] rounded-lg font-semibold text-sm transition cursor-pointer"
             >
               Eliminar
@@ -174,6 +175,14 @@
       </div>
 
     </div>
+
+    <app-paginador
+      class="mt-4"
+      variante="suelto"
+      [total]="filteredPets.length"
+      [(pagina)]="pagina"
+      [(tamano)]="tamanoPagina"
+    />
 
 
     <!-- SIN RESULTADOS -->
