@@ -91,7 +91,7 @@
 
                         <!-- ESPECIES -->
                         <tr
-                            *ngFor="let especie of especiesFiltradas"
+                            *ngFor="let especie of especiesFiltradas | paginar: pagina : tamanoPagina"
                             class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
 
                             <!-- ID -->
@@ -168,6 +168,7 @@
                     </tbody>
                 </table>
             </div>
+            <app-paginador [total]="especiesFiltradas.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
         </div>
 
     </main>

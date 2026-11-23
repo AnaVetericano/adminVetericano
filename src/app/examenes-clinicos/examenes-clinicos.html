@@ -225,7 +225,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm">
-                            @for (item of listaFiltrada; track item.id_examen) {
+                            @for (item of listaFiltrada | paginar: paginaActual : tamanoPagina; track item.id_examen) {
                                 <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
                                     <!-- COLUMNA NOMBRE -->
                                     <td class="px-4 py-3 align-middle">
@@ -293,6 +293,7 @@
                         </tbody>
                     </table>
                 </div>
+                <app-paginador [total]="listaFiltrada.length" [(pagina)]="paginaActual" [(tamano)]="tamanoPagina" />
             </div>
         }
 

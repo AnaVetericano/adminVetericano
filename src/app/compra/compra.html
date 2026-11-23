@@ -134,7 +134,7 @@
                 </div>
               </td>
             </tr>
-            <tr *ngFor="let c of compras" class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
+            <tr *ngFor="let c of compras | paginar: pagina : tamanoPagina" class="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
               <!-- N° Factura -->
               <td class="px-4 py-3 font-semibold text-[#170B3D]">
                 <span class="px-2 py-0.5 rounded-md text-xs font-mono tracking-wide border"
@@ -188,6 +188,7 @@
           </tbody>
         </table>
       </div>
+      <app-paginador class="shrink-0" [total]="compras.length" [(pagina)]="pagina" [(tamano)]="tamanoPagina" />
     </div>
 
   </main>

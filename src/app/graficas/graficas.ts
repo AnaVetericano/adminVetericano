@@ -15,11 +15,12 @@ import {
 } from '../models/duplicados.model';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-graficas',
   standalone: true,
-  imports: [NgIf, CommonModule, RouterLink, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [NgIf, CommonModule, RouterLink, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './graficas.html',
   styleUrl: './graficas.css',
 })
@@ -59,6 +60,8 @@ export class Graficas implements OnInit, AfterViewInit, OnDestroy {
 
   usuarios: any[] = [];
   usuariosFiltrados: any[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
   busquedaUsuario: string = '';
   filtroRol: string = 'TODOS';
 
@@ -166,7 +169,7 @@ export class Graficas implements OnInit, AfterViewInit, OnDestroy {
         this.rolVet = lista.filter(u => normalizarRol(u) === 'veterinario').length;
         this.rolPet = lista.filter(u => normalizarRol(u) === 'peticionario').length;
 
-        this.filtrarUsuarios();
+        this.filtrarUsuarios(false);
         this.cargandoGrafica = false;
 
         this.LoadGraficUsersActive();
@@ -182,7 +185,8 @@ export class Graficas implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  filtrarUsuarios(): void {
+  filtrarUsuarios(reiniciarPagina = true): void {
+    if (reiniciarPagina) this.pagina = 1;
     const term = (this.busquedaUsuario || '').toLowerCase().trim();
     this.usuariosFiltrados = this.usuarios.filter(u => {
       const matchTexto = !term ||

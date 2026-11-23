@@ -15,11 +15,12 @@ import {
 import { AuthService } from '../services/auth';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-veterinary-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './veterinary-inventory.component.html',
   styleUrl: './veterinary-inventory.component.css'
 })
@@ -45,6 +46,8 @@ export class VeterinaryInventoryComponent implements OnInit {
   // Filtros
   textoFiltro = '';
   filtroEstado = 'todos'; // todos | bajo | disponible | agotado
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
 
   // Información del veterinario y rol
   veterinarioNombre = '';
@@ -149,6 +152,7 @@ export class VeterinaryInventoryComponent implements OnInit {
       sessionStorage.setItem('veterinario_seleccionado_supervision', String(this.veterinarioSeleccionadoId));
       localStorage.setItem('veterinario_seleccionado_supervision', String(this.veterinarioSeleccionadoId));
     } catch {}
+    this.pagina = 1;
     this.cargarDatos();
   }
 
@@ -164,7 +168,7 @@ export class VeterinaryInventoryComponent implements OnInit {
     this.inventoryService.cargarInventarioVeterinario(idVet).subscribe({
       next: (items) => {
         this.itemsKit = items;
-        this.aplicarFiltro();
+        this.aplicarFiltro(false);
         this.cargando = false;
         this.cdr.detectChanges();
 
@@ -192,7 +196,8 @@ export class VeterinaryInventoryComponent implements OnInit {
     });
   }
 
-  aplicarFiltro(): void {
+  aplicarFiltro(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) this.pagina = 1;
     const q = this.textoFiltro.toLowerCase().trim();
 
     this.itemsFiltrados = this.itemsKit.filter((item) => {
@@ -471,7 +476,7 @@ export class VeterinaryInventoryComponent implements OnInit {
           item.saldoDisponible = item.cantidadEntregada - (Number(item.cantidadConsumida) || 0);
         }
         item.umbralBajo = item.saldoDisponible <= 10;
-        this.aplicarFiltro();
+        this.aplicarFiltro(false);
         this.cdr.detectChanges();
 
         this.cerrarModalAjuste();

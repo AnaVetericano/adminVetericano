@@ -378,7 +378,7 @@
 
             <!-- Lista scrolleable de solicitudes -->
             <div class="space-y-2.5 flex-1 max-h-[320px] overflow-y-auto pr-1">
-              <div *ngFor="let s of solicitudesFiltradas" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 transition-all min-w-0">
+              <div *ngFor="let s of solicitudesFiltradas | paginar: paginaSolicitudes : tamanoPaginaSolicitudes" class="p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#4141A5]/30 transition-all min-w-0">
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="px-2 py-0.5 rounded-full font-bold bg-[#4141A5]/10 text-[#4141A5] shrink-0">
                     #{{ s.id_solicitud || s.id }}
@@ -412,6 +412,12 @@
                 No tienes solicitudes de reposición en este filtro.
               </div>
             </div>
+
+            <app-paginador
+              class="mt-3 shrink-0"
+              [total]="solicitudesFiltradas.length"
+              [(pagina)]="paginaSolicitudes"
+              [(tamano)]="tamanoPaginaSolicitudes" />
           </div>
 
           <!-- Botón inferior para radicar pedido -->
@@ -525,7 +531,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs">
-                  <tr *ngFor="let p of peticionesFiltradas; trackBy: trackByPeticionId"
+                  <tr *ngFor="let p of peticionesFiltradas | paginar: paginaPeticiones : tamanoPaginaPeticiones; trackBy: trackByPeticionId"
                     class="hover:bg-slate-50/70 transition"
                     [ngClass]="esUrgente(p) ? 'bg-[#FEECEB]/50' : ''">
 
@@ -599,6 +605,13 @@
             </div>
 
           </div>
+
+          <app-paginador
+            *ngIf="!cargandoPeticiones"
+            class="mt-3 shrink-0"
+            [total]="peticionesFiltradas.length"
+            [(pagina)]="paginaPeticiones"
+            [(tamano)]="tamanoPaginaPeticiones" />
 
         </div>
 

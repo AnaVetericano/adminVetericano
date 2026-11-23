@@ -20,12 +20,13 @@ import { map, catchError, tap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { environment } from '../../environments/environment';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 
 @Component({
   selector: 'app-acta-seres-sintientes',
   standalone: true,
-  imports: [FormsModule, ReactiveFormsModule, CommonModule, PageTitleComponent],
+  imports: [FormsModule, ReactiveFormsModule, CommonModule, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './acta-seres-sintientes.html',
   styleUrl: './acta-seres-sintientes.css',
 })
@@ -2038,7 +2039,7 @@ export class ActaSeresSintientes implements OnInit {
           this.seguimientoSeleccionado.atendido = true;
           this.seguimientoSeleccionado.peticion_estado = 'Atendida';
         }
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
 
         // El guardado clínico ya fue exitoso; el mensaje final depende del resultado explícito de cada consumo
         // y de alertas_farmacia (un 200/201 no implica que el descuento del kit se haya aceptado).
@@ -2085,7 +2086,7 @@ export class ActaSeresSintientes implements OnInit {
           this.seguimientoSeleccionado.atendido = true;
           this.seguimientoSeleccionado.peticion_estado = 'Atendida';
         }
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
 
         Swal.fire({
           title: 'Historia clínica registrada',
@@ -2642,6 +2643,8 @@ export class ActaSeresSintientes implements OnInit {
   error = '';
   textoBusqueda = '';
   filtroEspecie = 'Todos';
+  paginaSeguimientos = 1;
+  tamanoPaginaSeguimientos = TAMANO_PAGINA_PREDETERMINADO;
 
   // Modo creación de nuevo paciente / acta
   esNuevoAnimal: boolean = false;
@@ -2994,7 +2997,7 @@ export class ActaSeresSintientes implements OnInit {
             confirmButtonText: 'Aceptar'
           });
 
-          this.aplicarFiltros();
+          this.aplicarFiltros(false);
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -3525,7 +3528,7 @@ export class ActaSeresSintientes implements OnInit {
           this.seguimientos = [];
         }
 
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
         this.cargando = false;
         this.cdr.detectChanges();
         console.log('Seguimientos cargados:', this.seguimientos);
@@ -3557,7 +3560,7 @@ export class ActaSeresSintientes implements OnInit {
             this.animalesConHistoriaIds.add(id);
           }
         });
-        this.aplicarFiltros();
+        this.aplicarFiltros(false);
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -3649,7 +3652,10 @@ export class ActaSeresSintientes implements OnInit {
     return this.seguimientos.filter(s => this.esAnimalAtendido(s)).length;
   }
 
-  aplicarFiltros(): void {
+  aplicarFiltros(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.paginaSeguimientos = 1;
+    }
     const texto = (this.textoBusqueda || '').trim().toLowerCase();
 
     this.seguimientosFiltrados = this.seguimientos.filter((seguimiento: any) => {

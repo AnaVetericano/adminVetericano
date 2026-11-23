@@ -201,7 +201,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let f of filas" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <tr *ngFor="let f of filas | paginar: paginaGeneral : tamanoPaginaGeneral" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td class="px-4 py-3 text-sm font-semibold text-[#170B3D]">
                   #{{ f.idInv ?? '—' }}
                   <div class="text-[11px] font-medium text-slate-400">det.compra: {{ f.idDetComp ?? '—' }}</div>
@@ -278,6 +278,7 @@
           <span>{{ filas.length }} de {{ totalRef }} medicamentos · {{ totalCompras }} factura(s)</span>
           <span>Stock total disponible en CBA: {{ totalUnd }} uds</span>
         </div>
+        <app-paginador class="shrink-0" [total]="filas.length" [(pagina)]="paginaGeneral" [(tamano)]="tamanoPaginaGeneral" />
       </div>
 
     </ng-container>
@@ -454,7 +455,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let item of itemsVeterinarioFiltrados" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <tr *ngFor="let item of itemsVeterinarioFiltrados | paginar: paginaVet : tamanoPaginaVet" class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td class="px-4 py-3 text-sm font-semibold text-[#170B3D]">
                   #{{ item.id_medicamento }}
                 </td>
@@ -502,6 +503,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginador class="shrink-0" [total]="itemsVeterinarioFiltrados.length" [(pagina)]="paginaVet" [(tamano)]="tamanoPaginaVet" />
       </div>
 
     </ng-container>

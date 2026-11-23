@@ -16,11 +16,12 @@ import {
 } from '../services/compras.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 @Component({
   selector: 'app-compra',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './compra.html',
   styleUrl: './compra.css',
 })
@@ -36,6 +37,8 @@ export class Compra implements OnInit {
   // Filtros
   filtroBusqueda: string = '';
   proveedorFiltroId: number | null = null;
+  pagina: number = 1;
+  tamanoPagina: number = TAMANO_PAGINA_PREDETERMINADO;
 
   // Modal de Registro / Edición
   modalRegistroAbierto: boolean = false;
@@ -246,13 +249,16 @@ export class Compra implements OnInit {
 
     this.compras = resultado;
     this.comprasOriginales = [...resultado];
-    this.filtrarCompras();
+    this.filtrarCompras(false);
   }
 
   /**
    * Filtrar compras por búsqueda de texto y/o proveedor
    */
-  filtrarCompras(): void {
+  filtrarCompras(reiniciarPagina: boolean = true): void {
+    if (reiniciarPagina) {
+      this.pagina = 1;
+    }
     const termino = this.filtroBusqueda.toLowerCase().trim();
 
     this.compras = this.comprasOriginales.filter((c) => {
@@ -282,6 +288,7 @@ export class Compra implements OnInit {
     this.filtroBusqueda = '';
     this.proveedorFiltroId = null;
     this.compras = [...this.comprasOriginales];
+    this.pagina = 1;
   }
 
   // --- Métricas acumuladas ---

@@ -13,6 +13,7 @@ import { AuthService } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 import {
   esEndpointNoDisponible,
   leerPrimeraHojaExcel,
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: 'app-examenes-clinicos',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './examenes-clinicos.html',
   styleUrl: './examenes-clinicos.css',
 })
@@ -82,7 +83,7 @@ export class ExamenesClinicos implements OnInit {
 
   // Control de paginación
   paginaActual: number = 1;
-  tamanoPagina: number = 6;
+  tamanoPagina: number = TAMANO_PAGINA_PREDETERMINADO;
   totalRegistros: number = 0;
   totalPaginas: number = 1;
 
@@ -113,7 +114,7 @@ export class ExamenesClinicos implements OnInit {
     this.examenesService.obtenerTodos().subscribe({
       next: (data: ExamenClinico[]) => {
         this.listaCatalogo = data || [];
-        this.filtrarExamenes();
+        this.filtrarExamenes(false);
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -172,7 +173,10 @@ export class ExamenesClinicos implements OnInit {
   /**
    * Búsqueda reactiva por nombre, tipo o descripción y filtro por estado y categoría
    */
-  filtrarExamenes(): void {
+  filtrarExamenes(reiniciarPagina = true): void {
+    if (reiniciarPagina) {
+      this.paginaActual = 1;
+    }
     const texto = (this.filtroBusqueda || '').toLowerCase().trim();
 
     this.listaFiltrada = this.listaCatalogo.filter(item => {
@@ -432,7 +436,7 @@ export class ExamenesClinicos implements OnInit {
           if (target) {
             target.estado = estadoFinal;
           }
-          this.filtrarExamenes();
+          this.filtrarExamenes(false);
           this.cdr.detectChanges();
 
           Swal.fire({

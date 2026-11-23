@@ -10,6 +10,7 @@ import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { environment, BACKEND_CLOUD_URL } from '../../environments/environment';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
+import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
 
 interface Pet {
   id?: number;
@@ -25,7 +26,7 @@ interface Pet {
 @Component({
   selector: 'app-adopciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent],
+  imports: [CommonModule, FormsModule, AnimalIconComponent, PageTitleComponent, PaginadorComponent, PaginarPipe],
   templateUrl: './adopciones.html',
   styleUrl: './adopciones.css',
 })
@@ -45,6 +46,8 @@ export class Adopciones implements OnInit {
   private readonly defaultImagen = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';
 
   pets: Pet[] = [];
+  pagina = 1;
+  tamanoPagina = TAMANO_PAGINA_PREDETERMINADO;
   searchTerm: string = '';
   isModalOpen: boolean = false;
   isEditMode: boolean = false;
