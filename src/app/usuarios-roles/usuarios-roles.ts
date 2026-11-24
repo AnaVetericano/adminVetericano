@@ -223,7 +223,7 @@ error: (error) => {
       // Si el mensaje es un arreglo, lo unimos. Si no, lo mostramos directo.
       const textoError = Array.isArray(mensajes) ? mensajes.join(', ') : mensajes;
       // Formato: <li><strong>campo:</strong> mensaje de error</li>
-      return `<dt>${campo}</dt><dd class="qa-tono">${textoError}</dd>`;
+      return `<dt>${campo}</dt><dd><span class="qa-tono">${textoError}</span></dd>`;
     });
 
     if (listaErrores.length > 0) {

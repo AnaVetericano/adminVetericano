@@ -680,7 +680,7 @@ export class Compra implements OnInit {
               <p>La base de datos o el sistema rechazó la anulación.</p>
               <dl class="qa-datos">
                 <dt>Motivo</dt>
-                <dd class="qa-tono">${msj}</dd>
+                <dd><span class="qa-tono">${msj}</span></dd>
               </dl>
               <p class="qa-nota">Si los medicamentos ya fueron asignados a maletines o formulados, reintégrelos antes de anular la factura.</p>
             `,

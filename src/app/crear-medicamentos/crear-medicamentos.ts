@@ -962,7 +962,7 @@ export class Medicamentos implements OnInit {
             <dd>${exitosos}</dd>
             <dt>Asignados con campos en "Otros"</dt>
             <dd>${conOtros}</dd>
-            ${fallidos > 0 ? `<dt>No se pudieron registrar</dt><dd class="qa-tono">${fallidos}</dd>` : ''}
+            ${fallidos > 0 ? `<dt>No se pudieron registrar</dt><dd><span class="qa-tono">${fallidos}</span></dd>` : ''}
           </dl>
           <p class="qa-nota">${conOtros > 0 ? 'Los medicamentos con discrepancias de catálogo fueron asignados a "Otros" para mantener la consistencia de inventario.' : 'Todos los medicamentos coincidieron exactamente con el catálogo.'}</p>
         `,
