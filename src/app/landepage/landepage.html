@@ -1,7 +1,42 @@
 <div class="auth-canvas p-4 sm:p-8 font-['Nunito',sans-serif] selection:bg-[#4141A5] selection:text-white">
   <div class="auth-card">
 
-    <!-- Sección Izquierda (Textos y Botones Centrados) -->
+    <!-- Sección Izquierda (Imagen y descripción institucional) -->
+    <section
+      class="auth-visual-panel hidden lg:flex lg:flex-col bg-[#F4F5F7] border-r border-slate-200"
+    >
+      <div class="auth-brand-header">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-white border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
+            <img
+              src="images/logoVetIcon.svg"
+              alt="Isotipo VETERICANO"
+              width="24"
+              height="24"
+              class="w-6 h-6 object-contain"
+            >
+          </div>
+
+          <h3 class="text-lg font-bold text-[#170B3D] leading-snug">
+            Panel de gestión veterinaria
+          </h3>
+        </div>
+
+        <p class="mt-3 max-w-[480px] text-sm leading-relaxed text-slate-600 text-balance">
+          Gestiona peticiones, rescates y la coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
+        </p>
+      </div>
+
+      <div class="absolute inset-x-0 bottom-0 flex justify-center items-end pointer-events-none pb-3">
+        <img
+          src="images/dogcatimage.png"
+          alt="Perro y gato VETERICANO"
+          class="h-[375px] w-auto object-contain select-none"
+        >
+      </div>
+    </section>
+
+    <!-- Sección Derecha (Textos y Botones Centrados) -->
     <section
       class="bg-white
              flex flex-col
@@ -70,41 +105,6 @@
           </button>
         </div>
 
-      </div>
-    </section>
-
-    <!-- Sección Derecha (Imagen y descripción institucional) -->
-    <section
-      class="auth-visual-panel hidden lg:flex lg:flex-col bg-[#F4F5F7] border-l border-slate-200"
-    >
-      <div class="auth-brand-header">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 bg-white border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
-            <img
-              src="images/logoVetIcon.svg"
-              alt="Isotipo VETERICANO"
-              width="24"
-              height="24"
-              class="w-6 h-6 object-contain"
-            >
-          </div>
-
-          <h3 class="text-lg font-bold text-[#170B3D] leading-snug">
-            Panel de gestión veterinaria
-          </h3>
-        </div>
-
-        <p class="mt-3 text-sm leading-relaxed text-slate-600">
-          Gestiona peticiones, rescates y la coordinación de equipos veterinarios. Administra y supervisa todas las operaciones de rescate.
-        </p>
-      </div>
-
-      <div class="absolute inset-x-0 bottom-0 flex justify-center items-end pointer-events-none pb-3">
-        <img
-          src="images/dogcatimage.png"
-          alt="Perro y gato VETERICANO"
-          class="h-[345px] w-auto object-contain select-none"
-        >
       </div>
     </section>
 
