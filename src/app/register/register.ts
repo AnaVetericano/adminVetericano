@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 })
 export class Register {
   mostrarPassword: boolean = false;
+  cargandoRegistro: boolean = false;
 
   register = {
     email: '',
@@ -29,7 +30,15 @@ export class Register {
     private authService: AuthService
   ) {}
 
+  volverAlInicio(): void {
+    this.router.navigate(['/']);
+  }
+
   registrarse() {
+    if (this.cargandoRegistro) {
+      return;
+    }
+
     if (!this.register.email || !this.register.identificacion || !this.register.password || !this.register.nombre || !this.register.apellido) {
       Swal.fire({
         title: 'Campos obligatorios incompletos',
@@ -40,10 +49,13 @@ export class Register {
       return;
     }
 
+    this.cargandoRegistro = true;
+
     // Enviamos el objeto 'this.register' completo que cumple exacto con la interfaz 'RegistroUsuario'
 
 this.authService.registrar(this.register).subscribe({
   next: (respuesta) => {
+    this.cargandoRegistro = false;
 
     console.log(' Registrado:', respuesta);
 
@@ -61,6 +73,7 @@ this.authService.registrar(this.register).subscribe({
   },
 
   error: (err) => {
+    this.cargandoRegistro = false;
 
     console.error('Error en el registro:', err);
 
