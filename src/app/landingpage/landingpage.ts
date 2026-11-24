@@ -66,8 +66,6 @@ export class Landingpage {
   private autoSlideTimer: number | null = null;
   private readonly autoSlideDelayMs = 3800;
 
-  protected readonly apkDownloadUrl = '/downloads/vetericano-cba.apk';
-
   protected readonly heroSlides: readonly HeroSlide[] = [
     {
       src: '/images/hero-horse.jpg',
@@ -243,16 +241,6 @@ export class Landingpage {
   goToLogin(): void {
     this.closeMobileMenu();
     void this.router.navigate(['/login']);
-  }
-
-  downloadApk(): void {
-    const link = this.document.createElement('a');
-    link.href = this.apkDownloadUrl;
-    link.download = 'VETERICANO-CBA.apk';
-    link.rel = 'noopener';
-    this.document.body.appendChild(link);
-    link.click();
-    link.remove();
   }
 
   private startAutoSlide(): void {

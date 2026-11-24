@@ -562,7 +562,7 @@
     <!-- 5. SECCIÓN DE DESCARGA MÓVIL Y CÓDIGO QR (Mockup móvil con QR integrado) -->
     <section id="descargar-app" tabindex="-1" class="scroll-mt-[84px] overflow-hidden border-y border-[#E5E0D5] bg-[#EFECE5] py-16 text-[#1F2937] sm:py-20">
       <div class="mx-auto grid max-w-[1760px] grid-cols-1 items-center gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:px-10 xl:px-12">
-        <!-- Columna izquierda: Info + botón APK -->
+        <!-- Columna izquierda: Info -->
         <div data-reveal class="lg:col-span-6">
           <span class="surface-pill-raise inline-flex items-center gap-2 rounded-full border border-[#162038]/15 bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-[#162038]">
             <span class="h-2 w-2 rounded-full bg-[#F5B82E]" aria-hidden="true"></span>
@@ -605,20 +605,6 @@
               <span>Autenticación biométrica facial y dactilar</span>
             </li>
           </ul>
-
-          <div class="mt-8">
-            <button
-              type="button"
-              (click)="downloadApk()"
-              class="btn-gold-grad inline-flex cursor-pointer items-center gap-2.5 rounded-[6px] px-6 py-3.5 text-sm font-bold text-[#162038] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#162038]"
-            >
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 3v12m0 0l-4-4m4 4l4-4" />
-                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-              </svg>
-              <span>Descargar APK directamente</span>
-            </button>
-          </div>
         </div>
 
         <!-- Columna derecha: iPhone 15 Pro Max con QR integrado -->
@@ -667,9 +653,17 @@
 
                       <!-- Header de marca dentro de la pantalla -->
                       <div class="mt-2 flex items-center justify-between border-b border-white/10 px-5 py-3">
-                        <div class="flex items-center gap-2">
-                          <span class="flex h-6 w-6 items-center justify-center rounded-md bg-[#F5B82E] text-[10px] font-extrabold text-[#162038]">
-                            VC
+                        <div class="flex items-center gap-2.5">
+                          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-white p-1 shadow-xs ring-1 ring-white/20">
+                            <img
+                              src="/images/logoVetIcon.svg"
+                              alt=""
+                              aria-hidden="true"
+                              loading="lazy"
+                              width="28"
+                              height="28"
+                              class="h-full w-full object-contain"
+                            />
                           </span>
                           <span class="font-display text-xs font-extrabold tracking-wide text-white">VETERICANO</span>
                         </div>
