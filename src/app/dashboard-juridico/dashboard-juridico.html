@@ -19,12 +19,9 @@
   <main class="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 pt-2 sm:pt-3 pb-6 flex flex-col gap-4">
 
     <!-- Mensaje de Error si ocurre -->
-    <div *ngIf="errorCarga" class="px-4 py-3 bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl flex items-center justify-between text-[#170B3D] text-xs font-semibold">
+    <div *ngIf="errorCarga" class="px-4 py-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-[#170B3D] text-xs font-semibold aviso aviso-error">
       <div class="flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-        </svg>
-        <span class="text-slate-700">{{ errorCarga }}</span>
+        <span class="aviso-titulo font-semibold text-[#170B3D]"><span class="mk">{{ errorCarga }}</span></span>
       </div>
       <button (click)="cargarDatos(true)" class="underline cursor-pointer text-[#B42318] hover:opacity-80">Reintentar</button>
     </div>

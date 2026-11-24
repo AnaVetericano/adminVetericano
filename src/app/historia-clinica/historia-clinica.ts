@@ -3175,7 +3175,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
       Swal.fire({
         icon: 'error',
         title: 'Stock insuficiente en maletín de campo',
-        html: `<p>Ajuste la cantidad a descontar antes de continuar.</p><dl class="qa-datos"><dt>Disponibles</dt><dd class="qa-tono">${stockActual} ${stockActual === 1 ? 'unidad' : 'unidades'}</dd><dt>Solicitadas</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
+        html: `<p>Ajuste la cantidad a descontar antes de continuar.</p><dl class="qa-datos"><dt>Disponibles</dt><dd><span class="qa-tono">${stockActual} ${stockActual === 1 ? 'unidad' : 'unidades'}</span></dd><dt>Solicitadas</dt><dd>${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'}</dd></dl>`,
         confirmButtonText: 'Aceptar'
       });
       return;
@@ -3272,7 +3272,7 @@ export class HistoriaClinica2Component implements OnInit, ComponenteConCambiosPe
         <p>Solicite reaprovisionamiento al inventario general.</p>
         <dl class="qa-datos">
           <dt>Producto</dt><dd>${nombre}</dd>
-          <dt>Stock disponible</dt><dd class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</dd>
+          <dt>Stock disponible</dt><dd><span class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</span></dd>
         </dl>
       `,
       confirmButtonText: 'Aceptar'

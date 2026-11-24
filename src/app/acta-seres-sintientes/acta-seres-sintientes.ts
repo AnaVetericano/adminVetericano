@@ -4407,7 +4407,7 @@ export class ActaSeresSintientes implements OnInit {
       html: `
         <dl class="qa-datos">
           <dt>Producto en maletín</dt><dd>${nombre}</dd>
-          <dt>Stock disponible</dt><dd class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</dd>
+          <dt>Stock disponible</dt><dd><span class="qa-tono">${s} ${s === 1 ? 'unidad' : 'unidades'}</span></dd>
         </dl>
         <p class="qa-nota">Solicite reaprovisionamiento al inventario general.</p>
       `,

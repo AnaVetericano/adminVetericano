@@ -268,7 +268,7 @@ export class VeterinaryInventoryComponent implements OnInit {
           <dt>Presentación</dt>
           <dd>${item.presentacion || 'Unidad de campo'}</dd>
           <dt>Saldo actual</dt>
-          <dd class="qa-tono">${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'}</dd>
+          <dd><span class="qa-tono">${item.saldoDisponible} ${item.saldoDisponible === 1 ? 'unidad' : 'unidades'}</span></dd>
           <dt>Kit / Lote</dt>
           <dd>${item.lote || 'Kit de Campo'}</dd>
         </dl>

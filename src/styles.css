@@ -396,23 +396,26 @@ thead th {
 /* ========================================================================= */
 /*
  * Una sola anatomía para todas las alertas, solo con CSS:
- *   [cuadrito de ícono] Título (azul oscuro) + descripción (gris)
- *                       datos `.qa-datos` · nota `.qa-nota` · campo
- *   ─────────── franja gris clara:  [Cancelar] [Acción] ───────────
- * - La severidad la da el cuadrito: tono según el tipo de ícono.
+ *   [riel gris con logo centrado] │ Título con resaltado según severidad
+ *                                 │ descripción · `.qa-datos` · `.qa-nota` · campo
+ *                                 ├── franja gris clara: [Cancelar] [Acción] ──
+ * - Sin íconos de severidad; la gravedad la marca el resaltado (`--mk`) detrás
+ *   del título y de los valores `.qa-tono` (índigo por defecto/info/pregunta/
+ *   cargando, verde éxito, dorado advertencia, rojo error).
  * - Confirmación destructiva: `customClass: { popup: 'qa-destructivo' }`
- *   → cuadrito con papelera y botón rojo. Solo eliminar/anular/desactivar/rechazar.
+ *   → resaltado rojo (gana a advertencia) y botón de acción rojo.
  * - Orden fijo de botones: Cancelar → Acción (se ignora `reverseButtons`).
  * - Ancho 440 px; 560 px si el contenido trae una tabla o `.qa-ancho`.
- * - Teléfono: botones apilados a lo ancho, acción principal arriba.
+ * - Teléfono: riel compacto y botones apilados a lo ancho, acción arriba.
  */
 .swal2-popup {
-  --qa-accent: #4141A5;
-  --qa-tint: rgba(65, 65, 165, 0.10);
-  --qa-glyph: none;
+  --mk: rgba(65, 65, 165, 0.20);
+  --qa-rail: 76px;
+  --qa-logo: 40px;
   --qa-pad-y: 20px;
   --qa-pad-r: 24px;
   --qa-pad-l: 20px;
+  display: block !important;
   position: relative !important;
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
@@ -421,85 +424,71 @@ thead th {
   font-family: 'Nunito', sans-serif !important;
   text-align: left !important;
   width: min(440px, calc(100vw - 32px)) !important;
-  padding: var(--qa-pad-y) var(--qa-pad-r) var(--qa-pad-y) var(--qa-pad-l) !important;
+  padding: var(--qa-pad-y) var(--qa-pad-r) var(--qa-pad-y) calc(var(--qa-rail) + var(--qa-pad-l)) !important;
   overflow: hidden !important;
-  display: grid !important;
-  grid-template-columns: 40px minmax(0, 1fr) !important;
-  column-gap: 14px !important;
-  row-gap: 6px !important;
-  align-items: start !important;
+}
+.swal2-popup::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--qa-rail);
+  background: #F8FAFC;
+  border-right: 1px solid var(--panel-border);
+  pointer-events: none;
+}
+.swal2-popup::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--qa-rail);
+  background: url("/images/logoVetIcon.svg") center / var(--qa-logo) var(--qa-logo) no-repeat;
+  pointer-events: none;
 }
 .swal2-popup:is(.qa-ancho, :has(.swal2-html-container table)) {
   width: min(560px, calc(100vw - 32px)) !important;
 }
 
-/* Tono por severidad (la destructiva va al final para ganar a la advertencia) */
-.swal2-popup.swal2-icon-success { --qa-accent: #067647; --qa-tint: #ECFDF3; }
-.swal2-popup.swal2-icon-error   { --qa-accent: #B42318; --qa-tint: #FEECEB; }
-.swal2-popup.swal2-icon-warning { --qa-accent: #9A5B13; --qa-tint: #FFF4E5; }
+/* Color de resaltado por severidad (destructiva al final para ganar a advertencia) */
+.swal2-popup.swal2-icon-success  { --mk: #ABEFC6; }
+.swal2-popup.swal2-icon-error    { --mk: #F5B7B1; }
+.swal2-popup.swal2-icon-warning  { --mk: rgba(241, 198, 60, 0.55); }
 .swal2-popup.swal2-icon-info,
-.swal2-popup.swal2-icon-question { --qa-accent: #4141A5; --qa-tint: rgba(65, 65, 165, 0.10); }
-.swal2-popup.qa-destructivo     { --qa-accent: #B42318; --qa-tint: #FEECEB; }
+.swal2-popup.swal2-icon-question { --mk: rgba(65, 65, 165, 0.20); }
+.swal2-popup.qa-destructivo      { --mk: #F5B7B1; }
 
 .swal2-container.swal2-backdrop-show {
   background: rgba(23, 11, 61, 0.32) !important;
 }
 
-/* Sin ícono: todo ocupa el ancho completo */
-.swal2-popup:not([class*="swal2-icon-"]) > * {
-  grid-column: 1 / -1 !important;
-}
-
-/* Cuadrito de ícono: mismo patrón que los cuadritos del panel.
-   No se fija `display`: SweetAlert lo oculta en línea cuando no hay ícono. */
+/* Sin íconos de severidad: el riel lleva el logo */
 .swal2-icon {
-  grid-column: 1 !important;
-  grid-row: 1 / span 2 !important;
-  position: relative !important;
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  margin: 0 !important;
-  border: 0 !important;
-  border-radius: 8px !important;
-  background: var(--qa-tint) !important;
-  box-shadow: var(--tile-raise) !important;
-  animation: none !important;
-}
-.swal2-icon > *,
-.swal2-icon::before {
   display: none !important;
 }
-.swal2-icon::after {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  inset: 10px !important;
-  background: var(--qa-accent) !important;
-  -webkit-mask: var(--qa-glyph) center / contain no-repeat !important;
-  mask: var(--qa-glyph) center / contain no-repeat !important;
-}
-.swal2-icon.swal2-success  { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
-.swal2-icon.swal2-error    { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z'/%3E%3Cpath d='m15 9-6 6M9 9l6 6'/%3E%3C/svg%3E"); }
-.swal2-icon.swal2-warning  { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cpath d='M12 9v4M12 17h.01'/%3E%3C/svg%3E"); }
-.swal2-icon.swal2-info     { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Cpath d='M12 11v6M12 7.5h.01'/%3E%3C/svg%3E"); }
-.swal2-icon.swal2-question { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Cpath d='M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01'/%3E%3C/svg%3E"); }
-.swal2-popup.qa-destructivo .swal2-icon { --qa-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6'/%3E%3C/svg%3E"); }
 
-/* Texto: título en azul oscuro, descripción en gris */
+/* Texto: título resaltado en azul oscuro, descripción en gris */
 .swal2-title {
-  grid-column: 2 !important;
+  display: inline !important;
   margin: 0 !important;
-  padding: 9px 0 0 !important;
-  text-align: left !important;
+  padding: .06em .32em !important;
+  border-radius: 5px !important;
+  background: var(--mk) !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   font-size: 16.5px !important;
-  line-height: 1.35 !important;
+  line-height: 1.62 !important;
   font-weight: 700 !important;
   color: #170B3D !important;
-  text-wrap: balance;
+  text-align: left !important;
+}
+.swal2-title[style*="display: none"],
+.swal2-title:empty {
+  display: none !important;
 }
 .swal2-html-container {
-  grid-column: 2 !important;
   margin: 0 !important;
   padding: 0 !important;
   text-align: left !important;
@@ -508,6 +497,9 @@ thead th {
   font-weight: 400 !important;
   color: #475569 !important;
   overflow-wrap: break-word !important;
+}
+.swal2-title:not([style*="display: none"]):not(:empty) ~ .swal2-html-container {
+  margin-top: 6px !important;
 }
 .swal2-html-container :is(b, strong) {
   color: #170B3D;
@@ -546,7 +538,13 @@ thead th {
 }
 /* Valor que debe resaltar con el tono de la alerta (ej. stock bajo) */
 .qa-tono {
-  color: var(--qa-accent) !important;
+  color: #170B3D !important;
+  font-weight: 700;
+  background: var(--mk);
+  padding: .04em .3em;
+  border-radius: 4px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 /* Nota secundaria: texto pequeño, sin caja de color */
 .qa-nota {
@@ -579,19 +577,13 @@ thead th {
   font-size: 12px;
 }
 
-/* Campos: en la columna del texto, hundidos como en el panel */
-.swal2-input-label,
-.swal2-input,
-.swal2-file,
-.swal2-range,
-.swal2-select,
-.swal2-radio,
-.swal2-checkbox,
-.swal2-textarea,
-.swal2-validation-message,
 .swal2-image {
-  grid-column: 2 !important;
+  display: block;
+  max-width: 100%;
+  margin: 10px 0 0;
 }
+
+/* Campos: hundidos como en el panel */
 .swal2-input-label {
   justify-content: flex-start !important;
   margin: 8px 0 0 !important;
@@ -637,10 +629,9 @@ thead th {
   display: none !important;
 }
 
-/* Franja de acciones: gris clara, de borde a borde, botones a la derecha.
+/* Franja de acciones: gris clara, de borde a borde del contenido, botones a la derecha.
    Si la alerta no tiene botones, SweetAlert la oculta y no deja hueco. */
 .swal2-actions {
-  grid-column: 1 / -1 !important;
   width: auto !important;
   margin: 14px calc(-1 * var(--qa-pad-r)) calc(-1 * var(--qa-pad-y)) calc(-1 * var(--qa-pad-l)) !important;
   padding: 12px 20px !important;
@@ -698,15 +689,17 @@ thead th {
   border-color: #4141A5 transparent #4141A5 transparent !important;
 }
 .swal2-timer-progress-bar-container {
-  grid-column: 1 / -1 !important;
+  position: absolute !important;
+  left: var(--qa-rail) !important;
+  right: 0 !important;
+  bottom: 0 !important;
 }
 .swal2-timer-progress-bar {
-  background: rgba(65, 65, 165, 0.35) !important;
+  background: var(--mk) !important;
   height: 2px !important;
 }
 
 .swal2-footer {
-  grid-column: 1 / -1 !important;
   margin: 14px 0 0 !important;
   padding: 12px 0 0 !important;
   border-top: 1px solid #E2E8F0 !important;
@@ -719,6 +712,7 @@ thead th {
   position: absolute !important;
   top: 12px !important;
   right: 12px !important;
+  z-index: 1 !important;
   width: 28px !important;
   height: 28px !important;
   font-size: 22px !important;
@@ -733,13 +727,14 @@ thead th {
   box-shadow: 0 0 0 3px rgba(65, 65, 165, 0.18) !important;
 }
 
-/* Teléfono: botones a lo ancho, la acción principal arriba */
+/* Teléfono: riel compacto y botones a lo ancho, la acción principal arriba */
 @media (max-width: 480px) {
   .swal2-popup {
+    --qa-rail: 56px;
+    --qa-logo: 32px;
     --qa-pad-y: 18px;
     --qa-pad-r: 18px;
     --qa-pad-l: 16px;
-    column-gap: 12px !important;
   }
   .swal2-popup:not(.swal2-toast) .swal2-actions {
     flex-direction: column-reverse !important;
@@ -747,36 +742,29 @@ thead th {
   }
   .swal2-popup:not(.swal2-toast) .swal2-actions > .swal2-styled {
     width: 100% !important;
-    min-height: 40px;
+    min-height: 44px;
   }
 }
 
 /* Toast (solo Sedes lo usa): versión compacta, sin franja */
 .swal2-popup.swal2-toast {
+  display: block !important;
+  --qa-rail: 52px;
+  --qa-logo: 26px;
   --qa-pad-y: 12px;
-  --qa-pad-r: 14px;
-  --qa-pad-l: 12px;
+  --qa-pad-r: 16px;
+  --qa-pad-l: 14px;
   width: min(380px, calc(100vw - 32px)) !important;
-  grid-template-columns: 32px minmax(0, 1fr) !important;
-  column-gap: 10px !important;
-  row-gap: 2px !important;
   box-shadow: 0 8px 24px -10px rgba(23, 11, 61, 0.25) !important;
-}
-.swal2-popup.swal2-toast .swal2-icon {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  border-radius: 6px !important;
-}
-.swal2-popup.swal2-toast .swal2-icon::after {
-  inset: 8px !important;
 }
 .swal2-popup.swal2-toast .swal2-title {
   font-size: 14px !important;
-  padding: 6px 0 0 !important;
 }
 .swal2-popup.swal2-toast .swal2-html-container {
   font-size: 13px !important;
+}
+.swal2-popup.swal2-toast .swal2-title:not([style*="display: none"]):not(:empty) ~ .swal2-html-container {
+  margin-top: 2px !important;
 }
 .swal2-popup.swal2-toast .swal2-actions {
   margin: 8px 0 0 !important;
@@ -787,9 +775,33 @@ thead th {
 
 @keyframes qa-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes qa-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes qa-respira { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.92); opacity: .78; } }
 .swal2-popup.swal2-show { animation: qa-in .16s ease-out !important; }
 .swal2-popup.swal2-hide { animation: qa-out .12s ease-in forwards !important; }
-.swal2-icon.swal2-icon-show, .swal2-icon .swal2-icon-content { animation: none !important; }
+.swal2-popup.swal2-loading::after { animation: qa-respira 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .swal2-popup.swal2-loading::after {
+    animation: none;
+  }
+}
+
+/* ========================================================================= */
+/* AVISOS EN PÁGINA                                                          */
+/* ========================================================================= */
+.mk {
+  background: var(--mk, rgba(65, 65, 165, 0.20));
+  padding: .06em .32em;
+  border-radius: 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  color: #170B3D;
+}
+.aviso { --mk: rgba(65, 65, 165, 0.20); }
+.aviso-info { --mk: rgba(65, 65, 165, 0.20); }
+.aviso-exito { --mk: #ABEFC6; }
+.aviso-advertencia { --mk: rgba(241, 198, 60, 0.55); }
+.aviso-error { --mk: #F5B7B1; }
+.aviso-titulo { line-height: 1.65; }
 
 /* ========================================================================= */
 /* FONDO TÉCNICO SUTIL: retícula de puntos tipo papel de registro clínico    */
@@ -913,6 +925,7 @@ thead th {
   .btn-outline-grad,
   .btn-hero-white-grad,
   .btn-hero-glass-grad,
+  .btn-hero-gold-grad,
   .btn-gold-grad {
     transition:
       background-position 240ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1014,6 +1027,38 @@ thead th {
     box-shadow: var(--raise-hero-press);
   }
 
+  .btn-hero-gold-grad {
+    background: linear-gradient(135deg, #f6d567 0%, #f1c63c 52%, #dfb022 100%);
+    background-size: 165% 100%;
+    background-position: 0% 50%;
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.30),
+      0 2px 10px rgba(241, 198, 60, 0.20),
+      inset 0 1px 0 rgba(255, 255, 255, 0.48),
+      inset 0 -2px 0 rgba(120, 82, 8, 0.30);
+  }
+
+  .btn-hero-gold-grad:hover:not(:disabled) {
+    background-position: 100% 50%;
+    transform: translateY(var(--lev-lift));
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, 0.36),
+      0 4px 16px rgba(241, 198, 60, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.56),
+      inset 0 -2px 0 rgba(120, 82, 8, 0.32);
+  }
+
+  .btn-hero-gold-grad:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: var(--raise-hero-press);
+  }
+
+  .btn-hero-gold-grad:focus-visible {
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, 0.36),
+      0 0 0 3px rgba(241, 198, 60, 0.45);
+  }
+
   .btn-gold-grad {
     --lev-hover: var(--raise-gold-hover);
     background: linear-gradient(135deg, #f9cd63 0%, #f5b82e 50%, #df9a11 100%);
@@ -1043,9 +1088,146 @@ thead th {
       .btn-outline-grad,
       .btn-hero-white-grad,
       .btn-hero-glass-grad,
+      .btn-hero-gold-grad,
       .btn-gold-grad
     ):hover {
       transform: none;
     }
+  }
+
+  /* ========================================================================= */
+  /* PANTALLAS PÚBLICAS DE AUTENTICACIÓN (BIENVENIDA, LOGIN Y REGISTRO)        */
+  /* ========================================================================= */
+  .auth-canvas {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(circle at 14% 16%, rgba(65, 65, 165, 0.08) 0%, transparent 42%),
+      radial-gradient(circle at 88% 84%, rgba(245, 184, 46, 0.10) 0%, transparent 40%),
+      radial-gradient(circle at 1px 1px, var(--bg-dot-color) 1px, transparent 0);
+    background-size: 100% 100%, 100% 100%, var(--bg-dot-gap) var(--bg-dot-gap);
+    overflow-x: hidden;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    background-color: #FFFFFF;
+    border: 1px solid var(--panel-border);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    box-shadow:
+      var(--panel-raise),
+      0 24px 56px -22px rgba(23, 11, 61, 0.18);
+  }
+
+  @media (min-width: 1024px) {
+    .auth-card {
+      max-width: 1040px;
+      min-height: 580px;
+      grid-template-columns: minmax(0, 54fr) minmax(0, 46fr);
+    }
+  }
+
+  .auth-visual-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 2.25rem 0 2.25rem;
+    background:
+      radial-gradient(circle at 46% 82%, rgba(245, 184, 46, 0.11) 0%, transparent 56%),
+      radial-gradient(circle at 18% 12%, rgba(65, 65, 165, 0.34) 0%, transparent 48%),
+      linear-gradient(155deg, #162038 0%, #170B3D 54%, #231C62 100%);
+  }
+
+  /* Respiro óptico mínimo (10 px) en el borde interno del panel oscuro, sin velo grisáceo */
+  .auth-visual-panel::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    width: 10px;
+    pointer-events: none;
+    z-index: 20;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+  }
+
+  /* Línea divisoria definida + micro-velo de profundidad (14 px) sobre el panel blanco en escritorio */
+  @media (min-width: 1024px) {
+    .auth-card > .auth-visual-panel + section {
+      position: relative;
+    }
+
+    .auth-card > .auth-visual-panel + section::before {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      left: 0;
+      width: 14px;
+      pointer-events: none;
+      z-index: 1;
+      border-left: 1px solid rgba(65, 65, 165, 0.14);
+      background: linear-gradient(
+        90deg,
+        rgba(23, 11, 61, 0.07) 0%,
+        rgba(23, 11, 61, 0.025) 45%,
+        rgba(23, 11, 61, 0) 100%
+      );
+    }
+  }
+
+  .auth-brand-header {
+    position: relative;
+    z-index: 10;
+  }
+
+  .auth-icon-tile {
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 6px 16px -6px rgba(0, 0, 0, 0.35);
+  }
+
+  .auth-stage-halo {
+    transform: scale(1.18);
+    background: radial-gradient(
+      circle closest-side,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(245, 184, 46, 0.14) 38%,
+      rgba(65, 65, 165, 0.07) 64%,
+      rgba(65, 65, 165, 0.02) 84%,
+      transparent 100%
+    );
+  }
+
+  .auth-animal-shadow {
+    filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.45));
+  }
+
+  .auth-rabbit-soft-base {
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+  }
+
+  /* Evita el rectángulo celeste del autocompletado de Chrome/Edge en los campos de auth */
+  .auth-card input:-webkit-autofill,
+  .auth-card input:-webkit-autofill:hover,
+  .auth-card input:-webkit-autofill:focus,
+  .auth-card input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+    -webkit-text-fill-color: #1E293B !important;
+    caret-color: #1E293B;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }

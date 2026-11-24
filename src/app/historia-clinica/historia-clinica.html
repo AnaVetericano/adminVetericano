@@ -57,41 +57,27 @@
 
       <!-- BANNER DE NOTIFICACIÓN DE ERROR -->
       <div *ngIf="mensajeError"
-        class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 flex items-start gap-3 animate-fade-in">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0 mt-0.5" fill="none"
-          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
+        class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-start gap-3 animate-fade-in aviso aviso-error">
         <div class="flex-1">
-          <p class="text-sm font-semibold text-[#170B3D]">Atención en el Formulario</p>
+          <p class="text-sm font-semibold text-[#170B3D] aviso-titulo"><span class="mk">Atención en el Formulario</span></p>
           <p class="text-sm text-slate-600 mt-0.5">{{ mensajeError }}</p>
         </div>
       </div>
 
       <!-- BANNER DE ÉXITO -->
       <div *ngIf="mensajeExito"
-        class="bg-white border border-slate-200 border-l-4 border-l-[#067647] rounded-xl px-4 py-3 flex items-start gap-3 animate-fade-in">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#067647] shrink-0 mt-0.5" fill="none"
-          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-start gap-3 animate-fade-in aviso aviso-exito">
         <div class="flex-1">
-          <p class="text-sm font-semibold text-[#170B3D]">Operación Completada</p>
+          <p class="text-sm font-semibold text-[#170B3D] aviso-titulo"><span class="mk">Operación Completada</span></p>
           <p class="text-sm text-slate-600 mt-0.5">{{ mensajeExito }}</p>
         </div>
       </div>
 
       <!-- BANNER DE HISTORIA ANULADA -->
       <div *ngIf="historiaAnulada"
-        class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 flex items-start gap-3 animate-fade-in print:hidden">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0 mt-0.5" fill="none"
-          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-        </svg>
+        class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-start gap-3 animate-fade-in print:hidden aviso aviso-error">
         <div class="flex-1">
-          <p class="text-sm font-semibold text-[#170B3D]">Historia Clínica Anulada (Solo Lectura)</p>
+          <p class="text-sm font-semibold text-[#170B3D] aviso-titulo"><span class="mk">Historia Clínica Anulada (Solo Lectura)</span></p>
           <p class="text-sm text-slate-600 mt-0.5">Esta historia clínica se encuentra anulada en el sistema. Conforme a las normativas de
             auditoría clínica, no es posible registrar modificaciones ni nuevas evoluciones sobre historias clínicas
             anuladas.</p>
@@ -2385,10 +2371,9 @@
 
             <!-- Si no hay medicamentos aún -->
             <div *ngIf="!medicamentosSeleccionados || medicamentosSeleccionados.length === 0"
-              class="bg-white border border-slate-200 border-l-4 border-l-[#9A5B13] rounded-xl px-4 py-3 flex items-start gap-3">
-              <svg class="w-5 h-5 text-[#9A5B13] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-start gap-3 aviso aviso-advertencia">
               <div class="space-y-0.5">
-                <p class="text-sm font-semibold text-[#170B3D]">No se han cargado medicamentos específicos en la atención actual.</p>
+                <p class="text-sm font-semibold text-[#170B3D] aviso-titulo"><span class="mk">No se han cargado medicamentos específicos en la atención actual.</span></p>
                 <p class="text-sm text-slate-600">Puedes agregarlos desde el Paso 3 (Tratamientos) o registrarlos en la evolución médica.</p>
               </div>
             </div>
