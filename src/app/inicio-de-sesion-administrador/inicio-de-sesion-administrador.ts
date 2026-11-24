@@ -29,6 +29,7 @@ export class InicioDeSesionAdministradorComponent {
   mostrarPasswordLogin: boolean = false;
   mostrarNuevaPassword: boolean = false;
   
+  cargandoLogin: boolean = false;
   cargandoPaso1: boolean = false;
   cargandoPaso2: boolean = false;
   
@@ -40,7 +41,15 @@ export class InicioDeSesionAdministradorComponent {
     private router: Router
   ) {}
 
+  volverAlInicio(): void {
+    this.router.navigate(['/']);
+  }
+
   login() {
+    if (this.cargandoLogin) {
+      return;
+    }
+
     // Validación corregida a 'email'
     if (this.usuario.email === '' || this.usuario.password === '') {
       Swal.fire({
@@ -52,12 +61,15 @@ export class InicioDeSesionAdministradorComponent {
       return;
     }
 
+    this.cargandoLogin = true;
+
     // Limpiar tokens y sesión anterior antes de intentar loguearse
     this.authService.logout();
 
     // Petición a la API usando AuthService
     this.authService.login(this.usuario).subscribe({
       next: () => {
+        this.cargandoLogin = false;
         // Redirección inteligente según el rol del usuario autenticado
         if (this.authService.isSuperAdmin()) {
           this.router.navigate(['/inicio-admin/super-dashboard']);
@@ -78,6 +90,7 @@ export class InicioDeSesionAdministradorComponent {
         }
       },
       error: (err: any) => {
+        this.cargandoLogin = false;
         this.authService.logout();
         const status = Number(err?.status);
         const mensajeRaw =

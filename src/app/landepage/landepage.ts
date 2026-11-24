@@ -30,4 +30,8 @@ export class Landepage implements OnInit {
     this.router.navigate(['/register']);
   }
 
+  volverAlInicio(): void {
+    this.router.navigate(['/']);
+  }
+
 }
