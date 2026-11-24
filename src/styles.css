@@ -1048,4 +1048,51 @@ thead th {
       transform: none;
     }
   }
+
+  /* ========================================================================= */
+  /* PANTALLAS PÚBLICAS DE AUTENTICACIÓN (BIENVENIDA, LOGIN Y REGISTRO)        */
+  /* ========================================================================= */
+  .auth-canvas {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-primary);
+    overflow-x: hidden;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    background-color: #FFFFFF;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    box-shadow:
+      0 28px 64px -16px rgba(0, 0, 0, 0.55),
+      0 12px 24px -12px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  @media (min-width: 1024px) {
+    .auth-card {
+      max-width: 920px;
+      min-height: 560px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .auth-visual-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 2rem 0;
+  }
+
+  .auth-brand-header {
+    position: relative;
+    z-index: 10;
+  }
 }
