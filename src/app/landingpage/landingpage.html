@@ -51,16 +51,8 @@
           </li>
         </ul>
 
-        <!-- Botones de acción + Logo SENA (Desktop) -->
+        <!-- Botón de acceso (Desktop) -->
         <div class="hidden items-center gap-3 lg:flex">
-          <button
-            type="button"
-            (click)="scrollToSection('descargar-app')"
-            class="btn-outline-grad cursor-pointer rounded-[6px] px-4 py-2 text-sm font-semibold text-[#1F2937] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E3192]"
-          >
-            Descargar App Móvil
-          </button>
-
           <button
             type="button"
             (click)="goToLogin()"
@@ -130,16 +122,9 @@
             <button
               type="button"
               (click)="goToLogin()"
-              class="btn-outline-grad w-full cursor-pointer rounded-[6px] px-4 py-2.5 text-sm font-semibold text-[#1F2937]"
-            >
-              Ingresar
-            </button>
-            <button
-              type="button"
-              (click)="scrollToSection('descargar-app')"
               class="btn-indigo-grad w-full cursor-pointer rounded-[6px] px-4 py-2.5 text-sm font-semibold text-white"
             >
-              Descargar App Móvil
+              Ingresar
             </button>
           </div>
           <div class="mt-4 flex items-center justify-center gap-2 border-t border-gray-100 pt-3 text-xs font-semibold text-[#6B7280]">
@@ -195,7 +180,7 @@
       <div class="relative z-10 mx-auto w-full max-w-[1760px] px-5 py-16 sm:px-8 sm:py-20 lg:px-10 xl:px-12">
         <div class="max-w-lg xl:max-w-xl">
           <span
-            class="inline-flex items-center rounded-full bg-[#F5B82E] px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-[#162038]"
+            class="inline-flex items-center rounded-full bg-[#F1C63C] px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-[#162038]"
           >
             Centro de Bienestar Animal
           </span>
@@ -206,7 +191,7 @@
             VETERICANO
           </h1>
 
-          <div class="mt-5 h-[3px] w-[60px] bg-[#F5B82E]" aria-hidden="true"></div>
+          <div class="mt-5 h-[3px] w-[60px] bg-[#F1C63C]" aria-hidden="true"></div>
 
           <p class="mt-5 max-w-xl text-lg font-medium leading-relaxed text-white sm:text-xl">
             Optimiza la gestión médica veterinaria y el seguimiento de denuncias de animales.
@@ -241,8 +226,8 @@
             [attr.aria-label]="'Mostrar imagen ' + (i + 1) + ' de ' + heroSlides.length"
             [attr.aria-pressed]="activeSlide() === i"
             [class]="
-              'h-2 cursor-pointer rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5B82E] ' +
-              (activeSlide() === i ? 'w-7 bg-[#F5B82E]' : 'w-2.5 bg-white/55 hover:bg-white/85')
+              'h-2 cursor-pointer rounded-full transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F1C63C] ' +
+              (activeSlide() === i ? 'w-7 bg-[#F1C63C]' : 'w-2.5 bg-white/55 hover:bg-white/85')
             "
           ></button>
         }
@@ -312,7 +297,7 @@
                     }
                   </div>
                   <span
-                    class="surface-pill-raise rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-bold text-[#6B7280] transition-colors group-hover:border-[#F5B82E] group-hover:bg-[#F5B82E]/15 group-hover:text-[#162038]"
+                    class="surface-pill-raise rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-bold text-[#6B7280] transition-colors group-hover:border-[#F1C63C] group-hover:bg-[#F1C63C]/15 group-hover:text-[#162038]"
                   >
                     {{ item.number }}
                   </span>
@@ -379,7 +364,7 @@
                 [class]="
                   'rounded-full px-2 py-0.5 text-[11px] font-bold ' +
                   (activeSolutionTab() === 'mobile'
-                    ? 'bg-[#F5B82E] text-[#162038]'
+                    ? 'bg-[#F1C63C] text-[#162038]'
                     : 'bg-gray-100 text-[#4B5563]')
                 "
               >
@@ -410,7 +395,7 @@
                 [class]="
                   'rounded-full px-2 py-0.5 text-[11px] font-bold ' +
                   (activeSolutionTab() === 'web'
-                    ? 'bg-[#F5B82E] text-[#162038]'
+                    ? 'bg-[#F1C63C] text-[#162038]'
                     : 'bg-gray-100 text-[#4B5563]')
                 "
               >
@@ -565,7 +550,7 @@
         <!-- Columna izquierda: Info + botón APK -->
         <div data-reveal class="lg:col-span-6">
           <span class="surface-pill-raise inline-flex items-center gap-2 rounded-full border border-[#162038]/15 bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-[#162038]">
-            <span class="h-2 w-2 rounded-full bg-[#F5B82E]" aria-hidden="true"></span>
+            <span class="h-2 w-2 rounded-full bg-[#F1C63C]" aria-hidden="true"></span>
             Aplicación Oficial · Android
           </span>
 
@@ -573,7 +558,7 @@
             Lleva VETERICANO en tu dispositivo móvil
           </h2>
 
-          <div class="mt-4 h-[3px] w-[60px] bg-[#F5B82E]" aria-hidden="true"></div>
+          <div class="mt-4 h-[3px] w-[60px] bg-[#F1C63C]" aria-hidden="true"></div>
 
           <p class="mt-5 max-w-xl text-base leading-relaxed text-[#374151] sm:text-lg">
             Escanea el código QR para descargar la aplicación móvil oficial y gestionar reportes o atenciones veterinarias desde cualquier lugar.
@@ -581,7 +566,7 @@
 
           <ul class="mt-6 space-y-2.5 text-sm font-medium text-[#374151]">
             <li class="flex items-center gap-2.5">
-              <span class="surface-track-sunk flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5B82E]/25 text-[#162038]">
+              <span class="surface-track-sunk flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F1C63C]/25 text-[#162038]">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 13l4 4L19 7" />
                 </svg>
@@ -589,7 +574,7 @@
               <span>Reporte con evidencia fotográfica y georreferenciación GPS</span>
             </li>
             <li class="flex items-center gap-2.5">
-              <span class="surface-track-sunk flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5B82E]/25 text-[#162038]">
+              <span class="surface-track-sunk flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F1C63C]/25 text-[#162038]">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 13l4 4L19 7" />
                 </svg>
@@ -597,7 +582,7 @@
               <span>Seguimiento en tiempo real de cada caso reportado</span>
             </li>
             <li class="flex items-center gap-2.5">
-              <span class="surface-track-sunk flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5B82E]/25 text-[#162038]">
+              <span class="surface-track-sunk flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F1C63C]/25 text-[#162038]">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M5 13l4 4L19 7" />
                 </svg>
@@ -668,19 +653,19 @@
                       <!-- Header de marca dentro de la pantalla -->
                       <div class="mt-2 flex items-center justify-between border-b border-white/10 px-5 py-3">
                         <div class="flex items-center gap-2">
-                          <span class="flex h-6 w-6 items-center justify-center rounded-md bg-[#F5B82E] text-[10px] font-extrabold text-[#162038]">
+                          <span class="flex h-6 w-6 items-center justify-center rounded-md bg-[#F1C63C] text-[10px] font-extrabold text-[#162038]">
                             VC
                           </span>
                           <span class="font-display text-xs font-extrabold tracking-wide text-white">VETERICANO</span>
                         </div>
-                        <span class="rounded-full bg-[#F5B82E]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#F5B82E]">
+                        <span class="rounded-full bg-[#F1C63C]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#F1C63C]">
                           App
                         </span>
                       </div>
 
                       <!-- Contenido central: QR 200x200 -->
                       <div class="px-5 pt-6 text-center">
-                        <p class="text-[11px] font-bold uppercase tracking-widest text-[#F5B82E]">
+                        <p class="text-[11px] font-bold uppercase tracking-widest text-[#F1C63C]">
                           Descarga Oficial APK
                         </p>
                         <p class="mt-1 text-xs text-white/75">
@@ -761,7 +746,7 @@
                     }
                   }
                 </div>
-                <span class="surface-pill-sunk rounded-full bg-[#F6F4F0] px-3 py-1 text-xs font-bold text-[#2E3192] transition-colors group-hover:bg-[#F5B82E]/20 group-hover:text-[#162038]">
+                <span class="surface-pill-sunk rounded-full bg-[#F6F4F0] px-3 py-1 text-xs font-bold text-[#2E3192] transition-colors group-hover:bg-[#F1C63C]/20 group-hover:text-[#162038]">
                   {{ impact.metric }}
                 </span>
               </div>
