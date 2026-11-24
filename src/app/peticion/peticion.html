@@ -706,8 +706,8 @@
 
         <!-- Estado de error -->
         <div *ngIf="!cargandoAlertas && errorAlertas"
-          class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-          <p class="text-sm font-semibold text-[#170B3D]">{{ errorAlertas }}</p>
+          class="bg-white border border-slate-200 rounded-xl px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs aviso aviso-error">
+          <p class="text-sm font-semibold text-[#170B3D] aviso-titulo"><span class="mk">{{ errorAlertas }}</span></p>
           <button type="button" (click)="cargarBandejaAlertas()"
             class="px-4 py-2 rounded-lg bg-[#B42318] hover:opacity-90 text-white text-xs font-semibold transition-opacity cursor-pointer shrink-0">
             Reintentar
@@ -1300,8 +1300,8 @@
           </div>
 
           <div *ngIf="!cargandoAlertasDetalle && errorAlertasDetalle"
-            class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 text-slate-700 flex items-center justify-between gap-2">
-            <span class="font-semibold text-[#170B3D]">{{ errorAlertasDetalle }}</span>
+            class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-700 flex items-center justify-between gap-2 aviso aviso-error">
+            <span class="font-semibold text-[#170B3D] aviso-titulo"><span class="mk">{{ errorAlertasDetalle }}</span></span>
             <button type="button"
               (click)="cargarAlertasDetallePeticion(peticionDetalle.id_peticion)"
               class="px-2.5 py-1 rounded-lg bg-[#B42318] hover:opacity-90 text-white font-semibold text-xs cursor-pointer">
@@ -1452,12 +1452,9 @@
 
       <!-- Alerta si el caso está atrasado (3.5) -->
       <div *ngIf="esAtrasada(peticionParaReasignar)"
-        class="bg-white border border-slate-200 border-l-4 border-l-[#B42318] rounded-xl px-4 py-3 flex items-center gap-2.5">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#B42318] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-        </svg>
+        class="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-2.5 aviso aviso-error">
         <div class="text-xs text-slate-600">
-          <strong class="font-semibold text-[#170B3D]">Atención:</strong> Este caso tiene {{ diasTranscurridos(peticionParaReasignar) }} días sin avances
+          <strong class="font-semibold text-[#170B3D] aviso-titulo"><span class="mk">Atención:</span></strong> Este caso tiene {{ diasTranscurridos(peticionParaReasignar) }} días sin avances
           registrados.
         </div>
       </div>
