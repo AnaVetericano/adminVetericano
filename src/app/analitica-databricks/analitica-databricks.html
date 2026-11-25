@@ -1,0 +1,284 @@
+<!-- Declaración del título para la barra superior institucional -->
+<app-page-title
+  titulo="Analítica de Datos y Reportes"
+  subtitulo="Inteligencia de datos, analítica clínica y tableros ejecutivos en Databricks AI/BI"
+  etiqueta="Databricks AI/BI"
+/>
+
+<div class="p-4 sm:p-6 max-w-[1600px] mx-auto flex flex-col gap-5 font-['Nunito',sans-serif]">
+
+  <!-- ========================================================================= -->
+  <!-- ENCABEZADO DE LA VISTA                                                    -->
+  <!-- ========================================================================= -->
+  <header class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    
+    <!-- Título y descripción -->
+    <div class="flex items-start sm:items-center gap-3.5">
+      <!-- Ícono temático Databricks / Analytics -->
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#170B3D] to-[#4141A5] flex items-center justify-center text-[#F1C63C] shadow-md shadow-[#4141A5]/15 shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18" />
+          <path d="M18 17V9" />
+          <path d="M13 17V5" />
+          <path d="M8 17v-3" />
+        </svg>
+      </div>
+
+      <div class="space-y-0.5">
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-xl sm:text-2xl font-black text-[#170B3D] tracking-tight">
+            Analítica de Datos y Reportes
+          </h1>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F1C63C]/15 text-[#170B3D] border border-[#F1C63C]/40">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5] animate-pulse"></span>
+            Databricks AI/BI
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 font-medium max-w-2xl">
+          Visualización de métricas avanzadas, indicadores clave de desempeño (KPIs) y trazabilidad clínica impulsada por Databricks.
+        </p>
+      </div>
+    </div>
+
+    <!-- Botones de Acción (Actualizar vista y Pantalla completa) -->
+    <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap self-start lg:self-auto">
+      
+      <!-- Botón: Actualizar vista -->
+      <button
+        type="button"
+        (click)="actualizarVista()"
+        [disabled]="!safeDatabricksUrl || cargando"
+        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#170B3D] bg-white border border-slate-200 hover:border-[#4141A5]/30 hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+        title="Recargar el dashboard de datos"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4 text-[#4141A5] transition-transform duration-500"
+          [class.animate-spin]="cargando"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>Actualizar vista</span>
+      </button>
+
+      <!-- Botón: Pantalla completa -->
+      <button
+        type="button"
+        (click)="togglePantallaCompleta()"
+        [disabled]="!safeDatabricksUrl"
+        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#170B3D] hover:bg-[#353583] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#170B3D]/15 cursor-pointer"
+        title="Alternar pantalla completa"
+      >
+        @if (esPantallaCompleta) {
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9L4 4m0 0l5 0m-5 0l0 5m11 2l5 5m0 0l-5 0m5 0l0-5m-5-11l5 5m0 0l0-5m0 5l-5 0M4 20l5-5m0 0l-5 0m5 0l0 5" />
+          </svg>
+          <span>Salir de pantalla completa</span>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#F1C63C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+          <span>Pantalla completa</span>
+        }
+      </button>
+
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- CONTENEDOR PRINCIPAL: IFRAME DE DATABRICKS O ASISTENTE DE CONFIGURACIÓN  -->
+  <!-- ========================================================================= -->
+  <div
+    #contenedorDashboard
+    class="relative w-full rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden transition-all duration-300 min-h-[75vh] h-[calc(100vh-190px)]"
+    [class.fixed]="esPantallaCompleta"
+    [class.inset-0]="esPantallaCompleta"
+    [class.z-50]="esPantallaCompleta"
+    [class.!h-screen]="esPantallaCompleta"
+    [class.!rounded-none]="esPantallaCompleta"
+  >
+
+    <!-- Barra auxiliar de pantalla completa -->
+    @if (esPantallaCompleta) {
+      <div class="h-12 bg-[#170B3D] text-white px-4 flex items-center justify-between z-20 relative">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#F1C63C]"></span>
+          <span class="text-xs font-bold tracking-wide">Databricks AI/BI - Modo Pantalla Completa</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="actualizarVista()"
+            class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition text-xs flex items-center gap-1 cursor-pointer"
+            title="Refrescar dashboard"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="hidden sm:inline">Recargar</span>
+          </button>
+          <button
+            type="button"
+            (click)="togglePantallaCompleta()"
+            class="px-2.5 py-1 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-[#F1C63C] text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+          >
+            ✕ Salir
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ESTADO 1: CUANDO HAY UNA URL VÁLIDA (IFRAME DE DATABRICKS ACTIVO) -->
+    @if (safeDatabricksUrl) {
+
+      <!-- SPINNER ANIMADO DE CARGA (#4141A5 y #F5C842) -->
+      @if (cargando) {
+        <div class="absolute inset-0 z-10 bg-white/95 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+          
+          <div class="relative w-20 h-20 mb-4 flex items-center justify-center">
+            <!-- Anillo exterior con color morado institucional #4141A5 -->
+            <div class="absolute inset-0 rounded-full border-4 border-[#4141A5]/15 border-t-[#4141A5] animate-spin"></div>
+            <!-- Anillo interior con color amarillo de acento #F5C842 -->
+            <div class="w-12 h-12 rounded-full border-4 border-transparent border-t-[#F5C842] border-r-[#F5C842] animate-spin" style="animation-direction: reverse; animation-duration: 0.8s;"></div>
+            <!-- Núcleo con isotipo institucional -->
+            <div class="w-6 h-6 rounded-md bg-[#170B3D] flex items-center justify-center text-[#F1C63C]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+              </svg>
+            </div>
+          </div>
+
+          <h3 class="text-base font-bold text-[#170B3D] tracking-tight">
+            Cargando Dashboard de Databricks AI/BI...
+          </h3>
+          <p class="text-xs text-slate-500 max-w-sm mt-1">
+            Conectando con el motor analítico de Databricks y procesando visualizaciones en tiempo real.
+          </p>
+
+          <div class="mt-4 flex items-center gap-2 text-[11px] text-[#4141A5] font-semibold bg-[#4141A5]/5 px-3 py-1.5 rounded-lg border border-[#4141A5]/15">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#F5C842]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>Conexión segura cifrada con Databricks Workspace</span>
+          </div>
+
+        </div>
+      }
+
+      <!-- IFRAME RESPONSIVO NATIVO CON SANDBOX COMPATIBLE -->
+      <iframe
+        #iframeDatabricks
+        [src]="safeDatabricksUrl"
+        (load)="onIframeLoaded()"
+        frameborder="0"
+        allowfullscreen
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        title="Dashboard de Analítica Databricks AI/BI"
+        class="w-full h-full border-0 block bg-white"
+        [class.h-[calc(100%-48px)]]="esPantallaCompleta"
+      ></iframe>
+
+    } @else {
+
+      <!-- ESTADO 2: TARJETA VISUAL ELEGANTE CUANDO databricksUrl ESTÁ VACÍA -->
+      <div class="w-full h-full flex flex-col items-center justify-center p-6 sm:p-10 text-center overflow-y-auto">
+        
+        <div class="max-w-2xl w-full bg-slate-50/70 border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          
+          <!-- Emblema visual con colores institucionales -->
+          <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-gradient-to-tr from-[#170B3D] via-[#4141A5] to-[#170B3D] flex items-center justify-center text-[#F5C842] shadow-xl shadow-[#4141A5]/20 ring-4 ring-[#F1C63C]/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 sm:w-10 sm:h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+
+          <div class="space-y-2">
+            <h2 class="text-xl sm:text-2xl font-black text-[#170B3D]">
+              Módulo de Analítica Databricks AI/BI Listo
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-lg mx-auto">
+              El contenedor nativo seguro con <code class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-[#4141A5] font-semibold text-xs">DomSanitizer</code> e <code class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-[#4141A5] font-semibold text-xs">&lt;iframe&gt;</code> está preparado para embeber dashboards de Databricks.
+            </p>
+          </div>
+
+          <!-- Alerta de validación en caso de error -->
+          @if (errorValidacion) {
+            <div class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs text-left flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>{{ errorValidacion }}</span>
+            </div>
+          }
+
+          <!-- Pasos de configuración en Databricks -->
+          <div class="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 text-left space-y-3 shadow-2xs">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-[#170B3D] flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#F5C842]"></span>
+              3 pasos para conectar su Dashboard de Databricks:
+            </h4>
+
+            <ol class="text-xs text-slate-600 space-y-2.5 pl-4 list-decimal marker:font-bold marker:text-[#4141A5]">
+              <li>
+                Inicie sesión en su espacio de trabajo de <strong class="text-[#170B3D]">Databricks</strong> y abra el informe en <strong class="text-[#170B3D]">AI/BI Dashboards</strong> (o Lakeview).
+              </li>
+              <li>
+                Haga clic en el botón superior <strong class="text-[#170B3D]">Share</strong> (Compartir) &gt; <strong class="text-[#170B3D]">Embed dashboard</strong> (Insertar tablero) y copie la URL HTTPS generada (o enlace de publicación).
+              </li>
+              <li>
+                Pegue la URL en la propiedad <code class="text-[#4141A5] font-semibold">databricksUrl</code> dentro de <code class="text-[#170B3D] font-bold">src/app/analitica-databricks/analitica-databricks.ts</code>.
+              </li>
+            </ol>
+          </div>
+
+          <!-- Campo interactivo para probar enlaces directamente en la vista -->
+          <div class="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center gap-2">
+            <div class="relative w-full flex-1">
+              <input
+                type="url"
+                [(ngModel)]="urlPrueba"
+                placeholder="O pegue aquí la URL de Databricks (https://...)"
+                class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4141A5]/30 focus:border-[#4141A5] bg-white text-[#170B3D]"
+              />
+            </div>
+            <button
+              type="button"
+              (click)="probarEnlace()"
+              [disabled]="!urlPrueba.trim()"
+              class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-[#4141A5] hover:bg-[#353583] text-white disabled:opacity-40 disabled:cursor-not-allowed transition shrink-0 cursor-pointer shadow-xs"
+            >
+              Probar enlace
+            </button>
+          </div>
+
+          <!-- Badges de características -->
+          <div class="flex items-center justify-center gap-3 pt-2 text-[11px] font-semibold text-slate-500 flex-wrap">
+            <span class="inline-flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#067647]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Databricks AI/BI Native
+            </span>
+            <span>•</span>
+            <span class="inline-flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#067647]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Sandbox seguro y aislado
+            </span>
+            <span>•</span>
+            <span class="inline-flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-[#067647]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Sanitizado con DomSanitizer
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>

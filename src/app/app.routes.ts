@@ -34,6 +34,7 @@ import { SedesComponent } from './sedes/sedes.component';
 import { SuperAdminDashboardComponent } from './super-admin-dashboard/super-admin-dashboard';
 import { SuperAdminAdministradoresComponent } from './super-admin-administradores/super-admin-administradores';
 import { SuperAdminReportesComponent } from './super-admin-reportes/super-admin-reportes';
+import { AnaliticaDatabricksComponent } from './analitica-databricks/analitica-databricks';
 import { AuthService } from './services/auth';
 
 export const routes: Routes = [
@@ -73,6 +74,7 @@ export const routes: Routes = [
 
       // Módulo Administrador / Entrada general
       { path: 'graficas', component: Graficas, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
+      { path: 'analitica', component: AnaliticaDatabricksComponent, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'usuarios-roles', component: UsuariosRoles, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'voluntarios', component: Voluntarios, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
       { path: 'eventos-voluntariado', component: EventosVoluntariado, canActivate: [roleGuard], data: { roles: ['Administrador'] } },
@@ -111,6 +113,8 @@ export const routes: Routes = [
       { path: 'perfil', component: PerfilComponent, canActivate: [roleGuard], data: { roles: ['Administrador', 'Veterinario', 'Jurídico', 'Super Administrador'] } }
     ]
   },
+
+  { path: 'analitica', redirectTo: 'inicio-admin/analitica', pathMatch: 'full' },
 
   { path: '**', redirectTo: '' }
 ];
