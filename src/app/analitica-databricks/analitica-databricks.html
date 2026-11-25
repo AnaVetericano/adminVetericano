@@ -5,50 +5,29 @@
   etiqueta="Databricks AI/BI"
 />
 
-<div class="p-4 sm:p-6 max-w-[1600px] mx-auto flex flex-col gap-5 font-['Nunito',sans-serif]">
+<div class="p-3 sm:p-5 max-w-[1600px] mx-auto flex flex-col gap-3 font-['Nunito',sans-serif]">
 
   <!-- ========================================================================= -->
-  <!-- ENCABEZADO DE LA VISTA                                                    -->
+  <!-- BARRA DE ACCIONES COMPACTA SUPERIOR                                       -->
   <!-- ========================================================================= -->
-  <header class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+  <div class="flex items-center justify-between gap-3 flex-wrap">
     
-    <!-- Título y descripción -->
-    <div class="flex items-start sm:items-center gap-3.5">
-      <!-- Ícono temático Databricks / Analytics -->
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#170B3D] to-[#4141A5] flex items-center justify-center text-[#F1C63C] shadow-md shadow-[#4141A5]/15 shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 3v18h18" />
-          <path d="M18 17V9" />
-          <path d="M13 17V5" />
-          <path d="M8 17v-3" />
-        </svg>
-      </div>
-
-      <div class="space-y-0.5">
-        <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="text-xl sm:text-2xl font-black text-[#170B3D] tracking-tight">
-            Analítica de Datos y Reportes
-          </h1>
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F1C63C]/15 text-[#170B3D] border border-[#F1C63C]/40">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#4141A5] animate-pulse"></span>
-            Databricks AI/BI
-          </span>
-        </div>
-        <p class="text-xs sm:text-sm text-slate-500 font-medium max-w-2xl">
-          Visualización de métricas avanzadas, indicadores clave de desempeño (KPIs) y trazabilidad clínica impulsada por Databricks.
-        </p>
-      </div>
+    <!-- Badge de estado de la plataforma -->
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 shadow-xs text-xs font-bold text-[#170B3D]">
+      <span class="w-2 h-2 rounded-full bg-[#4141A5] animate-pulse"></span>
+      <span>Databricks AI/BI</span>
+      <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">| Panel Embebido</span>
     </div>
 
     <!-- Botones de Acción (Actualizar vista y Pantalla completa) -->
-    <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap self-start lg:self-auto">
+    <div class="flex items-center gap-2 ml-auto">
       
       <!-- Botón: Actualizar vista -->
       <button
         type="button"
         (click)="actualizarVista()"
         [disabled]="!safeDatabricksUrl || cargando"
-        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#170B3D] bg-white border border-slate-200 hover:border-[#4141A5]/30 hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-[#170B3D] bg-white border border-slate-200/90 hover:border-[#4141A5]/30 hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer"
         title="Recargar el dashboard de datos"
       >
         <svg
@@ -70,7 +49,7 @@
         type="button"
         (click)="togglePantallaCompleta()"
         [disabled]="!safeDatabricksUrl"
-        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#170B3D] hover:bg-[#353583] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#170B3D]/15 cursor-pointer"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#170B3D] hover:bg-[#353583] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#170B3D]/15 cursor-pointer"
         title="Alternar pantalla completa"
       >
         @if (esPantallaCompleta) {
@@ -87,14 +66,14 @@
       </button>
 
     </div>
-  </header>
+  </div>
 
   <!-- ========================================================================= -->
   <!-- CONTENEDOR PRINCIPAL: IFRAME DE DATABRICKS O ASISTENTE DE CONFIGURACIÓN  -->
   <!-- ========================================================================= -->
   <div
     #contenedorDashboard
-    class="relative w-full rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden transition-all duration-300 min-h-[75vh] h-[calc(100vh-190px)]"
+    class="relative w-full rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden transition-all duration-300 min-h-[80vh] h-[calc(100vh-145px)]"
     [class.fixed]="esPantallaCompleta"
     [class.inset-0]="esPantallaCompleta"
     [class.z-50]="esPantallaCompleta"
