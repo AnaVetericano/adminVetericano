@@ -829,7 +829,7 @@ thead th {
   --color-indigo-brand: #2E3192;
   --color-navy-hero: #162038;
   --color-cream-surface: #F6F4F0;
-  --color-gold-accent: #F5B82E;
+  --color-gold-accent: #F1C63C;
   --color-charcoal: #1F2937;
 }
 
@@ -1028,7 +1028,7 @@ thead th {
   }
 
   .btn-hero-gold-grad {
-    background: linear-gradient(135deg, #f6d567 0%, #f1c63c 52%, #dfb022 100%);
+    background: #F1C63C;
     background-size: 165% 100%;
     background-position: 0% 50%;
     box-shadow:
@@ -1061,7 +1061,7 @@ thead th {
 
   .btn-gold-grad {
     --lev-hover: var(--raise-gold-hover);
-    background: linear-gradient(135deg, #f9cd63 0%, #f5b82e 50%, #df9a11 100%);
+    background: #F1C63C;
     background-size: 165% 100%;
     background-position: 0% 50%;
     box-shadow: var(--raise-gold);
