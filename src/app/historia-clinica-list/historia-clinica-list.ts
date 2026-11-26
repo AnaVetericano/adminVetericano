@@ -1544,7 +1544,8 @@ export class HistoriaClinicaListComponent implements OnInit {
             if (data.peso !== undefined && data.peso !== null) this.animalEnEdicion.peso = Number(data.peso);
             if (data.esterilizado !== undefined) this.animalEnEdicion.esterilizado = Boolean(data.esterilizado);
             if (data.caracteristicas) this.animalEnEdicion.caracteristicas = data.caracteristicas;
-            if (data.observaciones) this.animalEnEdicion.observaciones = data.observaciones;
+            // El servidor manda sobre la caché local también cuando las observaciones están vacías.
+            if (data.observaciones !== undefined) this.animalEnEdicion.observaciones = data.observaciones || '';
             if (data.foto_url) this.animalEnEdicion.foto_url = this.normalizarUrlFoto(data.foto_url);
             if (data.fecha_nacimiento) this.animalEnEdicion.fecha_nacimiento = data.fecha_nacimiento;
             if (data.disponible_adopcion !== undefined) this.animalEnEdicion.disponible_adopcion = Boolean(data.disponible_adopcion);
@@ -1595,8 +1596,9 @@ export class HistoriaClinicaListComponent implements OnInit {
       }
     }
 
+    // La descripción pública de Adopciones sale de 'caracteristicas' (lo que publica el catálogo) o de
+    // datos públicos del animal. Nunca de 'observaciones': son notas clínicas privadas.
     const descripcionAdopcion =
-      this.animalEnEdicion.observaciones.trim() ||
       this.animalEnEdicion.caracteristicas.trim() ||
       `Paciente ${this.animalEnEdicion.nombre.trim()} (${this.animalEnEdicion.especie} · ${this.animalEnEdicion.raza}), recuperado satisfactoriamente en el CBA, fuera de peligro y apto para adopción responsable.`;
 
@@ -1607,7 +1609,8 @@ export class HistoriaClinicaListComponent implements OnInit {
       peso: this.animalEnEdicion.peso !== null && this.animalEnEdicion.peso !== undefined ? Number(this.animalEnEdicion.peso) : null,
       esterilizado: Boolean(this.animalEnEdicion.esterilizado),
       caracteristicas: this.animalEnEdicion.caracteristicas.trim() || (this.animalEnEdicion.disponible_adopcion ? descripcionAdopcion : ''),
-      observaciones: this.animalEnEdicion.observaciones.trim() || (this.animalEnEdicion.disponible_adopcion ? descripcionAdopcion : ''),
+      // Las observaciones clínicas se guardan tal cual; no se rellenan con la descripción de adopción.
+      observaciones: this.animalEnEdicion.observaciones.trim(),
       foto_url: this.animalEnEdicion.foto_url.trim() || null,
       disponible_adopcion: Boolean(this.animalEnEdicion.disponible_adopcion)
     };
@@ -1820,9 +1823,9 @@ export class HistoriaClinicaListComponent implements OnInit {
     };
 
     const animalCache = (idAnim && !isNaN(idAnim)) ? (this.mapaAnimales.get(idAnim) || {}) : {};
+    // Solo información pública (nombre, especie, raza): nunca se precargan las observaciones clínicas
+    // ni las señas registradas en la atención, porque el texto se publica en el catálogo de adopción.
     const descripcionPorDefecto =
-      animalCache.observaciones ||
-      animalCache.caracteristicas ||
       `${historia.animal_nombre || 'Paciente'} (${historia.animal_especie || 'Canino'} · ${historia.animal_raza || 'Mestizo'}) fue atendido y recuperado satisfactoriamente en el Centro de Bienestar Animal (CBA). Se encuentra fuera de peligro, en estado clínico estable y apto para adopción responsable.`;
 
     Swal.fire({
@@ -1919,8 +1922,8 @@ export class HistoriaClinicaListComponent implements OnInit {
           urlAnimal,
           {
             disponible_adopcion: true,
+            // Descripción pública de adopción. Las observaciones clínicas no se tocan.
             caracteristicas: descripcionFinal,
-            observaciones: descripcionFinal,
             ...(fotoAnimal ? { foto_url: fotoAnimal } : {})
           },
           { headers: this.authHeaders }
@@ -2028,8 +2031,8 @@ export class HistoriaClinicaListComponent implements OnInit {
             this.mapaAnimales.set(idAnim, {
               ...prevAnim,
               disponible_adopcion: true,
+              // Solo la descripción pública cambió; las observaciones clínicas siguen siendo las del servidor.
               caracteristicas: descripcionFinal,
-              observaciones: descripcionFinal,
               foto_url: fotoAnimal || prevAnim.foto_url || ''
             });
           }

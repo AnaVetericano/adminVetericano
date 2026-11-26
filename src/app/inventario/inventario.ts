@@ -552,9 +552,9 @@ export class Inventario implements OnInit {
           html: `
             <dl class="qa-datos">
               <dt>Producto</dt>
-              <dd>${nombreProducto}</dd>
+              <dd>${this.escaparHtml(nombreProducto)}</dd>
               <dt>Veterinario destino</dt>
-              <dd>${nombreVet}</dd>
+              <dd>${this.escaparHtml(nombreVet)}</dd>
               <dt>Cantidad transferida</dt>
               <dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
             </dl>

@@ -585,8 +585,8 @@ export class InventarioJuridicoComponent implements OnInit {
           title: 'Stock asignado al veterinario',
           html: `
             <dl class="qa-datos">
-              <dt>Producto</dt><dd>${nombreProd}</dd>
-              <dt>Veterinario destino</dt><dd>${nombreVet}</dd>
+              <dt>Producto</dt><dd>${this.escaparHtml(nombreProd)}</dd>
+              <dt>Veterinario destino</dt><dd>${this.escaparHtml(nombreVet)}</dd>
               <dt>Cantidad transferida</dt><dd>${cant} ${cant === 1 ? 'unidad' : 'unidades'}</dd>
             </dl>
             <p class="qa-nota">
@@ -789,8 +789,8 @@ export class InventarioJuridicoComponent implements OnInit {
       <tr style="border-bottom: 1px solid #E2E8F0; ${i % 2 === 0 ? 'background-color: #F8FAFC;' : ''}">
         <td style="padding: 8px 10px; font-weight: bold; color: #170B3D;">#${f.idInv || '—'}</td>
         <td style="padding: 8px 10px;">
-          <strong style="color: #170B3D;">${f.nombre}</strong><br>
-          <span style="font-size: 11px; color: #64748B;">${f.descripcion || ''}</span>
+          <strong style="color: #170B3D;">${this.escaparHtml(f.nombre)}</strong><br>
+          <span style="font-size: 11px; color: #64748B;">${this.escaparHtml(f.descripcion || '')}</span>
         </td>
         <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #170B3D;">${f.sinLote ? '0' : f.stock} uds</td>
         <td style="padding: 8px 10px; text-align: center;">${f.cantidadEntrada} uds</td>
@@ -801,11 +801,11 @@ export class InventarioJuridicoComponent implements OnInit {
             f.estado === 'bajo' ? 'background: rgba(241,198,60,0.25); color: #170B3D;' :
             f.estado === 'agotado' ? 'background: #e2e8f0; color: #334155;' : 'background: #f1f5f9; color: #64748b;'
           }">
-            ${f.estadoDb || f.estado}
+            ${this.escaparHtml(f.estadoDb || f.estado)}
           </span>
         </td>
-        <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${f.proveedor || '—'}</td>
-        <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${f.facturaTexto || '—'}</td>
+        <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${this.escaparHtml(f.proveedor || '—')}</td>
+        <td style="padding: 8px 10px; font-size: 11px; color: #475569;">${this.escaparHtml(f.facturaTexto || '—')}</td>
       </tr>
     `).join('');
 
@@ -938,18 +938,20 @@ export class InventarioJuridicoComponent implements OnInit {
       return;
     }
 
-    const nombreVet = this.veterinarioSeleccionado?.nombre || this.veterinarioSeleccionado?.username || 'Médico Veterinario';
-    const emailVet = this.veterinarioSeleccionado?.email || this.veterinarioSeleccionado?.correo || 'No especificado';
+    // El reporte se escribe con document.write en una ventana del mismo origen (con acceso al
+    // token): los datos del veterinario y del catálogo se insertan siempre como texto.
+    const nombreVet = this.escaparHtml(this.veterinarioSeleccionado?.nombre || this.veterinarioSeleccionado?.username || 'Médico Veterinario');
+    const emailVet = this.escaparHtml(this.veterinarioSeleccionado?.email || this.veterinarioSeleccionado?.correo || 'No especificado');
     const fechaActual = new Date().toLocaleString('es-CO');
 
     const filasHtml = this.itemsVeterinarioFiltrados.map((item, i) => `
       <tr style="border-bottom: 1px solid #E2E8F0; ${i % 2 === 0 ? 'background-color: #F8FAFC;' : ''}">
         <td style="padding: 8px 10px; font-weight: bold; color: #170B3D;">#${item.id_medicamento}</td>
         <td style="padding: 8px 10px;">
-          <strong style="color: #170B3D;">${item.nombre}</strong><br>
-          <span style="font-size: 11px; color: #64748B;">${item.presentacion || item.tipo || ''}</span>
+          <strong style="color: #170B3D;">${this.escaparHtml(item.nombre)}</strong><br>
+          <span style="font-size: 11px; color: #64748B;">${this.escaparHtml(item.presentacion || item.tipo || '')}</span>
         </td>
-        <td style="padding: 8px 10px; text-align: center; color: #475569;">${item.tipo || 'General'}</td>
+        <td style="padding: 8px 10px; text-align: center; color: #475569;">${this.escaparHtml(item.tipo || 'General')}</td>
         <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #475569;">${item.cantidadEntregada || 0} uds</td>
         <td style="padding: 8px 10px; text-align: center; font-weight: bold; color: #170B3D;">${item.cantidadConsumida || 0} uds</td>
         <td style="padding: 8px 10px; text-align: center; font-weight: 800; font-size: 13px; color: #4141a5;">
