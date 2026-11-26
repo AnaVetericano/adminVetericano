@@ -58,7 +58,7 @@ export class InicioAdministradorComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.notificacionesRealtime.iniciar();
 
-    if (this.authService.isVeterinario() || this.authService.isAdmin()) {
+    if (this.authService.isVeterinario()) {
       this.alertasMaletinSub = this.inventoryService.alertasMaletin$.subscribe(alertas => {
         this.medicamentosAlertas = alertas || [];
       });
