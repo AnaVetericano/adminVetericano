@@ -116,8 +116,8 @@
         </a>
       }
 
-      <!-- DASHBOARD JURÍDICO (Jurídico y Administrador) -->
-      @if (authService.isJuridico() || authService.isAdmin()) {
+      <!-- DASHBOARD JURÍDICO (Solo Jurídico) -->
+      @if (authService.isJuridico()) {
         <a
           routerLink="/inicio-admin/dashboard-juridico"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
@@ -129,8 +129,10 @@
           </svg>
           <span class="text-[13px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 nav-label">Dashboard Jurídico</span>
         </a>
+      }
 
-        <!-- INVENTARIO CBA (Módulo Jurídico) -->
+      <!-- INVENTARIO CBA (Jurídico y Administrador) -->
+      @if (authService.isJuridico() || authService.isAdmin()) {
         <a
           routerLink="/inicio-admin/inventario-juridico"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
@@ -144,8 +146,8 @@
         </a>
       }
 
-      <!-- DASHBOARD VETERINARIO (Veterinario y Administrador) -->
-      @if (authService.isVeterinario() || authService.isAdmin()) {
+      <!-- DASHBOARD VETERINARIO (Solo Veterinario) -->
+      @if (authService.isVeterinario()) {
         <a
           routerLink="/inicio-admin/dashboard-veterinario"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
@@ -156,13 +158,13 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <span class="text-[13px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 nav-label">
-            {{ authService.isVeterinario() ? 'Dashboard' : 'Dashboard Veterinario' }}
+            Dashboard
           </span>
         </a>
       }
 
-      <!-- 2. INVENTARIO VETERINARIO (Veterinario y Administrador) -->
-      @if (authService.hasRole(['Veterinario', 'Administrador'])) {
+      <!-- 2. INVENTARIO VETERINARIO (Solo Veterinario) -->
+      @if (authService.isVeterinario()) {
         <a
           routerLink="inventario-veterinario"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
@@ -177,8 +179,8 @@
         </a>
       }
 
-      <!-- 3. HISTORIA CLÍNICA OFICIAL (Veterinario y Administrador) -->
-      @if (authService.hasRole(['Veterinario', 'Administrador'])) {
+      <!-- 3. HISTORIA CLÍNICA OFICIAL (Solo Veterinario) -->
+      @if (authService.isVeterinario()) {
         <a
           routerLink="acta-seres-sintientes"
           routerLinkActive="bg-white/10 text-white shadow-[inset_3px_0_0_#F1C63C]"
@@ -501,7 +503,7 @@
         }
 
         <!-- BOTÓN DE ALERTAS DE MEDICAMENTOS (AL LADO DEL PERFIL) -->
-        @if (authService.isVeterinario() || authService.isAdmin()) {
+        @if (authService.isVeterinario()) {
           <div class="relative">
             <button
               type="button"
@@ -597,7 +599,7 @@
         }
 
         <!-- Separador entre Alertas y el perfil -->
-        @if (notificacionesRealtime.habilitado || authService.isVeterinario() || authService.isAdmin()) {
+        @if (notificacionesRealtime.habilitado || authService.isVeterinario()) {
           <span class="hidden sm:block w-px h-6 bg-slate-200" aria-hidden="true"></span>
         }
 
@@ -673,14 +675,6 @@
                     {{ authService.currentUser()?.nombre ? (authService.currentUser()?.nombre + ' ' + (authService.currentUser()?.apellido || '')) : 'Usuario' }}
                   </p>
                   <p class="text-[11px] text-slate-500 truncate">{{ authService.currentUser()?.email }}</p>
-                </div>
-              </div>
-              <div class="px-4 py-1.5 bg-slate-50/60 border-b border-slate-100 flex items-center justify-between">
-                <span class="text-[10px] font-bold text-slate-400 uppercase">Rol</span>
-                <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
-                     [ngClass]="authService.isSuperAdmin() ? 'bg-white text-[#170B3D] border border-[#F1C63C]' : (authService.isAdmin() ? 'bg-white text-[#170B3D] border border-slate-200' : 'bg-white text-[#170B3D] border border-slate-200')">
-                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="authService.isSuperAdmin() ? 'bg-[#170B3D]' : (authService.isAdmin() ? 'bg-[#4141A5]' : (authService.isJuridico() ? 'bg-[#353583]' : 'bg-slate-400'))"></span>
-                  {{ authService.userRole() }} (Web & Móvil)
                 </div>
               </div>
 
