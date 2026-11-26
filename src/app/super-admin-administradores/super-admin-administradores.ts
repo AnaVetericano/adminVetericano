@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
+import { escaparHtml } from '../utils/escapar-html';
 import {
   SuperAdminService,
   AdministradorUsuario,
@@ -367,7 +368,8 @@ export class SuperAdminAdministradoresComponent implements OnInit {
 
     Swal.fire({
       title: 'Confirmar cambio de estado',
-      html: `El usuario <b>${admin.nombre} ${admin.apellido || ''}</b> (${admin.email}) pasará a estado <b>${nuevoEstado ? 'ACTIVO' : 'INACTIVO'}</b>.`,
+      // Nombre, apellido y correo los edita cada usuario en su perfil: siempre como texto.
+      html: `El usuario <b>${escaparHtml(admin.nombre)} ${escaparHtml(admin.apellido || '')}</b> (${escaparHtml(admin.email)}) pasará a estado <b>${nuevoEstado ? 'ACTIVO' : 'INACTIVO'}</b>.`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: nuevoEstado ? 'Activar' : 'Desactivar',
