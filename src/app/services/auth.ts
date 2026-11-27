@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, finalize, map, shareReplay, tap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, map, shareReplay, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type UserRole = 'Super Administrador' | 'Administrador' | 'Veterinario' | 'Jurídico' | 'Peticionario' | string;
@@ -29,6 +29,12 @@ export interface RegistroUsuario {
   password: string;
   nombre: string;
   apellido: string;
+  telefono?: string;
+}
+
+export interface ConfirmarRegistroPayload {
+  email: string;
+  codigo: string;
 }
 
 export interface InactivarUsuario {
@@ -37,7 +43,11 @@ export interface InactivarUsuario {
 
 export interface RespuestaRegistro {
   mensaje?: string;
+  email?: string;
+  cooldown_segundos?: number;
+  expira_en_segundos?: number;
   usuario?: any;
+  datos?: any;
   token?: string;
 }
 
@@ -617,8 +627,39 @@ export class AuthService {
     this.currentUserSignal.set(null);
   }
 
+  private postConFallbackLocal<T>(rutaRelativa: string, body: any): Observable<T> {
+    const rutaLimpia = rutaRelativa.replace(/^\/+/, '');
+    const urlPrincipal = `${this.apiUrl}/${rutaLimpia}`;
+    return this.http.post<T>(urlPrincipal, body).pipe(
+      catchError((err: HttpErrorResponse) => {
+        const esLocalhostBrowser =
+          typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const apuntaARailway = this.apiUrl.includes('railway.app');
+
+        if (
+          esLocalhostBrowser &&
+          apuntaARailway &&
+          (err.status === 404 || err.status === 0 || err.status >= 500)
+        ) {
+          const urlLocal = `http://127.0.0.1:8000/api/usuarios/${rutaLimpia}`;
+          return this.http.post<T>(urlLocal, body);
+        }
+        return throwError(() => err);
+      })
+    );
+  }
+
   registrar(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
-    return this.http.post<RespuestaRegistro>(`${this.apiUrl}/register/`, usuario);
+    return this.postConFallbackLocal<RespuestaRegistro>('register/', usuario);
+  }
+
+  solicitarCodigoRegistro(usuario: RegistroUsuario): Observable<RespuestaRegistro> {
+    return this.postConFallbackLocal<RespuestaRegistro>('register/solicitar-codigo/', usuario);
+  }
+
+  confirmarCodigoRegistro(payload: ConfirmarRegistroPayload): Observable<RespuestaRegistro> {
+    return this.postConFallbackLocal<RespuestaRegistro>('register/confirmar-codigo/', payload);
   }
 
 
@@ -633,7 +674,7 @@ export class AuthService {
 
 
   login(credenciales: CredencialesLogin): Observable<RespuestaLogin> {
-    return this.http.post<RespuestaLogin>(`${this.apiUrl}/login/`, credenciales).pipe(
+    return this.postConFallbackLocal<RespuestaLogin>('login/', credenciales).pipe(
       tap((res) => {
         const token = res.tokens?.access || res['access'] || res['token'];
         const refreshToken = res.tokens?.refresh || res['refresh'] || res['refresh_token'];
@@ -711,11 +752,11 @@ export class AuthService {
   }
 
   solicitarRecuperacion(email: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/recuperar-password/`, { email });
+    return this.postConFallbackLocal<any>('recuperar-password/', { email });
   }
 
   confirmarPassword(payload: ConfirmarPasswordPayload): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/confirmar-password/`, payload);
+    return this.postConFallbackLocal<any>('confirmar-password/', payload);
   }
 
   listarRoles(): Observable<any> {

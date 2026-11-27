@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -38,7 +38,8 @@ export class InicioDeSesionAdministradorComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   volverAlInicio(): void {
@@ -128,6 +129,16 @@ export class InicioDeSesionAdministradorComponent {
           return;
         }
 
+        if (status === 429) {
+          Swal.fire({
+            title: 'Cuenta bloqueada temporalmente',
+            text: mensajeRaw || 'Has superado el límite de intentos fallidos. Intenta nuevamente en 15 minutos o restablece tu contraseña.',
+            icon: 'warning',
+            confirmButtonText: 'Aceptar'
+          });
+          return;
+        }
+
         Swal.fire({
           title: 'Credenciales inválidas',
           text: mensajeRaw || 'Credenciales incorrectas. Verifique sus datos e intente nuevamente.',
@@ -149,11 +160,13 @@ export class InicioDeSesionAdministradorComponent {
     this.cargandoPaso1 = true;
     this.mensajeError = '';
     this.mensajeExito = '';
+    this.cdr.detectChanges();
 
     this.authService.solicitarRecuperacion(this.emailRecuperacion).subscribe({
       next: (res: any) => {
         this.mensajeExito = res.mensaje || res.detail || '¡Código enviado exitosamente a tu correo!';
         this.cargandoPaso1 = false;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         const st = Number(err?.status);
@@ -165,6 +178,7 @@ export class InicioDeSesionAdministradorComponent {
           this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'No se pudo enviar el correo.';
         }
         this.cargandoPaso1 = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -172,22 +186,26 @@ export class InicioDeSesionAdministradorComponent {
   confirmarRecuperacion() {
     if (!this.emailRecuperacion || !this.codigoIngresado || !this.nuevaPassword) {
       this.mensajeError = 'Todos los campos de recuperación son obligatorios.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.nuevaPassword.length < 8) {
       this.mensajeError = 'La nueva contraseña debe tener al menos 8 caracteres.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.nuevaPassword === this.nuevaPassword.toLowerCase()) {
       this.mensajeError = 'La nueva contraseña debe incluir al menos una letra mayúscula.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.cargandoPaso2 = true;
     this.mensajeError = '';
     this.mensajeExito = '';
+    this.cdr.detectChanges();
 
     const payload = {
       email: this.emailRecuperacion,
@@ -199,10 +217,12 @@ export class InicioDeSesionAdministradorComponent {
       next: (res: any) => {
         this.mensajeExito = res?.mensaje || res?.detail || '¡Contraseña actualizada con éxito!';
         this.cargandoPaso2 = false;
+        this.cdr.detectChanges();
         
         setTimeout(() => {
           this.mostrarRecuperacion = false;
           this.mensajeExito = '';
+          this.cdr.detectChanges();
         }, 2000);
       },
       error: (err: any) => {
@@ -215,6 +235,7 @@ export class InicioDeSesionAdministradorComponent {
           this.mensajeError = err.error?.error || err.error?.detail || err.error?.mensaje || 'Código incorrecto o expirado.';
         }
         this.cargandoPaso2 = false;
+        this.cdr.detectChanges();
       }
     });
   }

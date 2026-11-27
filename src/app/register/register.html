@@ -178,7 +178,7 @@
             type="submit"
             [disabled]="cargandoRegistro"
             class="btn-indigo-grad w-full h-[44px] px-4 rounded-lg text-white font-semibold text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-            {{ cargandoRegistro ? 'Creando cuenta...' : 'Crear cuenta' }}
+            {{ cargandoRegistro ? 'Enviando código de verificación...' : 'Crear cuenta' }}
           </button>
         </div>
 
@@ -190,6 +190,79 @@
       </p>
 
     </section>
+
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL DE VERIFICACIÓN DE CORREO ELECTRÓNICO (OTP 6 DÍGITOS) -->
+<!-- ========================================================= -->
+<div *ngIf="mostrarModalVerificacion" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs font-['Nunito',sans-serif]">
+  <div class="w-full max-w-md bg-white rounded-xl p-6 relative space-y-4 border border-slate-200 shadow-lg">
+
+    <button type="button" (click)="cerrarModalVerificacion()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-semibold text-lg cursor-pointer">
+      ✕
+    </button>
+
+    <div class="space-y-1">
+      <h3 class="text-xl font-bold text-[#170B3D]">Verifica tu correo electrónico</h3>
+      <p class="text-xs text-slate-500">
+        Enviamos un código de 6 dígitos a <strong class="text-[#170B3D]">{{ register.email }}</strong>. Ingresa el código para confirmar que tu correo es real y activar tu cuenta.
+      </p>
+    </div>
+
+    <div *ngIf="mensajeExitoModal" class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-emerald-800">
+      {{ mensajeExitoModal }}
+    </div>
+    <div *ngIf="mensajeErrorModal" class="bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-rose-800">
+      {{ mensajeErrorModal }}
+    </div>
+
+    <div class="space-y-3">
+      <label for="codigo-otp-registro" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+        Código de verificación (6 dígitos)
+      </label>
+      <input
+        id="codigo-otp-registro"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="123456"
+        [(ngModel)]="codigoVerificacion"
+        name="codigoVerificacionModal"
+        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-center text-lg font-extrabold tracking-[0.35em] text-[#170B3D] placeholder:text-slate-300 placeholder:tracking-normal focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20" />
+
+      <button
+        type="button"
+        (click)="confirmarCodigoYCrearCuenta()"
+        [disabled]="cargandoConfirmacion"
+        class="w-full btn-indigo-grad text-white font-semibold py-2.5 px-4 rounded-lg text-sm disabled:opacity-50 cursor-pointer">
+        {{ cargandoConfirmacion ? 'Verificando código...' : 'Verificar y Crear Cuenta' }}
+      </button>
+    </div>
+
+    <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+      <button
+        type="button"
+        (click)="reenviarCodigoVerificacion()"
+        [disabled]="cargandoReenvio || cooldownRestante > 0"
+        class="font-bold text-[#4141A5] hover:underline disabled:text-slate-400 disabled:no-underline cursor-pointer disabled:cursor-not-allowed">
+        {{
+          cargandoReenvio
+            ? 'Reenviando...'
+            : cooldownRestante > 0
+              ? 'Reenviar código en ' + cooldownRestante + 's'
+              : 'Reenviar código'
+        }}
+      </button>
+
+      <button
+        type="button"
+        (click)="cerrarModalVerificacion()"
+        class="text-slate-500 font-semibold hover:underline cursor-pointer">
+        Corregir correo
+      </button>
+    </div>
 
   </div>
 </div>
