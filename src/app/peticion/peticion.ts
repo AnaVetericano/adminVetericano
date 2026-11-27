@@ -24,6 +24,9 @@ import {
   extraerIdAlertaDeNotificacion
 } from '../models/duplicados.model';
 import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparacion/alerta-duplicado-comparacion';
+import { TriajeInteligentePanelComponent } from './triaje-inteligente-panel/triaje-inteligente-panel';
+import { TriajePeticionDetalle, TriajeResumenTarjeta } from '../models/triaje.model';
+import { TriajeIaService } from '../services/triaje-ia.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
@@ -37,6 +40,7 @@ import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '.
     FormsModule,
     DashboardJuridicoComponent,
     AlertaDuplicadoComparacionComponent,
+    TriajeInteligentePanelComponent,
     RouterLink,
     AnimalIconComponent,
     PageTitleComponent,
@@ -174,6 +178,7 @@ export class Peticion implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  readonly triajeIaService = inject(TriajeIaService);
 
   @ViewChild(AlertaDuplicadoComparacionComponent)
   private comparadorDuplicadoRef?: AlertaDuplicadoComparacionComponent;
@@ -217,6 +222,10 @@ export class Peticion implements OnInit, OnDestroy {
 
   get puedeGestionarDuplicados(): boolean {
     return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get puedeConsultarTriaje(): boolean {
+    return this.triajeIaService.puedeConsultarTriaje();
   }
 
   get puedeConsultarNotificacionesJuridicas(): boolean {
@@ -1026,11 +1035,76 @@ export class Peticion implements OnInit, OnDestroy {
 
   esUrgente(p: any): boolean {
     if (!p) return false;
-    const prio = String(p.prioridad || '').toLowerCase();
-    const tipo = String(p.tipo || this.tipoLabel(p) || '').toLowerCase();
+    const prio = String(p.prioridad || '').toLowerCase().trim();
     const est = String(p.estado || '').toLowerCase();
-    return prio.includes('urgente') || prio.includes('alta') || prio.includes('crit') ||
-      tipo.includes('herido') || est.includes('urgente');
+    if (prio) {
+      return prio.includes('urgente') || prio.includes('alta') || prio.includes('crit');
+    }
+    const tipo = String(p.tipo || this.tipoLabel(p) || '').toLowerCase();
+    return tipo.includes('herido') || est.includes('urgente');
+  }
+
+  prioridadConfirmadaTexto(p: any): string {
+    const prio = (p?.prioridad || '').toString().trim();
+    return prio || 'Estándar';
+  }
+
+  triajeDeTarjeta(p: any): TriajeResumenTarjeta | null {
+    if (!this.puedeConsultarTriaje || !p) {
+      return null;
+    }
+    return p.triaje_resumen ?? p.triaje_ia ?? null;
+  }
+
+  triajeEnCursoTarjeta(p: any): boolean {
+    const t = this.triajeDeTarjeta(p);
+    if (!t) {
+      return false;
+    }
+    return (
+      (t.estado_analisis === 'PENDIENTE' || t.estado_analisis === 'EN_PROCESO') &&
+      t.estado_envio !== 'FALLO_DEFINITIVO'
+    );
+  }
+
+  etiquetaDecisionTriajeTarjeta(decision: string | null | undefined): string {
+    switch (decision) {
+      case 'ACEPTADA':
+        return 'Confirmada';
+      case 'RECHAZADA':
+        return 'Rechazada';
+      case 'NO_APLICA':
+        return 'No aplica';
+      default:
+        return 'Por confirmar';
+    }
+  }
+
+  claseDecisionTriajeTarjeta(decision: string | null | undefined): string {
+    switch (decision) {
+      case 'ACEPTADA':
+        return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
+      case 'RECHAZADA':
+        return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
+      case 'NO_APLICA':
+        return 'bg-slate-100 text-slate-600 border-slate-200';
+      default:
+        return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
+    }
+  }
+
+  clasePrioridadTriajeBadge(prio: string | null | undefined): string {
+    const v = String(prio || '').toUpperCase().trim();
+    if (v.includes('URGENTE') || v.includes('ALTA') || v.includes('CRIT')) {
+      return 'bg-[#FEECEB] text-[#B42318] border-[#F5B7B1]';
+    }
+    if (v.includes('MEDIA')) {
+      return 'bg-[#FFF4E5] text-[#9A5B13] border-[#FCD9A6]';
+    }
+    if (v.includes('BAJA')) {
+      return 'bg-[#ECFDF3] text-[#067647] border-[#ABEFC6]';
+    }
+    return 'bg-slate-100 text-slate-700 border-slate-200';
   }
 
   diasTranscurridos(p: any): number | null {
@@ -1111,6 +1185,9 @@ export class Peticion implements OnInit, OnDestroy {
       const estado = String(p.estado || '').toLowerCase();
       const prioridad = String(p.prioridad || '').toLowerCase();
       const vet = this.nombreAsignado(p).toLowerCase();
+      const triaje = this.triajeDeTarjeta(p);
+      const prioSug = String(triaje?.prioridad_sugerida || '').toLowerCase();
+      const vetRec = String(triaje?.veterinario_recomendado_nombre || '').toLowerCase();
       const estAsigTexto = asignada ? 'asignada asignado' : 'sin asignar pendiente';
 
       return (
@@ -1122,6 +1199,8 @@ export class Peticion implements OnInit, OnDestroy {
         estado.includes(q) ||
         prioridad.includes(q) ||
         vet.includes(q) ||
+        prioSug.includes(q) ||
+        vetRec.includes(q) ||
         estAsigTexto.includes(q)
       );
     });
@@ -1788,6 +1867,77 @@ export class Peticion implements OnInit, OnDestroy {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
+  }
+
+  onTriajeSincronizado(triaje: TriajePeticionDetalle): void {
+    this.aplicarTriajeEnMemoria(triaje);
+    this.cdr.detectChanges();
+  }
+
+  onTriajePeticionActualizada(triaje: TriajePeticionDetalle): void {
+    const petId = Number(triaje?.id_peticion);
+    if (!Number.isInteger(petId) || petId <= 0) {
+      return;
+    }
+    this.aplicarTriajeEnMemoria(triaje);
+    if (this.peticionDetalle && Number(this.peticionDetalle.id_peticion) === petId) {
+      this.cargarDetalleCompleto(petId);
+      this.obtenerHistorialAsignaciones(petId);
+    }
+    this.obtenerPeticiones();
+    if (this.puedeConsultarNotificacionesJuridicas) {
+      this.obtenerNotificaciones();
+    }
+    this.cdr.detectChanges();
+  }
+
+  private aplicarTriajeEnMemoria(triaje: TriajePeticionDetalle): void {
+    const petId = Number(triaje?.id_peticion);
+    if (!Number.isInteger(petId) || petId <= 0) {
+      return;
+    }
+    const resumen: TriajeResumenTarjeta = {
+      id_triaje: triaje.id_triaje,
+      automatizacion_activa: triaje.automatizacion_activa,
+      puede_reintentar: triaje.puede_reintentar,
+      estado_envio: triaje.estado_envio,
+      estado_analisis: triaje.estado_analisis,
+      prioridad_sugerida: triaje.prioridad_sugerida,
+      prioridad_aplicada: triaje.prioridad_aplicada,
+      decision_prioridad: triaje.decision_prioridad,
+      veterinario_recomendado_id: triaje.veterinario_recomendado_id,
+      veterinario_recomendado_nombre: triaje.veterinario_recomendado_nombre,
+      veterinario_recomendado_sede: triaje.veterinario_recomendado_sede,
+      veterinario_recomendado_carga: triaje.veterinario_recomendado_carga,
+      decision_veterinario: triaje.decision_veterinario,
+      veterinario_asignado_decision_id: triaje.veterinario_asignado_decision_id,
+      contradiccion_foto_descripcion: triaje.contradiccion_foto_descripcion,
+      total_duplicados_detectados: triaje.total_duplicados_detectados,
+      completado_en: triaje.completado_en,
+      fecha_actualizacion: triaje.fecha_actualizacion
+    };
+
+    const actualizarRegistro = (reg: any): void => {
+      if (!reg || Number(reg.id_peticion) !== petId) {
+        return;
+      }
+      reg.triaje_resumen = resumen;
+      if (triaje.prioridad_actual_peticion) {
+        reg.prioridad = triaje.prioridad_actual_peticion;
+      }
+      if (triaje.estado_peticion) {
+        reg.estado = triaje.estado_peticion;
+      }
+      if (triaje.asignado_a_id_peticion) {
+        reg.asignado_a = triaje.asignado_a_id_peticion;
+      }
+    };
+
+    actualizarRegistro(this.peticionDetalle);
+    const enLista = this.peticionesLista.find((p: any) => Number(p?.id_peticion) === petId);
+    if (enLista) {
+      actualizarRegistro(enLista);
+    }
   }
 
   private mostrarAlerta(title: string, text: string, icon: 'success' | 'error' | 'warning'): void {
