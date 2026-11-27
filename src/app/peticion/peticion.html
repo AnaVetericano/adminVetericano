@@ -1222,6 +1222,17 @@
           </div>
         </div>
 
+        <!-- Triaje Inteligente (Solo Administrador y Jurídico) -->
+        <app-triaje-inteligente-panel
+          *ngIf="puedeConsultarTriaje"
+          [idPeticion]="peticionDetalle.id_peticion"
+          [peticion]="peticionDetalle"
+          [alertasPeticion]="alertasPeticionDetalle"
+          [esDuplicada]="esPeticionDuplicada(peticionDetalle)"
+          (abrirAlertaDuplicado)="abrirComparadorDuplicado($event)"
+          (peticionActualizada)="onTriajePeticionActualizada($event)">
+        </app-triaje-inteligente-panel>
+
         <!-- 5. Sección de Historial de Asignaciones y Reasignaciones (GET /api/peticiones/<id>/historial-asignaciones/) -->
         <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
           <div class="flex items-center justify-between mb-3">

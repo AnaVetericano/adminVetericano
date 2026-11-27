@@ -1,0 +1,5 @@
+/* Estilos complementarios para el panel de Triaje Inteligente */
+:host {
+  display: block;
+  width: 100%;
+}

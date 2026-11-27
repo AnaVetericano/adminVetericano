@@ -1,0 +1,466 @@
+<section
+  *ngIf="puedeConsultarTriaje"
+  aria-label="Triaje Inteligente de la denuncia"
+  data-testid="panel-triaje-inteligente"
+  class="bg-white rounded-xl p-4 border border-slate-200 border-l-4 border-l-[#4141A5] space-y-3.5">
+
+  <!-- Encabezado de la sección -->
+  <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+    <div class="flex items-center gap-2 flex-wrap">
+      <div class="w-7 h-7 rounded-lg bg-[#4141A5]/10 text-[#4141A5] flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      </div>
+      <div>
+        <h4 class="text-[11px] font-semibold text-[#170B3D] uppercase tracking-wide">
+          Triaje Inteligente (Apoyo Jurídico)
+        </h4>
+        <p *ngIf="triaje" class="text-[11px] text-slate-500">
+          Fecha del análisis:
+          <strong class="text-slate-700">{{ formatearFechaHora(triaje.completado_en || triaje.ultimo_intento_en || triaje.fecha_creacion) }}</strong>
+        </p>
+      </div>
+      <span
+        *ngIf="!cargando && !errorCarga"
+        data-testid="triaje-estado-badge"
+        [ngClass]="estadoAnalisisBadgeClase"
+        class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border">
+        {{ estadoAnalisisEtiqueta }}
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        *ngIf="!cargando && !errorCarga && puedeMostrarReintento && !esDuplicada"
+        type="button"
+        data-testid="btn-reintentar-triaje"
+        (click)="reintentarTriaje()"
+        [disabled]="reintentando || !automatizacionActiva"
+        [title]="automatizacionActiva ? 'Reintentar análisis de triaje inteligente' : 'Automatización de triaje desactivada en este entorno'"
+        class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-[#4141A5] border border-[#4141A5]/30 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+        {{ reintentando ? 'Reintentando...' : (triaje ? 'Reintentar análisis' : 'Ejecutar triaje') }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Aviso cuando la automatización esté desactivada -->
+  <div
+    *ngIf="!cargando && !errorCarga && !automatizacionActiva"
+    data-testid="triaje-automatizacion-desactivada"
+    class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-slate-600 flex items-center justify-between gap-2">
+    <span>
+      La automatización de triaje inteligente (n8n) está <strong>desactivada</strong> en este entorno.
+      {{ triaje ? 'Puedes revisar los resultados registrados y tomar decisiones humanas.' : 'Las denuncias se gestionan por el flujo manual habitual.' }}
+    </span>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="cargando" data-testid="triaje-cargando" class="py-4 flex items-center gap-2.5 text-xs text-slate-600">
+    <app-animal-icon tipo="huellas" [tamano]="24" etiqueta="Consultando triaje inteligente" />
+    <span>Consultando análisis de Triaje Inteligente...</span>
+  </div>
+
+  <!-- Error de consulta (permisos por rol/sede, red o servidor) -->
+  <div
+    *ngIf="!cargando && errorCarga"
+    data-testid="triaje-error-carga"
+    class="bg-[#FEECEB] border border-[#F5B7B1] rounded-lg px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs text-[#B42318]">
+    <span class="font-semibold">{{ errorCarga }}</span>
+    <button
+      *ngIf="errorCargaCodigo !== 'FORBIDDEN' && errorCargaCodigo !== 'UNAUTHORIZED'"
+      type="button"
+      (click)="cargarTriaje()"
+      class="px-2.5 py-1 rounded-lg bg-[#B42318] hover:opacity-90 text-white font-semibold text-xs shrink-0 cursor-pointer">
+      Reintentar
+    </button>
+  </div>
+
+  <!-- Denuncia antigua o sin registro de triaje -->
+  <div
+    *ngIf="!cargando && !errorCarga && !triaje"
+    data-testid="triaje-sin-registro"
+    class="bg-slate-50 rounded-lg p-3.5 border border-slate-200 text-xs text-slate-600 space-y-1">
+    <p class="font-semibold text-[#170B3D]">Esta denuncia no registra un análisis de Triaje Inteligente.</p>
+    <p class="text-[11px] text-slate-500">
+      Puede corresponder a un caso radicado antes de habilitar el triaje o con automatización desactivada.
+    </p>
+  </div>
+
+  <!-- Banners de retroalimentación de acciones -->
+  <div
+    *ngIf="mensajeExito"
+    data-testid="triaje-banner-exito"
+    class="bg-[#ECFDF3] border border-[#ABEFC6] rounded-lg px-3 py-2 text-xs text-[#067647] font-semibold">
+    {{ mensajeExito }}
+  </div>
+  <div
+    *ngIf="errorAccion"
+    data-testid="triaje-banner-error"
+    class="bg-[#FEECEB] border border-[#F5B7B1] rounded-lg px-3 py-2 text-xs text-[#B42318] font-semibold">
+    {{ errorAccion }}
+  </div>
+
+  <!-- Contenido completo cuando existe registro de triaje -->
+  <ng-container *ngIf="!cargando && !errorCarga && triaje">
+
+    <!-- Detalle de envío si hubo fallo de despacho -->
+    <div
+      *ngIf="triaje.estado_envio === 'FALLO_TEMPORAL' || triaje.estado_envio === 'FALLO_DEFINITIVO'"
+      class="bg-[#FEECEB] border border-[#F5B7B1] rounded-lg px-3 py-2 text-[11px] text-[#B42318]">
+      <strong>Estado de despacho ({{ triaje.estado_envio }}):</strong>
+      {{ triaje.ultimo_error_envio || 'No se pudo completar el envío automático hacia el orquestador.' }}
+    </div>
+
+    <!-- Advertencia cuando la fotografía contradiga la descripción -->
+    <div
+      *ngIf="tieneContradiccion"
+      data-testid="triaje-advertencia-contradiccion"
+      role="alert"
+      class="bg-[#FFF4E5] border border-[#FCD9A6] rounded-lg p-3 space-y-1.5 text-[#9A5B13]">
+      <div class="flex items-center gap-1.5 font-bold text-xs text-[#B42318]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>Advertencia: la fotografía contradice o difiere de la descripción ciudadana</span>
+      </div>
+      <ul *ngIf="advertenciasContradiccion.length > 0" class="list-disc pl-5 space-y-0.5 text-xs text-[#7A4409]">
+        <li *ngFor="let adv of advertenciasContradiccion">{{ adv }}</li>
+      </ul>
+      <p *ngIf="advertenciasContradiccion.length === 0" class="text-xs text-[#7A4409]">
+        Verifica la evidencia fotográfica y el relato antes de aceptar la prioridad o asignación sugerida.
+      </p>
+    </div>
+
+    <!-- 1. Prioridad sugerida y justificación + Decisión humana -->
+    <div class="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-2.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Prioridad sugerida:</span>
+          <span
+            *ngIf="triaje.prioridad_sugerida"
+            data-testid="triaje-prioridad-sugerida"
+            [ngClass]="claseBadgePrioridad(triaje.prioridad_sugerida)"
+            class="px-2 py-0.5 rounded-md text-xs font-bold border">
+            {{ triaje.prioridad_sugerida }}
+          </span>
+          <span *ngIf="!triaje.prioridad_sugerida" class="text-xs font-medium text-slate-500">
+            No sugerida aún
+          </span>
+          <span class="text-[11px] text-slate-500">
+            · Actual del caso: <strong class="text-[#170B3D]">{{ prioridadActualTexto }}</strong>
+          </span>
+        </div>
+
+        <span
+          data-testid="triaje-decision-prioridad-badge"
+          [ngClass]="claseBadgeDecision(triaje.decision_prioridad)"
+          class="px-2 py-0.5 rounded-md text-[11px] font-semibold border">
+          {{ etiquetaDecision(triaje.decision_prioridad) }}
+        </span>
+      </div>
+
+      <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
+        {{ triaje.justificacion || 'Sin justificación clínica/operativa registrada para este análisis.' }}
+      </p>
+
+      <p *ngIf="triaje.nivel_confianza !== null && triaje.nivel_confianza !== undefined"
+        data-testid="triaje-referencia-modelo"
+        class="text-[11px] text-slate-500 italic">
+        Indicador referencial del modelo ({{ triaje.nivel_confianza | number:'1.2-2' }}): uso orientativo interno; no representa una probabilidad clínica verificada de acierto.
+      </p>
+
+      <!-- Registro de decisión sobre prioridad -->
+      <div
+        *ngIf="triaje.decision_prioridad !== 'PENDIENTE' && triaje.decision_prioridad_en"
+        class="bg-white rounded-md p-2.5 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
+        <div>
+          <strong>Decisión registrada:</strong> {{ etiquetaDecision(triaje.decision_prioridad) }}
+          por <strong>{{ triaje.decision_prioridad_por_nombre || 'Área Jurídica' }}</strong>
+          el {{ formatearFechaHora(triaje.decision_prioridad_en) }}
+        </div>
+        <div *ngIf="triaje.decision_prioridad_observacion" class="text-slate-500 italic">
+          Observación: "{{ triaje.decision_prioridad_observacion }}"
+        </div>
+      </div>
+
+      <!-- Controles para aceptar o rechazar prioridad sugerida -->
+      <div
+        *ngIf="triaje.prioridad_sugerida && !esDuplicada && !esEstadoTerminalPeticion"
+        class="pt-2 border-t border-slate-200 space-y-2">
+        <input
+          type="text"
+          [(ngModel)]="observacionPrioridad"
+          maxlength="500"
+          placeholder="Observación jurídica opcional sobre la prioridad..."
+          class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20" />
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-testid="btn-aceptar-prioridad"
+            (click)="decidirPrioridad('ACEPTADA')"
+            [disabled]="procesandoDecision !== null"
+            class="px-3 py-1.5 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
+            {{ procesandoDecision === 'PRIORIDAD' ? 'Guardando...' : 'Aceptar prioridad sugerida' }}
+          </button>
+          <button
+            type="button"
+            data-testid="btn-rechazar-prioridad"
+            (click)="decidirPrioridad('RECHAZADA')"
+            [disabled]="procesandoDecision !== null"
+            class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
+            Rechazar recomendación
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Signos reportados por el ciudadano vs Signos observados en fotografías -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- Signos reportados por el ciudadano -->
+      <div data-testid="triaje-signos-ciudadano" class="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-2">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
+          Signos reportados por el ciudadano
+        </span>
+        <div *ngIf="signosReportadosCiudadano.length > 0" class="flex flex-wrap gap-1.5">
+          <span
+            *ngFor="let signo of signosReportadosCiudadano"
+            class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white border border-slate-200 text-slate-700">
+            {{ signo }}
+          </span>
+        </div>
+        <p *ngIf="triaje.resumen_texto" class="text-xs text-slate-600 leading-relaxed">
+          {{ triaje.resumen_texto }}
+        </p>
+        <p *ngIf="signosReportadosCiudadano.length === 0 && !triaje.resumen_texto" class="text-[11px] text-slate-500">
+          No se extrajeron signos específicos adicionales del relato ciudadano.
+        </p>
+      </div>
+
+      <!-- Signos realmente observados en fotografías -->
+      <div data-testid="triaje-signos-fotografia" class="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-2">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
+          Signos observados en fotografías
+        </span>
+        <ng-container *ngIf="triaje.tiene_fotografias; else sinFotosMsg">
+          <div *ngIf="signosObservadosFotografia.length > 0" class="flex flex-wrap gap-1.5">
+            <span
+              *ngFor="let signo of signosObservadosFotografia"
+              class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#4141A5]/5 border border-[#4141A5]/20 text-[#4141A5]">
+              {{ signo }}
+            </span>
+          </div>
+          <p *ngIf="triaje.resumen_vision" class="text-xs text-slate-600 leading-relaxed">
+            {{ triaje.resumen_vision }}
+          </p>
+          <p *ngIf="signosObservadosFotografia.length === 0 && !triaje.resumen_vision" class="text-[11px] text-slate-500">
+            Sin hallazgos visuales reportados en las fotografías adjuntas.
+          </p>
+        </ng-container>
+        <ng-template #sinFotosMsg>
+          <p class="text-[11px] text-slate-500">
+            Esta denuncia no tiene fotografías adjuntas; no existen signos observados en imagen.
+          </p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Signos combinados heredados (solo cuando backend no separa texto/foto en callbacks antiguos) -->
+    <div *ngIf="signosContextoCombinados.length > 0" class="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-1.5">
+      <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
+        Signos detectados en el análisis general
+      </span>
+      <div class="flex flex-wrap gap-1.5">
+        <span
+          *ngFor="let s of signosContextoCombinados"
+          class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-white border border-slate-200 text-slate-700">
+          {{ s }}
+        </span>
+      </div>
+    </div>
+
+    <!-- 3. Veterinario recomendado, sede y carga laboral -->
+    <div data-testid="triaje-veterinario-recomendado" class="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-2.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Veterinario recomendado y carga laboral
+        </span>
+        <span
+          *ngIf="triaje.veterinario_recomendado_id"
+          data-testid="triaje-decision-veterinario-badge"
+          [ngClass]="claseBadgeDecision(triaje.decision_veterinario)"
+          class="px-2 py-0.5 rounded-md text-[11px] font-semibold border">
+          {{ etiquetaDecision(triaje.decision_veterinario) }}
+        </span>
+      </div>
+
+      <ng-container *ngIf="triaje.veterinario_recomendado_id; else sinVetRecomendado">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white rounded-lg p-2.5 border border-slate-200">
+          <div>
+            <p class="text-xs font-bold text-[#170B3D]">
+              {{ triaje.veterinario_recomendado_nombre || ('Veterinario #' + triaje.veterinario_recomendado_id) }}
+            </p>
+            <p class="text-[11px] text-slate-500">
+              Sede: <strong class="text-slate-700">{{ triaje.veterinario_recomendado_sede || 'Sin sede asignada' }}</strong>
+            </p>
+          </div>
+
+          <div *ngIf="triaje.veterinario_recomendado_carga as carga" class="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="px-2 py-0.5 rounded-md bg-[#4141A5]/5 text-[#4141A5] border border-[#4141A5]/20 font-semibold">
+              Carga activa: {{ carga.carga_activa }}
+            </span>
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+              Pendientes: {{ carga.pendientes }} · En proceso: {{ carga.en_proceso }}
+            </span>
+            <span *ngIf="carga.urgentes_activos > 0" class="px-2 py-0.5 rounded-md bg-[#FEECEB] text-[#B42318] border border-[#F5B7B1] font-semibold">
+              Urgentes: {{ carga.urgentes_activos }}
+            </span>
+            <span *ngIf="carga.saturado" class="px-2 py-0.5 rounded-md bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6] font-semibold">
+              Saturado
+            </span>
+          </div>
+        </div>
+
+        <p *ngIf="triaje.justificacion_recomendacion" class="text-[11px] text-slate-600">
+          {{ triaje.justificacion_recomendacion }}
+        </p>
+
+        <div
+          *ngIf="triaje.decision_veterinario !== 'PENDIENTE' && triaje.decision_veterinario_en"
+          class="bg-white rounded-md p-2.5 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
+          <div>
+            <strong>Decisión registrada:</strong> {{ etiquetaDecision(triaje.decision_veterinario) }}
+            por <strong>{{ triaje.decision_veterinario_por_nombre || 'Área Jurídica' }}</strong>
+            el {{ formatearFechaHora(triaje.decision_veterinario_en) }}
+          </div>
+          <div *ngIf="triaje.decision_veterinario_observacion" class="text-slate-500 italic">
+            Observación: "{{ triaje.decision_veterinario_observacion }}"
+          </div>
+        </div>
+
+        <!-- Controles para aceptar (mediante PATCH /asignar/) o rechazar veterinario recomendado -->
+        <div
+          *ngIf="!esDuplicada && !esEstadoTerminalPeticion"
+          class="pt-2 border-t border-slate-200 space-y-2">
+          <input
+            type="text"
+            [(ngModel)]="observacionVeterinario"
+            maxlength="500"
+            placeholder="Motivo u observación para asignación / rechazo..."
+            class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4141A5] focus:ring-2 focus:ring-[#4141A5]/20" />
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              data-testid="btn-aceptar-veterinario"
+              (click)="decidirVeterinario('ACEPTADA')"
+              [disabled]="procesandoDecision !== null || (veterinarioYaAsignadoEsRecomendado && triaje.decision_veterinario === 'ACEPTADA')"
+              class="px-3 py-1.5 rounded-lg bg-[#067647] hover:opacity-90 text-white text-xs font-semibold transition-opacity disabled:opacity-50 cursor-pointer">
+              {{
+                procesandoDecision === 'VETERINARIO'
+                  ? 'Procesando...'
+                  : (veterinarioYaAsignadoEsRecomendado ? 'Confirmar veterinario ya asignado' : 'Aceptar y asignar veterinario')
+              }}
+            </button>
+            <button
+              type="button"
+              data-testid="btn-rechazar-veterinario"
+              (click)="decidirVeterinario('RECHAZADA')"
+              [disabled]="procesandoDecision !== null"
+              class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer">
+              Rechazar recomendación
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #sinVetRecomendado>
+        <p class="text-xs text-slate-500">
+          {{ triaje.justificacion_recomendacion || 'Sin recomendación automática de veterinario para este caso.' }}
+        </p>
+      </ng-template>
+    </div>
+
+    <!-- 4. Posibles duplicados detectados en el triaje -->
+    <div data-testid="triaje-posibles-duplicados" class="bg-slate-50 rounded-lg p-3.5 border border-slate-200 space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Posibles duplicados detectados en triaje ({{ posiblesDuplicadosLista.length }})
+        </span>
+      </div>
+
+      <p *ngIf="posiblesDuplicadosLista.length === 0" class="text-[11px] text-slate-500">
+        El análisis de triaje no encontró denuncias candidatas a duplicado.
+      </p>
+
+      <div *ngIf="posiblesDuplicadosLista.length > 0" class="space-y-2">
+        <div
+          *ngFor="let dup of posiblesDuplicadosLista"
+          class="bg-white rounded-lg p-2.5 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="font-bold text-[#170B3D] text-xs">
+                {{ dup.numero_radicado || ('Petición #' + dup.id_peticion) }}
+              </span>
+              <span *ngIf="dup.estado" class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-semibold">
+                {{ dup.estado }}
+              </span>
+              <span *ngIf="dup.estado_revision" class="px-1.5 py-0.5 rounded bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6] text-[10px] font-semibold">
+                Alerta: {{ dup.estado_revision }}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-600">
+              Texto: <strong class="text-[#4141A5]">{{ formatearPorcentajeTexto(dup.similitud_texto) }}</strong> ·
+              Imagen: <strong class="text-[#4141A5]">{{ formatearPorcentajeImagen(dup) }}</strong>
+              <span *ngIf="formatearMetodoImagen(dup.metodo_imagen)">({{ formatearMetodoImagen(dup.metodo_imagen) }})</span> ·
+              Distancia GPS: <strong class="text-slate-700">{{ formatearDistancia(dup.distancia_metros) }}</strong>
+            </p>
+          </div>
+
+          <button
+            *ngIf="dup.id_alerta"
+            type="button"
+            (click)="abrirComparador(dup.id_alerta)"
+            class="px-3 py-1.5 rounded-lg bg-[#4141A5] hover:bg-[#353583] text-white text-xs font-semibold transition-colors shrink-0 cursor-pointer">
+            Revisar en comparador
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Registro de decisiones humanas -->
+    <div *ngIf="triaje.historial_decisiones.length > 0" data-testid="triaje-historial-decisiones" class="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-2">
+      <button
+        type="button"
+        (click)="mostrarHistorialDecisiones = !mostrarHistorialDecisiones"
+        class="w-full flex items-center justify-between text-left text-[11px] font-semibold uppercase tracking-wide text-[#170B3D] cursor-pointer">
+        <span>Registro de decisiones humanas ({{ triaje.historial_decisiones.length }})</span>
+        <span class="text-[#4141A5]">{{ mostrarHistorialDecisiones ? 'Ocultar ▲' : 'Ver detalle ▼' }}</span>
+      </button>
+
+      <div *ngIf="mostrarHistorialDecisiones" class="space-y-1.5 pt-1">
+        <div
+          *ngFor="let item of triaje.historial_decisiones"
+          class="bg-white rounded-md p-2.5 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="font-bold text-[#170B3D]">
+              {{ item.tipo_recomendacion === 'PRIORIDAD' ? 'Prioridad' : 'Veterinario' }} · {{ item.decision }}
+            </span>
+            <span class="text-slate-400">{{ formatearFechaHora(item.fecha) }}</span>
+          </div>
+          <div>
+            Sugerido: <strong>{{ item.valor_sugerido || 'N/A' }}</strong> ·
+            Resultado: <strong>{{ item.valor_resultante || 'N/A' }}</strong>
+          </div>
+          <div>
+            Responsable: <strong>{{ item.usuario_nombre }}</strong>
+            <span *ngIf="item.usuario_rol">({{ item.usuario_rol }})</span>
+          </div>
+          <div *ngIf="item.observacion" class="italic text-slate-500">
+            "{{ item.observacion }}"
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</section>

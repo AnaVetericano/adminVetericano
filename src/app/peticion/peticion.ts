@@ -24,6 +24,9 @@ import {
   extraerIdAlertaDeNotificacion
 } from '../models/duplicados.model';
 import { AlertaDuplicadoComparacionComponent } from './alerta-duplicado-comparacion/alerta-duplicado-comparacion';
+import { TriajeInteligentePanelComponent } from './triaje-inteligente-panel/triaje-inteligente-panel';
+import { TriajePeticionDetalle } from '../models/triaje.model';
+import { TriajeIaService } from '../services/triaje-ia.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
 import { PageTitleComponent } from '../page-title/page-title';
 import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '../paginador/paginador';
@@ -37,6 +40,7 @@ import { PaginadorComponent, PaginarPipe, TAMANO_PAGINA_PREDETERMINADO } from '.
     FormsModule,
     DashboardJuridicoComponent,
     AlertaDuplicadoComparacionComponent,
+    TriajeInteligentePanelComponent,
     RouterLink,
     AnimalIconComponent,
     PageTitleComponent,
@@ -174,6 +178,7 @@ export class Peticion implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly alertasDuplicadosService = inject(AlertasDuplicadosService);
+  readonly triajeIaService = inject(TriajeIaService);
 
   @ViewChild(AlertaDuplicadoComparacionComponent)
   private comparadorDuplicadoRef?: AlertaDuplicadoComparacionComponent;
@@ -217,6 +222,10 @@ export class Peticion implements OnInit, OnDestroy {
 
   get puedeGestionarDuplicados(): boolean {
     return this.alertasDuplicadosService.puedeGestionarAlertas();
+  }
+
+  get puedeConsultarTriaje(): boolean {
+    return this.triajeIaService.puedeConsultarTriaje();
   }
 
   get puedeConsultarNotificacionesJuridicas(): boolean {
@@ -1788,6 +1797,31 @@ export class Peticion implements OnInit, OnDestroy {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
+  }
+
+  onTriajePeticionActualizada(triaje: TriajePeticionDetalle): void {
+    const petId = Number(triaje?.id_peticion);
+    if (!Number.isInteger(petId) || petId <= 0) {
+      return;
+    }
+    if (this.peticionDetalle && Number(this.peticionDetalle.id_peticion) === petId) {
+      if (triaje.prioridad_actual_peticion) {
+        this.peticionDetalle.prioridad = triaje.prioridad_actual_peticion;
+      }
+      if (triaje.estado_peticion) {
+        this.peticionDetalle.estado = triaje.estado_peticion;
+      }
+      if (triaje.asignado_a_id_peticion) {
+        this.peticionDetalle.asignado_a = triaje.asignado_a_id_peticion;
+      }
+      this.cargarDetalleCompleto(petId);
+      this.obtenerHistorialAsignaciones(petId);
+    }
+    this.obtenerPeticiones();
+    if (this.puedeConsultarNotificacionesJuridicas) {
+      this.obtenerNotificaciones();
+    }
+    this.cdr.detectChanges();
   }
 
   private mostrarAlerta(title: string, text: string, icon: 'success' | 'error' | 'warning'): void {
