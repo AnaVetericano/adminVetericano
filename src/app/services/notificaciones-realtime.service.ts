@@ -40,12 +40,18 @@ const BACKOFF_MIN_MS = 1_000;
 const BACKOFF_MAX_MS = 30_000;
 const MAX_EVENT_IDS = 500;
 const MARGEN_EXP_SEG = 60;
+/** Ítems recientes (leídos y no leídos) que muestra la campana; el contador sale del servidor. */
+const LIMITE_RECONCILIACION = 50;
 const CANAL_BROADCAST = 'vetericano-notificaciones';
 
 type AccionReconciliacion =
   | { tipo: 'np'; item: NotificacionItem }
   | { tipo: 'leida'; clave: string }
-  | { tipo: 'todas_leidas'; modulo: string | null };
+  // Solo las claves no leídas cargadas en ese momento: una NP nacida después NO se marca leída.
+  | { tipo: 'todas_leidas'; claves: string[] };
+
+/** Agrupa las consultas al contador (varias pestañas / eventos seguidos generan una sola petición). */
+const DEBOUNCE_CONTADOR_MS = 300;
 
 type MensajeCanal =
   | { tipo: 'np_recibida'; userId: number | null; item: NotificacionItem }
@@ -63,10 +69,17 @@ export class NotificacionesRealtimeService {
   private readonly _estado = signal<EstadoConexionRealtime>('apagado');
   private readonly _notificaciones = signal<NotificacionItem[]>([]);
   private readonly _ultimaAlerta = signal<AlertaRealtimeUI | null>(null);
+  /**
+   * No leídas según la BD que no están entre los ítems cargados (la campana carga solo los
+   * LIMITE_RECONCILIACION más recientes). Sale de `no_leidas` del REST: la BD es la fuente de verdad.
+   */
+  private readonly _noLeidasFuera = signal(0);
 
   readonly estado = this._estado.asReadonly();
   readonly notificaciones = this._notificaciones.asReadonly();
-  readonly noLeidas = computed(() => this._notificaciones().filter((n) => !n.leida).length);
+  readonly noLeidas = computed(
+    () => this._notificaciones().filter((n) => !n.leida).length + this._noLeidasFuera()
+  );
   readonly ultimaAlerta = this._ultimaAlerta.asReadonly();
 
   private readonly toastMixin = Swal.mixin({
@@ -96,6 +109,10 @@ export class NotificacionesRealtimeService {
   private tPeriodico?: ReturnType<typeof setInterval>;
 
   private reconciliacionSub?: Subscription;
+  private contadorSub?: Subscription;
+  private tContador?: ReturnType<typeof setTimeout>;
+  /** Cambia con cada modificación local del estado: una respuesta del contador anterior se descarta. */
+  private genEstado = 0;
   private reconciliando = false;
   private buffer: AccionReconciliacion[] = [];
 
@@ -165,7 +182,12 @@ export class NotificacionesRealtimeService {
     this.limpiarTimers(true);
     this.reconciliacionSub?.unsubscribe();
     this.reconciliacionSub = undefined;
+    this.contadorSub?.unsubscribe();
+    this.contadorSub = undefined;
+    clearTimeout(this.tContador);
+    this.tContador = undefined;
     this.buffer = [];
+    this._noLeidasFuera.set(0);
 
     this.listenersAbort?.abort();
     this.listenersAbort = null;
@@ -185,10 +207,15 @@ export class NotificacionesRealtimeService {
     this.usuarioActivoId = null;
   }
 
+  /**
+   * Marca una notificación como leída en la BD (PATCH central). La campana se actualiza al instante;
+   * si el servidor rechaza la petición se revierte y se avisa: nunca queda "leída" solo en pantalla.
+   */
   marcarLeida(clave: string): void {
     if (!this.habilitado || !clave) return;
 
     const prev = this._notificaciones().find((n) => n.clave === clave);
+    if (prev?.leida) return;
     this.aplicarLecturaEnEstado((n) => n.clave === clave);
     if (this.reconciliando) this.buffer.push({ tipo: 'leida', clave });
 
@@ -201,14 +228,19 @@ export class NotificacionesRealtimeService {
           );
         }
         this.emitirCanal({ tipo: 'leida', userId: this.usuarioActivoId, clave });
+        this.refrescarContador();
       },
       error: () => {
-        if (!prev) return;
-        this._notificaciones.update((lista) =>
-          lista.some((n) => n.clave === clave)
-            ? lista.map((n) => (n.clave === clave ? { ...prev } : n))
-            : this.ordenar([...lista, { ...prev }])
-        );
+        if (prev) {
+          this.genEstado++;
+          this._notificaciones.update((lista) =>
+            lista.some((n) => n.clave === clave)
+              ? lista.map((n) => (n.clave === clave ? { ...n, leida: false, fecha_lectura: prev.fecha_lectura } : n))
+              : this.ordenar([...lista, { ...prev }])
+          );
+        }
+        this.avisarError('No se pudo marcar la notificación como leída. Intenta de nuevo.');
+        this.reconciliar(); // la BD decide el estado final
       }
     });
   }
@@ -216,16 +248,37 @@ export class NotificacionesRealtimeService {
   marcarTodasLeidas(modulo: string | null = null): void {
     if (!this.habilitado) return;
 
-    const snapshot = this._notificaciones().map((n) => ({ ...n }));
-    this.aplicarLecturaEnEstado((n) => modulo === null || n.modulo === modulo);
-    if (this.reconciliando) this.buffer.push({ tipo: 'todas_leidas', modulo });
+    const coincide = (n: NotificacionItem) => modulo === null || n.modulo === modulo;
+    const afectadas = new Map(
+      this._notificaciones().filter((n) => !n.leida && coincide(n)).map((n) => [n.clave, n.fecha_lectura])
+    );
+    this.aplicarLecturaEnEstado((n) => afectadas.has(n.clave));
+    if (modulo === null) this._noLeidasFuera.set(0);
+    if (this.reconciliando) this.buffer.push({ tipo: 'todas_leidas', claves: Array.from(afectadas.keys()) });
 
     this.api.marcarTodasLeidas(modulo).subscribe({
-      next: () => this.emitirCanal({ tipo: 'todas_leidas', userId: this.usuarioActivoId, modulo }),
-      error: () => this._notificaciones.set(snapshot)
+      next: () => {
+        this.emitirCanal({ tipo: 'todas_leidas', userId: this.usuarioActivoId, modulo });
+        this.refrescarContador();
+      },
+      error: () => {
+        // Reversión inmediata de lo que marcó este clic y, después, la BD decide (reconciliación).
+        this.genEstado++;
+        this._notificaciones.update((lista) =>
+          lista.map((n) =>
+            afectadas.has(n.clave) ? { ...n, leida: false, fecha_lectura: afectadas.get(n.clave) ?? null } : n
+          )
+        );
+        this.avisarError('No se pudieron marcar las notificaciones como leídas. Intenta de nuevo.');
+        this.reconciliar();
+      }
     });
   }
 
+  /**
+   * Trae de la BD las notificaciones recientes (leídas y no leídas) y el total real de no leídas.
+   * Lo que llegó por WS o por otra pestaña mientras viajaba la consulta se aplica encima.
+   */
   reconciliar(): void {
     if (!this.activo || !this.habilitado) return;
 
@@ -233,7 +286,7 @@ export class NotificacionesRealtimeService {
     this.reconciliando = true;
     this.buffer = [];
 
-    this.reconciliacionSub = this.api.listar({ solo_no_leidas: true, limit: 50 }).subscribe({
+    this.reconciliacionSub = this.api.listar({ limit: LIMITE_RECONCILIACION }).subscribe({
       next: (resp) => {
         const mapa = new Map<string, NotificacionItem>();
         for (const item of resp?.resultados ?? []) {
@@ -241,22 +294,34 @@ export class NotificacionesRealtimeService {
           if (clave) mapa.set(clave, { ...item, clave });
         }
 
+        const marcarLeida = (n: NotificacionItem): NotificacionItem =>
+          n.leida ? n : { ...n, leida: true, fecha_lectura: n.fecha_lectura ?? this.ahoraIso() };
         for (const acc of this.buffer) {
           if (acc.tipo === 'np') {
             const clave = this.claveDe(acc.item);
-            if (clave) mapa.set(clave, { ...acc.item, clave });
+            if (clave && !mapa.has(clave)) mapa.set(clave, { ...acc.item, clave });
           } else if (acc.tipo === 'leida') {
-            mapa.delete(acc.clave);
+            const n = mapa.get(acc.clave);
+            if (n) mapa.set(acc.clave, marcarLeida(n));
           } else {
-            for (const [k, v] of mapa.entries()) {
-              if (acc.modulo === null || v.modulo === acc.modulo) mapa.delete(k);
+            for (const k of acc.claves) {
+              const n = mapa.get(k);
+              if (n) mapa.set(k, marcarLeida(n));
             }
           }
         }
+        const huboCambiosDurante = this.buffer.length > 0;
 
-        this._notificaciones.set(this.ordenar(Array.from(mapa.values())));
+        const lista = this.ordenar(Array.from(mapa.values()));
+        this.genEstado++;
+        this._notificaciones.set(lista);
+        const totalServidor = Number(resp?.no_leidas);
+        const cargadas = lista.filter((n) => !n.leida).length;
+        this._noLeidasFuera.set(Number.isFinite(totalServidor) ? Math.max(0, totalServidor - cargadas) : 0);
         this.reconciliando = false;
         this.buffer = [];
+        // La foto REST pudo ser anterior a esos cambios: se confirma el total con la BD.
+        if (huboCambiosDurante) this.refrescarContador();
       },
       error: () => {
         this.reconciliando = false;
@@ -531,14 +596,12 @@ export class NotificacionesRealtimeService {
     } else if (ev.event_type === 'notificacion.leida') {
       const clave = (ev.data as NotificacionLeidaData | undefined)?.clave;
       if (clave) {
-        this.aplicarLecturaEnEstado((n) => n.clave === clave);
-        if (this.reconciliando) this.buffer.push({ tipo: 'leida', clave });
+        this.aplicarLecturaRemota(clave);
         this.emitirCanal({ tipo: 'leida', userId: this.usuarioActivoId, clave });
       }
     } else if (ev.event_type === 'notificacion.todas_leidas') {
       const modulo = (ev.data as TodasLeidasData | undefined)?.modulo ?? null;
-      this.aplicarLecturaEnEstado((n) => modulo === null || n.modulo === modulo);
-      if (this.reconciliando) this.buffer.push({ tipo: 'todas_leidas', modulo });
+      this.aplicarTodasLeidasRemoto(modulo);
       this.emitirCanal({ tipo: 'todas_leidas', userId: this.usuarioActivoId, modulo });
     } else if (ev.categoria === 'NP') {
       const raw = ev.data as NotificacionItem;
@@ -586,16 +649,82 @@ export class NotificacionesRealtimeService {
   private upsertNotificacion(item: NotificacionItem): void {
     const clave = this.claveDe(item);
     if (!clave) return;
+    this.genEstado++;
     this._notificaciones.update((lista) => {
       const existe = lista.some((n) => n.clave === clave);
+      // Una NP tardía (WS o canal) nunca vuelve a "no leída" algo que ya se leyó.
+      const fusionar = (n: NotificacionItem): NotificacionItem => ({
+        ...n, ...item, clave, leida: n.leida || item.leida, fecha_lectura: n.fecha_lectura ?? item.fecha_lectura
+      });
       return this.ordenar(
-        existe ? lista.map((n) => (n.clave === clave ? { ...n, ...item, clave } : n)) : [{ ...item, clave }, ...lista]
+        existe ? lista.map((n) => (n.clave === clave ? fusionar(n) : n)) : [{ ...item, clave }, ...lista]
       );
     });
   }
 
+  /** Lectura hecha en otra pestaña o dispositivo (evento WS `notificacion.leida` o BroadcastChannel). */
+  private aplicarLecturaRemota(clave: string): void {
+    const estabaCargada = this._notificaciones().some((n) => n.clave === clave);
+    this.aplicarLecturaEnEstado((n) => n.clave === clave);
+    if (this.reconciliando) this.buffer.push({ tipo: 'leida', clave });
+    // Si no estaba entre las cargadas, el total de no leídas pudo bajar: se consulta a la BD.
+    if (!estabaCargada) this.refrescarContador();
+  }
+
+  private aplicarTodasLeidasRemoto(modulo: string | null): void {
+    const claves = this._notificaciones()
+      .filter((n) => !n.leida && (modulo === null || n.modulo === modulo))
+      .map((n) => n.clave);
+    const set = new Set(claves);
+    this.aplicarLecturaEnEstado((n) => set.has(n.clave));
+    if (this.reconciliando) this.buffer.push({ tipo: 'todas_leidas', claves });
+    if (modulo === null) this._noLeidasFuera.set(0);
+    else this.refrescarContador();
+  }
+
+  /**
+   * Ajusta el contador al total real de no leídas de la BD (`GET /api/notificaciones/contador/`).
+   * Agrupado (debounce) y descartando respuestas que llegan después de un cambio local del estado.
+   */
+  private refrescarContador(): void {
+    if (!this.activo || !this.habilitado) return;
+    clearTimeout(this.tContador);
+    this.tContador = setTimeout(() => {
+      this.tContador = undefined;
+      if (!this.activo || !this.habilitado) return;
+      this.contadorSub?.unsubscribe();
+      const gen = this.genEstado;
+      this.contadorSub = this.api.contador().subscribe({
+        next: (resp) => {
+          if (gen !== this.genEstado) {
+            this.refrescarContador(); // el estado cambió mientras viajaba: se vuelve a preguntar
+            return;
+          }
+          const total = Number(resp?.no_leidas);
+          if (!Number.isFinite(total)) return;
+          const cargadas = this._notificaciones().filter((n) => !n.leida).length;
+          if (total < cargadas) {
+            // La BD tiene menos no leídas que la campana (se leyeron en otro lado sin aviso): se recarga.
+            this.reconciliar();
+            return;
+          }
+          this._noLeidasFuera.set(total - cargadas);
+        },
+        error: () => {}
+      });
+    }, DEBOUNCE_CONTADOR_MS);
+  }
+
+  private avisarError(texto: string): void {
+    if (Swal.isVisible()) return;
+    try {
+      void this.toastMixin.fire({ icon: 'error', titleText: 'Notificaciones', text: texto }).catch(() => {});
+    } catch {}
+  }
+
   private aplicarLecturaEnEstado(predicado: (n: NotificacionItem) => boolean): void {
     const ahora = this.ahoraIso();
+    this.genEstado++;
     this._notificaciones.update((lista) =>
       lista.map((n) => (predicado(n) ? { ...n, leida: true, fecha_lectura: n.fecha_lectura ?? ahora } : n))
     );
@@ -655,12 +784,9 @@ export class NotificacionesRealtimeService {
             if (this.reconciliando) this.buffer.push({ tipo: 'np', item: norm });
           }
         } else if (msg.tipo === 'leida' && msg.clave) {
-          this.aplicarLecturaEnEstado((n) => n.clave === msg.clave);
-          if (this.reconciliando) this.buffer.push({ tipo: 'leida', clave: msg.clave });
+          this.aplicarLecturaRemota(msg.clave);
         } else if (msg.tipo === 'todas_leidas') {
-          const mod = msg.modulo ?? null;
-          this.aplicarLecturaEnEstado((n) => mod === null || n.modulo === mod);
-          if (this.reconciliando) this.buffer.push({ tipo: 'todas_leidas', modulo: mod });
+          this.aplicarTodasLeidasRemoto(msg.modulo ?? null);
         }
       };
       this.canal = ch;

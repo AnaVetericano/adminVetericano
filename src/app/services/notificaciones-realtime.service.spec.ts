@@ -212,8 +212,9 @@ describe('NotificacionesRealtimeService', () => {
     expect(service.estado()).toBe('degradado');
 
     const req1 = httpMock.expectOne(
-      (r) => r.method === 'GET' && r.url === `${baseNotifUrl}/` && r.params.get('solo_no_leidas') === 'true'
+      (r) => r.method === 'GET' && r.url === `${baseNotifUrl}/` && r.params.get('limit') === '50'
     );
+    expect(req1.request.params.has('solo_no_leidas')).toBe(false);
     req1.flush({ total: 1, no_leidas: 1, resultados: [crearItem({ id_notificacion: 1 })] });
     expect(service.noLeidas()).toBe(1);
 
@@ -256,9 +257,7 @@ describe('NotificacionesRealtimeService', () => {
     const ws = await conectarYAutenticar(service);
     expect(service.estado()).toBe('conectado');
 
-    const reqRest = httpMock.expectOne(
-      (r) => r.method === 'GET' && r.url === `${baseNotifUrl}/` && r.params.get('solo_no_leidas') === 'true'
-    );
+    const reqRest = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${baseNotifUrl}/`);
 
     // Mientras REST sigue pendiente llegan eventos por WS:
     // 1) pet-101 ya viene en REST y también llega por WS (no debe duplicarse)
@@ -305,12 +304,191 @@ describe('NotificacionesRealtimeService', () => {
       no_leidas: 2,
       resultados: [item100, item101]
     });
+    // pet-100 no estaba cargada cuando llegó su lectura remota: el contador se confirma con la BD
+    await vi.advanceTimersByTimeAsync(300);
+    httpMock.expectOne(`${baseNotifUrl}/contador/`).flush({ no_leidas: 2, por_modulo: { peticiones: 2 } });
 
     const claves = service.notificaciones().map((n) => n.clave);
-    expect(claves).toEqual(['pet-102', 'pet-101']);
+    expect(claves).toEqual(['pet-102', 'pet-101', 'pet-100']);
     expect(service.noLeidas()).toBe(2);
     expect(claves.filter((c) => c === 'pet-101').length).toBe(1);
-    expect(claves).not.toContain('pet-100');
+    // pet-100 sigue visible, pero como leída (no desaparece ni cuenta como no leída)
+    expect(service.notificaciones().find((n) => n.clave === 'pet-100')?.leida).toBe(true);
+  });
+
+  it('el contador usa el total no_leidas de la BD aunque la campana cargue solo las 50 más recientes', async () => {
+    const { service } = configurar();
+    await conectarYAutenticar(service);
+    const recientes = [
+      crearItem({ id_notificacion: 2, clave: 'pet-2', fecha_creacion: '2026-11-17T09:59:00' }),
+      crearItem({ id_notificacion: 1, clave: 'pet-1', fecha_creacion: '2026-11-17T09:58:00', leida: true, fecha_lectura: '2026-11-17T09:58:30' })
+    ];
+    httpMock
+      .expectOne((r) => r.url === `${baseNotifUrl}/`)
+      .flush({ total: 130, no_leidas: 120, resultados: recientes });
+
+    // 1 no leída cargada + 119 que están en la BD pero fuera de las cargadas
+    expect(service.noLeidas()).toBe(120);
+    expect(service.notificaciones().find((n) => n.clave === 'pet-1')?.leida).toBe(true);
+
+    service.marcarLeida('pet-2');
+    expect(service.noLeidas()).toBe(119);
+    httpMock.expectOne(`${baseNotifUrl}/pet-2/leer/`).flush(
+      { ...recientes[0], leida: true, fecha_lectura: '2026-11-17T10:00:00' }
+    );
+    // Tras confirmar en la BD se vuelve a leer el contador real
+    await vi.advanceTimersByTimeAsync(300);
+    httpMock.expectOne(`${baseNotifUrl}/contador/`).flush({ no_leidas: 119, por_modulo: { peticiones: 119 } });
+    expect(service.noLeidas()).toBe(119);
+    expect(service.notificaciones().find((n) => n.clave === 'pet-2')?.fecha_lectura).toBe('2026-11-17T10:00:00');
+
+    // Marcar todas deja el contador en 0 y lo confirma con la BD
+    service.marcarTodasLeidas();
+    expect(service.noLeidas()).toBe(0);
+    const reqTodas = httpMock.expectOne((r) => r.url === `${baseNotifUrl}/leer-todas/`);
+    expect(reqTodas.request.method).toBe('PATCH');
+    reqTodas.flush({ actualizadas: 119 });
+    await vi.advanceTimersByTimeAsync(300);
+    httpMock.expectOne(`${baseNotifUrl}/contador/`).flush({ no_leidas: 0, por_modulo: {} });
+    expect(service.noLeidas()).toBe(0);
+  });
+
+  it('marcarTodasLeidas revierte solo lo que marcó si el servidor falla y avisa al usuario', async () => {
+    const { service } = configurar();
+    const ws = await conectarYAutenticar(service);
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({
+      total: 2, no_leidas: 5,
+      resultados: [crearItem({ id_notificacion: 11, clave: 'pet-11' }), crearItem({ id_notificacion: 10, clave: 'pet-10', fecha_creacion: '2026-11-17T09:00:00' })]
+    });
+    expect(service.noLeidas()).toBe(5);
+
+    service.marcarTodasLeidas();
+    expect(service.noLeidas()).toBe(0);
+    // Llega una NP nueva mientras viaja el PATCH: no debe perderse al revertir
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'np-12', event_type: 'peticion.asignada', categoria: 'NP',
+      modulo: 'peticiones', timestamp: '2026-11-17T10:00:05', data: crearItem({ id_notificacion: 12, clave: 'pet-12', fecha_creacion: '2026-11-17T10:00:05' })
+    });
+    toastFireSpy.mockClear();
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/leer-todas/`).flush({ detail: 'x' }, { status: 503, statusText: 'Unavailable' });
+
+    // Reversión inmediata de lo marcado + aviso; la NP nueva no se pierde
+    expect(service.notificaciones().map((n) => n.clave)).toEqual(['pet-12', 'pet-11', 'pet-10']);
+    expect(service.notificaciones().every((n) => !n.leida)).toBe(true);
+    expect(toastFireSpy).toHaveBeenCalledWith(expect.objectContaining({ icon: 'error' }));
+
+    // Y después manda la BD (reconciliación)
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({
+      total: 3, no_leidas: 6,
+      resultados: [
+        crearItem({ id_notificacion: 12, clave: 'pet-12', fecha_creacion: '2026-11-17T10:00:05' }),
+        crearItem({ id_notificacion: 11, clave: 'pet-11' }),
+        crearItem({ id_notificacion: 10, clave: 'pet-10', fecha_creacion: '2026-11-17T09:00:00' })
+      ]
+    });
+    expect(service.noLeidas()).toBe(6);
+  });
+
+  it('"Marcar todas" durante una reconciliación NO marca como leída una NP nacida después (hallazgo revisión #1)', async () => {
+    const { service } = configurar();
+    const ws = await conectarYAutenticar(service);
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({
+      total: 1, no_leidas: 1, resultados: [crearItem({ id_notificacion: 30, clave: 'pet-30', fecha_creacion: '2026-11-17T09:30:00' })]
+    });
+
+    // Reconciliación en vuelo
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    const reqRest = httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`);
+
+    service.marcarTodasLeidas();
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/leer-todas/`).flush({ actualizadas: 1 });
+    // Nace X después del PATCH
+    const x = crearItem({ id_notificacion: 31, clave: 'pet-31', fecha_creacion: '2026-11-17T10:00:10' });
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'np-31', event_type: 'peticion.asignada', categoria: 'NP',
+      modulo: 'peticiones', timestamp: '2026-11-17T10:00:10', data: x
+    });
+    // La foto REST (posterior a X pero anterior al PATCH) trae ambas sin leer
+    reqRest.flush({ total: 2, no_leidas: 2, resultados: [x, crearItem({ id_notificacion: 30, clave: 'pet-30', fecha_creacion: '2026-11-17T09:30:00' })] });
+
+    expect(service.notificaciones().find((n) => n.clave === 'pet-31')?.leida).toBe(false);
+    expect(service.notificaciones().find((n) => n.clave === 'pet-30')?.leida).toBe(true);
+    // El total se confirma con la BD (una sola consulta agrupada)
+    await vi.advanceTimersByTimeAsync(300);
+    httpMock.expectOne(`${baseNotifUrl}/contador/`).flush({ no_leidas: 1, por_modulo: { peticiones: 1 } });
+    expect(service.noLeidas()).toBe(1);
+  });
+
+  it('una NP tardía no vuelve a "no leída" una notificación ya leída (hallazgo revisión #9)', async () => {
+    const { service } = configurar();
+    const ws = await conectarYAutenticar(service);
+    const leida = crearItem({ id_notificacion: 40, clave: 'pet-40', leida: true, fecha_lectura: '2026-11-17T09:59:00' });
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({ total: 1, no_leidas: 0, resultados: [leida] });
+
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'np-40-tardia', event_type: 'peticion.asignada', categoria: 'NP',
+      modulo: 'peticiones', timestamp: '2026-11-17T10:00:00', data: crearItem({ id_notificacion: 40, clave: 'pet-40' })
+    });
+    expect(service.notificaciones()[0].leida).toBe(true);
+    expect(service.noLeidas()).toBe(0);
+  });
+
+  it('una lectura hecha en otro dispositivo (evento WS) de un ítem no cargado actualiza el contador desde la BD', async () => {
+    const { service } = configurar();
+    const ws = await conectarYAutenticar(service);
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({
+      total: 60, no_leidas: 3, resultados: [crearItem({ id_notificacion: 40, clave: 'pet-40' })]
+    });
+    expect(service.noLeidas()).toBe(3);
+
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'leida-remota-5', event_type: 'notificacion.leida', categoria: 'AS',
+      modulo: 'transversal', timestamp: '2026-11-17T10:01:00', data: { clave: 'sis-5' }
+    });
+    await vi.advanceTimersByTimeAsync(300);
+    httpMock.expectOne(`${baseNotifUrl}/contador/`).flush({ no_leidas: 2, por_modulo: { peticiones: 1, inventario: 1 } });
+    expect(service.noLeidas()).toBe(2);
+
+    // Lectura remota de un ítem cargado: se aplica sin consultar al servidor
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'leida-remota-40', event_type: 'notificacion.leida', categoria: 'AS',
+      modulo: 'transversal', timestamp: '2026-11-17T10:01:10', data: { clave: 'pet-40' }
+    });
+    expect(service.noLeidas()).toBe(1);
+    expect(service.notificaciones()[0].leida).toBe(true);
+
+    // Todas leídas en otro dispositivo
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'todas-1', event_type: 'notificacion.todas_leidas', categoria: 'AS',
+      modulo: 'transversal', timestamp: '2026-11-17T10:02:00', data: { modulo: null }
+    });
+    expect(service.noLeidas()).toBe(0);
+  });
+
+  it('si la BD tiene menos no leídas que la campana, recarga la lista desde la BD', async () => {
+    const { service } = configurar();
+    const ws = await conectarYAutenticar(service);
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({
+      total: 2, no_leidas: 2,
+      resultados: [crearItem({ id_notificacion: 21, clave: 'pet-21' }), crearItem({ id_notificacion: 20, clave: 'pet-20', fecha_creacion: '2026-11-17T09:00:00' })]
+    });
+
+    ws.simularMensaje({
+      type: 'event', schema_version: '1', event_id: 'leida-remota-x', event_type: 'notificacion.leida', categoria: 'AS',
+      modulo: 'transversal', timestamp: '2026-11-17T10:01:00', data: { clave: 'pet-999' }
+    });
+    await vi.advanceTimersByTimeAsync(300);
+    httpMock.expectOne(`${baseNotifUrl}/contador/`).flush({ no_leidas: 0, por_modulo: {} });
+    httpMock.expectOne((r) => r.url === `${baseNotifUrl}/`).flush({
+      total: 2, no_leidas: 0,
+      resultados: [
+        crearItem({ id_notificacion: 21, clave: 'pet-21', leida: true, fecha_lectura: '2026-11-17T10:00:30' }),
+        crearItem({ id_notificacion: 20, clave: 'pet-20', fecha_creacion: '2026-11-17T09:00:00', leida: true, fecha_lectura: '2026-11-17T10:00:30' })
+      ]
+    });
+    expect(service.noLeidas()).toBe(0);
+    expect(service.notificaciones().length).toBe(2);
   });
 
   it('deduplica eventos repetidos por event_id (conjunto acotado de 500) y enruta NP / AO / AS', async () => {
@@ -542,6 +720,11 @@ describe('NotificacionesRealtimeService', () => {
     // Revierte el estado optimista
     expect(service.noLeidas()).toBe(1);
     expect(service.notificaciones()[0].leida).toBe(false);
+    // ...y confirma con la BD (reconciliación)
+    httpMock
+      .expectOne((r) => r.url === `${baseNotifUrl}/`)
+      .flush({ total: 1, no_leidas: 1, resultados: [crearItem({ id_notificacion: 88, clave: 'pet-88' })] });
+    expect(service.noLeidas()).toBe(1);
   });
 
   it('reconcilia cada 3 min conectado, en visibilitychange visible y en online', async () => {

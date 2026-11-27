@@ -324,8 +324,9 @@ export class Peticion implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.notificaciones.forEach(n => n.leida = true);
-        this.cdr.detectChanges();
+        // La BD es la fuente de verdad: si el servidor no las marcó, no se muestran como leídas.
+        this.mostrarAlerta('No se pudieron marcar como leídas', 'Intente nuevamente en unos segundos.', 'warning');
+        this.obtenerNotificaciones();
       }
     });
   }
@@ -344,9 +345,9 @@ export class Peticion implements OnInit, OnDestroy {
         this.abrirPeticionDesdeNotificacion(notif);
       },
       error: () => {
-        notif.leida = true;
-        this.cdr.detectChanges();
+        // Se abre igual la petición, pero la notificación sigue como no leída (estado real de la BD).
         this.abrirPeticionDesdeNotificacion(notif);
+        this.obtenerNotificaciones();
       }
     });
   }
