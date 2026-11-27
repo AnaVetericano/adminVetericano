@@ -69,6 +69,17 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "triaje-local": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.triaje-local.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -84,6 +95,9 @@
             },
             "local": {
               "buildTarget": "adminVetericano:build:local"
+            },
+            "triaje-local": {
+              "buildTarget": "adminVetericano:build:triaje-local"
             }
           },
           "defaultConfiguration": "development"
