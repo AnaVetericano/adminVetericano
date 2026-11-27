@@ -518,18 +518,20 @@
                 </div>
               </div>
 
-              <!-- Resumen de datos clave con Tiempo Transcurrido (3.2 y 3.5) -->
+              <!-- Resumen de datos clave con diferenciación entre confirmado/asignado y sugerido por IA -->
               <div class="space-y-1.5 py-3 text-xs text-slate-600">
-                <div class="flex justify-between gap-2">
-                  <span class="text-slate-500">Veterinario:</span>
-                  <span class="font-semibold text-slate-700 truncate max-w-[150px]">{{ nombreAsignado(p) || 'Sin asignar'
-                    }}</span>
+                <div class="flex justify-between items-center gap-2">
+                  <span class="text-slate-500">{{ puedeConsultarTriaje ? 'Veterinario asignado:' : 'Veterinario:' }}</span>
+                  <span class="font-semibold truncate max-w-[160px]"
+                    [ngClass]="nombreAsignado(p) ? 'text-[#170B3D]' : 'text-slate-500'">
+                    {{ nombreAsignado(p) || 'Sin asignar' }}
+                  </span>
                 </div>
-                <div class="flex justify-between gap-2">
-                  <span class="text-slate-500">Prioridad:</span>
-                  <span class="font-semibold truncate max-w-[150px]"
-                    [ngClass]="esUrgente(p) ? 'text-[#B42318] font-semibold' : 'text-slate-700'">
-                    {{ esUrgente(p) ? 'Urgente / Alta' : (p.prioridad || 'Estándar') }}
+                <div class="flex justify-between items-center gap-2">
+                  <span class="text-slate-500">{{ puedeConsultarTriaje ? 'Prioridad confirmada:' : 'Prioridad:' }}</span>
+                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border truncate max-w-[160px]"
+                    [ngClass]="prioridadClase(p.prioridad, esUrgente(p))">
+                    {{ prioridadConfirmadaTexto(p) }}
                   </span>
                 </div>
                 <div class="flex justify-between gap-2">
@@ -546,6 +548,95 @@
                     {{ contarFotos(p) }}
                   </button>
                   <span *ngIf="!fotoDe(p)" class="font-medium text-slate-500">Sin archivo</span>
+                </div>
+              </div>
+
+              <!-- Bloque de Triaje Inteligente IA en tarjeta (Solo Admin y Jurídico, sin consultas adicionales) -->
+              <div *ngIf="puedeConsultarTriaje && triajeDeTarjeta(p) as triaje"
+                [attr.data-testid]="'tarjeta-triaje-' + p.id_peticion"
+                class="mb-2 rounded-lg bg-slate-50 border border-slate-200 border-l-4 border-l-[#4141A5] p-2.5 space-y-2 text-[11px]">
+                <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                  <span class="font-bold uppercase tracking-wide text-[10px] text-[#4141A5]">
+                    Triaje Inteligente IA
+                  </span>
+                  <span *ngIf="triajeEnCursoTarjeta(p)"
+                    data-testid="tarjeta-triaje-en-curso"
+                    class="px-1.5 py-0.5 rounded bg-[#4141A5]/10 text-[#4141A5] font-semibold text-[10px]">
+                    Analizando...
+                  </span>
+                  <span *ngIf="!triajeEnCursoTarjeta(p) && triaje.estado_analisis === 'FALLIDO'"
+                    class="px-1.5 py-0.5 rounded bg-[#FEECEB] text-[#B42318] font-semibold text-[10px]">
+                    Error de análisis
+                  </span>
+                  <span *ngIf="!triajeEnCursoTarjeta(p) && triaje.contradiccion_foto_descripcion"
+                    class="px-1.5 py-0.5 rounded bg-[#FFF4E5] text-[#9A5B13] border border-[#FCD9A6] font-semibold text-[10px]">
+                    ⚠ Revisar foto/relato
+                  </span>
+                </div>
+
+                <!-- Prioridad sugerida por IA (diferenciada de la confirmada) -->
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-slate-500">Prioridad sugerida (IA):</span>
+                  <div class="flex items-center gap-1 flex-wrap justify-end">
+                    <span *ngIf="triaje.prioridad_sugerida"
+                      data-testid="tarjeta-prioridad-sugerida"
+                      [ngClass]="clasePrioridadTriajeBadge(triaje.prioridad_sugerida)"
+                      class="px-1.5 py-0.5 rounded border font-bold text-[10px]">
+                      {{ triaje.prioridad_sugerida }}
+                    </span>
+                    <span *ngIf="!triaje.prioridad_sugerida" class="text-slate-400 font-medium">
+                      {{ triajeEnCursoTarjeta(p) ? 'Pendiente' : 'No sugerida' }}
+                    </span>
+                    <span *ngIf="triaje.prioridad_sugerida"
+                      data-testid="tarjeta-decision-prioridad"
+                      [ngClass]="claseDecisionTriajeTarjeta(triaje.decision_prioridad)"
+                      class="px-1.5 py-0.5 rounded border font-semibold text-[10px]">
+                      {{ etiquetaDecisionTriajeTarjeta(triaje.decision_prioridad) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Veterinario recomendado automáticamente por IA y carga laboral -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-slate-500 shrink-0">Vet. recomendado (IA):</span>
+                    <div class="flex items-center gap-1 min-w-0 justify-end">
+                      <span *ngIf="triaje.veterinario_recomendado_nombre"
+                        data-testid="tarjeta-vet-recomendado"
+                        class="font-bold text-[#170B3D] truncate max-w-[120px]"
+                        [title]="triaje.veterinario_recomendado_nombre + (triaje.veterinario_recomendado_sede ? ' · ' + triaje.veterinario_recomendado_sede : '')">
+                        {{ triaje.veterinario_recomendado_nombre }}
+                      </span>
+                      <span *ngIf="!triaje.veterinario_recomendado_nombre" class="text-slate-400 font-medium">
+                        {{ triajeEnCursoTarjeta(p) ? 'Evaluando...' : 'Sin recomendación' }}
+                      </span>
+                      <span *ngIf="triaje.veterinario_recomendado_id"
+                        data-testid="tarjeta-decision-veterinario"
+                        [ngClass]="claseDecisionTriajeTarjeta(triaje.decision_veterinario)"
+                        class="px-1.5 py-0.5 rounded border font-semibold text-[10px] shrink-0">
+                        {{ etiquetaDecisionTriajeTarjeta(triaje.decision_veterinario) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div *ngIf="triaje.veterinario_recomendado_carga as carga"
+                    data-testid="tarjeta-vet-carga"
+                    class="flex flex-wrap items-center justify-end gap-1 text-[10px]">
+                    <span *ngIf="triaje.veterinario_recomendado_sede"
+                      class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 truncate max-w-[115px]">
+                      {{ triaje.veterinario_recomendado_sede }}
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-[#4141A5]/10 border border-[#4141A5]/20 text-[#4141A5] font-semibold">
+                      Carga activa: {{ carga.carga_activa }}
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
+                      Pend: {{ carga.pendientes }} · Proc: {{ carga.en_proceso }}
+                    </span>
+                    <span *ngIf="carga.saturado"
+                      class="px-1.5 py-0.5 rounded bg-[#FFF4E5] border border-[#FCD9A6] text-[#9A5B13] font-semibold">
+                      Saturado
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1098,8 +1189,9 @@
             <div>
               <p class="font-bold text-[#170B3D] text-sm">{{ tipoLabel(peticionDetalle) }}</p>
               <p class="text-slate-600 text-xs">
-                Prioridad: <strong [ngClass]="esUrgente(peticionDetalle) ? 'text-[#B42318]' : 'text-slate-700'">{{
-                  esUrgente(peticionDetalle) ? 'Urgente / Prioritaria' : (peticionDetalle.prioridad || 'Estándar')
+                {{ puedeConsultarTriaje ? 'Prioridad confirmada:' : 'Prioridad:' }}
+                <strong [ngClass]="esUrgente(peticionDetalle) ? 'text-[#B42318]' : 'text-slate-700'">{{
+                  prioridadConfirmadaTexto(peticionDetalle)
                   }}</strong>
               </p>
               <p class="text-slate-500 text-[11px]">
@@ -1230,6 +1322,7 @@
           [alertasPeticion]="alertasPeticionDetalle"
           [esDuplicada]="esPeticionDuplicada(peticionDetalle)"
           (abrirAlertaDuplicado)="abrirComparadorDuplicado($event)"
+          (triajeCargado)="onTriajeSincronizado($event)"
           (peticionActualizada)="onTriajePeticionActualizada($event)">
         </app-triaje-inteligente-panel>
 

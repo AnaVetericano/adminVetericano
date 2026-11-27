@@ -133,6 +133,27 @@ export interface TriajePeticionDetalle {
   fecha_actualizacion: string;
 }
 
+export interface TriajeResumenTarjeta {
+  id_triaje: number;
+  automatizacion_activa: boolean;
+  puede_reintentar: boolean;
+  estado_envio: EstadoEnvioTriaje;
+  estado_analisis: EstadoAnalisisTriaje;
+  prioridad_sugerida: string | null;
+  prioridad_aplicada: string | null;
+  decision_prioridad: DecisionHumanaTriaje;
+  veterinario_recomendado_id: number | null;
+  veterinario_recomendado_nombre: string | null;
+  veterinario_recomendado_sede: string | null;
+  veterinario_recomendado_carga: CargaVeterinarioTriaje | null;
+  decision_veterinario: DecisionHumanaTriaje;
+  veterinario_asignado_decision_id: number | null;
+  contradiccion_foto_descripcion: boolean;
+  total_duplicados_detectados: number;
+  completado_en: string | null;
+  fecha_actualizacion: string | null;
+}
+
 export interface EstadoConsultaTriaje {
   existe_triaje: boolean;
   automatizacion_activa: boolean;

@@ -351,4 +351,44 @@ describe('TriajeInteligentePanelComponent', () => {
     httpMock.expectNone(`${baseApi}/triaje-ia/peticiones/701/`);
     expect(fixtureVet.debugElement.query(By.css('[data-testid="panel-triaje-inteligente"]'))).toBeNull();
   });
+
+  it('actualiza automáticamente cuando el análisis inicia EN_PROCESO y luego se completa', async () => {
+    vi.useFakeTimers();
+    try {
+      const fixture = montarPanel(702);
+      httpMock.expectOne(`${baseApi}/triaje-ia/peticiones/702/`).flush(
+        crearTriajeMock({
+          id_peticion: 702,
+          estado_analisis: 'EN_PROCESO',
+          estado_envio: 'ENVIADO',
+          prioridad_sugerida: null,
+          justificacion: ''
+        })
+      );
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css('[data-testid="triaje-estado-badge"]')).nativeElement.textContent).toContain(
+        'Procesando'
+      );
+
+      await vi.advanceTimersByTimeAsync(3000);
+      httpMock.expectOne(`${baseApi}/triaje-ia/peticiones/702/`).flush(
+        crearTriajeMock({
+          id_peticion: 702,
+          estado_analisis: 'COMPLETADO',
+          estado_envio: 'ENVIADO',
+          prioridad_sugerida: 'ALTA'
+        })
+      );
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css('[data-testid="triaje-estado-badge"]')).nativeElement.textContent).toContain(
+        'Completado'
+      );
+      expect(fixture.debugElement.query(By.css('[data-testid="triaje-prioridad-sugerida"]')).nativeElement.textContent).toContain(
+        'ALTA'
+      );
+      fixture.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

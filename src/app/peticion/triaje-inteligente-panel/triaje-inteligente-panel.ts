@@ -41,6 +41,7 @@ export class TriajeInteligentePanelComponent implements OnChanges, OnDestroy {
 
   @Output() abrirAlertaDuplicado = new EventEmitter<number>();
   @Output() peticionActualizada = new EventEmitter<TriajePeticionDetalle>();
+  @Output() triajeCargado = new EventEmitter<TriajePeticionDetalle>();
 
   cargando = false;
   reintentando = false;
@@ -62,6 +63,10 @@ export class TriajeInteligentePanelComponent implements OnChanges, OnDestroy {
   private consultaSub: Subscription | null = null;
   private reintentoSub: Subscription | null = null;
   private decisionSub: Subscription | null = null;
+  private pollingTimer: ReturnType<typeof setTimeout> | null = null;
+  private intentosPolling = 0;
+  private readonly maxIntentosPolling = 15;
+  private readonly intervaloPollingMs = 3000;
 
   get puedeConsultarTriaje(): boolean {
     return this.triajeService.puedeConsultarTriaje();
@@ -218,6 +223,8 @@ export class TriajeInteligentePanelComponent implements OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['idPeticion']) {
+      this.detenerPolling();
+      this.intentosPolling = 0;
       this.resetearMensajes();
       this.observacionPrioridad = '';
       this.observacionVeterinario = '';
@@ -227,41 +234,83 @@ export class TriajeInteligentePanelComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.detenerPolling();
     this.consultaSub?.unsubscribe();
     this.reintentoSub?.unsubscribe();
     this.decisionSub?.unsubscribe();
   }
 
-  cargarTriaje(): void {
+  cargarTriaje(silencioso = false): void {
     if (!this.puedeConsultarTriaje || !this.idPeticion || this.idPeticion <= 0) {
+      this.detenerPolling();
       this.triaje = null;
       this.existeTriaje = false;
       this.cargando = false;
       return;
     }
 
-    this.cargando = true;
-    this.errorCarga = null;
-    this.errorCargaCodigo = null;
+    if (!silencioso) {
+      this.detenerPolling();
+      this.intentosPolling = 0;
+      this.cargando = true;
+      this.errorCarga = null;
+      this.errorCargaCodigo = null;
+    }
     this.consultaSub?.unsubscribe();
 
-    this.consultaSub = this.triajeService.obtenerTriajePeticion(Number(this.idPeticion)).subscribe({
+    const idConsultado = Number(this.idPeticion);
+    this.consultaSub = this.triajeService.obtenerTriajePeticion(idConsultado).subscribe({
       next: (res) => {
         this.cargando = false;
         this.existeTriaje = res.existe_triaje;
         this.automatizacionActiva = res.automatizacion_activa;
         this.triaje = res.triaje;
+        if (res.triaje) {
+          this.triajeCargado.emit(res.triaje);
+        }
+        this.programarPollingSiPendiente(idConsultado);
         this.cdr.detectChanges();
       },
       error: (err: ErrorTriajeApi) => {
         this.cargando = false;
-        this.triaje = null;
-        this.existeTriaje = false;
-        this.errorCargaCodigo = err.codigo;
-        this.errorCarga = err.mensaje || 'No se pudo consultar el análisis de triaje.';
+        if (!silencioso) {
+          this.triaje = null;
+          this.existeTriaje = false;
+          this.errorCargaCodigo = err.codigo;
+          this.errorCarga = err.mensaje || 'No se pudo consultar el análisis de triaje.';
+        }
+        this.detenerPolling();
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private programarPollingSiPendiente(idConsultado: number): void {
+    this.detenerPolling();
+    if (!this.automatizacionActiva || !this.triaje) {
+      return;
+    }
+    const enCurso =
+      (this.triaje.estado_analisis === 'PENDIENTE' || this.triaje.estado_analisis === 'EN_PROCESO') &&
+      this.triaje.estado_envio !== 'FALLO_DEFINITIVO';
+    if (!enCurso || this.intentosPolling >= this.maxIntentosPolling) {
+      return;
+    }
+    this.pollingTimer = setTimeout(() => {
+      this.pollingTimer = null;
+      if (Number(this.idPeticion) !== idConsultado) {
+        return;
+      }
+      this.intentosPolling += 1;
+      this.cargarTriaje(true);
+    }, this.intervaloPollingMs);
+  }
+
+  private detenerPolling(): void {
+    if (this.pollingTimer !== null) {
+      clearTimeout(this.pollingTimer);
+      this.pollingTimer = null;
+    }
   }
 
   reintentarTriaje(): void {
