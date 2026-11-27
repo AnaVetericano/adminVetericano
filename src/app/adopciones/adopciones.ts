@@ -128,8 +128,9 @@ export class Adopciones implements OnInit {
             nombre: localInfo?.nombre || p.nombre || 'Animal de compañía CBA',
             raza: localInfo?.raza || p.raza || 'Mestizo',
             imagen: this.normalizarImagen(localInfo?.imagen || p.imagen),
+            // La descripción pública la decide el backend (caracteristicas). La caché local no prevalece:
+            // versiones anteriores guardaban ahí observaciones clínicas y se reenviarían al editar o retirar.
             descripcion:
-              localInfo?.descripcion ||
               p.descripcion ||
               'Paciente recuperado satisfactoriamente en el Centro de Bienestar Animal (CBA), fuera de peligro y apto para adopción responsable.',
             estado: estadoResuelto,

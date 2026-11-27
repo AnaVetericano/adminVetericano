@@ -37,6 +37,7 @@ export const environment = {
   // Sistema de notificaciones en tiempo real (WebSockets + REST central)
   notificacionesHabilitadas: false,
   wsHabilitado: false,
-  wsUrl: 'ws://127.0.0.1:8002/ws/notificaciones/',
-  wsRoles: [1, 2, 3, 5]
+  // Mismo backend que BACKEND_CLOUD_URL: el ws de producción (un ws local rechazaría estos tokens con 4001).
+  wsUrl: 'wss://vetericano-ws-production.up.railway.app/ws/notificaciones/',
+  wsRoles: [3]
 };

@@ -45,7 +45,7 @@
       <div class="max-h-80 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
         @if (notificaciones().length === 0) {
           <div class="p-6 text-center text-xs text-slate-400">
-            <p class="font-semibold text-slate-600">Sin notificaciones pendientes</p>
+            <p class="font-semibold text-slate-600">Sin notificaciones</p>
           </div>
         } @else {
           @for (item of notificaciones(); track item.clave) {

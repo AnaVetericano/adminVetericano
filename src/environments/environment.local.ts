@@ -35,9 +35,10 @@ export const environment = {
   apiUrlSedes: `${BACKEND_LOCAL_URL}/api/sedes/`,
   apiUrlSuperAdmin: `${BACKEND_LOCAL_URL}/api/super-administrador/`,
 
-  // Sistema de notificaciones en tiempo real (WebSockets + REST central)
-  notificacionesHabilitadas: false,
-  wsHabilitado: false,
+  // Sistema de notificaciones en tiempo real (WebSockets + REST central) contra el backend y ws LOCALES
+  // (web 127.0.0.1:8000, ws 127.0.0.1:8002). Nunca usar aquí URLs de Railway/Vercel.
+  notificacionesHabilitadas: true,
+  wsHabilitado: true,
   wsUrl: 'ws://127.0.0.1:8002/ws/notificaciones/',
   wsRoles: [1, 2, 3, 5]
 };

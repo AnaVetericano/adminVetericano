@@ -34,9 +34,10 @@ export const environment = {
   apiUrlSedes: `${BACKEND_CLOUD_URL}/api/sedes/`,
   apiUrlSuperAdmin: `${BACKEND_CLOUD_URL}/api/super-administrador/`,
 
-  // Sistema de notificaciones en tiempo real (WebSockets + REST central)
-  notificacionesHabilitadas: false,
-  wsHabilitado: false,
-  wsUrl: 'wss://REEMPLAZAR-DOMINIO-WS/ws/notificaciones/',
-  wsRoles: [1, 2, 3, 5]
+  // Sistema de notificaciones en tiempo real (WebSockets + REST central).
+  // El ws debe ser el del MISMO backend que BACKEND_CLOUD_URL (misma SECRET_KEY); si no, rechaza el JWT con 4001.
+  notificacionesHabilitadas: true,
+  wsHabilitado: true,
+  wsUrl: 'wss://vetericano-ws-production.up.railway.app/ws/notificaciones/',
+  wsRoles: [3]
 };

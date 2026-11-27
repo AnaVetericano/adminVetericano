@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment';
 import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { escaparHtml } from '../utils/escapar-html';
 import { AuthService } from '../services/auth';
 import { RealtimeEventosService } from '../services/realtime-eventos.service';
 import { AnimalIconComponent } from '../animal-icon/animal-icon';
@@ -223,7 +224,8 @@ error: (error) => {
       // Si el mensaje es un arreglo, lo unimos. Si no, lo mostramos directo.
       const textoError = Array.isArray(mensajes) ? mensajes.join(', ') : mensajes;
       // Formato: <li><strong>campo:</strong> mensaje de error</li>
-      return `<dt>${campo}</dt><dd><span class="qa-tono">${textoError}</span></dd>`;
+      // Campos y mensajes vienen del backend (pueden repetir lo enviado): se escapan como texto.
+      return `<dt>${escaparHtml(campo)}</dt><dd><span class="qa-tono">${escaparHtml(textoError)}</span></dd>`;
     });
 
     if (listaErrores.length > 0) {
@@ -457,7 +459,8 @@ filtrarPorRol(idRol: number | null): void {
 
     Swal.fire({
       title: 'Confirmar cambio de rol',
-      html: `Se asignará a <b>${usuario.nombre} ${usuario.apellido}</b> el rol <b>${nuevoNombreRol}</b>.`,
+      // Nombre y apellido los escribe el propio ciudadano al registrarse: siempre como texto.
+      html: `Se asignará a <b>${escaparHtml(usuario.nombre)} ${escaparHtml(usuario.apellido)}</b> el rol <b>${escaparHtml(nuevoNombreRol)}</b>.`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Cambiar rol',
