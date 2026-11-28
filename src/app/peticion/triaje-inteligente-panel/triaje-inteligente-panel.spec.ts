@@ -206,6 +206,27 @@ describe('TriajeInteligentePanelComponent', () => {
     expect(seccionFoto).not.toContain('No debería verse');
   });
 
+  it('muestra el análisis de la imagen sintética aunque la petición no tenga adjuntos', () => {
+    const fixture = montarPanel(503);
+    httpMock.expectOne(`${baseApi}/triaje-ia/peticiones/503/`).flush(
+      crearTriajeMock({
+        id_peticion: 503,
+        automatizacion_activa: false,
+        tiene_fotografias: false,
+        imagen_sintetica_demo: true,
+        signos_fotografia: ['Animal junto a un vehículo dibujado'],
+        resumen_vision: 'La ilustración muestra un perro inmóvil.'
+      })
+    );
+    fixture.detectChanges();
+
+    const seccion = fixture.debugElement.query(By.css('[data-testid="triaje-signos-fotografia"]'))
+      .nativeElement.textContent as string;
+    expect(seccion).toContain('Observaciones de la imagen sintética');
+    expect(seccion).toContain('Animal junto a un vehículo dibujado');
+    expect(seccion).toContain('La ilustración muestra un perro inmóvil.');
+  });
+
   it('maneja denuncias antiguas sin triaje y automatización desactivada', () => {
     const fixture = montarPanel(105);
     const req = httpMock.expectOne(`${baseApi}/triaje-ia/peticiones/105/`);

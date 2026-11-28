@@ -113,14 +113,18 @@ export class TriajeInteligentePanelComponent implements OnChanges, OnDestroy {
       return this.triaje.signos_reportados;
     }
     // Solo si no hay campo separado y no hay fotos, los signos detectados provienen del relato textual
-    if (!this.triaje.tiene_fotografias && this.triaje.signos_detectados.length > 0) {
+    if (!this.tieneEvidenciaVisual && this.triaje.signos_detectados.length > 0) {
       return this.triaje.signos_detectados;
     }
     return [];
   }
 
+  get tieneEvidenciaVisual(): boolean {
+    return Boolean(this.triaje?.tiene_fotografias || this.triaje?.imagen_sintetica_demo);
+  }
+
   get signosObservadosFotografia(): string[] {
-    if (!this.triaje || !this.triaje.tiene_fotografias) {
+    if (!this.triaje || !this.tieneEvidenciaVisual) {
       return [];
     }
     return this.triaje.signos_fotografia;
@@ -131,7 +135,7 @@ export class TriajeInteligentePanelComponent implements OnChanges, OnDestroy {
     if (
       this.triaje.signos_reportados.length === 0 &&
       this.triaje.signos_fotografia.length === 0 &&
-      this.triaje.tiene_fotografias &&
+      this.tieneEvidenciaVisual &&
       this.triaje.signos_detectados.length > 0
     ) {
       return this.triaje.signos_detectados;

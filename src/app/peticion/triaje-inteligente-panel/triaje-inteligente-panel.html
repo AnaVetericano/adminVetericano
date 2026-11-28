@@ -240,9 +240,9 @@
       <!-- Signos realmente observados en fotografías -->
       <div data-testid="triaje-signos-fotografia" class="bg-slate-50 rounded-lg p-3 border border-slate-200 space-y-2">
         <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">
-          Signos observados en fotografías
+          {{ triaje.imagen_sintetica_demo ? 'Observaciones de la imagen sintética' : 'Signos observados en fotografías' }}
         </span>
-        <ng-container *ngIf="triaje.tiene_fotografias; else sinFotosMsg">
+        <ng-container *ngIf="tieneEvidenciaVisual; else sinFotosMsg">
           <div *ngIf="signosObservadosFotografia.length > 0" class="flex flex-wrap gap-1.5">
             <span
               *ngFor="let signo of signosObservadosFotografia"
@@ -254,7 +254,7 @@
             {{ triaje.resumen_vision }}
           </p>
           <p *ngIf="signosObservadosFotografia.length === 0 && !triaje.resumen_vision" class="text-[11px] text-slate-500">
-            Sin hallazgos visuales reportados en las fotografías adjuntas.
+            Sin hallazgos visuales reportados.
           </p>
         </ng-container>
         <ng-template #sinFotosMsg>

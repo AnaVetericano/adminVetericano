@@ -76,6 +76,7 @@ export interface TriajePeticionDetalle {
   clave_idempotencia: string;
   automatizacion_activa: boolean;
   tiene_fotografias: boolean;
+  imagen_sintetica_demo?: boolean;
   puede_reintentar: boolean;
   estado_envio: EstadoEnvioTriaje;
   estado_analisis: EstadoAnalisisTriaje;
